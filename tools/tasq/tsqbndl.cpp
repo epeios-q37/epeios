@@ -18,11 +18,11 @@
 */
 
 
-#include "tasqtasks.h"
+#include "tsqbndl.h"
 
-using namespace tasqtasks;
+using namespace tsqbndl;
 
-# define UUID_  "93218d1b-f5ed-4b88-bcae-e2c54862372b"
+# define UUID_  "c79626c0-860b-4425-9b64-a9f7b86d885a"
 
 # if BSO_ENDIANESS_SEAL_SIZE == 4
 #  define ENDIANESS_SEAL_TAG_ "XXXX"
@@ -58,7 +58,7 @@ namespace {
   }
 }
 
-void tasqtasks::rXBundle::StoreStatics_(void)
+void tsqbndl::rXBundle::StoreStatics_(void)
 {
   dBundle::Flush();
   FH_.Flush();
@@ -72,14 +72,14 @@ void tasqtasks::rXBundle::StoreStatics_(void)
   FH_.Put((const sdr::sByte *)&XBundle_.S_, sizeof(IDENTIFICATION_) + sizeof(INFORMATION_), sizeof(rXBundle::S_));
 }
 
-rXBundle &tasqtasks::Get(hGuard &Guard )
+rXBundle &tsqbndl::Get(hGuard &Guard )
 {
     Guard.InitAndLock(Mutex_);
 
     return XBundle_;
 }
 
-const rXBundle & tasqtasks::CGet(hGuard &Guard)
+const rXBundle & tsqbndl::CGet(hGuard &Guard)
 {
   return Get(Guard);
 }
@@ -102,27 +102,28 @@ namespace {
     }
   }
 
-  void Populate_(void) {
-    sTRow Row = qNIL;
-
+  void Populate_(
+    dTasks &Tasks,
+    sTRow Row)
+  {
     _::Add("T1", "D1", Row);
     _::Add("T2", "D2", Row);
     _::Add("T3", "D3", Row);
 
-    Row = XBundle_.Next();
+    Row = Tasks.First(Row);
 
-    Row = XBundle_.Next(Row);
+    Row = Tasks.Next(Row);
 
     _::Add("T2.1", "D2.1", Row);
     _::Add("T2.2", "# D2.2", Row);
 
-    Row = XBundle_.Next(Row);
+    Row = Tasks.Next(Row);
 
     _::Add("T3.1", "D3.1", Row);
     _::Add("T3.2", "D3.2", Row);
 
-    Row = XBundle_.Previous(Row);
-    Row = XBundle_.First(Row);
+    Row = Tasks.Previous(Row);
+    Row = Tasks.First(Row);
 
     _::Add("T2.1.1", "D2.1.1", Row);
     _::Add("T2.1.2", "D2.1.2", Row);
@@ -130,7 +131,7 @@ namespace {
   }
 }
 
-bso::sBool tasqtasks::Initialize(const fnm::rName &Filename)
+bso::sBool tsqbndl::Initialize(const fnm::rName &Filename)
 {
   Mutex_ = mtx::Create();
   bso::sBool Exists = FH_.Init(Filename, uys::mReadWrite).Boolean();
@@ -154,7 +155,7 @@ bso::sBool tasqtasks::Initialize(const fnm::rName &Filename)
   return Exists;
 }
 
-void tasqtasks::Immortalize(void)
+void tsqbndl::Immortalize(void)
 {
   XBundle_.Immortalize();
 }

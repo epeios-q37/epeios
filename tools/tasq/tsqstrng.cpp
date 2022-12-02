@@ -18,41 +18,7 @@
 */
 
 
-#ifndef TASQXML_INC_
-# define TASQXML_INC_
+#include "tsqstrng.h"
 
-# include "tasqtasks.h"
+using namespace tsqstrng;
 
-# include "xml.h"
-
-namespace tasqxml {
-  qENUM( Filter ) {
-    fDescription_,
-    fId_,
-    f_amount_,
-    f_Undefined_,
-  };
-
-# define FF_( name )	ff##name = ( 1 << f##name##_ )
-
-  qENUM( FilterFlag ) {
-    FF_( Description ),
-    FF_( Id ),
-    ffAll = ( ( 1 << f_amount_ ) - 1 ),
-    ffExport = ffDescription,
-    ffDisplay = ffId
-  };
-
-# undef TF_
-
-  void Write(
-    const tasqtasks::dBundle &Bundle,
-    int TokenFlags,
-    xml::rWriter &Writer);
-
-  void Parse(
-    xml::rParser &Parser,
-    tasqtasks::dBundle &Bundle);
-}
-
-#endif

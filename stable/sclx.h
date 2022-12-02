@@ -705,11 +705,12 @@ namespace sclx {
 
 			return Value;
 		}
-		const char *FirstChild(
-			const str::dString &Id,
+		template <typename chars> const char *FirstChild(
+			const chars &Id,
 			qCBUFFERh &Value )
 		{
-			qRLmt();
+			Process_("FirstChild_1", Value, Id);
+
 			return Value;
 		}
 		template <typename chars> const char *LastChild(
@@ -720,18 +721,20 @@ namespace sclx {
 
 			return Value;
 		}
-		const char *PreviousSibling(
-			const str::dString &Id,
+		template <typename chars> const char *PreviousSibling(
+			const chars &Id,
 			qCBUFFERh &Value )
 		{
-			qRLmt();
+			Process_("PreviousSibling_1", Value, Id);
+
 			return Value;
 		}
-		const char *NextSibling(
-			const str::dString &Id,
+		template <typename chars> const char *NextSibling(
+			const chars &Id,
 			qCBUFFERh &Value )
 		{
-			qRLmt();
+			Process_("NextSibling_1", Value, Id);
+
 			return Value;
 		}
 		void InsertChild(

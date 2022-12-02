@@ -21,7 +21,7 @@
 
 #include "registry.h"
 
-#include "tasqxml.h"
+#include "tsqxml.h"
 
 using namespace main;
 
@@ -32,8 +32,6 @@ sclx::action_handler<sSession> main::Core;
     SCLX_ADec( sSession, name );\
   }\
   SCLX_ADef( sSession, actions_, name )
-
-namespace tasks = tasqtasks;
 
 namespace {
   qENUM( Id_ ) {
@@ -170,20 +168,21 @@ namespace {
 
 namespace {
   void Select_(
-    tasks::sTRow Row,
-    const tasks::dBundle &Bundle,
+    tsqtsk::sRow Row,
+    const tsqtsk::dXTasks &Tasks,
     sSession &Session)
   {
   qRH;
     bso::pInteger Buffer;
-    tasks::sTRow Looper = qNIL;
-    qCBUFFERh Parent;
+    tsqtsk::sRow Looper = qNIL;
+    qCBUFFERh Previous;
   qRB;
-    Looper = Row;
-    while ( Looper != qNIL ) {
-      Session.SetAttribute(Session.Parent(bso::Convert(*Looper, Buffer), Parent), "open", "true");
+    Looper = Tasks.Parent(Row);
 
-      Looper = Bundle.Parent(Looper);
+    while ( Looper != qNIL ) {
+      Session.SetAttribute(Session.PreviousSibling(Session.PreviousSibling(bso::Convert(*Looper, Buffer), Previous), Previous), "checked", "true");
+
+      Looper = Tasks.Parent(Looper);
     }
 
     Session.ScrollTo(bso::Convert(*Row, Buffer));
@@ -197,7 +196,7 @@ namespace {
 
 namespace {
   void FillTree_(
-    const tasqtasks::dBundle &Bundle,
+    const tsqbndl::dBundle &Bundle,
     sSession &Session)
   {
   qRH;
@@ -210,7 +209,7 @@ namespace {
     Flow.Init(XML);
     Writer.Init(Flow, xml::lIndent);
 
-    tasqxml::Write(Bundle, tasqxml::ffDisplay, Writer);
+    tsqxml::Write(Bundle, tsqxml::ffDisplay, Writer);
     Writer.reset();
     Flow.reset();
 
@@ -232,9 +231,9 @@ namespace {
 }
 
 
-#define BGRD  tasks::hGuard BundleGuard
-#define BNDL()  tasks::rXBundle &Bundle = tasks::Get(BundleGuard)
-#define CBNDL()  const tasks::rXBundle &Bundle = tasks::CGet(BundleGuard)
+#define BGRD  tsqbndl::hGuard BundleGuard
+#define BNDL()  tsqbndl::dBundle &Bundle = tsqbndl::Get(BundleGuard)
+#define CBNDL()  const tsqbndl::dBundle &Bundle = tsqbndl::CGet(BundleGuard)
 
 D_( OnNewSession )
 {
@@ -262,7 +261,7 @@ D_( Select )
 {
 qRH;
   BGRD;
-  tasks::sTRow Row = qNIL;
+  tsqtsk::sRow Row = qNIL;
   str::wString Title, Description, Script;
   bso::pInteger Buffer;
 qRB;
@@ -281,11 +280,11 @@ qRB;
   flx::rStringTWFlow(Script) << "renderMarkdown('DescriptionView','" << xdhcmn::Escape(Description, 0) << "');";
   Session.Execute(Script);
 
-  Session.RemoveClass(bso::Convert(Session.Selected == qNIL ? *Bundle.Root() : *Session.Selected, Buffer), "selected");
+  Session.RemoveClass(bso::Convert(Session.Selected == qNIL ? *Bundle.RootTask() : *Session.Selected, Buffer), "selected");
 
   Session.AddClass(bso::Convert(*Row, Buffer), L_( cSelected ));
 
-  Session.Selected = Row == Bundle.Root() ? qNIL : Row;
+  Session.Selected = Row == Bundle.RootTask() ? qNIL : Row;
 
   SetDisplay_(mView, Session);
 qRR;
@@ -416,6 +415,8 @@ qRB;
     FillTree_(Bundle, Session);
 
     SetDisplay_(mView, Session);
+
+    Select_(Session.Selected == qNIL ? Bundle.RootTask() : Session.Selected, Bundle.Tasks, Session);
   }
 qRR;
 qRT;

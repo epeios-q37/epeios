@@ -18,11 +18,11 @@
 */
 
 
-#include "tasqxml.h"
+#include "tsqxml.h"
 
-using namespace tasqxml;
+using namespace tsqxml;
 
-namespace tasks = tasqtasks;
+namespace task = tsqtsk;
 
 namespace {
   qENUM(Token_) {
@@ -110,25 +110,29 @@ namespace {
   }
 }
 
-void tasqxml::Write(
-  const tasqtasks::dBundle &Bundle,
+void tsqxml::Write(
+  const tsqbndl::dBundle &Bundle,
   int Flags,
   xml::rWriter &Writer)
 {
 qRH;
-  dtr::qBROWSERs(tasks::sTRow) Browser;
-  tasks::sTask Task;
-  tasks::sTRow Row = qNIL;
+  dtr::qBROWSERs(task::sRow) Browser;
+  task::sTask Task;
+  task::sRow Row = qNIL;
   bso::sBool Skip = false;
 qRB;
+  const task::dXTasks &Tasks = Bundle.Tasks;
+
   Writer.PushTag(L_( Tasks) );
 
+  Row = Bundle.RootTask();
+
   if ( Flags & ffId )
-    Writer.PutAttribute(L_( RootId ), *Bundle.Root());
+    Writer.PutAttribute(L_( RootId ), *Row);
 
-  Browser.Init(Bundle.Root());
+  Browser.Init(Row);
 
-  Row = Bundle.Browse(Browser);
+  Row = Tasks.Browse(Browser);
 
   while ( Row != qNIL ) {
     switch ( Browser.Kinship() ) {
@@ -154,14 +158,14 @@ qRB;
         Writer.PutAttribute(L_( Id ), *Row);
 
       Task.Init();
-      Bundle.Tasks.Recall(Row, Task);
+      Tasks.Recall(Row, Task);
       Writer.PutAttribute(L_( Title ), Bundle.Strings(Task.Title));
       if ( ( Flags & ffDescription ) && ( Task.Description != qNIL ) )
         WriteDescription_(Bundle.Strings(Task.Description), Writer);
     } else
       Skip = false;
 
-    Row = Bundle.Browse(Browser);
+    Row = Tasks.Browse(Browser);
   }
 
   Writer.PopTag();
@@ -174,13 +178,13 @@ namespace {
   namespace _ {
     void ParseItems(
       xml::rParser &Parser,
-      tasqtasks::dBundle &Bundle)
+      tsqbndl::dBundle &Bundle)
     {
     qRH;
       bso::sBool Continue = true;
       stkbch::qBSTACKwl( eToken_ ) Tokens;
       str::wString Title;
-      tasqtasks::sTRow Row = qNIL;
+      task::sRow Row = qNIL;
     qRB;
       if ( GetToken_(Parser.TagName()) != tItems )
         qRGnr();
@@ -231,7 +235,7 @@ namespace {
         case xml::tCData:
           switch ( Tokens.Top() ) {
           case tDescription:
-            Bundle.UpdateDescription(Row, Parser.Value());
+            Bundle.UpdateTaskDescription(Row, Parser.Value());
             break;
           default:
             break;
@@ -247,7 +251,7 @@ namespace {
               Continue = false;
             break;
           case tItem:
-            Row = Bundle.Parent(Row);
+            Row = Bundle.Tasks.Parent(Row);
             break;
           case tDescription:
             break;
@@ -269,7 +273,7 @@ namespace {
 
   void ParseTasks_(
     xml::rParser &Parser,
-    tasqtasks::dBundle &Bundle)
+    tsqbndl::dBundle &Bundle)
   {
   qRH;
     bso::sBool Continue = true;
@@ -309,9 +313,9 @@ namespace {
 
 }
 
-void tasqxml::Parse(
+void tsqxml::Parse(
   xml::rParser &Parser,
-  tasqtasks::dBundle &Bundle)
+  tsqbndl::dBundle &Bundle)
 {
 qRH;
   bso::sBool Continue = true;

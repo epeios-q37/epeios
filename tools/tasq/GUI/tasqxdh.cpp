@@ -22,7 +22,7 @@
 #include "main.h"
 #include "registry.h"
 
-#include "tasqtasks.h"
+#include "tsqbndl.h"
 
 SCLI_DEF( tasqxdh, NAME_LC	SCLX_DEFAULT_SUFFIX, NAME_MC );
 
@@ -39,7 +39,7 @@ qRB;
   DBFileAffix.Init();
   sclm::MGetValue(::registry::parameter::DBFileAffix, DBFileAffix);
 
-  tasqtasks::Initialize(DBFileAffix);
+  tsqbndl::Initialize(DBFileAffix);
 qRR;
 qRT;
 qRE;
@@ -131,5 +131,5 @@ qGCTOR( tasqxdh ) {
 }
 
 qGDTOR( tasqxdh ) {
-  tasqtasks::Immortalize();
+  tsqbndl::Immortalize();
 }

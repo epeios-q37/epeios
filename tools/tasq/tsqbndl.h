@@ -18,47 +18,20 @@
 */
 
 
-#ifndef TASQTASKS_INC_
-# define TASQTASKS_INC_
+#ifndef TSQBNDL_INC_
+# define TSQBNDL_INC_
 
-# include "bso.h"
-# include "dtr.h"
-# include "lstbch.h"
-# include "lstcrt.h"
-# include "str.h"
+# include "tsqtsk.h"
 
-namespace tasqtasks {
-  qROW( SRow );
+namespace tsqbndl {
+  typedef tsqtsk::dXTasks dTasks;
+  using tsqtsk::sTask;
+  typedef tsqtsk::sRow sTRow;
 
-  typedef lstcrt::qLMCRATEd( str::dString, sSRow ) dStrings;
-  qW( Strings );
-
-  qROW( TRow );
-
-  typedef dtr::qDTREEd( sTRow ) dTree;
-
-  class sTask {
-  public:
-    sSRow
-      Title,
-      Description;
-    void reset(bso::sBool P = true)
-    {
-      Title = Description = qNIL;
-    }
-    qCDTOR(sTask);
-    void Init(void)
-    {
-      Title = Description = qNIL;
-    }
-  };
-
-
-  typedef lstbch::qLBUNCHd( sTask, sTRow ) dTasks;
-  qW(Tasks);
+  using tsqstrng::dStrings;
+  typedef tsqstrng::sRow sSRow;
 
   class dBundle
-  : public dTree
   {
   private:
     sSRow Add_(const str::dString &String)
@@ -85,38 +58,33 @@ namespace tasqtasks {
     virtual void StoreStatics_(void) = 0;
   public:
     struct s
-    : public dTree::s
     {
       qASd::s AS;
       dStrings::s Strings;
       dTasks::s Tasks;
-      sTRow Root; // Main tasks
+      sTRow RootTask;
     } &S_;
     dStrings Strings;
     dTasks Tasks;
     dBundle(s &S)
-    : dTree(S),
-      S_(S),
+    : S_(S),
       Strings(S.Strings),
       Tasks(S.Tasks)
     {}
     void reset(bso::sBool P = true)
     {
       tol::reset(P, Strings, Tasks);
-      dTree::reset(P);
-      S_.Root = qNIL;
+      S_.RootTask = qNIL;
     }
     void plug(qASd *AS)
     {
       tol::plug(AS, Strings, Tasks);
-      dTree::plug(AS);
     }
     dBundle &operator =(const dBundle &B)
     {
       Strings = B.Strings;
       Tasks = B.Tasks;
-      dTree::operator=(B);
-      S_.Root = B.S_.Root;
+      S_.RootTask = B.S_.RootTask;
 
       return *this;
     }
@@ -124,31 +92,24 @@ namespace tasqtasks {
     {
       sTask Task;
       tol::Init(Strings, Tasks);
-      dTree::Init();
       Task.Init();
-      S_.Root = Tasks.Add(Task);
-      dTree::Allocate(Tasks.Extent());
+      S_.RootTask = Tasks.Add(Task);
     }
     void Flush(void)
     {
       Strings.Flush();
     }
-    sTRow Root(void) const
+    sTRow RootTask(void) const
     {
-      if ( S_.Root == qNIL )
+      if ( S_.RootTask == qNIL )
         qRGnr();
 
-      return S_.Root;
+      return S_.RootTask;
     }
     bso::sBool IsRoot(sTRow Row) const
     {
-      return Row == Root();
+      return Row == RootTask();
     }
-    sTRow Next(void) const
-    {
-      return Next(S_.Root);
-    }
-    using dTree::Next;
     sTRow Add(
       const str::dString &Title,
       const str::dString &Description,
@@ -158,7 +119,7 @@ namespace tasqtasks {
       sTRow New = qNIL;
 
       if ( Row == qNIL )
-        Row = S_.Root;
+        Row = S_.RootTask;
 
       Task.Init();
 
@@ -168,9 +129,8 @@ namespace tasqtasks {
         Task.Description = Add_(Description);
 
       New = Tasks.Add(Task);
-      dTree::Allocate(Tasks.Extent());
 
-      BecomeLast(New, Row);
+      Tasks.BecomeLast(New, Row);
 
       StoreStatics_();
 
@@ -182,7 +142,7 @@ namespace tasqtasks {
     {
       return Add(Title, str::Empty, Row);
     }
-    sTRow UpdateDescription(
+    sTRow UpdateTaskDescription(
       sTRow Row,
       const str::dString &Description)
     {

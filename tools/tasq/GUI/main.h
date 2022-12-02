@@ -20,7 +20,7 @@
 #ifndef MAIN_INC_
 # define MAIN_INC_
 
-# include "tasqtasks.h"
+# include "tsqtsk.h"
 
 # include "sclx.h"
 
@@ -32,7 +32,7 @@ namespace main {
   : public sclx::sProxy
   {
   public:
-    tasqtasks::sTRow Selected;
+    tsqtsk::sRow Selected;
     bso::sBool IsNew;
     void reset(bso::sBool P = true)
     {

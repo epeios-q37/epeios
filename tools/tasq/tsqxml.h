@@ -18,10 +18,42 @@
 */
 
 
-#include "tasqregistry.h"
+#ifndef TSQXML_INC_
+# define TSQXML_INC_
 
-using namespace tasqregistry;
+# include "tsqbndl.h"
+# include "tsqtsk.h"
 
-using sclr::rEntry;
+# include "xml.h"
 
-rEntry tasqregistry::parameter::DBFileAffix( "DBFileAffix", sclr::Parameters );
+namespace tsqxml {
+  qENUM( Filter ) {
+    fDescription_,
+    fId_,
+    f_amount_,
+    f_Undefined_,
+  };
+
+# define FF_( name )	ff##name = ( 1 << f##name##_ )
+
+  qENUM( FilterFlag ) {
+    FF_( Description ),
+    FF_( Id ),
+    ffAll = ( ( 1 << f_amount_ ) - 1 ),
+    ffExport = ffDescription,
+    ffDisplay = ffId
+  };
+
+# undef TF_
+
+  void Write(
+    const tsqbndl::dBundle &Bundle,
+    int TokenFlags,
+    xml::rWriter &Writer);
+
+  void Parse(
+    xml::rParser &Parser,
+    tsqbndl::dBundle &Bundle);
+}
+
+#endif

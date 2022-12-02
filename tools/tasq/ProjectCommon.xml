@@ -1,9 +1,11 @@
  <xpp:bloc xmlns:xpp="http://zeusw.org/epeios/xpp">
    <xpp:define name="TasQModules">
 		<Modules Group="TasQ" Path="../">
-      <Module>tasqregistry</Module>
-      <Module>tasqtasks</Module>
-		  <Module>tasqxml</Module>
+      <Module>tsqbndl</Module>
+      <Module>tsqrgstry</Module>
+      <Module>tsqstrng</Module>
+      <Module>tsqtsk</Module>
+		  <Module>tsqxml</Module>
     </Modules>
   </xpp:define>
   <xpp:define name="CoreModules">

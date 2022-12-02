@@ -18,12 +18,12 @@
 */
 
 
-#ifndef TASQREGISTRY_INC_
-# define TASQREGISTRY_INC_
+#ifndef TSQRGSTRY_INC_
+# define TSQRGSTRY_INC_
 
 # include "sclr.h"
 
-namespace tasqregistry {
+namespace tsqrgstry {
 	namespace parameter {
 		using namespace sclr::parameter;
 

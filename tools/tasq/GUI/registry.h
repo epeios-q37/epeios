@@ -20,15 +20,15 @@
 #ifndef REGISTRY_INC_
 # define REGISTRY_INC_
 
-# include "tasqregistry.h"
+# include "tsqrgstry.h"
 
 namespace registry {
 	namespace parameter {
-		using namespace tasqregistry::parameter;
+		using namespace tsqrgstry::parameter;
 	}
 
 	namespace definition {
-		using namespace tasqregistry::definition;
+		using namespace tsqrgstry::definition;
 
 		extern sclr::rEntry
       Head,
