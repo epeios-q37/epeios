@@ -22,8 +22,8 @@
 
 #include "registry.h"
 
-#include "tasqtasks.h"
-#include "tasqxml.h"
+#include "tsqbndl.h"
+#include "tsqxml.h"
 
 #include "sclm.h"
 #include "sclt.h"
@@ -70,20 +70,20 @@ namespace {
     str::wString DBFileAffix, XMLFilename;
     sclm::rTWFlowRack Rack;
     xml::rWriter Writer;
-    tasqtasks::hGuard Guard;
+    tsqbndl::hGuard Guard;
     bso::sBool Initialized = false;
 	qRB;
     tol::Init(DBFileAffix, XMLFilename);
     _::GetFilenames(DBFileAffix, XMLFilename);
 
-    if ( tasqtasks::Initialize(DBFileAffix) ) {
+    if ( tsqbndl::Initialize(DBFileAffix) ) {
       Initialized = true;
 
       Writer.Init(Rack.Init(XMLFilename), xml::lIndent);
 
       Writer.PushTag("TasQ");
 
-      tasqxml::Write(tasqtasks::Get(Guard), tasqxml::ffExport, Writer);
+      tsqxml::Write(tsqbndl::CGet(Guard), tsqxml::ffExport, Writer);
 
       Writer.PopTag();
     } else {
@@ -93,7 +93,7 @@ namespace {
     Rack.HandleError();
 	qRT;
     if ( Initialized )
-      tasqtasks::Immortalize();
+      tsqbndl::Immortalize();
 	qRE;
 	}
 
@@ -103,13 +103,13 @@ namespace {
     str::wString DBFileAffix, XMLFilename;
     sclm::rXRFlowRack Rack;
     xml::rParser Parser;
-    tasqtasks::hGuard Guard;
+    tsqbndl::hGuard Guard;
     bso::sBool Initialized = false;
 	qRB;
     tol::Init(DBFileAffix, XMLFilename);
     _::GetFilenames(DBFileAffix, XMLFilename);
 
-    if ( !tasqtasks::Initialize(DBFileAffix) ) {
+    if ( !tsqbndl::Initialize(DBFileAffix) ) {
       Initialized = true;
 
       Parser.Init(Rack.Init(XMLFilename), xml::eh_Default);
@@ -117,7 +117,7 @@ namespace {
       if ( ( Parser.Parse(xml::tfStartTagClosed) != xml::tStartTagClosed ) || ( Parser.TagName() != "TasQ") )
         qRFwk();
 
-      tasqxml::Parse(Parser, tasqtasks::Get(Guard));
+      tsqxml::Parse(Parser, tsqbndl::Get(Guard));
     } else {
       cio::COut << '\'' << DBFileAffix << "' already exists!" << txf::nl;
     }
@@ -125,7 +125,7 @@ namespace {
     Rack.HandleError();
 	qRT;
     if ( Initialized )
-      tasqtasks::Immortalize();
+      tsqbndl::Immortalize();
 	qRE;
 	}
 }
