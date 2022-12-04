@@ -705,6 +705,7 @@ namespace sclx {
 
 			return Value;
 		}
+<<<<<<< working copy
 		template <typename chars> const char *FirstChild(
 			const chars &Id,
 			qCBUFFERh &Value )
@@ -735,6 +736,35 @@ namespace sclx {
 		{
 			Process_("NextSibling_1", Value, Id);
 
+=======
+		const char *FirstChild(
+			const str::dString &Id,
+			qCBUFFERh &Value )
+		{
+			qRLmt();
+			return Value;
+		}
+		template <typename chars> const char *LastChild(
+			const chars &Id,
+			qCBUFFERh &Value )
+		{
+			Process_("LastChild_1", Value, Id);
+
+			return Value;
+		}
+		const char *PreviousSibling(
+			const str::dString &Id,
+			qCBUFFERh &Value )
+		{
+			qRLmt();
+			return Value;
+		}
+		const char *NextSibling(
+			const str::dString &Id,
+			qCBUFFERh &Value )
+		{
+			qRLmt();
+>>>>>>> merge rev
 			return Value;
 		}
 		void InsertChild(

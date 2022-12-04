@@ -409,9 +409,8 @@ qRB;
     if ( Session.IsNew ) {
       Session.Selected = Bundle.Add(Title, Description, Session.Selected());
 
-      XML.Init();
+      Fill_()
 
-      tsqxml::Write()
 
       FillTree_(Bundle, Session);
       Select_(Session.Selected, Bundle.Tasks, Session);
