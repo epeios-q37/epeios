@@ -40,16 +40,33 @@ namespace tsqxml {
     FF_( Description ),
     FF_( Id ),
     ffAll = ( ( 1 << f_amount_ ) - 1 ),
-    ffExport = ffDescription,
-    ffDisplay = ffId
+    ffExport = ffAll & ~ffId,
+    ffDisplay = ffAll & ~ffDescription
   };
 
 # undef TF_
 
   void Write(
+    tsqtsk::sRow Row,
     const tsqbndl::dBundle &Bundle,
     int TokenFlags,
     xml::rWriter &Writer);
+
+  void Write(
+    tsqtsk::sRow Row,
+    const tsqbndl::dBundle &Bundle,
+    int TokenFlags,
+    str::dString &XML);
+
+  void Write(
+    const tsqbndl::dBundle &Bundle,
+    int TokenFlags,
+    xml::rWriter &Writer);
+
+  void Write(
+    const tsqbndl::dBundle &Bundle,
+    int TokenFlags,
+    str::dString &XML);
 
   void Parse(
     xml::rParser &Parser,

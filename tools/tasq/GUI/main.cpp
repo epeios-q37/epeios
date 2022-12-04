@@ -195,26 +195,26 @@ namespace {
 }
 
 namespace {
-  void FillTree_(
+  void Fill_(
+    tsqtsk::sRow Row,
+    const str::dString Id,
+    const rgstry::rTEntry &XSLEntry,
     const tsqbndl::dBundle &Bundle,
     sSession &Session)
   {
   qRH;
     str::wString XML;
     str::wString XSL, Base64XSL, XSLAsURI;
-    flx::rStringTWFlow Flow;
-    xml::rWriter Writer;
   qRB;
     XML.Init();
-    Flow.Init(XML);
-    Writer.Init(Flow, xml::lIndent);
 
-    tsqxml::Write(Bundle, tsqxml::ffDisplay, Writer);
-    Writer.reset();
-    Flow.reset();
+    if ( Row == qNIL )
+      tsqxml::Write(Bundle, tsqxml::ffDisplay, XML);
+    else
+      tsqxml::Write(Row, Bundle, tsqxml::ffDisplay, XML);
 
     XSL.Init();
-    sclm::MGetValue(registry::definition::XSLFiles::Items, XSL);
+    sclm::MGetValue(XSLEntry, XSL);
 
     Base64XSL.Init();
     cdgb64::Encode(XSL, cdgb64::fOriginal, Base64XSL);
@@ -223,7 +223,7 @@ namespace {
     XSLAsURI.Append(Base64XSL);
 
     XSL.StripLeadingChars('\n');
-    Session.Inner(str::wString(L_( iTree )), XML, XSLAsURI);
+    Session.Inner(Id, XML, XSLAsURI);
   qRR;
   qRT;
   qRE;
@@ -249,7 +249,7 @@ qRB;
 
   CBNDL();
 
-  FillTree_(Bundle, Session);
+  Fill_(qNIL, str::wString(L_( iTree )), registry::definition::XSLFiles::Items, Bundle, Session);
 
   SetDisplay_(mView, Session);
 qRR;
@@ -391,7 +391,7 @@ D_( Submit )
 {
 qRH;
   BGRD;
-  str::wString Title, Description;
+  str::wString Title, Description, XML;
   bso::pInteger Buffer;
 qRB;
   tol::Init(Title, Description);
@@ -409,16 +409,20 @@ qRB;
     if ( Session.IsNew ) {
       Session.Selected = Bundle.Add(Title, Description, Session.Selected());
 
+      XML.Init();
+
+      tsqxml::Write()
+
       FillTree_(Bundle, Session);
-      SetDisplay_(mView, Session);
       Select_(Session.Selected, Bundle.Tasks, Session);
-    Session.IsNew = false;
+      Session.IsNew = false;
     } else {
       Bundle.Set(Title, Description, Session.Selected());
 
       Session.SetValue(bso::Convert(*Session.Selected, Buffer), Title);
-      SetDisplay_(mView, Session);
     }
+
+    SetDisplay_(mView, Session);
   }
 qRR;
 qRT;

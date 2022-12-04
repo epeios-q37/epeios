@@ -20,6 +20,8 @@
 
 #include "tsqxml.h"
 
+#include "flx.h"
+
 using namespace tsqxml;
 
 namespace task = tsqtsk;
@@ -98,16 +100,122 @@ namespace {
 #define L_(token)  GetLabel_( t##token )
 
 namespace {
-  void WriteDescription_(
-    const str::dString &Description,
-    xml::rWriter &Writer)
-  {
-    if ( Description.Amount() ) {
-      Writer.PushTag(L_( Description ));
-      Writer.PutCData(Description);
-      Writer.PopTag();
+  namespace _ {
+    void WriteDescription(
+      const str::dString &Description,
+      xml::rWriter &Writer)
+    {
+      if ( Description.Amount() ) {
+        Writer.PushTag(L_( Description ));
+        Writer.PutCData(Description);
+        Writer.PopTag();
+      }
     }
   }
+
+  void WriteItemContent_(
+    tsqtsk::sRow Row,
+    const tsqbndl::dBundle &Bundle,
+    int Flags,
+    xml::rWriter &Writer)
+  {
+  qRH;
+    task::sTask Task;
+  qRB;
+    if ( Flags & ffId )
+      Writer.PutAttribute(L_( Id ), *Row);
+
+    Task.Init();
+    Bundle.Tasks.Recall(Row, Task);
+    Writer.PutAttribute(L_( Title ), Bundle.Strings(Task.Title));
+    if ( ( Flags & ffDescription ) && ( Task.Description != qNIL ) )
+      _::WriteDescription(Bundle.Strings(Task.Description), Writer);
+  qRR;
+  qRT;
+  qRE;
+  }
+
+  void Write_(
+    task::sRow Row,
+    const tsqbndl::dBundle &Bundle,
+    int Flags,
+    xml::rWriter &Writer)
+  {
+  qRH;
+    dtr::qBROWSERs(task::sRow) Browser;
+    bso::sBool Skip = false;
+  qRB;
+    Browser.Init(Row);
+
+    Row = Bundle.Tasks.Browse(Browser);
+
+    while ( Row != qNIL ) {
+      switch ( Browser.Kinship() ) {
+        case dtr::kChild:
+          Writer.PushTag(L_( Items ) );
+          break;
+        case dtr::kSibling:
+          Writer.PopTag();  // 'Item'
+          break;
+        case dtr::kParent:
+          Writer.PopTag();  // 'Item'
+          Writer.PopTag();  // 'Items'.
+          Skip = true;
+          break;
+        default:
+          qRGnr();
+          break;
+      }
+
+      if ( !Skip ) {
+        Writer.PushTag(L_( Item ));
+        WriteItemContent_(Row, Bundle, Flags, Writer );
+      } else
+        Skip = false;
+
+      Row = Bundle.Tasks.Browse(Browser);
+    }
+  qRR;
+  qRT;
+  qRE;
+  }
+
+}
+
+void tsqxml::Write(
+  task::sRow Row,
+  const tsqbndl::dBundle &Bundle,
+  int Flags,
+  xml::rWriter &Writer)
+{
+  Writer.PushTag(L_( Tasks) );
+  Writer.PushTag(L_( Item ) );
+
+  WriteItemContent_(Row, Bundle, Flags, Writer);
+
+  Write_(Row, Bundle, Flags, Writer);
+
+  Writer.PopTag();
+  Writer.PopTag();
+}
+
+void tsqxml::Write(
+  task::sRow Row,
+  const tsqbndl::dBundle &Bundle,
+  int Flags,
+  str::dString &XML)
+{
+qRH;
+  flx::rStringTWFlow Flow;
+  xml::rWriter Writer;
+qRB;
+  Flow.Init(XML);
+  Writer.Init(Flow, xml::oIndent);
+
+  Write(Row, Bundle, Flags, Writer);
+qRR;
+qRT;
+qRE;
 }
 
 void tsqxml::Write(
@@ -115,13 +223,7 @@ void tsqxml::Write(
   int Flags,
   xml::rWriter &Writer)
 {
-qRH;
-  dtr::qBROWSERs(task::sRow) Browser;
-  task::sTask Task;
-  task::sRow Row = qNIL;
-  bso::sBool Skip = false;
-qRB;
-  const task::dXTasks &Tasks = Bundle.Tasks;
+  task::sRow Row;
 
   Writer.PushTag(L_( Tasks) );
 
@@ -130,45 +232,24 @@ qRB;
   if ( Flags & ffId )
     Writer.PutAttribute(L_( RootId ), *Row);
 
-  Browser.Init(Row);
-
-  Row = Tasks.Browse(Browser);
-
-  while ( Row != qNIL ) {
-    switch ( Browser.Kinship() ) {
-      case dtr::kChild:
-        Writer.PushTag(L_( Items ) );
-        break;
-      case dtr::kSibling:
-        Writer.PopTag();  // 'Item'
-        break;
-      case dtr::kParent:
-        Writer.PopTag();  // 'Item'
-        Writer.PopTag();  // 'Items'.
-        Skip = true;
-        break;
-      default:
-        qRGnr();
-        break;
-    }
-
-    if ( !Skip ) {
-      Writer.PushTag(L_( Item ));
-      if ( Flags & ffId )
-        Writer.PutAttribute(L_( Id ), *Row);
-
-      Task.Init();
-      Tasks.Recall(Row, Task);
-      Writer.PutAttribute(L_( Title ), Bundle.Strings(Task.Title));
-      if ( ( Flags & ffDescription ) && ( Task.Description != qNIL ) )
-        WriteDescription_(Bundle.Strings(Task.Description), Writer);
-    } else
-      Skip = false;
-
-    Row = Tasks.Browse(Browser);
-  }
+  Write_(Row, Bundle, Flags, Writer);
 
   Writer.PopTag();
+}
+
+void tsqxml::Write(
+  const tsqbndl::dBundle &Bundle,
+  int Flags,
+  str::dString &XML)
+{
+qRH;
+  flx::rStringTWFlow Flow;
+  xml::rWriter Writer;
+qRB;
+  Flow.Init(XML);
+  Writer.Init(Flow, xml::oIndent);
+
+  Write(Bundle, Flags, Writer);
 qRR;
 qRT;
 qRE;
