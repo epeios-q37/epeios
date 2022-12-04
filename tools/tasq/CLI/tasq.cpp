@@ -22,7 +22,6 @@
 
 #include "registry.h"
 
-<<<<<<< working copy
 #include "tsqbndl.h"
 #include "tsqxml.h"
 
@@ -127,112 +126,6 @@ namespace {
 	qRT;
     if ( Initialized )
       tsqbndl::Immortalize();
-=======
-#include "tasqtasks.h"
-#include "tasqxml.h"
-
-#include "sclm.h"
-#include "sclt.h"
-
-#include "err.h"
-#include "cio.h"
-#include "epsmsc.h"
-#include "xpp.h"
-#include "fnm.h"
-#include "flf.h"
-
-using cio::CErr;
-using cio::COut;
-using cio::CIn;
-
-SCLI_DEF( tasq, NAME_LC, NAME_MC );
-
-const scli::sInfo &sclt::SCLTInfo( void )
-{
-	return tasq::Info;
-}
-
-namespace {
-	void PrintHeader_( void )
-	{
-		COut << NAME_MC " V" VERSION << " (" WEBSITE_URL ")" << txf::nl;
-		COut << "Copyright (C) " COPYRIGHT << txf::nl;
-		COut << txf::pad << "Build: " __DATE__ " " __TIME__ << " (" << cpe::GetDescription() << ')' << txf::nl;
-	}
-
-	namespace _ {
-	  void GetFilenames(
-      str::dString &DBFileAffix,
-      str::dString &XMLFilename)
-      {
-        sclm::MGetValue(registry::parameter::DBFileAffix, DBFileAffix);
-        sclm::MGetValue(registry::parameter::XMLFilename, XMLFilename);
-      }
-	}
-
-	void Export_( void )
-	{
-	qRH;
-    str::wString DBFileAffix, XMLFilename;
-    sclm::rTWFlowRack Rack;
-    xml::rWriter Writer;
-    tasqtasks::hGuard Guard;
-    bso::sBool Initialized = false;
-	qRB;
-    tol::Init(DBFileAffix, XMLFilename);
-    _::GetFilenames(DBFileAffix, XMLFilename);
-
-    if ( tasqtasks::Initialize(DBFileAffix) ) {
-      Initialized = true;
-
-      Writer.Init(Rack.Init(XMLFilename), xml::lIndent);
-
-      Writer.PushTag("TasQ");
-
-      tasqxml::Write(tasqtasks::Get(Guard), tasqxml::ffExport, Writer);
-
-      Writer.PopTag();
-    } else {
-      cio::COut << "No '" << DBFileAffix << "' to export!";
-    }
-	qRR;
-    Rack.HandleError();
-	qRT;
-    if ( Initialized )
-      tasqtasks::Immortalize();
-	qRE;
-	}
-
-	void Import_( void )
-	{
-	qRH;
-    str::wString DBFileAffix, XMLFilename;
-    sclm::rXRFlowRack Rack;
-    xml::rParser Parser;
-    tasqtasks::hGuard Guard;
-    bso::sBool Initialized = false;
-	qRB;
-    tol::Init(DBFileAffix, XMLFilename);
-    _::GetFilenames(DBFileAffix, XMLFilename);
-
-    if ( !tasqtasks::Initialize(DBFileAffix) ) {
-      Initialized = true;
-
-      Parser.Init(Rack.Init(XMLFilename), xml::eh_Default);
-
-      if ( ( Parser.Parse(xml::tfStartTagClosed) != xml::tStartTagClosed ) || ( Parser.TagName() != "TasQ") )
-        qRFwk();
-
-      tasqxml::Parse(Parser, tasqtasks::Get(Guard));
-    } else {
-      cio::COut << '\'' << DBFileAffix << "' already exists!" << txf::nl;
-    }
-	qRR;
-    Rack.HandleError();
-	qRT;
-    if ( Initialized )
-      tasqtasks::Immortalize();
->>>>>>> merge rev
 	qRE;
 	}
 }

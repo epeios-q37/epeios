@@ -21,7 +21,6 @@
 #ifndef REGISTRY_INC_
 # define REGISTRY_INC_
 
-<<<<<<< working copy
 # include "tsqrgstry.h"
 
 namespace registry {
@@ -33,19 +32,6 @@ namespace registry {
 
 	namespace definition {
 		using namespace tsqrgstry::definition;
-=======
-# include "tasqregistry.h"
-
-namespace registry {
-	namespace parameter {
-		using namespace tasqregistry::parameter;
-
-		extern sclr::rEntry XMLFilename;
-	}
-
-	namespace definition {
-		using namespace tasqregistry::definition;
->>>>>>> merge rev
 	}
 }
 

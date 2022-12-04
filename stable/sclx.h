@@ -734,8 +734,6 @@ namespace sclx {
 			qCBUFFERh &Value )
 		{
 			Process_("NextSibling_1", Value, Id);
-
-			return Value;
 		}
 		void InsertChild(
 			const str::dString &Child,
