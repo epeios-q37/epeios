@@ -32,4 +32,5 @@ namespace {
   rEntry XSLFiles_("XSLFiles", sclr::Definitions);
 }
 
+rEntry registry::definition::XSLFiles::Item("Item", XSLFiles_);
 rEntry registry::definition::XSLFiles::Items("Items", XSLFiles_);

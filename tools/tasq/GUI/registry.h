@@ -35,7 +35,9 @@ namespace registry {
       Body;
 
 		namespace XSLFiles{
-		  extern sclr::rEntry Items;
+		  extern sclr::rEntry
+        Item,
+        Items;
 		}
 	}
 }

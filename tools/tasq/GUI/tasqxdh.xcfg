@@ -23,6 +23,11 @@
 				<xpp:expand href="assets/Body.xml"/>
 			</Body>
 			<XSLFiles>
+				<Item>
+					<xpp:cdata>
+					  <xpp:expand href="assets/Item.xsl"/>
+          </xpp:cdata>
+				</Item>
 				<Items>
 					<xpp:cdata>
 					  <xpp:expand href="assets/Items.xsl"/>
