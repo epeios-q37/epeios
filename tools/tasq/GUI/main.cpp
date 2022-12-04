@@ -230,7 +230,6 @@ namespace {
   }
 }
 
-
 #define BGRD  tsqbndl::hGuard BundleGuard
 #define BNDL()  tsqbndl::dBundle &Bundle = tsqbndl::Get(BundleGuard)
 #define CBNDL()  const tsqbndl::dBundle &Bundle = tsqbndl::CGet(BundleGuard)
