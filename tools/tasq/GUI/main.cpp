@@ -392,6 +392,7 @@ D_( Submit )
 qRH;
   BGRD;
   str::wString Title, Description;
+  bso::pInteger Buffer;
 qRB;
   tol::Init(Title, Description);
 
@@ -405,18 +406,19 @@ qRB;
   } else {
     BNDL();
 
-    if ( Session.IsNew )
-      Bundle.Add(Title, Description, Session.Selected());
-    else
+    if ( Session.IsNew ) {
+      Session.Selected = Bundle.Add(Title, Description, Session.Selected());
+
+      FillTree_(Bundle, Session);
+      SetDisplay_(mView, Session);
+      Select_(Session.Selected, Bundle.Tasks, Session);
+    Session.IsNew = false;
+    } else {
       Bundle.Set(Title, Description, Session.Selected());
 
-    Session.IsNew = false;
-
-    FillTree_(Bundle, Session);
-
-    SetDisplay_(mView, Session);
-
-    Select_(Session.Selected == qNIL ? Bundle.RootTask() : Session.Selected, Bundle.Tasks, Session);
+      Session.SetValue(bso::Convert(*Session.Selected, Buffer), Title);
+      SetDisplay_(mView, Session);
+    }
   }
 qRR;
 qRT;
