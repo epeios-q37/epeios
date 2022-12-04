@@ -197,7 +197,7 @@ namespace {
 namespace {
   void Fill_(
     tsqtsk::sRow Row,
-    const str::dString Id,
+    const str::dString &Id,
     const rgstry::rTEntry &XSLEntry,
     const tsqbndl::dBundle &Bundle,
     sSession &Session)
@@ -409,10 +409,8 @@ qRB;
     if ( Session.IsNew ) {
       Session.Selected = Bundle.Add(Title, Description, Session.Selected());
 
-      Fill_()
+      Fill_(qNIL, str::wString(L_( iTree )), registry::definition::XSLFiles::Items, Bundle, Session);
 
-
-      FillTree_(Bundle, Session);
       Select_(Session.Selected, Bundle.Tasks, Session);
       Session.IsNew = false;
     } else {
