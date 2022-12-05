@@ -128,6 +128,19 @@ namespace dtr {
 			Tree_.Init();
 			Queue_.Init();
 		}
+		sdr::sSize ChildAmount(r Row)
+		{
+		  sdr::sSize Amount = 0;
+
+		  Row = First(Row);
+
+		  while ( Row != qNIL ) {
+        Amount++;
+        Row = Next(Row);
+		  }
+
+		  return Amount;
+		}
 		//f Allocate place nedeed for 'Size' nodes.
 		void Allocate(
 			sdr::size__ Size,

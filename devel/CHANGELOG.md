@@ -13,6 +13,10 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2022-12-05
+- DTR: [extn];
+- SCLX: [extn];
+
 ## 2022-12-02
 - AEM: [stdz];
 - SCLX: [extn];

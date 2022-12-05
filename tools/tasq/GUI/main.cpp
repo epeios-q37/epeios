@@ -198,6 +198,7 @@ namespace {
   void Fill_(
     tsqtsk::sRow Row,
     const str::dString &Id,
+    sclx::ePosition Position,
     const rgstry::rTEntry &XSLEntry,
     const tsqbndl::dBundle &Bundle,
     sSession &Session)
@@ -223,7 +224,7 @@ namespace {
     XSLAsURI.Append(Base64XSL);
 
     XSL.StripLeadingChars('\n');
-    Session.Inner(Id, XML, XSLAsURI);
+    Session.Put(Id, Position, XML, XSLAsURI);
   qRR;
   qRT;
   qRE;
@@ -248,7 +249,7 @@ qRB;
 
   CBNDL();
 
-  Fill_(qNIL, str::wString(L_( iTree )), registry::definition::XSLFiles::Items, Bundle, Session);
+  Fill_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
 
   SetDisplay_(mView, Session);
 qRR;
@@ -391,6 +392,7 @@ D_( Submit )
 qRH;
   BGRD;
   str::wString Title, Description, XML;
+  qCBUFFERh IdBuffer;
   bso::pInteger Buffer;
 qRB;
   tol::Init(Title, Description);
@@ -406,14 +408,23 @@ qRB;
     BNDL();
 
     if ( Session.IsNew ) {
-      Session.Selected = Bundle.Add(Title, Description, Session.Selected());
+      tsqtsk::sRow Parent = Session.Selected;
 
-      Fill_(qNIL, str::wString(L_( iTree )), registry::definition::XSLFiles::Items, Bundle, Session);
+      Session.Selected = Bundle.Add(Title, Description, Parent);
+
+      if ( Bundle.Tasks.ChildAmount(Parent == qNIL ? Bundle.RootTask() : Parent) == 1 ) {
+        if ( Parent == qNIL )
+          Fill_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
+        else
+          Fill_(Parent, str::wString(bso::Convert(*Parent, Buffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
+      } else {
+        Fill_(Session.Selected, str::wString(Session.NextSibling(str::wString(bso::Convert(Parent == qNIL ? *Bundle.RootTask() : *Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+      }
 
       Select_(Session.Selected, Bundle.Tasks, Session);
       Session.IsNew = false;
     } else {
-      Bundle.Set(Title, Description, Session.Selected());
+      Bundle.Set(Title, Description, Session.Selected);
 
       Session.SetValue(bso::Convert(*Session.Selected, Buffer), Title);
     }

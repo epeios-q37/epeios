@@ -270,6 +270,18 @@ namespace sclx {
 
 	typedef fblfrd::cReporting cReporting_;
 
+	qENUM( Position ) {
+	  pBefore,  // Content put before element.
+	  pBegin,   // Content put as first child of element.
+	  pInner,   // Content replaces actual content of element.
+	  pEnd,     // Content put as last child of element.
+	  pAfter,   // Content put after element.
+	  p_amount,
+	  p_Undefined
+	};
+
+	const char *GetLabel_(ePosition Position);
+
 	class sProxy
 	{
 	private:
@@ -473,7 +485,7 @@ namespace sclx {
 		qRE;
 		}
 		void HandleLayout_(
-      const str::dString &Variant,
+      const str::dString &Position,
       const str::dString &Id,
       const str::dString &XML,
       const str::dString &XSL)
@@ -483,10 +495,19 @@ namespace sclx {
     qRB;
       Dummy.Init();
 
-      Process_("HandleLayout_1", &Dummy, Variant, Id, XML, XSL); // The primitive returns a string, but which is not handled by the user.
+      Process_("HandleLayout_1", &Dummy, Position, Id, XML, XSL); // The primitive returns a string, hence the 'Dummy' parameter,
+                                                                  // but which is not handled by the user.
     qRR;
     qRT;
     qRE;
+    }
+		void HandleLayout_(
+      ePosition Position,
+      const str::dString &Id,
+      const str::dString &XML,
+      const str::dString &XSL)
+    {
+      return HandleLayout_(str::wString(GetLabel_(Position)), Id, XML, XSL);
     }
 	public:
 		void reset( bso::sBool P = true )
@@ -588,21 +609,50 @@ namespace sclx {
 		bso::bool__ ConfirmU(
 			const str::dString &Message,
 			const char *Language );	// Displays 'Message' as is. 'Language' is used for the closing text message.
+    void Put(
+      const str::dString &Id,
+      ePosition Position,
+      const str::dString &XML,
+      const str::dString &XSL = str::Empty)
+    {
+      return HandleLayout_(Position, Id, XML, XSL);
+    }
+    void Before(
+      const str::dString &Id,
+      const str::dString &XML,
+      const str::dString &XSL = str::Empty)
+    {
+      return Put(Id, pBefore, XML, XSL);
+    }
+    void Begin(
+      const str::dString &Id,
+      const str::dString &XML,
+      const str::dString &XSL = str::Empty)
+    {
+      return Put(Id, pBegin,XML, XSL);
+    }
     void Inner(
       const str::dString &Id,
       const str::dString &XML,
       const str::dString &XSL = str::Empty)
     {
-      return HandleLayout_(str::wString("inner"), Id, XML, XSL);
+      return Put(Id, pInner, XML, XSL);
     }
     void End(
       const str::dString &Id,
       const str::dString &XML,
       const str::dString &XSL = str::Empty)
     {
-      return HandleLayout_(str::wString("beforeend"), Id, XML, XSL);
+      return Put(Id, pEnd, XML, XSL);
     }
-		template <typename s, typename t, typename u> void SetAttribute(
+    void After(
+      const str::dString &Id,
+      const str::dString &XML,
+      const str::dString &XSL = str::Empty)
+    {
+      return Put(Id, pAfter, XML, XSL);
+    }
+    template <typename s, typename t, typename u> void SetAttribute(
 			const s &Id,
 			const t &Name,
 			const u &Value )
@@ -734,6 +784,8 @@ namespace sclx {
 			qCBUFFERh &Value )
 		{
 			Process_("NextSibling_1", Value, Id);
+
+			return Value;
 		}
 		void InsertChild(
 			const str::dString &Child,

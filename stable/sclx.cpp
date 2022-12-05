@@ -481,6 +481,32 @@ qRT
 qRE
 }
 
+const char *sclx::GetLabel_(ePosition Position)
+{
+  switch( Position ) {
+  case pBefore:
+    return "beforebegin";
+    break;
+  case pBegin:
+    return "afterbegin";
+    break;
+  case pInner:
+    return "inner";
+    break;
+  case pEnd:
+    return "beforeend";
+    break;
+  case pAfter:
+    return "aftereend";
+    break;
+  default:
+    qRGnr();
+    break;
+  }
+
+  return NULL;  // To avoid a warning.
+}
+
 namespace {
 	eXSLFileHandling GetXMLFileHandlingFromRegistry_(const sclr::dRegistry &Registry)
 	{
