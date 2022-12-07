@@ -105,6 +105,26 @@ namespace {
 
     return NULL;  // To avoid a warning.
   }
+
+  qENUM( Attribute_ ) {
+    aChecked,
+    a_amount,
+    a_Undefined
+  };
+
+  const char *GetLabel_(eAttribute_ Attribute)
+  {
+    switch ( Attribute ) {
+    case aChecked:
+      return "checked";
+      break;
+    default:
+      qRGnr();
+      break;
+    }
+
+    return NULL;  // To avoid a warning.
+  }
 }
 
 #define L_(name)  GetLabel_(name)
@@ -167,7 +187,7 @@ namespace {
 }
 
 namespace {
-  void Select_(
+  void Unfold_(
     tsqtsk::sRow Row,
     const tsqtsk::dXTasks &Tasks,
     sSession &Session)
@@ -180,7 +200,7 @@ namespace {
     Looper = Tasks.Parent(Row);
 
     while ( Looper != qNIL ) {
-      Session.SetAttribute(Session.PreviousSibling(Session.PreviousSibling(bso::Convert(*Looper, Buffer), Previous), Previous), "checked", "true");
+      Session.SetAttribute(Session.PreviousSibling(Session.PreviousSibling(bso::Convert(*Looper, Buffer), Previous), Previous), L_( aChecked ), "true");
 
       Looper = Tasks.Parent(Looper);
     }
@@ -277,10 +297,10 @@ qRB;
   Session.SetValue(L_( iTitleView ), Title);
 
   Script.Init();
-  flx::rStringTWFlow(Script) << "renderMarkdown('DescriptionView','" << xdhcmn::Escape(Description, 0) << "');";
+  flx::rStringTWFlow(Script) << "renderMarkdown('" << L_( iDescriptionView ) << "', '" << xdhcmn::Escape(Description, 0) << "');";
   Session.Execute(Script);
 
-  Session.RemoveClass(bso::Convert(Session.Selected == qNIL ? *Bundle.RootTask() : *Session.Selected, Buffer), "selected");
+  Session.RemoveClass(bso::Convert(Session.Selected == qNIL ? *Bundle.RootTask() : *Session.Selected, Buffer), L_( cSelected ));
 
   Session.AddClass(bso::Convert(*Row, Buffer), L_( cSelected ));
 
@@ -305,7 +325,7 @@ namespace {
     Session.SetValue(L_( iTitleEdition ), Title);
 
     tol::Init(Script, EscapedDescription);
-    flx::rStringTWFlow(Script) << "markdown = editMarkdown('DescriptionEdition','" << xdhcmn::Escape(Description, EscapedDescription, 0) << "');";
+    flx::rStringTWFlow(Script) << "markdown = editMarkdown('" << L_( iDescriptionEdition ) << "', '" << xdhcmn::Escape(Description, EscapedDescription, 0) << "');";
     Session.Execute(Script);
 
     SetDisplay_(mEdition, Session);
@@ -410,18 +430,19 @@ qRB;
     if ( Session.IsNew ) {
       tsqtsk::sRow Parent = Session.Selected;
 
-      Session.Selected = Bundle.Add(Title, Description, Parent);
+      sRow New = Bundle.Add(Title, Description, Parent);
 
       if ( Bundle.Tasks.ChildAmount(Parent == qNIL ? Bundle.RootTask() : Parent) == 1 ) {
         if ( Parent == qNIL )
           Fill_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
         else
-          Fill_(Parent, str::wString(bso::Convert(*Parent, Buffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
+          Fill_(Parent, str::wString(Session.Parent(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
       } else {
-        Fill_(Session.Selected, str::wString(Session.NextSibling(str::wString(bso::Convert(Parent == qNIL ? *Bundle.RootTask() : *Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+        Fill_(Row, str::wString(Session.NextSibling(str::wString(bso::Convert(Parent == qNIL ? *Bundle.RootTask() : *Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
       }
 
-      Select_(Session.Selected, Bundle.Tasks, Session);
+      Unfold_(Row);
+
       Session.IsNew = false;
     } else {
       Bundle.Set(Title, Description, Session.Selected);

@@ -3,7 +3,6 @@
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:xdh="http://q37.info/ns/xdh"
   xmlns:xpp="http://epeios.q37.info/ns/xpp">
-  >
   <xsl:attribute-set name="ItemEvents">
     <xsl:attribute name="xdh:onevent">Select</xsl:attribute>
   </xsl:attribute-set>
@@ -17,7 +16,6 @@
     <xsl:param name="Id" select="@id" />
     <xsl:param name="Label" select="@Title" />
     <xsl:param name="Style" />
-    <li>
       <xsl:choose>
         <xsl:when test="Items">
           <input type="checkbox" id="{generate-id()}" />
@@ -33,6 +31,5 @@
           </span>
         </xsl:otherwise>
       </xsl:choose>
-    </li>
   </xsl:template>
 </xpp:bloc>
