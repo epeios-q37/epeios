@@ -16,20 +16,20 @@
     <xsl:param name="Id" select="@id" />
     <xsl:param name="Label" select="@Title" />
     <xsl:param name="Style" />
-      <xsl:choose>
-        <xsl:when test="Items">
-          <input type="checkbox" id="{generate-id()}" />
-          <label style="color: transparent; width: 0px;" class="tree_label" for="{generate-id()}">i</label>
-          <span xsl:use-attribute-sets="ItemWithChildren" id="{$Id}" style="{$Style}">
-            <xsl:value-of select="$Label" />
-          </span>
-          <xsl:apply-templates select="Items" />
-        </xsl:when>
-        <xsl:otherwise>
-          <span xsl:use-attribute-sets="ItemWithoutChildren" id="{$Id}" style="{$Style}">
-            <xsl:value-of select="$Label" />
-          </span>
-        </xsl:otherwise>
-      </xsl:choose>
+    <xsl:choose>
+      <xsl:when test="Items">
+        <input type="checkbox" id="{generate-id()}" />
+        <label style="color: transparent; width: 0px;" class="tree_label" for="{generate-id()}">i</label>
+        <span xsl:use-attribute-sets="ItemWithChildren" id="{$Id}" style="{$Style}">
+          <xsl:value-of select="$Label" />
+        </span>
+        <xsl:apply-templates select="Items" />
+      </xsl:when>
+      <xsl:otherwise>
+        <span xsl:use-attribute-sets="ItemWithoutChildren" id="{$Id}" style="{$Style}">
+          <xsl:value-of select="$Label" />
+        </span>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 </xpp:bloc>

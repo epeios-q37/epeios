@@ -13,8 +13,9 @@
       <div>
         <fieldset id="TitleView"></fieldset>
         <input style="width: 100%;" class="hide" id="TitleEdition" />
+        <input id="begin"></input>
         <div>
-          <fieldset id="DescriptionView" style="height: 300px; overflow: auto;"></fieldset>
+          <fieldset id="DescriptionView" style="height: 100px; overflow: auto;"></fieldset>
           <textarea class="hide" id="DescriptionEdition"></textarea>
         </div>
         <div class="buttons">

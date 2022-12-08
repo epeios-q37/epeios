@@ -194,20 +194,13 @@ namespace {
   {
   qRH;
     bso::pInteger Buffer;
-    tsqtsk::sRow Looper = qNIL;
     qCBUFFERh Previous;
   qRB;
-    Looper = Tasks.Parent(Row);
+    while ( Row != qNIL ) {
+      Session.SetAttribute(Session.PreviousSibling(Session.PreviousSibling(bso::Convert(*Row, Buffer), Previous), Previous), L_( aChecked ), "true");
 
-    while ( Looper != qNIL ) {
-      Session.SetAttribute(Session.PreviousSibling(Session.PreviousSibling(bso::Convert(*Looper, Buffer), Previous), Previous), L_( aChecked ), "true");
-
-      Looper = Tasks.Parent(Looper);
+      Row = Tasks.Parent(Row);
     }
-
-    Session.ScrollTo(bso::Convert(*Row, Buffer));
-
-    Session.AddClass(Buffer(), L_( cSelected ));
   qRR;
   qRT;
   qRE;
@@ -330,6 +323,8 @@ namespace {
 
     SetDisplay_(mEdition, Session);
 
+    Session.Execute("toDatePicker('begin');");
+
     Session.Focus(L_( iTitleEdition ));
   qRR;
   qRT;
@@ -428,20 +423,21 @@ qRB;
     BNDL();
 
     if ( Session.IsNew ) {
-      tsqtsk::sRow Parent = Session.Selected;
-
-      sRow New = Bundle.Add(Title, Description, Parent);
+      tsqtsk::sRow
+        Parent = Session.Selected,
+        New = Bundle.Add(Title, Description, Parent);
 
       if ( Bundle.Tasks.ChildAmount(Parent == qNIL ? Bundle.RootTask() : Parent) == 1 ) {
-        if ( Parent == qNIL )
+        if ( Parent == qNIL ) {
           Fill_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
-        else
+          Session.AddClass(L_( iTree ), L_( cSelected ) );
+        } else
           Fill_(Parent, str::wString(Session.Parent(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
       } else {
-        Fill_(Row, str::wString(Session.NextSibling(str::wString(bso::Convert(Parent == qNIL ? *Bundle.RootTask() : *Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+        Fill_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(Parent == qNIL ? *Bundle.RootTask() : *Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
       }
 
-      Unfold_(Row);
+      Unfold_(New, Bundle.Tasks, Session);
 
       Session.IsNew = false;
     } else {

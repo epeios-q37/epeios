@@ -24,5 +24,16 @@
       breaks: true
     });
   }
+
+  function toDatePicker(id) {
+    const elem = document.getElementById(id);
+    elem.value="30/12/1969";
+    const datepicker = new Datepicker(elem, {
+      autohide: true,
+      todayBtn: true,
+      todayHighlight: true,
+      language: "fr"
+    }); 
+  }
 </script>
 </xpp:bloc>
