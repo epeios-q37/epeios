@@ -2,6 +2,7 @@
    <xpp:define name="TasQModules">
 		<Modules Group="TasQ" Path="../">
       <Module>tsqbndl</Module>
+      <Module>tsqchrns</Module>
       <Module>tsqrgstry</Module>
       <Module>tsqstrng</Module>
       <Module>tsqtsk</Module>
@@ -11,6 +12,7 @@
   <xpp:define name="CoreModules">
     <xpp:bloc>
       <Module>btr</Module>
+      <Module>tme</Module>
     </xpp:bloc>
   </xpp:define>
 </xpp:bloc>

@@ -17,16 +17,10 @@
 	along with the Epeios framework.  If not, see <http://www.gnu.org/licenses/>
 */
 
-//D DaTE 
+// DaTE
 
 #ifndef DTE_INC_
 # define DTE_INC_
-
-# define DTE_NAME		"DTE"
-
-# define	DTE_VERSION	"$Revision: 1.30 $"
-
-# define DTE_OWNER		"Claude SIMON (http://zeusw.org/intl/contact.html)"
 
 # if defined( E_DEBUG ) && !defined( DTE_NODBG )
 #  define DTE_DBG
@@ -52,29 +46,53 @@ and over which we consider we are in the XX century. */
 
 # define DTE_CORE_MASK	( ( (raw_date__)~0 << DTE_CORE_SHIFT ) & ( ~DTE_SIGN_MASK ) )
 
+/*************/
+/**** NEW ****/
+/*************/
 
 namespace dte {
-	//t Type of a raw date.
-	typedef bso::u32__ raw_date__;
+  typedef bso::sU32 tDate;
 
-	//t Type for the year.
-	typedef bso::u16__	year__;
+  typedef bso::sU16 sYear;
 
-	//t Type for the month.
-	typedef bso::u8__	month__;
+  typedef bso::sU8 sMonth;
 
-	//t Type of the day.
-	typedef bso::u8__ day__;
+  typedef bso::sU8 sDay;
 
-	typedef char buffer__[11];
+  typedef bso::sChar pBuffer[11];
 
-	enum format__ {
+	qENUM( Format ) {
 		fDDMMYYYY,	// ('25/11/2003').
 		fMMDDYYYY,	// ('11/25/2003').
 		fYYYYMMDD,	// ('2003/25/11').
 		f_amount,
 		f_Undefined
 	};
+
+	qCDEF(tDate, Undefined, DTE_INVALID_DATE);
+}
+
+/*************/
+/**** OLD ****/
+/*************/
+
+
+namespace dte {
+	//t Type of a raw date.
+	typedef tDate raw_date__;
+
+	//t Type for the year.
+	typedef sYear	year__;
+
+	//t Type for the month.
+	typedef sMonth	month__;
+
+	//t Type of the day.
+	typedef sDay day__;
+
+	typedef pBuffer buffer__;
+
+	typedef eFormat format__;
 
 	inline const char *GetLabel( format__ Format )
 	{
@@ -217,7 +235,7 @@ namespace dte {
 			return IsValid();
 		}
 		//f Initialization with 'Day', 'Month' and 'Year'.
-		void Init( 
+		void Init(
 			day__ Day,
 			month__ Month,
 			year__ Year )
@@ -332,7 +350,7 @@ namespace dte {
 			default:
 				return 31;
 			}
-	    } 
+	    }
 		void AddDay( void )
 		{
 			if ( Day() == GetAmountOfDaysInMonth() ) {
@@ -386,5 +404,12 @@ namespace dte {
 	date__ Now( void );
 }
 
-/*$END$*/
+/*************/
+/**** NEW ****/
+/*************/
+
+namespace dte {
+  typedef date__ sDate;
+}
+
 #endif

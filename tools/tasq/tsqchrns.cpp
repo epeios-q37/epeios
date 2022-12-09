@@ -17,24 +17,51 @@
     along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// TaSQ ReGiSTRY
 
+#include "tsqchrns.h"
 
-#ifndef TSQRGSTRY_INC_
-# define TSQRGSTRY_INC_
+#include "stsfsm.h"
 
-# include "sclr.h"
+using namespace tsqchrns;
 
-namespace tsqrgstry {
-	namespace parameter {
-		using namespace sclr::parameter;
+#define C( name )	case t##name : return #name; break
 
-		extern sclr::rEntry DBFileAffix;
+const char *tsqchrns::GetLabel(eType Type)
+{
+	switch ( Type ) {
+	C( Pending );
+	C( Completed );
+	C( Due );
+	C( Event );
+	default:
+		qRFwk();
+		break;
 	}
 
-	namespace definition {
-		using namespace sclr::definition;
+	return NULL;	// To avoid a warning.
+}
+
+#undef C
+
+namespace {
+	stsfsm::wAutomat TypeAutomat_;
+
+	void FillTypeAutomat_( void )
+	{
+		TypeAutomat_.Init();
+		stsfsm::Fill<eType>(TypeAutomat_, t_amount, GetLabel);
 	}
 }
 
-#endif
+eType tsqchrns::GetType(const str::dString &Pattern)
+{
+	return stsfsm::GetId(Pattern, TypeAutomat_, t_Undefined, t_amount);
+}
+
+qGCTOR( tsqchrns )
+{
+	FillTypeAutomat_();
+}
+
+
+

@@ -17,10 +17,10 @@
     along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TaSQ STRiNG
 
 #ifndef TSQSTRNG_INC_
 # define TSQSTRNG_INC_
-
 
 # include "lstcrt.h"
 # include "str.h"

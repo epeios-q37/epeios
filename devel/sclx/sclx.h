@@ -282,6 +282,17 @@ namespace sclx {
 
 	const char *GetLabel_(ePosition Position);
 
+	qENUM( Action )
+	{
+	  aAdd,
+	  aRemove,
+	  aToggle,
+	  a_amount,
+	  a_Undefined
+	};
+
+	const char *GetLabel_(eAction Action);
+
 	class sProxy
 	{
 	private:
@@ -428,12 +439,27 @@ namespace sclx {
 			return HandleLayout_(Variant, str::wString(Id), XSLFilename, Target, Registry, XML, Marker);
 		}
 		void HandleClasses_(
-			const char *Variant,
+			eAction Action,
 			const str::dStrings &Ids,
 			const str::dStrings &Classes)
 		{
-			Process_("HandleClasses_1", NULL, Variant, Ids, Classes);
+			Process_("HandleClasses_1", NULL, GetLabel_(Action), Ids, Classes);
 		}
+		void HandleClasses_(
+			eAction Action,
+			const str::dStrings &Ids,
+			const str::dString &Class);  // Applies same class to all ids.
+		void HandleClasses_(
+			eAction Action,
+			const str::dStrings &Ids,
+			const char *Class)
+    {
+      return HandleClasses_(Action, Ids, str::wString(Class));
+    }
+		void HandleClass_(
+			eAction Action,
+			const str::dString &Id,
+			const str::dString &Class);  // Applies same class to all ids.
 		template <typename c1, typename c2> void GetValue_(
 			const c1 &Id,
 			c2 &Buffer )
@@ -818,41 +844,41 @@ namespace sclx {
 		xdhcmn::sIndex AppendCSSRule( const str::dString &Rule );
 		void RemoveCSSRule( xdhcmn::sIndex Index );
 		*/
-		void AddClasses(
+		template <typename c> void AddClasses(
 			const str::dStrings &Ids,
-			const str::dStrings &Classes )
+			const c &Classes )
 		{
-			return HandleClasses_("Add", Ids, Classes);
+			return HandleClasses_(aAdd, Ids, Classes);
 		}
-		template <typename c1, typename c2> void AddClass(
-			const c1 &Id,
-			const c2 &Class )
+		template <typename i, typename c> void AddClass(
+			const i &Id,
+			const c &Class )
 		{
-			return AddClasses(str::wStrings(Id), str::wStrings(Class));
+			return AddClasses(str::wStrings(Id), Class);
 		}
-		void RemoveClasses(
+		template <typename c> void RemoveClasses(
 			const str::dStrings &Ids,
-			const str::dStrings &Classes )
+			const c &Classes )
 		{
-			return HandleClasses_("Remove", Ids, Classes);
+			return HandleClasses_(aRemove, Ids, Classes);
 		}
-		template <typename c1, typename c2> void RemoveClass(
-			const c1 &Id,
-			const c2 &Class )
+		template <typename i, typename c> void RemoveClass(
+			const i &Id,
+			const c &Class )
 		{
-			return RemoveClasses(str::wStrings(Id), str::wStrings(Class));
+			return RemoveClasses(str::wStrings(Id), Class);
 		}
-		void ToggleClasses(
+		template <typename c> void ToggleClasses(
 			const str::dStrings &Ids,
-			const str::dStrings &Classes )
+			const c &Classes )
 		{
-			return HandleClasses_("Toggle", Ids, Classes);
+			return HandleClasses_(aToggle, Ids, Classes);
 		}
-		template <typename c1, typename c2> void ToggleClass(
-			const c1 &Id,
-			const c2 &Class )
+		template <typename i, typename c> void ToggleClass(
+			const i &Id,
+			const c &Class )
 		{
-			return ToggleClasses(str::wStrings(Id), str::wStrings(Class));
+			return ToggleClasses(str::wStrings(Id), Class);
 		}
 		void EnableElements( const str::dStrings &Ids );
 		void EnableElement( const str::dString &Id );

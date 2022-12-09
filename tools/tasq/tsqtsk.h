@@ -17,10 +17,12 @@
     along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TaSQ TaSK
 
 #ifndef TSQTSK_INC_
 # define TSQTSK_INC_
 
+# include "tsqchrns.h"
 # include "tsqstrng.h"
 
 # include "bso.h"
@@ -39,14 +41,16 @@ namespace tsqtsk {
     tsqstrng::sRow
       Title,
       Description;
+    tsqchrns::sRow Status;
     void reset(bso::sBool P = true)
     {
-      Title = Description = qNIL;
+      tol::reset(P, Title, Description, Status);
     }
     qCDTOR(sTask);
     void Init(void)
     {
       Title = Description = qNIL;
+      Status = qNIL;
     }
   };
 

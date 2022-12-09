@@ -5,6 +5,10 @@
   background-color: bisque;
 }
 
+.date {
+  wifth: 10ch;
+}
+
 .item {
   cursor: pointer;
 }

@@ -6,12 +6,20 @@
 - [cont]: continuation of previous modifications;
 - [crtn]: creation;
 - [extn]: extension;
+- [impr]: improvement;
 - [obvs]: obvious modifications;
 - [rvrt]: reverting modifications;
 - [stdz]: modification to comply with cusrrent standards;
 - [trvl]: trivial modifications;
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
+
+## 2022-12-09
+- DTE: [stdz];
+- SCLX: [impr];
+- SCLX: [extn
+- TME: [stdz];
+- TOL: adding `reset(…)` method to `qROW(…)` so it can be used with `tol::teset(…)`;
 
 ## 2022-12-05
 - DTR: [extn];
@@ -4472,6 +4480,7 @@
 [cont]:#Continuation
 [crtn]:#Creation
 [extn]:#Extension
+[impr]:#Improvement
 [obvs]:#Obvious
 [rvrt]:#Reverting
 [stdz]:#Standardization
@@ -4491,9 +4500,13 @@ Continuation of the in progress modifications.
 
 Creation of the library.
 
-### Extension
+### Extension (extn)
 
 The library is extended.
+
+### Improvement (impr)
+
+The library is improved.
 
 ### Obvious (obvs)
 

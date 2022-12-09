@@ -37,6 +37,16 @@ namespace {
   qENUM( Id_ ) {
     iTree,
     iTitleView,
+    iStatusEdition,
+    iTaskType,
+    iDueDates,
+    iDueDateBefore,
+    iDueDateAfter,
+    iEventDateAndTime,
+    iEventDate,
+    iEventTime,
+    iEventTimeHour,
+    iEventTimeMinute,
     iDescriptionView,
     iNew,
     iEdit,
@@ -59,6 +69,16 @@ namespace {
     switch ( Id ) {
     C_( Tree );
     C_( TitleView );
+    C_( StatusEdition );
+    C_( TaskType );
+    C_( DueDates );
+    C_( DueDateBefore );
+    C_( DueDateAfter );
+    C_( EventDateAndTime );
+    C_( EventDate );
+    C_( EventTime );
+    C_( EventTimeHour );
+    C_( EventTimeMinute );
     C_( DescriptionView );
     C_( New );
     C_( Edit );
@@ -137,35 +157,25 @@ namespace {
     m_Undefined
   };
 
-  void SetDisplay_(
+  void GlobalDressing_(
     eMode_ Mode,
     sSession &Session)
   {
   qRH;
-    str::wStrings
-      ViewIds, ViewClasses,
-      EditionIds, EditionClasses,
-      Ids;
+    str::wStrings ViewIds, EditionIds, Ids;
   qRB;
-    tol::Init(ViewIds, ViewClasses);
-
-    ViewIds.AppendMulti(L_( iTree ), L_( iTitleView ), L_( iDescriptionView ), L_( iEdit ), L_( iNew ), L_( iDelete ));
-    ViewClasses.AppendMulti(L_( cHide ), L_( cHide ), L_( cHide ), L_( cHide ), L_( cHide ), L_( cHide ));
-
-    tol::Init(EditionIds, EditionClasses);
-
-    EditionIds.AppendMulti(L_( iTitleEdition ), L_( iDescriptionEdition ), L_( iSubmit ), L_( iCancel ));
-    EditionClasses.AppendMulti(L_( cHide ), L_( cHide ), L_( cHide ), L_( cHide ));
+    ViewIds.Init(L_( iTree ), L_( iTitleView ), L_( iDescriptionView ), L_( iEdit ), L_( iNew ), L_( iDelete ));
+    EditionIds.Init(L_( iTitleEdition ), L_( iDescriptionEdition ), L_( iSubmit ), L_( iCancel ), L_( iStatusEdition));
 
     switch( Mode ) {
     case mView:
-      Session.AddClasses(EditionIds, EditionClasses);
-      Session.RemoveClasses(ViewIds, ViewClasses);
+      Session.AddClasses(EditionIds, L_( cHide ));
+      Session.RemoveClasses(ViewIds, L_( cHide ));
       Session.Execute("markdown.toTextArea(); markdown = null;");
       break;
     case mEdition:
-      Session.AddClasses(ViewIds, ViewClasses);
-      Session.RemoveClasses(EditionIds, EditionClasses);
+      Session.AddClasses(ViewIds,  L_( cHide ));
+      Session.RemoveClasses(EditionIds,  L_( cHide ));
       break;
     default:
       qRGnr();
@@ -264,7 +274,7 @@ qRB;
 
   Fill_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
 
-  SetDisplay_(mView, Session);
+  GlobalDressing_(mView, Session);
 qRR;
 qRT;
 qRE;
@@ -276,16 +286,17 @@ qRH;
   BGRD;
   tsqtsk::sRow Row = qNIL;
   str::wString Title, Description, Script;
+  tsqchrns::sStatus Status;
   bso::pInteger Buffer;
 qRB;
-  tol::Init(Title, Description);
+  tol::Init(Title, Description, Status);
 
   str::wString(Id).ToNumber(*Row);
 
   BNDL();
 
   if ( !Bundle.IsRoot(Row) )
-    Bundle.Get(Row, Title, Description);
+    Bundle.Get(Row, Title, Description, Status);
 
   Session.SetValue(L_( iTitleView ), Title);
 
@@ -299,17 +310,68 @@ qRB;
 
   Session.Selected = Row == Bundle.RootTask() ? qNIL : Row;
 
-  SetDisplay_(mView, Session);
+  GlobalDressing_(mView, Session);
 qRR;
 qRT;
 qRE;
 }
 
 namespace {
-  void Edit_(
+  void DressTaskStatusEdition_(
+    tsqchrns::eType Type,
+    sSession &Session)
+  {
+  qRH;
+    str::wStrings Displayed, Hidden;
+    str::wString Script;
+  qRB;
+    tol::Init(Displayed, Hidden);
+
+    switch( Type ) {
+    case tsqchrns::tPending:
+    case tsqchrns::tCompleted:
+      Hidden.AppendMulti(L_( iDueDates), L_( iEventDateAndTime));
+      break;
+    case tsqchrns::tDue:
+      Displayed.AppendMulti(L_( iDueDates));
+      Hidden.AppendMulti(L_( iEventDateAndTime ));
+      break;
+    case tsqchrns::tEvent:
+      Displayed.AppendMulti(L_( iEventDateAndTime ));
+      Hidden.AppendMulti(L_( iDueDates));
+      break;
+    default:
+      qRGnr();
+      break;
+    }
+
+    Script.Init();
+
+    switch ( Type ) {
+    case tsqchrns::tEvent:
+      flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iEventDate ) << "');";
+      Session.Execute(Script);
+      break;
+    case tsqchrns::tDue:
+      flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iDueDateBefore ) << "');" << "toDatePicker('" << L_( iDueDateAfter ) << "');";
+      Session.Execute(Script);
+      break;
+    default:
+      break;
+    }
+
+    Session.RemoveClasses(Displayed, L_( cHide ));
+    Session.AddClasses(Hidden, L_( cHide ));
+  qRR;
+  qRT;
+  qRE;
+  }
+
+  void DressTaskEdition_(
     const str::dString &Title,
     const str::dString &Description,
     bso::sBool SelectedIsRoot,
+    tsqchrns::eType StatusType,
     sSession &Session)
   {
   qRH;
@@ -321,9 +383,9 @@ namespace {
     flx::rStringTWFlow(Script) << "markdown = editMarkdown('" << L_( iDescriptionEdition ) << "', '" << xdhcmn::Escape(Description, EscapedDescription, 0) << "');";
     Session.Execute(Script);
 
-    SetDisplay_(mEdition, Session);
+    DressTaskStatusEdition_(StatusType, Session);
 
-    Session.Execute("toDatePicker('begin');");
+    GlobalDressing_(mEdition, Session);
 
     Session.Focus(L_( iTitleEdition ));
   qRR;
@@ -340,7 +402,7 @@ qRB;
   CBNDL();
 
   Session.IsNew = true;
-  Edit_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), Session);
+  DressTaskEdition_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), tsqchrns::tPending, Session);
 qRR;
 qRT;
 qRE;
@@ -351,14 +413,15 @@ D_( Edit )
 qRH;
   BGRD;
   str::wString Title, Description;
+  tsqchrns::sStatus Status;
 qRB;
   CBNDL();
 
-  tol::Init(Title, Description);
-  Bundle.Get(Session.Selected(), Title, Description);
+  tol::Init(Title, Description, Status);
+  Bundle.Get(Session.Selected(), Title, Description, Status);
 
   Session.IsNew = false;
-  Edit_(Title, Description, Bundle.IsRoot(Session.Selected()), Session);
+  DressTaskEdition_(Title, Description, Bundle.IsRoot(Session.Selected()), Status.Type, Session);
 qRR;
 qRT;
 qRE;
@@ -381,22 +444,23 @@ D_( Cancel )
 qRH;
   BGRD;
   str::wString NewTitle, OldTitle, NewDescription, OldDescription;
+  tsqchrns::sStatus NewStatus, OldStatus;
 qRB;
-  tol::Init(NewTitle, OldTitle, NewDescription, OldDescription);
+  tol::Init(NewTitle, OldTitle, NewDescription, OldDescription, NewStatus, OldStatus);
 
   RetrieveContent_(Session, NewTitle, NewDescription);
 
   if ( !Session.IsNew ) {
     CBNDL();
 
-    Bundle.Get(Session.Selected(), OldTitle, OldDescription);
+    Bundle.Get(Session.Selected(), OldTitle, OldDescription, OldStatus);
   }
 
-  if ( ( OldTitle != NewTitle) || ( OldDescription != NewDescription ) ) {
+  if ( ( OldTitle != NewTitle) || ( OldDescription != NewDescription ) || ( OldStatus != NewStatus ) ) {
     if ( Session.ConfirmB(str::wString("Are sure you want to cancel your modifications?")) )
-      SetDisplay_(mView, Session);
+      GlobalDressing_(mView, Session);
   } else
-    SetDisplay_(mView, Session);
+    GlobalDressing_(mView, Session);
 qRR;
 qRT;
 qRE;
@@ -446,8 +510,23 @@ qRB;
       Session.SetValue(bso::Convert(*Session.Selected, Buffer), Title);
     }
 
-    SetDisplay_(mView, Session);
+    GlobalDressing_(mView, Session);
   }
+qRR;
+qRT;
+qRE;
+}
+
+D_( SelectTaskType )
+{
+qRH;
+  str::wString RawType;
+qRB;
+  RawType.Init();
+
+  Session.GetValue(Id, RawType);
+
+  DressTaskStatusEdition_(tsqchrns::GetType(RawType), Session);
 qRR;
 qRT;
 qRE;
@@ -479,7 +558,8 @@ namespace {
     _::Add(Core,
       OnNewSession, Select,
       Edit, New,
-      Submit, Cancel);
+      Submit, Cancel,
+      SelectTaskType);
   }
 }
 

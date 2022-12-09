@@ -507,6 +507,26 @@ const char *sclx::GetLabel_(ePosition Position)
   return NULL;  // To avoid a warning.
 }
 
+const char *sclx::GetLabel_(eAction Action)
+{
+  switch( Action ) {
+  case aAdd:
+    return "Add";
+    break;
+  case aRemove:
+    return "Remove";
+    break;
+  case aToggle:
+    return "Toggle";
+    break;
+  default:
+    qRGnr();
+    break;
+  }
+
+  return NULL;  // To avoid a warning.
+}
+
 namespace {
 	eXSLFileHandling GetXMLFileHandlingFromRegistry_(const sclr::dRegistry &Registry)
 	{
@@ -587,6 +607,28 @@ qRB;
 	HandleXSL_(XSLFilename, Target, XSLFileHandling_, Registry, Marker, XSL);
 
 	Process_("HandleLayout_1", &Dummy, Variant, Id, XML, XSL);
+qRR;
+qRT;
+qRE;
+}
+
+void sclx::sProxy::HandleClasses_(
+  eAction Action,
+  const str::dStrings &Ids,
+  const str::dString &Class)
+{
+qRH;
+  str::wStrings Classes;
+  sdr::sSize Amount = 0;
+qRB;
+  Amount = Ids.Amount();
+
+  Classes.Init();
+
+  while ( Amount-- )
+    Classes.Append(Class);
+
+  HandleClasses_(Action, Ids, Classes);
 qRR;
 qRT;
 qRE;

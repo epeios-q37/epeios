@@ -95,7 +95,13 @@ namespace str {
 
 # define qXENUM( name, prefix )	typedef tol::extended_enum__<e##name##_, prefix##_False, prefix##_Error, prefix##_Undefined> e##name
 
-# define TOL_ROW_( name ) E_TMIMIC__( sdr::tRow, name )
+# define TOL_ROW_( name )\
+  E_XTMIMIC__( sdr::tRow, name )\
+    void reset(bso::sBool = true)\
+    {\
+      V_ = qNIL;\
+    }\
+  }
 
 # define qROW( name ) TOL_ROW_( s##name )
 // Nota: although a static object, defining it as resource containing object
@@ -950,10 +956,8 @@ namespace tol
 			return V_;\
 		}\
 
-// Similaire  un 'typedef type alias', sauf que 'type' et 'alias' ne sont pas interchangeable.
-// Uniqumement pour des objets statiques.
-// Utiliiser 'E_TMIMIC( type, alias)' pour des objets dynamiques.
-# define E_TMIMIC__( type, alias )\
+// Version extensible.
+# define E_XTMIMIC__( type, alias )\
 	struct alias\
 	{\
 		E__TMIMIC__( type, alias )\
@@ -973,6 +977,13 @@ namespace tol
 		{\
 			return V_ != T;\
 		}\
+
+
+// Similaire  un 'typedef type alias', sauf que 'type' et 'alias' ne sont pas interchangeable.
+// Uniqumement pour des objets statiques.
+// Utiliiser 'E_TMIMIC( type, alias)' pour des objets dynamiques.
+# define E_TMIMIC__( type, alias )\
+	E_XTMIMIC__( type, alias )\
 	}
 
 // Similaire  un 'T_MIMIC__( type, alias )', mais sans oprateurs de comparaisons.

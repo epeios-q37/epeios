@@ -20,12 +20,6 @@
 #ifndef TME_INC_
 # define TME_INC_
 
-# define TME_NAME		"TME"
-
-# if defined( E_DEBUG ) && !defined( TME_NODBG )
-#  define TME_DBG
-# endif
-
 // TiME
 
 # include "err.h"
@@ -34,20 +28,40 @@
 
 #define TME_CORE_SHIFT	4
 
-#define TME_CORE_MASK	( ~0 << TME_CORE_SHIFT )
+#define TME_CORE_MASK	( (unsigned)~0 << TME_CORE_SHIFT )
+
+/*************/
+/**** NEW ****/
+/*************/
+
+namespace tme {
+ 	typedef bso::sU32 tTime;
+
+	typedef bso::sU8 sHours;
+	typedef bso::sU8 sMinutes;
+	typedef bso::sU8 sSeconds;
+	typedef bso::sU16 sTicks;
+
+	typedef bso::sChar pBuffer[13] ;
+}
+
+/*************/
+/**** OLD ****/
+/*************/
+
 
 
 namespace tme {
-	typedef bso::u32__ raw_time__;
+	typedef tTime raw_time__;
 
 	E_CDEF( raw_time__, Undefined, bso::U32Max );
 
-	typedef bso::u8__ hours__;
-	typedef bso::u8__ minutes__;
-	typedef bso::u8__ seconds__;
-	typedef bso::u16__ ticks__;
+	typedef sHours hours__;
+	typedef sMinutes minutes__;
+	typedef sSeconds seconds__;
+	typedef sTicks ticks__;
 
-	typedef char buffer__[13] ;
+	typedef pBuffer buffer__;
 
 	enum format__ {
 		fH,
@@ -84,13 +98,13 @@ namespace tme {
 		const char *Time,
 		const char **End = NULL );
 
-	class time__ 
+	class time__
 	{
 	private:
 		raw_time__ _Raw;
 		raw_time__ _Core( void ) const
 		{
-			return ( _Raw & TME_CORE_MASK ) >> TME_CORE_SHIFT; 
+			return ( _Raw & TME_CORE_MASK ) >> TME_CORE_SHIFT;
 		}
 		hours__ _H( void ) const
 		{
@@ -149,10 +163,17 @@ namespace tme {
 			return _Raw != Undefined;
 		}
 		const char *ASCII(
-			buffer__ &Buffer, 
+			buffer__ &Buffer,
 			format__ Format = f_Default ) const;
 	};
+}
 
+/*************/
+/**** NEW ****/
+/*************/
+
+namespace tme {
+  typedef time__ sTime;
 }
 
 #endif

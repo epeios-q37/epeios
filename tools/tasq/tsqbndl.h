@@ -17,6 +17,7 @@
     along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TaSQ BuNDLe
 
 #ifndef TSQBNDL_INC_
 # define TSQBNDL_INC_
@@ -24,12 +25,16 @@
 # include "tsqtsk.h"
 
 namespace tsqbndl {
-  typedef tsqtsk::dXTasks dTasks;
-  using tsqtsk::sTask;
   typedef tsqtsk::sRow sTRow;
+  using tsqtsk::sTask;
+  typedef tsqtsk::dXTasks dTasks;
 
-  using tsqstrng::dStrings;
   typedef tsqstrng::sRow sSRow;
+  using tsqstrng::dStrings;
+
+  using tsqchrns::sStatus;
+  typedef tsqchrns::sRow sCRow;
+  using tsqchrns::dStatutes;
 
   class dBundle
   {
@@ -62,28 +67,32 @@ namespace tsqbndl {
       qASd::s AS;
       dStrings::s Strings;
       dTasks::s Tasks;
+      dStatutes::s Statutes;
       sTRow RootTask;
     } &S_;
     dStrings Strings;
     dTasks Tasks;
+    dStatutes Statutes;
     dBundle(s &S)
     : S_(S),
       Strings(S.Strings),
-      Tasks(S.Tasks)
+      Tasks(S.Tasks),
+      Statutes(S.Statutes)
     {}
     void reset(bso::sBool P = true)
     {
-      tol::reset(P, Strings, Tasks);
+      tol::reset(P, Strings, Tasks, Statutes);
       S_.RootTask = qNIL;
     }
     void plug(qASd *AS)
     {
-      tol::plug(AS, Strings, Tasks);
+      tol::plug(AS, Strings, Tasks, Statutes);
     }
     dBundle &operator =(const dBundle &B)
     {
       Strings = B.Strings;
       Tasks = B.Tasks;
+      Statutes = B.Statutes;
       S_.RootTask = B.S_.RootTask;
 
       return *this;
@@ -91,7 +100,7 @@ namespace tsqbndl {
     void Init(void)
     {
       sTask Task;
-      tol::Init(Strings, Tasks);
+      tol::Init(Strings, Tasks, Statutes);
       Task.Init();
       S_.RootTask = Tasks.Add(Task);
     }
@@ -168,10 +177,32 @@ namespace tsqbndl {
 
       return Row;
     }
+    sTRow UpdateTaskStatus(
+      sTRow Row,
+      sStatus Status)
+    {
+      sTask Task;
+
+      Task.Init();
+
+      Task = GetTask_(Row);
+
+      if ( Task.Status == qNIL )
+        Task.Status = Statutes.New();
+
+      Statutes.Store(Status, Task.Status);
+
+      Tasks.Store(Task, Row);
+
+      StoreStatics_();
+
+      return Row;
+    }
     void Get(
       sTRow Row,
       str::dString &Title,
-      str::dString &Description) const
+      str::dString &Description,
+      sStatus &Status) const
     {
       sTask Task;
 
@@ -183,6 +214,9 @@ namespace tsqbndl {
 
       if ( Task.Description != qNIL )
         Strings.Recall(Task.Description, Description);
+
+      if ( Task.Status != qNIL )
+        Statutes.Recall(Task.Status, Status);
     }
     void Set(
       const str::dString &Title,

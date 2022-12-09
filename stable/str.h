@@ -844,6 +844,13 @@ namespace str {
 	{
 	public:
         using tstrings_<row>::tstrings_;
+        using tstrings_<row>::Init;
+				template <typename ...s> row Init(const s &...Strings)
+				{
+				  Init();
+
+				  return AppendMulti(Strings...);
+				}
         using tstrings_<row>::Append;
         sdr::sRow Append(const char *String)
         {

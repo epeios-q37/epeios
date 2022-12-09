@@ -20,9 +20,11 @@
 
 #include "tsqbndl.h"
 
+#include "sclm.h"
+
 using namespace tsqbndl;
 
-# define UUID_  "c79626c0-860b-4425-9b64-a9f7b86d885a"
+# define UUID_  "54d1effe-b649-4623-8df4-35cb67908a43"
 
 # if BSO_ENDIANESS_SEAL_SIZE == 4
 #  define ENDIANESS_SEAL_TAG_ "XXXX"
@@ -143,7 +145,7 @@ bso::sBool tsqbndl::Initialize(const fnm::rName &Filename)
     FH_.Get(0, sizeof(Identification), (sdr::sByte *)Identification);
 
     if ( memcmp(Identification, BuildIdentification_(), sizeof(Identification) ) )
-      qRFwk();
+      sclm::ReportAndAbort("Incompatible database format!");
 
     FH_.Get(sizeof(IDENTIFICATION_) + sizeof(INFORMATION_), sizeof(XBundle_.S_), (sdr::sByte *)&XBundle_.S_);
 

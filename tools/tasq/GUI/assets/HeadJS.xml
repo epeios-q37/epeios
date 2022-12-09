@@ -25,9 +25,9 @@
     });
   }
 
-  function toDatePicker(id) {
+  function toDatePicker(id, date) {
     const elem = document.getElementById(id);
-    elem.value="30/12/1969";
+    elem.value = date;
     const datepicker = new Datepicker(elem, {
       autohide: true,
       todayBtn: true,
