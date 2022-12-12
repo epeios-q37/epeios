@@ -37,16 +37,19 @@ namespace {
   qENUM( Id_ ) {
     iTree,
     iTitleView,
-    iStatusEdition,
+    iTaskStatusEdition,
     iTaskType,
-    iDueDates,
-    iDueDateBefore,
-    iDueDateAfter,
-    iEventDateAndTime,
-    iEventDate,
-    iEventTime,
-    iEventTimeHour,
-    iEventTimeMinute,
+    iTaskTimelyFeatures,
+    iTaskTimelyDateLatest,
+    iTaskTimelyDateEarliest,
+    iTaskEventFeatures,
+    iTaskEventDate,
+    iTaskEventTime,
+    iTaskEventTimeHour,
+    iTaskEventTimeMinute,
+    iTaskRecurrentFeatures,
+    iTaskRecurrentDelay,
+    iTaskRecurrentDelayUnit,
     iDescriptionView,
     iNew,
     iEdit,
@@ -69,17 +72,20 @@ namespace {
     switch ( Id ) {
     C_( Tree );
     C_( TitleView );
-    C_( StatusEdition );
+    C_( TaskStatusEdition );
     C_( TaskType );
-    C_( DueDates );
-    C_( DueDateBefore );
-    C_( DueDateAfter );
-    C_( EventDateAndTime );
-    C_( EventDate );
-    C_( EventTime );
-    C_( EventTimeHour );
-    C_( EventTimeMinute );
+    C_( TaskTimelyFeatures );
+    C_( TaskTimelyDateLatest );
+    C_( TaskTimelyDateEarliest );
+    C_( TaskEventFeatures );
+    C_( TaskEventDate );
+    C_( TaskEventTime );
+    C_( TaskEventTimeHour );
+    C_( TaskEventTimeMinute );
     C_( DescriptionView );
+    C_( TaskRecurrentFeatures);
+    C_( TaskRecurrentDelay);
+    C_( TaskRecurrentDelayUnit);
     C_( New );
     C_( Edit );
     C_( Delete );
@@ -165,7 +171,7 @@ namespace {
     str::wStrings ViewIds, EditionIds, Ids;
   qRB;
     ViewIds.Init(L_( iTree ), L_( iTitleView ), L_( iDescriptionView ), L_( iEdit ), L_( iNew ), L_( iDelete ));
-    EditionIds.Init(L_( iTitleEdition ), L_( iDescriptionEdition ), L_( iSubmit ), L_( iCancel ), L_( iStatusEdition));
+    EditionIds.Init(L_( iTitleEdition ), L_( iDescriptionEdition ), L_( iSubmit ), L_( iCancel ), L_( iTaskStatusEdition));
 
     switch( Mode ) {
     case mView:
@@ -219,24 +225,15 @@ namespace {
 
 namespace {
   void Fill_(
-    tsqtsk::sRow Row,
     const str::dString &Id,
     sclx::ePosition Position,
+    const str::dString &XML,
     const rgstry::rTEntry &XSLEntry,
-    const tsqbndl::dBundle &Bundle,
     sSession &Session)
   {
   qRH;
-    str::wString XML;
     str::wString XSL, Base64XSL, XSLAsURI;
   qRB;
-    XML.Init();
-
-    if ( Row == qNIL )
-      tsqxml::Write(Bundle, tsqxml::ffDisplay, XML);
-    else
-      tsqxml::Write(Row, Bundle, tsqxml::ffDisplay, XML);
-
     XSL.Init();
     sclm::MGetValue(XSLEntry, XSL);
 
@@ -254,6 +251,32 @@ namespace {
   }
 }
 
+namespace {
+  void Fill_(
+    tsqtsk::sRow Row,
+    const str::dString &Id,
+    sclx::ePosition Position,
+    const rgstry::rTEntry &XSLEntry,
+    const tsqbndl::dBundle &Bundle,
+    sSession &Session)
+  {
+  qRH;
+    str::wString XML;
+  qRB;
+    XML.Init();
+
+    if ( Row == qNIL )
+      tsqxml::Write(Bundle, tsqxml::ffDisplay, XML);
+    else
+      tsqxml::Write(Row, Bundle, tsqxml::ffDisplay, XML);
+
+    Fill_(Id, Position, XML, XSLEntry, Session);
+  qRR;
+  qRT;
+  qRE;
+  }
+}
+
 #define BGRD  tsqbndl::hGuard BundleGuard
 #define BNDL()  tsqbndl::dBundle &Bundle = tsqbndl::Get(BundleGuard)
 #define CBNDL()  const tsqbndl::dBundle &Bundle = tsqbndl::CGet(BundleGuard)
@@ -262,13 +285,12 @@ D_( OnNewSession )
 {
 qRH;
   BGRD;
-  str::wString Body;
-  str::wString Tree;
+  str::wString XML;
 qRB;
-  Body.Init();
-  sclm::MGetValue(registry::definition::Body, Body);
+  XML.Init();
+  tsqxml::WriteCorpus(XML);
 
-  Session.Inner(str::Empty, Body);
+  Fill_(str::Empty, sclx::pInner, XML, registry::definition::Body, Session);
 
   CBNDL();
 
@@ -322,23 +344,25 @@ namespace {
     sSession &Session)
   {
   qRH;
-    str::wStrings Displayed, Hidden;
+    str::wStrings All;
+    str::wString Displayed;
     str::wString Script;
   qRB;
-    tol::Init(Displayed, Hidden);
+    All.Init(L_( iTaskTimelyFeatures), L_( iTaskEventFeatures), L_( iTaskRecurrentFeatures ));
 
     switch( Type ) {
     case tsqchrns::tPending:
     case tsqchrns::tCompleted:
-      Hidden.AppendMulti(L_( iDueDates), L_( iEventDateAndTime));
+      Displayed.Init();
       break;
-    case tsqchrns::tDue:
-      Displayed.AppendMulti(L_( iDueDates));
-      Hidden.AppendMulti(L_( iEventDateAndTime ));
+    case tsqchrns::tTimely:
+      Displayed.Init(L_( iTaskTimelyFeatures));
       break;
     case tsqchrns::tEvent:
-      Displayed.AppendMulti(L_( iEventDateAndTime ));
-      Hidden.AppendMulti(L_( iDueDates));
+      Displayed.Init(L_( iTaskEventFeatures ));
+      break;
+    case tsqchrns::tRecurrent:
+      Displayed.Init(L_( iTaskRecurrentFeatures ));
       break;
     default:
       qRGnr();
@@ -349,19 +373,19 @@ namespace {
 
     switch ( Type ) {
     case tsqchrns::tEvent:
-      flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iEventDate ) << "');";
+      flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iTaskEventDate ) << "');";
       Session.Execute(Script);
       break;
-    case tsqchrns::tDue:
-      flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iDueDateBefore ) << "');" << "toDatePicker('" << L_( iDueDateAfter ) << "');";
+    case tsqchrns::tTimely:
+      flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iTaskTimelyDateLatest ) << "');" << "toDatePicker('" << L_( iTaskTimelyDateEarliest ) << "');";
       Session.Execute(Script);
       break;
     default:
       break;
     }
 
-    Session.RemoveClasses(Displayed, L_( cHide ));
-    Session.AddClasses(Hidden, L_( cHide ));
+    Session.AddClasses(All, L_( cHide ));
+    Session.RemoveClass(Displayed, L_( cHide ));
   qRR;
   qRT;
   qRE;
@@ -526,7 +550,7 @@ qRB;
 
   Session.GetValue(Id, RawType);
 
-  DressTaskStatusEdition_(tsqchrns::GetType(RawType), Session);
+  DressTaskStatusEdition_((tsqchrns::eType)RawType.ToU8(), Session);
 qRR;
 qRT;
 qRE;

@@ -47,6 +47,10 @@ namespace tsqxml {
 
 # undef TF_
 
+  void WriteCorpus(xml::rWriter &Writer);
+
+  void WriteCorpus(str::dString &XML);
+
   void Write(
     tsqtsk::sRow Row,
     const tsqbndl::dBundle &Bundle,

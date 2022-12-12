@@ -1,41 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configurations xmlns:xpp="http://q37.info/ns/xpp/">
-  <Configuration target="tasqxdh">
-    <xpp:set name="q37.xpp" env-var="Q37_XPP"/>
-		<xpp:set name="Update" env-var="UPDATE"/>
-    <xpp:expand value-of="q37.xpp"/>
-    <xpp:expand href="../../../XDH.xcfg"/>
-    <Parameters>
+	<Configuration target="tasqxdh">
+		<xpp:set name="q37.xpp" env-var="Q37_XPP" />
+		<xpp:set name="Update" env-var="UPDATE" />
+		<xpp:expand value-of="q37.xpp" />
+		<xpp:expand href="../../../XDH.xcfg" />
+		<Parameters>
 			<xpp:ifeq select="Update" value="yes">
 				<DBFilename>/home/csimon/Misc/TasQ/DB</DBFilename>
 			</xpp:ifeq>
 			<xpp:ifeq select="Update" value="">
 				<DBFileAffix>./Test</DBFileAffix>
 			</xpp:ifeq>
-		<Language>en</Language>
-    </Parameters>
-    <Definitions>
-			<XDHTML xpp:attribute="ScriptsVersion,XDHScriptsVersion"/>
+			<Language>en</Language>
+		</Parameters>
+		<Definitions>
+			<XDHTML xpp:attribute="ScriptsVersion,XDHScriptsVersion" />
 			<Head>
-				<xpp:expand href="assets/Head.xml"/>
+				<xpp:expand href="assets/Head.xml" />
 			</Head>
 			<Body>
-				<xpp:expand href="assets/Body.xml"/>
+				<xpp:cdata>
+					<xpp:expand href="assets/Body.xsl" />
+				</xpp:cdata>
 			</Body>
 			<XSLFiles>
 				<Item>
 					<xpp:cdata>
-					  <xpp:expand href="assets/Item.xsl"/>
-          </xpp:cdata>
+						<xpp:expand href="assets/Item.xsl" />
+					</xpp:cdata>
 				</Item>
 				<Items>
 					<xpp:cdata>
-					  <xpp:expand href="assets/Items.xsl"/>
-          </xpp:cdata>
+						<xpp:expand href="assets/Items.xsl" />
+					</xpp:cdata>
 				</Items>
 			</XSLFiles>
-    </Definitions>
-    <Locale>
-    </Locale>
-  </Configuration>
+		</Definitions>
+		<Locale></Locale>
+	</Configuration>
 </Configurations>

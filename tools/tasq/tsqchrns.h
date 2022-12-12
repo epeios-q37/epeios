@@ -30,9 +30,11 @@
 namespace tsqchrns {
   qENUM( Type ) {
     tPending,   // Task is pending; NOTA: not directly used by this library; is implicit when sRow == qNIL.
-    tCompleted, // Task is completed
+    t_First = tPending,
     tEvent,     // Task is an event (date and hour).
-    tDue,       // Due task (due date and begin date, which, by default, is the date when the task was crated.
+    tTimely,    // Due task (due date and begin date, which, by default, is the date when the task was crated.
+    tRecurrent,
+    tCompleted, // Task is completed
     t_amount,
     t_Undefined,
     t_Default = tPending
@@ -107,7 +109,7 @@ namespace tsqchrns {
     {
       tol::Init(Before, After, Time);
 
-      Type = tDue;
+      Type = tTimely;
 
       this->Before = Before;
       this-> After = After;
@@ -133,11 +135,11 @@ inline bso::sBool operator ==(
   case tsqchrns::tCompleted:
     return true;
     break;
-  case tsqchrns::tDue:
-    return ( S1.Before == S2.Before) && ( S1.After == S2.After );
-    break;
   case tsqchrns::tEvent:
     return ( S1.Date == S2.Date ) && ( S1.Time == S2.Time );
+    break;
+  case tsqchrns::tTimely:
+    return ( S1.Before == S2.Before) && ( S1.After == S2.After );
     break;
   default:
     qRGnr();

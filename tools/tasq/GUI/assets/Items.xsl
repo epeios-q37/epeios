@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0"
   xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:xdh="http://q37.info/ns/xdh"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:xpp="http://epeios.q37.info/ns/xpp">
   <xpp:expand href="item.sub.xsl" />
   <xsl:output method="html" indent="yes" />
-  <xsl:template match="/Tasks">
+  <xsl:template match="/TasQ">
+    <xsl:apply-templates select="Tasks" />
+  </xsl:template>
+  <xsl:template match="Tasks">
     <ul class="tree">
       <li>
         <xsl:call-template name="Item">

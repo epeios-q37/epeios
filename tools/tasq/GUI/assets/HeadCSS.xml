@@ -6,7 +6,7 @@
 }
 
 .date {
-  wifth: 10ch;
+  width: 10ch;
 }
 
 .item {

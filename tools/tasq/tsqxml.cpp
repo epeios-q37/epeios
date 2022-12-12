@@ -28,51 +28,56 @@ namespace task = tsqtsk;
 
 namespace {
   qENUM(Token_) {
+    tTasQ,
+    tCorpus,
+    tStatusTypes,
+    tType,
     tTasks,
     tItems,
     tItem,
     tRootId,
     tId,
+    tLabel,
     tSelected,
     tTitle,
     tDescription,
+    tStatus,
+    tTypeId,
+    tRaw,
+    tReadable,
     t_amount,
     t_Undefined
   };
+
+#define C_( name ) case t##name: Label= #name; break
 
   const char *GetLabel_(eToken_ Token)
   {
     const char *Label = NULL;
 
     switch ( Token ) {
-    case tTasks:
-      Label = "Tasks";
-      break;
-    case tItems:
-      Label = "Items";
-      break;
-    case tItem:
-      Label = "Item";
-      break;
-    case tRootId:
-      Label = "RootId";
-      break;
+    C_( TasQ );
+    C_( Corpus );
+    C_( StatusTypes );
+    C_( Type );
+    C_( Tasks );
+    C_( Items );
+    C_( Item );
+    C_( RootId );
     case tId:
       Label = "id";
       break;
-    case tSelected:
-      Label = "Selected";
-      break;
-    case tTitle:
-      Label = "Title";
-      break;
-    case tDescription:
-      Label = "Description";
+    C_( Label );
+    C_( Selected );
+    C_( Title );
+    C_( Description );
+    C_( Status );
+    C_( TypeId );
+    C_( Raw );
+    C_( Readable );
       break;
 /*
-    case:
-      Label = "";
-      break;
+    C_( );
 */
     default:
       qRGnr();
@@ -80,6 +85,8 @@ namespace {
 
     return Label;
   }
+
+#undef C_
 
   namespace _ {
     stsfsm::wAutomat Automat;
@@ -98,6 +105,46 @@ namespace {
 }
 
 #define L_(token)  GetLabel_( t##token )
+namespace {
+  void WriteRoot_(xml::rWriter &Writer )
+  {
+    Writer.PushTag(L_( TasQ ));
+  }
+}
+
+void tsqxml::WriteCorpus(xml::rWriter &Writer)
+{
+  Writer.PushTag(L_( Corpus ));
+  Writer.PushTag(L_( StatusTypes));
+
+  for(bso::tEnum I = tsqchrns::t_First; I < tsqchrns::t_amount; I++) {
+    Writer.PushTag(L_( Type ) );
+    Writer.PutAttribute(L_( Id ), I);
+    Writer.PutAttribute(L_( Label ), tsqchrns::GetLabel((tsqchrns::eType)I));
+    Writer.PopTag();
+  }
+
+  Writer.PopTag();
+}
+
+void tsqxml::WriteCorpus(str::dString &XML)
+{
+qRH;
+  flx::rStringTWFlow Flow;
+  xml::rWriter Writer;
+qRB;
+  Flow.Init(XML);
+  Writer.Init(Flow, xml::oIndent);
+
+  WriteRoot_(Writer);
+
+  WriteCorpus(Writer);
+
+  Writer.PopTag();
+qRR;
+qRT;
+qRE;
+}
 
 namespace {
   namespace _ {
@@ -111,6 +158,55 @@ namespace {
         Writer.PopTag();
       }
     }
+
+    namespace _ {
+      void Write(
+        dte::sDate Date,
+        const char *Tag,
+        xml::rWriter &Writer)
+      {
+        dte::pBuffer Buffer;
+
+        Writer.PushTag(Tag);
+        Writer.PutAttribute(L_( Raw), Date);
+        Writer.PutAttribute(L_( Readable ), Date.ASCII(dte::fDDMMYYYY, Buffer));
+        Writer.PopTag();
+      }
+
+      void Write(
+        tme::sTime Time,
+        const char *Tag,
+        xml::rWriter &Writer)
+      {
+        tme::pBuffer Buffer;
+
+        Writer.PushTag(Tag);
+        Writer.PutAttribute(L_( Raw ), Time);
+        Writer.PutAttribute(L_( Readable ), Time.ASCII(Buffer));
+        Writer.PopTag();
+      }
+    }
+
+    void WriteStatus(
+      tsqchrns::sStatus &Status,
+      xml::rWriter &Writer)
+    {
+      Writer.PushTag(L_( Status ));
+
+      Writer.PutAttribute(L_( TypeId ), tsqchrns::GetLabel(Status.Type));
+
+      switch ( Status.Type ) {
+      case tsqchrns::tPending:
+        qRGnr();
+        break;
+      case tsqchrns::tCompleted:
+        break;
+      case tsqchrns::tEvent:
+        _::Write(Status.Date, "Data", Writer);
+        _::Write(Status.Time, "Time", Writer);
+        break;
+      }
+    }
   }
 
   void WriteItemContent_(
@@ -121,6 +217,7 @@ namespace {
   {
   qRH;
     task::sTask Task;
+    tsqchrns::sStatus Status;
   qRB;
     if ( Flags & ffId )
       Writer.PutAttribute(L_( Id ), *Row);
@@ -130,6 +227,12 @@ namespace {
     Writer.PutAttribute(L_( Title ), Bundle.Strings(Task.Title));
     if ( ( Flags & ffDescription ) && ( Task.Description != qNIL ) )
       _::WriteDescription(Bundle.Strings(Task.Description), Writer);
+
+    if ( Task.Status != qNIL ) {
+      Status.Init();
+      Bundle.Statutes.Recall(Task.Status, Status);
+      _::WriteStatus(Status, Writer);
+    }
   qRR;
   qRT;
   qRE;
@@ -249,7 +352,11 @@ qRB;
   Flow.Init(XML);
   Writer.Init(Flow, xml::oIndent);
 
+  WriteRoot_(Writer);
+
   Write(Bundle, Flags, Writer);
+
+  Writer.PopTag();
 qRR;
 qRT;
 qRE;
