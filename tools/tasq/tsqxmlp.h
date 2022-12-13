@@ -17,11 +17,19 @@
     along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TaSQ XML Parsing
 
-#include "tasqregistry.h"
+#ifndef TSQXMLP_INC_
+# define TSQXMLP_INC_
 
-using namespace tasqregistry;
+# include "tsqbndl.h"
 
-using sclr::rEntry;
+# include "xml.h"
 
-rEntry tasqregistry::parameter::DBFileAffix( "DBFileAffix", sclr::Parameters );
+namespace tsqxmlp {
+  void Parse(
+    xml::rParser &Parser,
+    tsqbndl::dBundle &Bundle);
+}
+
+#endif

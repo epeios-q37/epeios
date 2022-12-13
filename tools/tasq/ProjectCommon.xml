@@ -6,7 +6,11 @@
       <Module>tsqrgstry</Module>
       <Module>tsqstrng</Module>
       <Module>tsqtsk</Module>
-		  <Module>tsqxml</Module>
+      <Modules Group="XML">
+        <Module>tsqxmlc</Module>
+        <Module>tsqxmlp</Module>
+        <Module>tsqxmlw</Module>
+      </Modules>
     </Modules>
   </xpp:define>
   <xpp:define name="CoreModules">

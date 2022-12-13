@@ -23,7 +23,8 @@
 #include "registry.h"
 
 #include "tsqbndl.h"
-#include "tsqxml.h"
+#include "tsqxmlp.h"
+#include "tsqxmlw.h"
 
 #include "sclm.h"
 #include "sclt.h"
@@ -83,7 +84,7 @@ namespace {
 
       Writer.PushTag("TasQ");
 
-      tsqxml::Write(tsqbndl::CGet(Guard), tsqxml::ffExport, Writer);
+      tsqxmlw::Write(tsqbndl::CGet(Guard), tsqxmlw::ffExport, Writer);
 
       Writer.PopTag();
     } else {
@@ -117,7 +118,7 @@ namespace {
       if ( ( Parser.Parse(xml::tfStartTagClosed) != xml::tStartTagClosed ) || ( Parser.TagName() != "TasQ") )
         qRFwk();
 
-      tsqxml::Parse(Parser, tsqbndl::Get(Guard));
+      tsqxmlp::Parse(Parser, tsqbndl::Get(Guard));
     } else {
       cio::COut << '\'' << DBFileAffix << "' already exists!" << txf::nl;
     }

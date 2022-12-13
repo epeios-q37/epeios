@@ -21,7 +21,8 @@
 
 #include "registry.h"
 
-#include "tsqxml.h"
+#include "tsqbndl.h"
+#include "tsqxmlw.h"
 
 using namespace main;
 
@@ -266,9 +267,9 @@ namespace {
     XML.Init();
 
     if ( Row == qNIL )
-      tsqxml::Write(Bundle, tsqxml::ffDisplay, XML);
+      tsqxmlw::Write(Bundle, tsqxmlw::ffDisplay, XML);
     else
-      tsqxml::Write(Row, Bundle, tsqxml::ffDisplay, XML);
+      tsqxmlw::Write(Row, Bundle, tsqxmlw::ffDisplay, XML);
 
     Fill_(Id, Position, XML, XSLEntry, Session);
   qRR;
@@ -288,7 +289,7 @@ qRH;
   str::wString XML;
 qRB;
   XML.Init();
-  tsqxml::WriteCorpus(XML);
+  tsqxmlw::WriteCorpus(XML);
 
   Fill_(str::Empty, sclx::pInner, XML, registry::definition::Body, Session);
 

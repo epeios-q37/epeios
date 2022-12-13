@@ -18,171 +18,32 @@
 */
 
 
-#include "tasqxml.h"
+#include "tsqxmlp.h"
 
-using namespace tasqxml;
+#include "tsqxmlc.h"
 
-namespace tasks = tasqtasks;
+#include "flx.h"
+#include "stkbch.h"
 
-namespace {
-  qENUM(Token_) {
-    tTasks,
-    tItems,
-    tItem,
-    tRootId,
-    tId,
-    tSelected,
-    tTitle,
-    tDescription,
-    t_amount,
-    t_Undefined
-  };
+using namespace tsqxmlp;
 
-  const char *GetLabel_(eToken_ Token)
-  {
-    const char *Label = NULL;
+using namespace tsqxmlc;
 
-    switch ( Token ) {
-    case tTasks:
-      Label = "Tasks";
-      break;
-    case tItems:
-      Label = "Items";
-      break;
-    case tItem:
-      Label = "Item";
-      break;
-    case tRootId:
-      Label = "RootId";
-      break;
-    case tId:
-      Label = "id";
-      break;
-    case tSelected:
-      Label = "Selected";
-      break;
-    case tTitle:
-      Label = "Title";
-      break;
-    case tDescription:
-      Label = "Description";
-      break;
-/*
-    case:
-      Label = "";
-      break;
-*/
-    default:
-      qRGnr();
-    }
-
-    return Label;
-  }
-
-  namespace _ {
-    stsfsm::wAutomat Automat;
-  }
-
-  void FillAutomat_( void )
-  {
-    _::Automat.Init();
-    stsfsm::Fill<eToken_>(_::Automat, t_amount, GetLabel_);
-  }
-
-  eToken_ GetToken_( const str::dString &Pattern )
-  {
-    return stsfsm::GetId(Pattern, _::Automat, t_Undefined, t_amount);
-  }
-}
-
-#define L_(token)  GetLabel_( t##token )
-
-namespace {
-  void WriteDescription_(
-    const str::dString &Description,
-    xml::rWriter &Writer)
-  {
-    if ( Description.Amount() ) {
-      Writer.PushTag(L_( Description ));
-      Writer.PutCData(Description);
-      Writer.PopTag();
-    }
-  }
-}
-
-void tasqxml::Write(
-  const tasqtasks::dBundle &Bundle,
-  int Flags,
-  xml::rWriter &Writer)
-{
-qRH;
-  dtr::qBROWSERs(tasks::sTRow) Browser;
-  tasks::sTask Task;
-  tasks::sTRow Row = qNIL;
-  bso::sBool Skip = false;
-qRB;
-  Writer.PushTag(L_( Tasks) );
-
-  if ( Flags & ffId )
-    Writer.PutAttribute(L_( RootId ), *Bundle.Root());
-
-  Browser.Init(Bundle.Root());
-
-  Row = Bundle.Browse(Browser);
-
-  while ( Row != qNIL ) {
-    switch ( Browser.Kinship() ) {
-      case dtr::kChild:
-        Writer.PushTag(L_( Items ) );
-        break;
-      case dtr::kSibling:
-        Writer.PopTag();  // 'Item'
-        break;
-      case dtr::kParent:
-        Writer.PopTag();  // 'Item'
-        Writer.PopTag();  // 'Items'.
-        Skip = true;
-        break;
-      default:
-        qRGnr();
-        break;
-    }
-
-    if ( !Skip ) {
-      Writer.PushTag(L_( Item ));
-      if ( Flags & ffId )
-        Writer.PutAttribute(L_( Id ), *Row);
-
-      Task.Init();
-      Bundle.Tasks.Recall(Row, Task);
-      Writer.PutAttribute(L_( Title ), Bundle.Strings(Task.Title));
-      if ( ( Flags & ffDescription ) && ( Task.Description != qNIL ) )
-        WriteDescription_(Bundle.Strings(Task.Description), Writer);
-    } else
-      Skip = false;
-
-    Row = Bundle.Browse(Browser);
-  }
-
-  Writer.PopTag();
-qRR;
-qRT;
-qRE;
-}
+namespace task = tsqtsk;
 
 namespace {
   namespace _ {
     void ParseItems(
       xml::rParser &Parser,
-      tasqtasks::dBundle &Bundle)
+      tsqbndl::dBundle &Bundle)
     {
     qRH;
       bso::sBool Continue = true;
-      stkbch::qBSTACKwl( eToken_ ) Tokens;
+      stkbch::qBSTACKwl( eToken ) Tokens;
       str::wString Title;
-      tasqtasks::sTRow Row = qNIL;
+      task::sRow Row = qNIL;
     qRB;
-      if ( GetToken_(Parser.TagName()) != tItems )
+      if ( GetToken(Parser.TagName()) != tItems )
         qRGnr();
 
       Tokens.Init();
@@ -192,7 +53,7 @@ namespace {
       while ( Continue ) {
         switch ( Parser.Parse(xml::tfObvious | xml::tfStartTagClosed) ) {
         case xml::tStartTag:
-          Tokens.Push(GetToken_(Parser.TagName()));
+          Tokens.Push(GetToken(Parser.TagName()));
 
           switch ( Tokens.Top() ) {
           case tItem:
@@ -207,7 +68,7 @@ namespace {
           }
           break;
         case xml::tAttribute:
-          switch( GetToken_(Parser.AttributeName()) ) {
+          switch( GetToken(Parser.AttributeName()) ) {
           case tTitle:
             if ( Tokens.Top() != tItem )
               qRFwk();
@@ -231,14 +92,14 @@ namespace {
         case xml::tCData:
           switch ( Tokens.Top() ) {
           case tDescription:
-            Bundle.UpdateDescription(Row, Parser.Value());
+            Bundle.UpdateTaskDescription(Row, Parser.Value());
             break;
           default:
             break;
           }
           break;
         case xml::tEndTag:
-          if ( Tokens.Top() != GetToken_(Parser.TagName()) )
+          if ( Tokens.Top() != GetToken(Parser.TagName()) )
             qRGnr();
 
           switch ( Tokens.Pop() ) {
@@ -247,7 +108,7 @@ namespace {
               Continue = false;
             break;
           case tItem:
-            Row = Bundle.Parent(Row);
+            Row = Bundle.Tasks.Parent(Row);
             break;
           case tDescription:
             break;
@@ -269,18 +130,18 @@ namespace {
 
   void ParseTasks_(
     xml::rParser &Parser,
-    tasqtasks::dBundle &Bundle)
+    tsqbndl::dBundle &Bundle)
   {
   qRH;
     bso::sBool Continue = true;
   qRB;
-    if ( GetToken_(Parser.TagName()) != tTasks )
+    if ( GetToken(Parser.TagName()) != tTasks )
       qRGnr();
 
     while ( Continue ) {
       switch ( Parser.Parse(xml::tfObvious) ) {
       case xml::tStartTag:
-        switch ( GetToken_(Parser.TagName() ) ) {
+        switch ( GetToken(Parser.TagName() ) ) {
         case tItems:
           _::ParseItems(Parser, Bundle);
           break;
@@ -290,7 +151,7 @@ namespace {
       }
       break;
       case xml::tEndTag:
-        if ( GetToken_(Parser.TagName()) != tTasks )
+        if ( GetToken(Parser.TagName()) != tTasks )
           qRGnr();
         Continue = false;
         break;
@@ -309,9 +170,9 @@ namespace {
 
 }
 
-void tasqxml::Parse(
+void tsqxmlp::Parse(
   xml::rParser &Parser,
-  tasqtasks::dBundle &Bundle)
+  tsqbndl::dBundle &Bundle)
 {
 qRH;
   bso::sBool Continue = true;
@@ -319,7 +180,7 @@ qRB;
   while ( Continue ) {
     switch ( Parser.Parse(xml::tfObvious) ) {
     case xml::tStartTag:
-      switch ( GetToken_(Parser.TagName() ) ) {
+      switch ( GetToken(Parser.TagName() ) ) {
       case tTasks:
         ParseTasks_(Parser, Bundle);
         break;
@@ -342,9 +203,4 @@ qRB;
 qRR;
 qRT;
 qRE;
-}
-
-qGCTOR( tasqxml )
-{
-  FillAutomat_();
 }

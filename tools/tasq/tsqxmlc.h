@@ -17,22 +17,43 @@
     along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TaSQ XML Common
 
-#ifndef TASQREGISTRY_INC_
-# define TASQREGISTRY_INC_
+#ifndef TSQXMLC_INC_
+# define TSQXMLC_INC_
 
-# include "sclr.h"
+# include "xml.h"
 
-namespace tasqregistry {
-	namespace parameter {
-		using namespace sclr::parameter;
+namespace tsqxmlc {
+  qENUM( Token ) {
+    tTasQ,
+    tCorpus,
+    tStatusTypes,
+    tType,
+    tTasks,
+    tItems,
+    tItem,
+    tRootId,
+    tId,
+    tLabel,
+    tSelected,
+    tTitle,
+    tDescription,
+    tStatus,
+    tTypeId,
+    tDate,
+    tTime,
+    tLatest,
+    tEarliest,
+    tSpan,
+    tUnitId,
+    t_amount,
+    t_Undefined
+  };
 
-		extern sclr::rEntry DBFileAffix;
-	}
+  const char *GetLabel(eToken Token);
 
-	namespace definition {
-		using namespace sclr::definition;
-	}
+  eToken GetToken(const str::dString &Pattern);
 }
 
 #endif

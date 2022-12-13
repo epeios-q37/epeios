@@ -18,101 +18,20 @@
 */
 
 
-#include "tsqxml.h"
+#include "tsqxmlw.h"
+
+#include "tsqxmlc.h"
 
 #include "flx.h"
 
-using namespace tsqxml;
+using namespace tsqxmlw;
+
+using namespace tsqxmlc;
 
 namespace task = tsqtsk;
 
-namespace {
-  qENUM(Token_) {
-    tTasQ,
-    tCorpus,
-    tStatusTypes,
-    tType,
-    tTasks,
-    tItems,
-    tItem,
-    tRootId,
-    tId,
-    tLabel,
-    tSelected,
-    tTitle,
-    tDescription,
-    tStatus,
-    tTypeId,
-    tDate,
-    tTime,
-    tLatest,
-    tEarliest,
-    tSpan,
-    tUnitId,
-    t_amount,
-    t_Undefined
-  };
+#define L_(token)  GetLabel( t##token )
 
-#define C_( name ) case t##name: Label= #name; break
-
-  const char *GetLabel_(eToken_ Token)
-  {
-    const char *Label = NULL;
-
-    switch ( Token ) {
-    C_( TasQ );
-    C_( Corpus );
-    C_( StatusTypes );
-    C_( Type );
-    C_( Tasks );
-    C_( Items );
-    C_( Item );
-    C_( RootId );
-    case tId:
-      Label = "id";
-      break;
-    C_( Label );
-    C_( Selected );
-    C_( Title );
-    C_( Description );
-    C_( Status );
-    C_( TypeId );
-    C_( Date );
-    C_( Time );
-    C_( Latest );
-    C_( Earliest );
-    C_( Span );
-    C_( UnitId );
-      break;
-/*
-    C_( );
-*/
-    default:
-      qRGnr();
-    }
-
-    return Label;
-  }
-
-#undef C_
-
-  namespace _ {
-    stsfsm::wAutomat Automat;
-  }
-
-  void FillAutomat_( void )
-  {
-    _::Automat.Init();
-    stsfsm::Fill<eToken_>(_::Automat, t_amount, GetLabel_);
-  }
-
-  eToken_ GetToken_( const str::dString &Pattern )
-  {
-    return stsfsm::GetId(Pattern, _::Automat, t_Undefined, t_amount);
-  }
-}
-
-#define L_(token)  GetLabel_( t##token )
 namespace {
   void WriteRoot_(xml::rWriter &Writer )
   {
@@ -120,7 +39,7 @@ namespace {
   }
 }
 
-void tsqxml::WriteCorpus(xml::rWriter &Writer)
+void tsqxmlw::WriteCorpus(xml::rWriter &Writer)
 {
   Writer.PushTag(L_( Corpus ));
   Writer.PushTag(L_( StatusTypes));
@@ -135,7 +54,7 @@ void tsqxml::WriteCorpus(xml::rWriter &Writer)
   Writer.PopTag();
 }
 
-void tsqxml::WriteCorpus(str::dString &XML)
+void tsqxmlw::WriteCorpus(str::dString &XML)
 {
 qRH;
   flx::rStringTWFlow Flow;
@@ -170,30 +89,30 @@ namespace {
     namespace _ {
       void Write(
         dte::sDate Date,
-        eToken_ Token,
+        eToken Token,
         int Flags,
         xml::rWriter &Writer)
       {
         dte::pBuffer Buffer;
 
         if ( Flags & ffReadable )
-          Writer.PutAttribute(GetLabel_(Token), Date.ASCII(dte::fDDMMYYYY, Buffer));
+          Writer.PutAttribute(GetLabel(Token), Date.ASCII(dte::fDDMMYYYY, Buffer));
         else
-          Writer.PutAttribute(GetLabel_(Token), Date);
+          Writer.PutAttribute(GetLabel(Token), Date);
       }
 
       void Write(
         tme::sTime Time,
-        eToken_ Token,
+        eToken Token,
         int Flags,
         xml::rWriter &Writer)
       {
         tme::pBuffer Buffer;
 
         if ( Flags & ffReadable )
-          Writer.PutAttribute(GetLabel_(Token), Time.ASCII(Buffer));
+          Writer.PutAttribute(GetLabel(Token), Time.ASCII(Buffer));
         else
-          Writer.PutAttribute(GetLabel_(Token), Time);
+          Writer.PutAttribute(GetLabel(Token), Time);
       }
     }
 
@@ -309,7 +228,7 @@ namespace {
 
 }
 
-void tsqxml::Write(
+void tsqxmlw::Write(
   task::sRow Row,
   const tsqbndl::dBundle &Bundle,
   int Flags,
@@ -326,7 +245,7 @@ void tsqxml::Write(
   Writer.PopTag();
 }
 
-void tsqxml::Write(
+void tsqxmlw::Write(
   task::sRow Row,
   const tsqbndl::dBundle &Bundle,
   int Flags,
@@ -345,7 +264,7 @@ qRT;
 qRE;
 }
 
-void tsqxml::Write(
+void tsqxmlw::Write(
   const tsqbndl::dBundle &Bundle,
   int Flags,
   xml::rWriter &Writer)
@@ -364,7 +283,7 @@ void tsqxml::Write(
   Writer.PopTag();
 }
 
-void tsqxml::Write(
+void tsqxmlw::Write(
   const tsqbndl::dBundle &Bundle,
   int Flags,
   str::dString &XML)
@@ -384,183 +303,4 @@ qRB;
 qRR;
 qRT;
 qRE;
-}
-
-namespace {
-  namespace _ {
-    void ParseItems(
-      xml::rParser &Parser,
-      tsqbndl::dBundle &Bundle)
-    {
-    qRH;
-      bso::sBool Continue = true;
-      stkbch::qBSTACKwl( eToken_ ) Tokens;
-      str::wString Title;
-      task::sRow Row = qNIL;
-    qRB;
-      if ( GetToken_(Parser.TagName()) != tItems )
-        qRGnr();
-
-      Tokens.Init();
-
-      Tokens.Push(tItems);
-
-      while ( Continue ) {
-        switch ( Parser.Parse(xml::tfObvious | xml::tfStartTagClosed) ) {
-        case xml::tStartTag:
-          Tokens.Push(GetToken_(Parser.TagName()));
-
-          switch ( Tokens.Top() ) {
-          case tItem:
-            Title.Init();
-            break;
-          case tDescription:
-          case tItems:
-            break;
-          default:
-            qRGnr();
-            break;
-          }
-          break;
-        case xml::tAttribute:
-          switch( GetToken_(Parser.AttributeName()) ) {
-          case tTitle:
-            if ( Tokens.Top() != tItem )
-              qRFwk();
-
-            Title.Init(Parser.Value());
-            break;
-          default:
-            qRGnr();
-            break;
-          }
-          break;
-        case xml::tStartTagClosed:
-          if ( Tokens.Top() == tItem ) {
-            if ( Title.Amount() == 0 )
-              qRGnr();
-            else
-              Row = Bundle.Add(Title, Row);
-          }
-          break;
-        case xml::tValue:
-        case xml::tCData:
-          switch ( Tokens.Top() ) {
-          case tDescription:
-            Bundle.UpdateTaskDescription(Row, Parser.Value());
-            break;
-          default:
-            break;
-          }
-          break;
-        case xml::tEndTag:
-          if ( Tokens.Top() != GetToken_(Parser.TagName()) )
-            qRGnr();
-
-          switch ( Tokens.Pop() ) {
-          case tItems:
-            if ( !Tokens.Amount() )
-              Continue = false;
-            break;
-          case tItem:
-            Row = Bundle.Tasks.Parent(Row);
-            break;
-          case tDescription:
-            break;
-          default:
-            qRGnr();
-            break;
-          }
-          break;
-        default:
-          qRGnr();
-          break;
-        }
-      }
-    qRR;
-    qRT;
-    qRE;
-    }
-  }
-
-  void ParseTasks_(
-    xml::rParser &Parser,
-    tsqbndl::dBundle &Bundle)
-  {
-  qRH;
-    bso::sBool Continue = true;
-  qRB;
-    if ( GetToken_(Parser.TagName()) != tTasks )
-      qRGnr();
-
-    while ( Continue ) {
-      switch ( Parser.Parse(xml::tfObvious) ) {
-      case xml::tStartTag:
-        switch ( GetToken_(Parser.TagName() ) ) {
-        case tItems:
-          _::ParseItems(Parser, Bundle);
-          break;
-        default:
-          qRGnr();
-          break;
-      }
-      break;
-      case xml::tEndTag:
-        if ( GetToken_(Parser.TagName()) != tTasks )
-          qRGnr();
-        Continue = false;
-        break;
-      case xml::t_Error:
-        qRGnr();
-        break;
-      default:
-        qRGnr();
-        break;
-      }
-    }
-  qRR;
-  qRT;
-  qRE;
-  }
-
-}
-
-void tsqxml::Parse(
-  xml::rParser &Parser,
-  tsqbndl::dBundle &Bundle)
-{
-qRH;
-  bso::sBool Continue = true;
-qRB;
-  while ( Continue ) {
-    switch ( Parser.Parse(xml::tfObvious) ) {
-    case xml::tStartTag:
-      switch ( GetToken_(Parser.TagName() ) ) {
-      case tTasks:
-        ParseTasks_(Parser, Bundle);
-        break;
-      default:
-        qRGnr();
-        break;
-    }
-    break;
-    case xml::tEndTag:
-      Continue = false;
-      break;
-    case xml::t_Error:
-      qRGnr();
-      break;
-    default:
-      qRGnr();
-      break;
-    }
-  }
-qRR;
-qRT;
-qRE;
-}
-
-qGCTOR( tasqxml )
-{
-  FillAutomat_();
 }

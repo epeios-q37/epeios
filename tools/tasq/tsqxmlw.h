@@ -17,17 +17,17 @@
     along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// TaSQ XML
+// TaSQ XML Writing
 
-#ifndef TSQXML_INC_
-# define TSQXML_INC_
+#ifndef TSQXMLW_INC_
+# define TSQXMLW_INC_
 
 # include "tsqbndl.h"
 # include "tsqtsk.h"
 
 # include "xml.h"
 
-namespace tsqxml {
+namespace tsqxmlw {
   qENUM( Filter ) {
     fDescription_,
     fId_,
@@ -56,28 +56,24 @@ namespace tsqxml {
   void Write(
     tsqtsk::sRow Row,
     const tsqbndl::dBundle &Bundle,
-    int TokenFlags,
+    int Flags,
     xml::rWriter &Writer);
 
   void Write(
     tsqtsk::sRow Row,
     const tsqbndl::dBundle &Bundle,
-    int TokenFlags,
+    int Flags,
     str::dString &XML);
 
   void Write(
     const tsqbndl::dBundle &Bundle,
-    int TokenFlags,
+    int Flags,
     xml::rWriter &Writer);
 
   void Write(
     const tsqbndl::dBundle &Bundle,
-    int TokenFlags,
+    int Flags,
     str::dString &XML);
-
-  void Parse(
-    xml::rParser &Parser,
-    tsqbndl::dBundle &Bundle);
 }
 
 #endif
