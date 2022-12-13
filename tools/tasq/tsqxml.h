@@ -31,6 +31,7 @@ namespace tsqxml {
   qENUM( Filter ) {
     fDescription_,
     fId_,
+    fReadable_,
     f_amount_,
     f_Undefined_,
   };
@@ -40,8 +41,9 @@ namespace tsqxml {
   qENUM( FilterFlag ) {
     FF_( Description ),
     FF_( Id ),
+    FF_( Readable ),
     ffAll = ( ( 1 << f_amount_ ) - 1 ),
-    ffExport = ffAll & ~ffId,
+    ffExport = ffAll & ~( ffId | ffReadable ),
     ffDisplay = ffAll & ~ffDescription
   };
 

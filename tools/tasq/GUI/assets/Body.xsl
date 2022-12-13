@@ -81,7 +81,7 @@
                 </div>
               </div>
               <div id="TaskRecurrentFeatures" class="hide">
-                <input id="TaskReccurentDelay" type="number" />
+                <input id="TaskReccurentSpan" min="1" type="number" />
                 <select id="TaskRecurrentUnit">
                   <option value="Days">Days</option>
                   <option value="Weeks">Weeks</option>

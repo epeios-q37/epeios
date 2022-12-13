@@ -30,7 +30,6 @@
 namespace tsqchrns {
   qENUM( Type ) {
     tPending,   // Task is pending; NOTA: not directly used by this library; is implicit when sRow == qNIL.
-    t_First = tPending,
     tEvent,     // Task is an event (date and hour).
     tTimely,    // Due task (due date and begin date, which, by default, is the date when the task was crated.
     tRecurrent,
@@ -38,6 +37,17 @@ namespace tsqchrns {
     t_amount,
     t_Undefined,
     t_Default = tPending
+  };
+
+  typedef bso::sU8 sSpan;
+
+  qENUM( Unit ) {
+    uDay,
+    uWeek,
+    uMonth,
+    uYear,
+    u_amount,
+    u_Undefined
   };
 
   const char *GetLabel(eType Type);
@@ -48,17 +58,24 @@ namespace tsqchrns {
   {
   public:
     eType Type;
-    dte::sDate Before;  // For 'tDue' tasks.
+    dte::sDate Latest;  // For 'tDue' tasks.
     union {
-      dte::sDate
-        After,  // For 'tDue' tasks.
-        Date;   // For 'tEvent' tasks.
+      struct {
+        dte::sDate Date;
+        tme::sTime Time;
+      } Event;
+      struct {
+        dte::sDate
+          Latest, Earliest;
+      } Timely;
+      struct {
+        sSpan Span;
+        eUnit Unit;
+      } Recurrent;
     };
-    tme::sTime Time;    // For 'tEvent' tasks;
     void reset(bso::sBool P = true)
     {
       Type = t_Undefined;
-      tol::reset(Before, After, Time);
     }
     sStatus(eType Type)
     {
@@ -88,31 +105,33 @@ namespace tsqchrns {
         qRGnr();
         break;
       }
-
-      tol::Init(Before, After, Time);
     }
     void Init(
       dte::sDate Date,
       tme::sTime Time)
     {
-      tol::Init(Before, After, Time);
-
       Type = tEvent;
 
-      this->Date = Date;
-      this->Time = Time;
-
+      Event.Date = Date;
+      Event.Time = Time;
     }
     void Init(
-      dte::sDate Before,
-      dte::sDate After )
+      dte::sDate Latest,
+      dte::sDate Earliest )
     {
-      tol::Init(Before, After, Time);
-
       Type = tTimely;
 
-      this->Before = Before;
-      this-> After = After;
+      Timely.Latest = Latest;
+      Timely.Earliest = Earliest;
+    }
+    void Init(
+      sSpan Span,
+      eUnit Unit)
+    {
+      Type = tRecurrent;
+
+      Recurrent.Span = Span;
+      Recurrent.Unit = Unit;
     }
   };
 
@@ -120,6 +139,17 @@ namespace tsqchrns {
 
   typedef bch::qBUNCHd(sStatus, sRow) dStatutes;
 }
+
+# ifdef C
+#  define TSQCHRNS_BUFFER_ C
+# endif
+
+# undef C
+
+# define C( name )\
+  case tsqchrns::t##name:\
+    return memcmp( &S1.name, &S2.name, sizeof(S1.name)) == 0;\
+    break
 
 inline bso::sBool operator ==(
   const tsqchrns::sStatus &S1,
@@ -135,12 +165,9 @@ inline bso::sBool operator ==(
   case tsqchrns::tCompleted:
     return true;
     break;
-  case tsqchrns::tEvent:
-    return ( S1.Date == S2.Date ) && ( S1.Time == S2.Time );
-    break;
-  case tsqchrns::tTimely:
-    return ( S1.Before == S2.Before) && ( S1.After == S2.After );
-    break;
+  C( Event );
+  C( Timely );
+  C( Recurrent );
   default:
     qRGnr();
     break;
@@ -148,6 +175,13 @@ inline bso::sBool operator ==(
 
   return false; // To avoid a warning.
 }
+
+# undef C
+
+# ifdef TSQCHRNS_BUFFER_
+#  define C TSQCHRNS_BUFFER_
+# endif
+
 
 inline bso::sBool operator !=(
   const tsqchrns::sStatus &S1,

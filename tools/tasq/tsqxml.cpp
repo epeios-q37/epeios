@@ -43,8 +43,12 @@ namespace {
     tDescription,
     tStatus,
     tTypeId,
-    tRaw,
-    tReadable,
+    tDate,
+    tTime,
+    tLatest,
+    tEarliest,
+    tSpan,
+    tUnitId,
     t_amount,
     t_Undefined
   };
@@ -73,8 +77,12 @@ namespace {
     C_( Description );
     C_( Status );
     C_( TypeId );
-    C_( Raw );
-    C_( Readable );
+    C_( Date );
+    C_( Time );
+    C_( Latest );
+    C_( Earliest );
+    C_( Span );
+    C_( UnitId );
       break;
 /*
     C_( );
@@ -117,7 +125,7 @@ void tsqxml::WriteCorpus(xml::rWriter &Writer)
   Writer.PushTag(L_( Corpus ));
   Writer.PushTag(L_( StatusTypes));
 
-  for(bso::tEnum I = tsqchrns::t_First; I < tsqchrns::t_amount; I++) {
+  for(bso::tEnum I = 0; I < tsqchrns::t_amount; I++) {
     Writer.PushTag(L_( Type ) );
     Writer.PutAttribute(L_( Id ), I);
     Writer.PutAttribute(L_( Label ), tsqchrns::GetLabel((tsqchrns::eType)I));
@@ -162,38 +170,41 @@ namespace {
     namespace _ {
       void Write(
         dte::sDate Date,
-        const char *Tag,
+        eToken_ Token,
+        int Flags,
         xml::rWriter &Writer)
       {
         dte::pBuffer Buffer;
 
-        Writer.PushTag(Tag);
-        Writer.PutAttribute(L_( Raw), Date);
-        Writer.PutAttribute(L_( Readable ), Date.ASCII(dte::fDDMMYYYY, Buffer));
-        Writer.PopTag();
+        if ( Flags & ffReadable )
+          Writer.PutAttribute(GetLabel_(Token), Date.ASCII(dte::fDDMMYYYY, Buffer));
+        else
+          Writer.PutAttribute(GetLabel_(Token), Date);
       }
 
       void Write(
         tme::sTime Time,
-        const char *Tag,
+        eToken_ Token,
+        int Flags,
         xml::rWriter &Writer)
       {
         tme::pBuffer Buffer;
 
-        Writer.PushTag(Tag);
-        Writer.PutAttribute(L_( Raw ), Time);
-        Writer.PutAttribute(L_( Readable ), Time.ASCII(Buffer));
-        Writer.PopTag();
+        if ( Flags & ffReadable )
+          Writer.PutAttribute(GetLabel_(Token), Time.ASCII(Buffer));
+        else
+          Writer.PutAttribute(GetLabel_(Token), Time);
       }
     }
 
     void WriteStatus(
       tsqchrns::sStatus &Status,
+      int Flags,
       xml::rWriter &Writer)
     {
       Writer.PushTag(L_( Status ));
 
-      Writer.PutAttribute(L_( TypeId ), tsqchrns::GetLabel(Status.Type));
+      Writer.PutAttribute(L_( TypeId ), (bso::tEnum)Status.Type);
 
       switch ( Status.Type ) {
       case tsqchrns::tPending:
@@ -202,10 +213,23 @@ namespace {
       case tsqchrns::tCompleted:
         break;
       case tsqchrns::tEvent:
-        _::Write(Status.Date, "Data", Writer);
-        _::Write(Status.Time, "Time", Writer);
+        _::Write(Status.Event.Date, tDate, Flags, Writer);
+        _::Write(Status.Event.Time, tTime, Flags, Writer);
+        break;
+      case tsqchrns::tTimely:
+        _::Write(Status.Timely.Latest, tLatest, Flags, Writer);
+        _::Write(Status.Timely.Earliest, tEarliest, Flags, Writer);
+        break;
+      case tsqchrns::tRecurrent:
+        Writer.PutAttribute(L_( Span ), Status.Recurrent.Span);
+        Writer.PutAttribute(L_( UnitId ), (bso::tEnum)Status.Recurrent.Unit);
+        break;
+      default:
+        qRGnr();
         break;
       }
+
+      Writer.PopTag();
     }
   }
 
@@ -231,7 +255,7 @@ namespace {
     if ( Task.Status != qNIL ) {
       Status.Init();
       Bundle.Statutes.Recall(Task.Status, Status);
-      _::WriteStatus(Status, Writer);
+      _::WriteStatus(Status,Flags, Writer);
     }
   qRR;
   qRT;
