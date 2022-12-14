@@ -105,7 +105,7 @@
     </div>
   </xsl:template>
   <xsl:template match="StatusTypes">
-    <select id="TaskType" xdh:onevent="SelectTaskType">
+    <select id="TaskStatusType" xdh:onevent="SelectTaskType">
       <xsl:apply-templates select="Type" />
     </select>
   </xsl:template>

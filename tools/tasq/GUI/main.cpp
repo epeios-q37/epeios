@@ -39,7 +39,7 @@ namespace {
     iTree,
     iTitleView,
     iTaskStatusEdition,
-    iTaskType,
+    iTaskStatusType,
     iTaskTimelyFeatures,
     iTaskTimelyDateLatest,
     iTaskTimelyDateEarliest,
@@ -74,7 +74,7 @@ namespace {
     C_( Tree );
     C_( TitleView );
     C_( TaskStatusEdition );
-    C_( TaskType );
+    C_( TaskStatusType );
     C_( TaskTimelyFeatures );
     C_( TaskTimelyDateLatest );
     C_( TaskTimelyDateEarliest );
@@ -453,14 +453,31 @@ qRE;
 }
 
 namespace {
+  typedef SCLX_VALUESr(eId_, i_amount, GetLabel_) rValues;
+}
+
+namespace {
   void RetrieveContent_(
     sSession &Session,
     str::dString &Title,
-    str::dString &Description)
+    str::dString &Description,
+    tsqchrns::sStatus &Status)
   {
-    Session.GetValue(L_( iTitleEdition ), Title);
-//    Session.Execute("let value = markdown.value(); markdown.toTextArea(); markdown = null; value;", Description);
+  qRH;
+    rValues Values;
+  qRB;
+    Values.Init();
+
+    Values.Fetch(Session, iTitleEdition, iTaskStatusType);
+
+    Title.Append(Values.Get(iTitleEdition));
+
+    Status.Type = (tsqchrns::eType)Values.Get(iTaskStatusType).ToU8();
+
     Session.Execute("markdown.value();", Description);
+  qRR;
+  qRT;
+  qRE;
   }
 }
 
@@ -473,7 +490,7 @@ qRH;
 qRB;
   tol::Init(NewTitle, OldTitle, NewDescription, OldDescription, NewStatus, OldStatus);
 
-  RetrieveContent_(Session, NewTitle, NewDescription);
+  RetrieveContent_(Session, NewTitle, NewDescription, NewStatus);
 
   if ( !Session.IsNew ) {
     CBNDL();
@@ -498,10 +515,11 @@ qRH;
   str::wString Title, Description, XML;
   qCBUFFERh IdBuffer;
   bso::pInteger Buffer;
+  tsqchrns::sStatus Status;
 qRB;
-  tol::Init(Title, Description);
+  tol::Init(Title, Description, Status);
 
-  RetrieveContent_(Session, Title, Description);
+  RetrieveContent_(Session, Title, Description, Status);
 
   Title.StripChars();
 

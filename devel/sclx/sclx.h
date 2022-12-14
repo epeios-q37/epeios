@@ -1015,6 +1015,94 @@ namespace sclx {
 	void SCLXDismissCallback( xdhcdc::cSingle *Callback );	// To define by user.
 
 	extern bso::sBool (* SCLXGetHead)(str::dString &Head);  // To override for head handling by user.
+
+	// Use 'typedef SCLX_VALUESr(…) …'
+  template <typename type, int amount> class rValues_ {
+  private:
+    str::wStrings Values_;
+    sdr::sRow Links_[amount];
+    const char *(* GL_)(type);
+    void ResetLinks_(void)
+    {
+      memset(Links_, -1, sizeof(Links_));
+    }
+    void Fill_(
+      str::dStrings &Ids,
+      type Id)
+    {
+      if ( Id >= amount )
+        qRFwk();
+
+      if ( Links_[Id] != qNIL )
+        qRGnr();
+
+      Links_[Id] = Ids.Append(GL_(Id));
+    }
+    template <typename ...others> void Fill_(
+      str::dStrings &Ids,
+      type Id,
+      others ...Others)
+    {
+      Fill_(Ids, Id);
+      Fill_(Ids, Others...);
+    }
+  public:
+    void reset(bso::sBool P = true)
+    {
+      Values_.reset(P);
+      ResetLinks_();
+      GL_ = NULL;
+    }
+    qCDTOR(rValues_);
+    void Init(const char *(* GetLabel)(type))
+    {
+      ResetLinks_();
+      Values_.Init();
+      GL_ = GetLabel;
+    }
+    template <typename ...ids> void Fetch(
+      sclx::sProxy &Proxy,
+      ids ...Ids)
+    {
+    qRH;
+      str::wStrings IdsSet;
+    qRB;
+      IdsSet.Init();
+
+      if ( GL_ == NULL )
+        qRFwk();
+
+      Fill_(IdsSet, Ids...);
+
+      Proxy.GetValues(IdsSet, Values_);
+    qRR;
+    qRT;
+    qRE;
+    }
+    const str::dString &Get(type Id) const
+    {
+      if ( Id >= amount )
+        qRFwk();
+
+      if ( Links_[Id] == qNIL )
+        qRFwk();
+
+      return Values_(Links_[Id]);
+    }
+  };
+
+// 'typedef SXLX_VALUESr(…) …'
+# define SCLX_VALUESr(type, amount, label_retriever)\
+class\
+: public sclx::rValues_<type, amount>\
+{\
+public:\
+  void Init(void)\
+  {\
+    rValues_::Init(label_retriever);\
+  }\
+}
+
 }
 
 #endif
