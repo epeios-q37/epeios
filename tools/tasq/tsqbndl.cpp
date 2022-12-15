@@ -85,7 +85,7 @@ const rXBundle & tsqbndl::CGet(hGuard &Guard)
 {
   return Get(Guard);
 }
-
+/*
 namespace {
   namespace _ {
     sTRow Add(
@@ -132,7 +132,7 @@ namespace {
 
   }
 }
-
+*/
 bso::sBool tsqbndl::Initialize(const fnm::rName &Filename)
 {
   Mutex_ = mtx::Create();

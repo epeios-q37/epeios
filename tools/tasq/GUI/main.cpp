@@ -532,7 +532,7 @@ qRB;
     if ( Session.IsNew ) {
       tsqtsk::sRow
         Parent = Session.Selected,
-        New = Bundle.Add(Title, Description, Parent);
+        New = Bundle.Add(Title, Description, Status, Parent);
 
       if ( Bundle.Tasks.ChildAmount(Parent == qNIL ? Bundle.RootTask() : Parent) == 1 ) {
         if ( Parent == qNIL ) {

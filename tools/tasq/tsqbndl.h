@@ -122,6 +122,7 @@ namespace tsqbndl {
     sTRow Add(
       const str::dString &Title,
       const str::dString &Description,
+      const sStatus &Status,
       sTRow Row = qNIL)
     {
       sTask Task;
@@ -137,6 +138,9 @@ namespace tsqbndl {
       if ( Description.Amount() )
         Task.Description = Add_(Description);
 
+      if ( Status.Type != tsqchrns::t_Default )
+        Task.Status = Statutes.Add(Status);
+
       New = Tasks.Add(Task);
 
       Tasks.BecomeLast(New, Row);
@@ -147,9 +151,10 @@ namespace tsqbndl {
     }
     sTRow Add(
       const str::dString &Title,
+      const sStatus &Status,
       sTRow Row)
     {
-      return Add(Title, str::Empty, Row);
+      return Add(Title, str::Empty, Status, Row);
     }
     sTRow UpdateTaskDescription(
       sTRow Row,
@@ -179,7 +184,7 @@ namespace tsqbndl {
     }
     sTRow UpdateTaskStatus(
       sTRow Row,
-      sStatus Status)
+      const sStatus &Status)
     {
       sTask Task;
 
