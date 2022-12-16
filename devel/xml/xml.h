@@ -32,7 +32,8 @@
 #include "flw.h"
 #include "str.h"
 #include "xtf.h"
-#include "stkctn.h"
+#include "stkbch.h"
+#include "stkcrt.h"
 #include "ctn.h"
 #include "cpe.h"
 
@@ -992,6 +993,202 @@ namespace xml {
 		entities_handling__ EntitiesHandling,
 		callback__ &Callback,
 		qRPD );
+
+  qROW( VRow_ );
+
+  typedef stkcrt::qCSTACKw(str::dString, sVRow_) rValues_;
+
+  template <typename token, int amount, token undefined> struct sTag
+  {
+  public:
+    token Token;
+    sVRow_ Attributes[amount];
+    sdr::sSize Amount;
+    void reset(bso::sBool P = true)
+    {
+      Token = undefined;
+      memset(Attributes, -1, sizeof(Attributes));
+      Amount = 0;
+    }
+    void Init(void)
+    {
+      reset();
+    }
+  };
+
+  qROW( TRow );
+
+  template <typename token, int amount, token undefined> qTCLONE(stkbch::qBSTACKw(sTag<qCOVER3(token,amount,undefined)>, sTRow), rTags_);
+
+  template <typename token, int amount, token undefined> class rBundle
+  {
+  private:
+    rValues_ Values_;
+    rTags_<token,amount,undefined> Tags_;
+  public:
+    void reset(bso::sBool P = true )
+    {
+      tol::reset(P, Values_, Tags_);
+    }
+    qCDTOR( rBundle );
+    void Init(void)
+    {
+      tol::Init(Values_, Tags_);
+    }
+    bso::sBool IsEmpty(void) const
+    {
+      return Tags_.Amount() == 0;
+    }
+    bso::sBool HasAttribute(
+      sTRow Row,
+      token Token) const
+    {
+      sTag<token,amount,undefined> Tag;
+
+      Tag.Init();
+      Tags_.Recall(Row, Tag);
+
+      return Tag.Attributes[Token] != qNIL;
+    }
+    const str::dString &GetAttribute(
+      sTRow Row,
+      token Token) const
+    {
+      sTag<token,amount,undefined> Tag;
+
+      Tag.Init();
+      Tags_.Recall(Row, Tag);
+
+      if ( Tag.Attributes[Token] != qNIL )
+        return Values_(Tag.Attributes[Token]);
+      else
+        return str::Empty;
+    }
+    void Pop(void)
+    {
+      sTag<token,amount,undefined> Tag;
+
+      Tag.Init();
+      Tags_.Pop(Tag);
+
+      while ( Tag.Amount-- )
+        Values_.Pop();
+    }
+    sVRow_ Push(const str::dString &Value)
+    {
+      return Values_.Push(Value);
+    }
+    sTRow Push(const sTag<token,amount,undefined> &Tag)
+    {
+      return Tags_.Push(Tag);
+    }
+    sTRow Parent(sTRow Row) const
+    {
+      return Tags_.Previous(Row);
+    }
+    sTRow Top(void) const
+    {
+      return Tags_.Last();
+    }
+    sTag<token,amount,undefined> Tag(sTRow Row) const
+    {
+      return Tags_(Row);
+    }
+  };
+
+  template <typename token, int amount, token undefined> class cXParser
+  {
+  protected:
+    virtual void XMLOnStartTagClosed(
+      token Tag,
+      sTRow Row,
+      const rBundle<token,amount,undefined> &Bundle) = 0;
+    virtual void XMLOnEndTag(
+      token Tag,
+      sTRow Row,
+      const str::dString &Value,
+      const rBundle<token,amount,undefined> &Bundle) = 0;
+  public:
+    void OnStartTagClosed(
+      token Tag,
+      sTRow Row,
+      const rBundle<token,amount,undefined> &Bundle)
+    {
+      return XMLOnStartTagClosed(Tag, Row, Bundle);
+    }
+    void OnEndTag(
+      token Tag,
+      sTRow Row,
+      const str::dString &Value,
+      const rBundle<token,amount,undefined> &Bundle)
+    {
+      return XMLOnEndTag(Tag, Row, Value, Bundle);
+    }
+  };
+
+  template <typename token, int amount, token undefined> inline void Parse(
+    xml::rParser &Parser,
+    cXParser<token,amount,undefined> &Callback,
+    token (*GetToken)(const str::dString &Pattern))
+  {
+  qRH;
+    bso::sBool Continue = true;
+    rBundle<token,amount,undefined> Bundle;
+    sTag<token,amount,undefined> Tag;
+    token Token = undefined;
+    str::wString Value;
+    stkcrt::qCSTACKwl(str::dString) Values;
+  qRB;
+    tol::Init(Bundle, Value, Values);
+
+    while ( Continue ) {
+      switch( Parser.Parse(xml::tfAllButUseless) ) {
+      case xml::tStartTag:
+        Values.Push(Value);
+        Value.Init();
+        Tag.Init();
+        Tag.Token = GetToken(Parser.TagName());
+        break;
+      case xml::tAttribute:
+        Token = GetToken(Parser.AttributeName());
+
+        if ( Tag.Attributes[Token] != qNIL )
+          qRFwk();
+
+        Tag.Attributes[Token] = Bundle.Push(Parser.Value());
+        Tag.Amount++;
+        break;
+      case xml::tStartTagClosed:
+        Callback.OnStartTagClosed(Tag.Token, Bundle.Push(Tag), Bundle);
+        break;
+      case xml::tValue:
+      case xml::tCData:
+        Value.Init(Parser.Value());
+        break;
+      case xml::tEndTag:
+        if ( Bundle.IsEmpty() ) {
+          Continue = false;
+        } else {
+          Callback.OnEndTag(Bundle.Tag(Bundle.Top()).Token, Bundle.Top(),Value, Bundle);
+          Bundle.Pop();
+          Value.Init(Values(Values.Pop()));
+        }
+        break;
+      case xml::t_Processed:
+        if ( !Bundle.IsEmpty() )
+          qRFwk();
+
+        Continue = false;
+        break;
+      default:
+        qRFwk();
+        break;
+      }
+    }
+  qRR;
+  qRT;
+  qRE;
+  }
 
 	// Transformation des caractres spciaux, comm '<' qui devient '&lt;'.
 	void TransformUsingEntities(

@@ -704,4 +704,11 @@ qRT;
 qRE;
 }
 
+qGCTOR( sclx )
+{
+  // To test if 'qNIL' is equivalent to -1.
+  if ( !tol::CanBeFilledWith<sdr::sRow>(qNIL, -1, qRPU) )
+    qRChk();
+}
+
 

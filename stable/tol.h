@@ -2434,6 +2434,26 @@ namespace tol {
 	}
 
 # define qDELETE(object) tol::Delete_(object)
+
+  template <typename t> inline bso::sBool CanBeFilledWith(
+    t RefValue,
+    int Filler,
+    qRPD)
+  {
+    t Ref = RefValue;
+    bso::sByte Buffer[sizeof(t)];
+
+    memset(Buffer, Filler, sizeof(Buffer));
+
+    if ( memcmp(&Ref, Buffer, sizeof(t)) ) {
+      if ( qRPT )
+        qRFwk();
+      else
+        return false;
+    }
+
+    return true;
+  }
 }
 
 

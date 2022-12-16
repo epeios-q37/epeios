@@ -225,7 +225,7 @@ namespace {
 }
 
 namespace {
-  void Fill_(
+  void Dress_(
     const str::dString &Id,
     sclx::ePosition Position,
     const str::dString &XML,
@@ -253,7 +253,7 @@ namespace {
 }
 
 namespace {
-  void Fill_(
+  void DressTaskTree_(
     tsqtsk::sRow Row,
     const str::dString &Id,
     sclx::ePosition Position,
@@ -271,7 +271,7 @@ namespace {
     else
       tsqxmlw::Write(Row, Bundle, tsqxmlw::ffDisplay, XML);
 
-    Fill_(Id, Position, XML, XSLEntry, Session);
+    Dress_(Id, Position, XML, XSLEntry, Session);
   qRR;
   qRT;
   qRE;
@@ -291,11 +291,11 @@ qRB;
   XML.Init();
   tsqxmlw::WriteCorpus(XML);
 
-  Fill_(str::Empty, sclx::pInner, XML, registry::definition::Body, Session);
+  Dress_(str::Empty, sclx::pInner, XML, registry::definition::Body, Session);
 
   CBNDL();
 
-  Fill_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
+  DressTaskTree_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
 
   GlobalDressing_(mView, Session);
 qRR;
@@ -536,12 +536,12 @@ qRB;
 
       if ( Bundle.Tasks.ChildAmount(Parent == qNIL ? Bundle.RootTask() : Parent) == 1 ) {
         if ( Parent == qNIL ) {
-          Fill_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
+          DressTaskTree_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
           Session.AddClass(L_( iTree ), L_( cSelected ) );
         } else
-          Fill_(Parent, str::wString(Session.Parent(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
+          DressTaskTree_(Parent, str::wString(Session.Parent(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
       } else {
-        Fill_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(Parent == qNIL ? *Bundle.RootTask() : *Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+        DressTaskTree_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(Parent == qNIL ? *Bundle.RootTask() : *Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
       }
 
       Unfold_(New, Bundle.Tasks, Session);

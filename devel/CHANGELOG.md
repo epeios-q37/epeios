@@ -14,6 +14,11 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2022-12-16
+- SCLX:adding some checking;
+- TOL: intoducing `CanBeFilledWith(…)`;
+- XML: introducing `cXParser` with corresponding `Parse(…)`;
+;
 ## 2022-12-14
 - SCLX: [extn];
 
