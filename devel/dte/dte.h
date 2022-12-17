@@ -244,6 +244,10 @@ namespace dte {
 
 			Raw_ = _Convert( Day, Month, Year );
 		}
+		tDate operator()(void) const
+		{
+		  return Raw_;
+		}
 		//f Return the date in raw format.
 		operator raw_date__( void ) const
 		{

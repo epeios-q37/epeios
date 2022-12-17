@@ -123,7 +123,7 @@ namespace {
     {
       Writer.PushTag(L_( Status ));
 
-      Writer.PutAttribute(L_( TypeId ), (bso::tEnum)Status.Type);
+      Writer.PutAttribute(L_( Type ), (bso::tEnum)Status.Type);
 
       switch ( Status.Type ) {
       case tsqchrns::tPending:
@@ -141,7 +141,7 @@ namespace {
         break;
       case tsqchrns::tRecurrent:
         Writer.PutAttribute(L_( Span ), Status.Recurrent.Span);
-        Writer.PutAttribute(L_( UnitId ), (bso::tEnum)Status.Recurrent.Unit);
+        Writer.PutAttribute(L_( Unit ), (bso::tEnum)Status.Recurrent.Unit);
         break;
       default:
         qRGnr();
@@ -276,7 +276,7 @@ void tsqxmlw::Write(
   Row = Bundle.RootTask();
 
   if ( Flags & ffId )
-    Writer.PutAttribute(L_( RootId ), *Row);
+    Writer.PutAttribute(L_( RootTask ), *Row);
 
   Write_(Row, Bundle, Flags, Writer);
 

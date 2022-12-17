@@ -49,8 +49,8 @@ namespace {
     iTaskEventTimeHour,
     iTaskEventTimeMinute,
     iTaskRecurrentFeatures,
-    iTaskRecurrentDelay,
-    iTaskRecurrentDelayUnit,
+    iTaskRecurrentSpan,
+    iTaskRecurrentUnit,
     iDescriptionView,
     iNew,
     iEdit,
@@ -85,8 +85,8 @@ namespace {
     C_( TaskEventTimeMinute );
     C_( DescriptionView );
     C_( TaskRecurrentFeatures);
-    C_( TaskRecurrentDelay);
-    C_( TaskRecurrentDelayUnit);
+    C_( TaskRecurrentSpan);
+    C_( TaskRecurrentUnit);
     C_( New );
     C_( Edit );
     C_( Delete );
@@ -170,6 +170,7 @@ namespace {
   {
   qRH;
     str::wStrings ViewIds, EditionIds, Ids;
+
   qRB;
     ViewIds.Init(L_( iTree ), L_( iTitleView ), L_( iDescriptionView ), L_( iEdit ), L_( iNew ), L_( iDelete ));
     EditionIds.Init(L_( iTitleEdition ), L_( iDescriptionEdition ), L_( iSubmit ), L_( iCancel ), L_( iTaskStatusEdition));
@@ -340,30 +341,44 @@ qRE;
 }
 
 namespace {
+  typedef SCLX_TVALUESr(eId_, i_amount, GetLabel_) rTValues_;
+}
+
+namespace {
   void DressTaskStatusEdition_(
-    tsqchrns::eType Type,
+    tsqchrns::sStatus Status,
     sSession &Session)
   {
   qRH;
     str::wStrings All;
     str::wString Displayed;
     str::wString Script;
+    rTValues_ Values;
   qRB;
     All.Init(L_( iTaskTimelyFeatures), L_( iTaskEventFeatures), L_( iTaskRecurrentFeatures ));
+    Values.Init();
 
-    switch( Type ) {
+    Values.Add(iTaskStatusType, (tsqchrns::tType)Status.Type);
+
+    switch( Status.Type ) {
     case tsqchrns::tPending:
     case tsqchrns::tCompleted:
       Displayed.Init();
       break;
     case tsqchrns::tTimely:
       Displayed.Init(L_( iTaskTimelyFeatures));
+      Values.Add(iTaskTimelyDateLatest, Status.Timely.Latest());
+      Values.Add(iTaskTimelyDateEarliest, Status.Timely.Earliest());
       break;
     case tsqchrns::tEvent:
       Displayed.Init(L_( iTaskEventFeatures ));
+      Values.Add(iTaskEventDate, Status.Event.Date());
+      Values.Add(iTaskEventTime, Status.Event.Time());
       break;
     case tsqchrns::tRecurrent:
       Displayed.Init(L_( iTaskRecurrentFeatures ));
+      Values.Add(iTaskRecurrentSpan, Status.Recurrent.Span);
+      Values.Add(iTaskRecurrentUnit, (tsqchrns::tUnit)Status.Recurrent.Unit);
       break;
     default:
       qRGnr();
@@ -372,7 +387,7 @@ namespace {
 
     Script.Init();
 
-    switch ( Type ) {
+    switch ( Status.Type ) {
     case tsqchrns::tEvent:
       flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iTaskEventDate ) << "');";
       Session.Execute(Script);
@@ -386,6 +401,7 @@ namespace {
     }
 
     Session.AddClasses(All, L_( cHide ));
+    Values.Push(Session);
     Session.RemoveClass(Displayed, L_( cHide ));
   qRR;
   qRT;
@@ -396,7 +412,7 @@ namespace {
     const str::dString &Title,
     const str::dString &Description,
     bso::sBool SelectedIsRoot,
-    tsqchrns::eType StatusType,
+    const tsqchrns::sStatus &Status,
     sSession &Session)
   {
   qRH;
@@ -408,7 +424,7 @@ namespace {
     flx::rStringTWFlow(Script) << "markdown = editMarkdown('" << L_( iDescriptionEdition ) << "', '" << xdhcmn::Escape(Description, EscapedDescription, 0) << "');";
     Session.Execute(Script);
 
-    DressTaskStatusEdition_(StatusType, Session);
+    DressTaskStatusEdition_(Status, Session);
 
     GlobalDressing_(mEdition, Session);
 
@@ -427,7 +443,7 @@ qRB;
   CBNDL();
 
   Session.IsNew = true;
-  DressTaskEdition_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), tsqchrns::tPending, Session);
+  DressTaskEdition_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), tsqchrns::sStatus(tsqchrns::tPending), Session);
 qRR;
 qRT;
 qRE;
@@ -446,7 +462,7 @@ qRB;
   Bundle.Get(Session.Selected(), Title, Description, Status);
 
   Session.IsNew = false;
-  DressTaskEdition_(Title, Description, Bundle.IsRoot(Session.Selected()), Status.Type, Session);
+  DressTaskEdition_(Title, Description, Bundle.IsRoot(Session.Selected()), Status, Session);
 qRR;
 qRT;
 qRE;
@@ -569,7 +585,7 @@ qRB;
 
   Session.GetValue(Id, RawType);
 
-  DressTaskStatusEdition_((tsqchrns::eType)RawType.ToU8(), Session);
+  DressTaskStatusEdition_(tsqchrns::sStatus((tsqchrns::eType)RawType.ToU8()), Session);
 qRR;
 qRT;
 qRE;

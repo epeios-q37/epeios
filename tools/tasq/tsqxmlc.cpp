@@ -38,7 +38,7 @@ const char *tsqxmlc::GetLabel(eToken Token)
   C_( Tasks );
   C_( Items );
   C_( Item );
-  C_( RootId );
+  C_( RootTask );
   case tId:
     Label = "id";
     break;
@@ -47,13 +47,12 @@ const char *tsqxmlc::GetLabel(eToken Token)
   C_( Title );
   C_( Description );
   C_( Status );
-  C_( TypeId );
   C_( Date );
   C_( Time );
   C_( Latest );
   C_( Earliest );
   C_( Span );
-  C_( UnitId );
+  C_( Unit );
     break;
 /*
   C_( );

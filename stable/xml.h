@@ -1064,6 +1064,40 @@ namespace xml {
       else
         return str::Empty;
     }
+    template <typename t> bso::sBool GetAttribute(
+      sTRow Row,
+      token Token,
+      t &Number,
+      qRPD) const
+    {
+      if ( !HasAttribute(Row, Token) ) {
+        if ( qRPT )
+          qRFwk();
+        else
+          return false;
+      }
+
+      GetAttribute(Row, Token).ToNumber(Number);
+
+      return true;
+    }
+    bso::sBool GetAttribute(
+      sTRow Row,
+      token Token,
+      bso::tEnum &Number,
+      qRPD) const
+    {
+      if ( !HasAttribute(Row, Token) ) {
+        if ( qRPT )
+          qRFwk();
+        else
+          return false;
+      }
+
+      GetAttribute(Row, Token).ToNumber(Number);
+
+      return true;
+    }
     void Pop(void)
     {
       sTag<token,amount,undefined> Tag;

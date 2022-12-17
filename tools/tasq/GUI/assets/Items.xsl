@@ -13,7 +13,7 @@
     <ul class="tree">
       <li>
         <xsl:call-template name="Item">
-          <xsl:with-param name="Id" select="@RootId" />
+          <xsl:with-param name="Id" select="@RootTask" />
           <xsl:with-param name="Label">Tasks</xsl:with-param>
           <xsl:with-param name="Style">border: double; padding: 0 5px 0 5px;</xsl:with-param>
         </xsl:call-template>

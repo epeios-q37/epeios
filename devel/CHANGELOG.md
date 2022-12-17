@@ -14,6 +14,12 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2022-12-17
+- DTE: [extn];
+- TME: [extn];
+- TOL: [extn];
+- XML: [extn];
+
 ## 2022-12-16
 - SCLX:adding some checking;
 - TOL: intoducing `CanBeFilledWith(…)`;

@@ -131,6 +131,12 @@ namespace tme {
 		{
 			_Raw = Undefined;
 		}
+		time__( tTime Time = Undefined )
+		{
+		  reset(false);
+
+		  _Raw = Time;
+		}
 		E_CDTOR( time__ );
 		void Init( raw_time__ Time = Undefined )
 		{
@@ -153,6 +159,10 @@ namespace tme {
 			_Raw = tme::Convert( Hours, Minutes, Seconds, Ticks );
 
 			return IsSet();
+		}
+		tTime operator ()(void) const
+		{
+		  return _Raw;
 		}
 		operator raw_time__( void ) const
 		{

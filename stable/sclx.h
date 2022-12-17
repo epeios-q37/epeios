@@ -1061,7 +1061,7 @@ namespace sclx {
       GL_ = GetLabel;
     }
     template <typename ...ids> void Fetch(
-      sclx::sProxy &Proxy,
+      sProxy &Proxy,
       ids ...Ids)
     {
     qRH;
@@ -1100,6 +1100,74 @@ public:\
   void Init(void)\
   {\
     rValues_::Init(label_retriever);\
+  }\
+}
+
+  template <typename type, int amount> class rTValues_
+  {
+  private:
+    str::wStrings
+      Ids_,
+      Values_;
+    const char *(* GL_)(type);
+  public:
+    void reset(bso::sBool P = true)
+    {
+      tol::reset(P, Ids_, Values_);
+      GL_ = NULL;
+    }
+    qCDTOR( rTValues_ );
+    void Init(const char *(* GetLabel)(type))
+    {
+      tol::Init(Ids_, Values_);
+      GL_ = GetLabel;
+    }
+    sdr::sRow Add(
+      type Id,
+      const str::dString &Value)
+    {
+      if ( Id >= amount )
+        qRFwk();
+
+      if ( GL_ == NULL )
+        qRFwk();
+
+      sdr::sRow Row = Ids_.Append(GL_(Id));
+
+      if ( Row != Values_.Append(Value))
+        qRFwk();
+
+      return Row;
+    }
+    sdr::sRow Add(
+      type Id,
+      const str::wString &Value)
+    {
+      return Add(Id, *Value);
+    }
+    template<typename t> sdr::sRow Add(
+      type Id,
+      t Value)
+    {
+      bso::pInteger Buffer;
+
+      return Add(Id, str::wString(bso::Convert(Value, Buffer)));
+    }
+    void Push(sProxy &Proxy)
+    {
+      Proxy.SetValues(Ids_, Values_);
+    }
+  };
+
+// 'typedef SXLX_VALUESr(…) …'
+# define SCLX_TVALUESr(type, amount, label_retriever)\
+class\
+: public sclx::rTValues_<type, amount>\
+{\
+public:\
+  void Init(void)\
+  {\
+    rTValues_::Init(label_retriever);\
   }\
 }
 

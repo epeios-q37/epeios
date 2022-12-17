@@ -29,29 +29,62 @@
 using namespace tsqxmlp;
 
 using namespace tsqxmlc;
+using namespace tsqbndl;
+using namespace tsqchrns;
 
-namespace task = tsqtsk;
-
-typedef xml::rBundle<eToken,t_amount,t_Undefined> rPBundle;
+typedef xml::rBundle<eToken,tsqxmlc::t_amount,tsqxmlc::t_Undefined> rPBundle;
 
 namespace {
-  task::sRow HandleItem_(
+  sTRow HandleItem_(
     const rPBundle &PBundle,
     xml::sTRow TRow,
-    tsqbndl::dBundle &Bundle,
-    task::sRow Row)
+    dBundle &Bundle,
+    sTRow Row)
   {
   qRH;
     str::wString Title;
-    tsqchrns::sStatus Status;
-    tsqchrns::eType Type = tsqchrns::t_Undefined;
+    sStatus Status;
   qRB;
     Title.Init(PBundle.GetAttribute(TRow, tTitle));
 
-    if ( PBundle.HasAttribute(TRow, tType) )
-      Type = tsqchrns::GetType(PBundle.GetAttribute(TRow, tType));
+    if ( PBundle.HasAttribute(TRow, eToken::tType) )
+      switch ( GetType(PBundle.GetAttribute(TRow, eToken::tType)) ) {
+      case tPending:
+        Status.Init(tPending);
+        break;
+      case tEvent:
+        dte::tDate Date;
+        tme::tTime Time;
 
-    Status.Init();
+        PBundle.GetAttribute(TRow, tDate, Date);
+        PBundle.GetAttribute(TRow, tTime, Time);
+
+        Status.Init(dte::sDate(Date), tme::sTime(Time));
+        break;
+      case tTimely:
+        dte::tDate Latest, Earliest;
+
+        PBundle.GetAttribute(TRow, tLatest, Latest);
+        PBundle.GetAttribute(TRow, tEarliest, Earliest);
+
+        Status.Init(dte::sDate(Latest), dte::sDate(Earliest));
+        break;
+      case tRecurrent:
+        sSpan Span;
+        tsqchrns::tUnit Unit;
+
+        PBundle.GetAttribute(TRow, tSpan, Span);
+        PBundle.GetAttribute(TRow, eToken::tUnit, Unit);
+
+        Status.Init(Span, (eUnit)Unit);
+        break;
+      case tCompleted:
+        Status.Init(tCompleted);
+        break;
+      default:
+        qRFwk();
+        break;
+      }
 
     Row = Bundle.Add(Title, Status, Row);
   qRR;
@@ -62,11 +95,11 @@ namespace {
 }
 
 class sCallback
-: public xml::cXParser<eToken,t_amount,t_Undefined>
+: public xml::cXParser<eToken,tsqxmlc::t_amount,tsqxmlc::t_Undefined>
 {
 private:
-  qRMV(tsqbndl::dBundle, B_, Bundle_);
-  task::sRow Row_;
+  qRMV(dBundle, B_, Bundle_);
+  sTRow Row_;
 protected:
   virtual void XMLOnStartTagClosed(
     eToken Tag,
@@ -115,7 +148,7 @@ public:
     Bundle_ = NULL;
     Row_ = qNIL;
   }
-  void Init(tsqbndl::dBundle &Bundle)
+  void Init(dBundle &Bundle)
   {
     Bundle_ = &Bundle;
     Row_ = qNIL;
@@ -124,12 +157,12 @@ public:
 
 void tsqxmlp::Parse(
   xml::rParser &Parser,
-  tsqbndl::dBundle &Bundle)
+  dBundle &Bundle)
 {
   sCallback Callback;
 
   Callback.Init(Bundle);
 
-  xml::Parse<eToken,t_amount,t_Undefined>(Parser, Callback, GetToken);
+  xml::Parse<eToken,tsqxmlc::t_amount,tsqxmlc::t_Undefined>(Parser, Callback, GetToken);
 }
 

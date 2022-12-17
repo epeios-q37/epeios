@@ -77,7 +77,7 @@ namespace tsqchrns {
     {
       Type = t_Undefined;
     }
-    sStatus(eType Type)
+    explicit sStatus(eType Type)
     {
       Init(Type);
     }
