@@ -1,20 +1,20 @@
 /*
 	Copyright (C) 2022 Claude SIMON (http://q37.info/contact/).
 
-	This file is part of the 'mscfdraftq' tool.
+	This file is part of the 'TASq' tool.
 
-    'mscfdraftq' is free software: you can redistribute it and/or modify it
+    'TASq' is free software: you can redistribute it and/or modify it
     under the terms of the GNU Affero General Public License as published
     by the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    'mscfdraftq' is distributed in the hope that it will be useful,
+    'TASq' is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
     You should have received a copy of the GNU Affero General Public License
-    along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
+    along with 'TASq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -44,10 +44,10 @@ void tsqxmlw::WriteCorpus(xml::rWriter &Writer)
   Writer.PushTag(L_( Corpus ));
   Writer.PushTag(L_( StatusTypes));
 
-  for(bso::tEnum I = 0; I < tsqchrns::t_amount; I++) {
+  for(bso::tEnum I = 0; I < tsqstts::t_amount; I++) {
     Writer.PushTag(L_( Type ) );
     Writer.PutAttribute(L_( Id ), I);
-    Writer.PutAttribute(L_( Label ), tsqchrns::GetLabel((tsqchrns::eType)I));
+    Writer.PutAttribute(L_( Label ), tsqstts::GetLabel((tsqstts::eType)I));
     Writer.PopTag();
   }
 
@@ -98,7 +98,7 @@ namespace {
         if ( Flags & ffReadable )
           Writer.PutAttribute(GetLabel(Token), Date.ASCII(dte::fDDMMYYYY, Buffer));
         else
-          Writer.PutAttribute(GetLabel(Token), Date);
+          Writer.PutAttribute(GetLabel(Token), Date(), dte::Undefined);
       }
 
       void Write(
@@ -112,12 +112,12 @@ namespace {
         if ( Flags & ffReadable )
           Writer.PutAttribute(GetLabel(Token), Time.ASCII(Buffer));
         else
-          Writer.PutAttribute(GetLabel(Token), Time);
+          Writer.PutAttribute(GetLabel(Token), Time(), tme::Undefined);
       }
     }
 
     void WriteStatus(
-      tsqchrns::sStatus &Status,
+      tsqstts::sStatus &Status,
       int Flags,
       xml::rWriter &Writer)
     {
@@ -126,20 +126,20 @@ namespace {
       Writer.PutAttribute(L_( Type ), (bso::tEnum)Status.Type);
 
       switch ( Status.Type ) {
-      case tsqchrns::tPending:
+      case tsqstts::tPending:
         qRGnr();
         break;
-      case tsqchrns::tCompleted:
+      case tsqstts::tCompleted:
         break;
-      case tsqchrns::tEvent:
+      case tsqstts::tEvent:
         _::Write(Status.Event.Date, tDate, Flags, Writer);
         _::Write(Status.Event.Time, tTime, Flags, Writer);
         break;
-      case tsqchrns::tTimely:
+      case tsqstts::tTimely:
         _::Write(Status.Timely.Latest, tLatest, Flags, Writer);
         _::Write(Status.Timely.Earliest, tEarliest, Flags, Writer);
         break;
-      case tsqchrns::tRecurrent:
+      case tsqstts::tRecurrent:
         Writer.PutAttribute(L_( Span ), Status.Recurrent.Span);
         Writer.PutAttribute(L_( Unit ), (bso::tEnum)Status.Recurrent.Unit);
         break;
@@ -160,7 +160,7 @@ namespace {
   {
   qRH;
     task::sTask Task;
-    tsqchrns::sStatus Status;
+    tsqstts::sStatus Status;
   qRB;
     if ( Flags & ffId )
       Writer.PutAttribute(L_( Id ), *Row);

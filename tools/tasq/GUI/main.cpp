@@ -310,7 +310,7 @@ qRH;
   BGRD;
   tsqtsk::sRow Row = qNIL;
   str::wString Title, Description, Script;
-  tsqchrns::sStatus Status;
+  tsqstts::sStatus Status;
   bso::pInteger Buffer;
 qRB;
   tol::Init(Title, Description, Status);
@@ -346,7 +346,7 @@ namespace {
 
 namespace {
   void DressTaskStatusEdition_(
-    tsqchrns::sStatus Status,
+    tsqstts::sStatus Status,
     sSession &Session)
   {
   qRH;
@@ -358,27 +358,27 @@ namespace {
     All.Init(L_( iTaskTimelyFeatures), L_( iTaskEventFeatures), L_( iTaskRecurrentFeatures ));
     Values.Init();
 
-    Values.Add(iTaskStatusType, (tsqchrns::tType)Status.Type);
+    Values.Add(iTaskStatusType, (tsqstts::tType)Status.Type);
 
     switch( Status.Type ) {
-    case tsqchrns::tPending:
-    case tsqchrns::tCompleted:
+    case tsqstts::tPending:
+    case tsqstts::tCompleted:
       Displayed.Init();
       break;
-    case tsqchrns::tTimely:
+    case tsqstts::tTimely:
       Displayed.Init(L_( iTaskTimelyFeatures));
-      Values.Add(iTaskTimelyDateLatest, Status.Timely.Latest());
-      Values.Add(iTaskTimelyDateEarliest, Status.Timely.Earliest());
+      Values.Add(iTaskTimelyDateLatest, Status.Timely.Latest, dte::fDDMMYYYY);
+      Values.Add(iTaskTimelyDateEarliest, Status.Timely.Earliest, dte::fDDMMYYYY);
       break;
-    case tsqchrns::tEvent:
+    case tsqstts::tEvent:
       Displayed.Init(L_( iTaskEventFeatures ));
-      Values.Add(iTaskEventDate, Status.Event.Date());
-      Values.Add(iTaskEventTime, Status.Event.Time());
+      Values.Add(iTaskEventDate, Status.Event.Date, dte::fDDMMYYYY);
+      Values.Add(iTaskEventTime, Status.Event.Time);
       break;
-    case tsqchrns::tRecurrent:
+    case tsqstts::tRecurrent:
       Displayed.Init(L_( iTaskRecurrentFeatures ));
       Values.Add(iTaskRecurrentSpan, Status.Recurrent.Span);
-      Values.Add(iTaskRecurrentUnit, (tsqchrns::tUnit)Status.Recurrent.Unit);
+      Values.Add(iTaskRecurrentUnit, (tsqstts::tUnit)Status.Recurrent.Unit);
       break;
     default:
       qRGnr();
@@ -388,11 +388,11 @@ namespace {
     Script.Init();
 
     switch ( Status.Type ) {
-    case tsqchrns::tEvent:
+    case tsqstts::tEvent:
       flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iTaskEventDate ) << "');";
       Session.Execute(Script);
       break;
-    case tsqchrns::tTimely:
+    case tsqstts::tTimely:
       flx::rStringTWFlow(Script) << "toDatePicker('" << L_( iTaskTimelyDateLatest ) << "');" << "toDatePicker('" << L_( iTaskTimelyDateEarliest ) << "');";
       Session.Execute(Script);
       break;
@@ -412,7 +412,7 @@ namespace {
     const str::dString &Title,
     const str::dString &Description,
     bso::sBool SelectedIsRoot,
-    const tsqchrns::sStatus &Status,
+    const tsqstts::sStatus &Status,
     sSession &Session)
   {
   qRH;
@@ -443,7 +443,7 @@ qRB;
   CBNDL();
 
   Session.IsNew = true;
-  DressTaskEdition_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), tsqchrns::sStatus(tsqchrns::tPending), Session);
+  DressTaskEdition_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), tsqstts::sStatus(tsqstts::tPending), Session);
 qRR;
 qRT;
 qRE;
@@ -454,7 +454,7 @@ D_( Edit )
 qRH;
   BGRD;
   str::wString Title, Description;
-  tsqchrns::sStatus Status;
+  tsqstts::sStatus Status;
 qRB;
   CBNDL();
 
@@ -477,7 +477,7 @@ namespace {
     sSession &Session,
     str::dString &Title,
     str::dString &Description,
-    tsqchrns::sStatus &Status)
+    tsqstts::sStatus &Status)
   {
   qRH;
     rValues Values;
@@ -488,7 +488,7 @@ namespace {
 
     Title.Append(Values.Get(iTitleEdition));
 
-    Status.Type = (tsqchrns::eType)Values.Get(iTaskStatusType).ToU8();
+    Status.Type = (tsqstts::eType)Values.Get(iTaskStatusType).ToU8();
 
     Session.Execute("markdown.value();", Description);
   qRR;
@@ -502,7 +502,7 @@ D_( Cancel )
 qRH;
   BGRD;
   str::wString NewTitle, OldTitle, NewDescription, OldDescription;
-  tsqchrns::sStatus NewStatus, OldStatus;
+  tsqstts::sStatus NewStatus, OldStatus;
 qRB;
   tol::Init(NewTitle, OldTitle, NewDescription, OldDescription, NewStatus, OldStatus);
 
@@ -531,7 +531,7 @@ qRH;
   str::wString Title, Description, XML;
   qCBUFFERh IdBuffer;
   bso::pInteger Buffer;
-  tsqchrns::sStatus Status;
+  tsqstts::sStatus Status;
 qRB;
   tol::Init(Title, Description, Status);
 
@@ -585,7 +585,7 @@ qRB;
 
   Session.GetValue(Id, RawType);
 
-  DressTaskStatusEdition_(tsqchrns::sStatus((tsqchrns::eType)RawType.ToU8()), Session);
+  DressTaskStatusEdition_(tsqstts::sStatus((tsqstts::eType)RawType.ToU8()), Session);
 qRR;
 qRT;
 qRE;

@@ -232,7 +232,7 @@ namespace dte {
 			if ( ( End != NULL ) && ( *End == NULL ) )
 				*End = Date;
 
-			return IsValid();
+			return IsSet();
 		}
 		//f Initialization with 'Day', 'Month' and 'Year'.
 		void Init(
@@ -247,11 +247,6 @@ namespace dte {
 		tDate operator()(void) const
 		{
 		  return Raw_;
-		}
-		//f Return the date in raw format.
-		operator raw_date__( void ) const
-		{
-			return Raw_;
 		}
 		//f Return simplified raw date 'yyyymmdd'.
 		unsigned long GetSimplifiedRawDate( void ) const
@@ -315,7 +310,7 @@ namespace dte {
 			Raw_ = _Convert( this->Day(), (month__)( Month() - DeltaMonth ), (year__)( Year() - DeltaYear ) );
 		}
 		//f Return true if the date is valid, false otherwise.
-		bso::bool__ IsValid( void ) const
+		bso::bool__ IsSet( void ) const
 		{
 			return Raw_ != DTE_INVALID_DATE;
 		}
@@ -393,7 +388,7 @@ namespace dte {
 		const date__ &Date1,
 		const date__ &Date2 )
 	{
-		return bso::Compare( Date1, Date2 );
+		return bso::Compare( Date1(), Date2() );
 	}
 
 	inline txf::text_oflow__ &operator <<(

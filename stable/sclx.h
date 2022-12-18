@@ -36,10 +36,13 @@ and mainly handled by the 'xdhqxdh' and 'faasq' utilities.
 
 # include "sclr.h"
 
+# include "dte.h"
 # include "err.h"
 # include "fblfrd.h"
 # include "rgstry.h"
+# include "tme.h"
 # include "tol.h"
+
 # include "xdhcdc.h"
 # include "xdhcmn.h"
 # include "xdhdws.h"
@@ -1110,6 +1113,23 @@ public:\
       Ids_,
       Values_;
     const char *(* GL_)(type);
+    template <typename s> sdr::sRow Add_(
+      type Id,
+      const s &Value)
+    {
+      if ( Id >= amount )
+        qRFwk();
+
+      if ( GL_ == NULL )
+        qRFwk();
+
+      sdr::sRow Row = Ids_.Append(GL_(Id));
+
+      if ( Row != Values_.Append(Value))
+        qRFwk();
+
+      return Row;
+    }
   public:
     void reset(bso::sBool P = true)
     {
@@ -1126,24 +1146,42 @@ public:\
       type Id,
       const str::dString &Value)
     {
-      if ( Id >= amount )
-        qRFwk();
-
-      if ( GL_ == NULL )
-        qRFwk();
-
-      sdr::sRow Row = Ids_.Append(GL_(Id));
-
-      if ( Row != Values_.Append(Value))
-        qRFwk();
-
-      return Row;
+      return Add_(Id, Value);
+    }
+    sdr::sRow Add(
+      type Id,
+      const char *Value)
+    {
+      return Add_(Id, Value);
     }
     sdr::sRow Add(
       type Id,
       const str::wString &Value)
     {
-      return Add(Id, *Value);
+      return Add_(Id, Value);
+    }
+    sdr::sRow Add(
+      type Id,
+      dte::sDate Date,
+      dte::eFormat Format)
+    {
+      dte::pBuffer Buffer;
+
+      if ( Date.IsSet() )
+        return Add(Id, Date.ASCII(Format, Buffer));
+      else
+        return Add(Id, "");
+    }
+    sdr::sRow Add(
+      type Id,
+      tme::sTime Time)
+    {
+      tme::pBuffer Buffer;
+
+      if ( Time.IsSet() )
+        return Add(Id, Time.ASCII(Buffer));
+      else
+        return Add(Id, "");
     }
     template<typename t> sdr::sRow Add(
       type Id,

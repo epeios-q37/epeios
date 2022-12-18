@@ -2,10 +2,11 @@
    <xpp:define name="TasQModules">
 		<Modules Group="TasQ" Path="../">
       <Module>tsqbndl</Module>
-      <Module>tsqchrns</Module>
+      <Module>tsqstts</Module>
       <Module>tsqrgstry</Module>
       <Module>tsqstrng</Module>
       <Module>tsqtsk</Module>
+      <Module>tsqstts</Module>
       <Modules Group="XML">
         <Module>tsqxmlc</Module>
         <Module>tsqxmlp</Module>

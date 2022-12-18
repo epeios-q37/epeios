@@ -1,33 +1,33 @@
 /*
 	Copyright (C) 2022 Claude SIMON (http://q37.info/contact/).
 
-	This file is part of the 'mscfdraftq' tool.
+	This file is part of the 'TASq' tool.
 
-    'mscfdraftq' is free software: you can redistribute it and/or modify it
+    'TASq' is free software: you can redistribute it and/or modify it
     under the terms of the GNU Affero General Public License as published
     by the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    'mscfdraftq' is distributed in the hope that it will be useful,
+    'TASq' is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
     You should have received a copy of the GNU Affero General Public License
-    along with 'mscfdraftq'.  If not, see <http://www.gnu.org/licenses/>.
+    along with 'TASq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// TaSQ CHRoNoS
+// TaSQ STaTuS
 
-#ifndef TSQCHRNS_INC_
-# define TSQCHRNS_INC_
+#ifndef TSQSTTS_INC_
+# define TSQSTTS_INC_
 
 # include "bch.h"
 # include "dte.h"
 # include "tme.h"
 # include "tol.h"
 
-namespace tsqchrns {
+namespace tsqstts {
   qENUM( Type ) {
     tPending,   // Task is pending; NOTA: not directly used by this library; is implicit when sRow == qNIL.
     tEvent,     // Task is an event (date and hour).
@@ -63,14 +63,27 @@ namespace tsqchrns {
       struct {
         dte::sDate Date;
         tme::sTime Time;
+        void Init(void)
+        {
+          tol::Init(Date, Time);
+        }
       } Event;
       struct {
         dte::sDate
           Latest, Earliest;
+        void Init(void)
+        {
+          tol::Init(Latest, Earliest);
+        }
       } Timely;
       struct {
         sSpan Span;
         eUnit Unit;
+        void Init(void)
+        {
+          Span = 0;
+          Unit = u_Undefined;
+        }
       } Recurrent;
     };
     void reset(bso::sBool P = true)
@@ -96,10 +109,21 @@ namespace tsqchrns {
     qCDTOR( sStatus );
     void Init(eType Type = t_Default)
     {
+      this->Type = Type;
+
       switch( Type ) {
       case tPending:
+        break;
+      case tEvent:
+        Event.Init();
+        break;
+      case tTimely:
+        Timely.Init();
+        break;
+      case tRecurrent:
+        Recurrent.Init();
+        break;
       case tCompleted:
-        this->Type = Type;
         break;
       default:
         qRGnr();
@@ -141,28 +165,28 @@ namespace tsqchrns {
 }
 
 # ifdef C
-#  define TSQCHRNS_BUFFER_ C
+#  define TSQSTTS_BUFFER_ C
 # endif
 
 # undef C
 
 # define C( name )\
-  case tsqchrns::t##name:\
+  case tsqstts::t##name:\
     return memcmp( &S1.name, &S2.name, sizeof(S1.name)) == 0;\
     break
 
 inline bso::sBool operator ==(
-  const tsqchrns::sStatus &S1,
-  const tsqchrns::sStatus &S2)
+  const tsqstts::sStatus &S1,
+  const tsqstts::sStatus &S2)
 {
   if ( S1.Type != S2.Type )
     return false;
 
   switch ( S1.Type ) {
-  case tsqchrns::tPending:
+  case tsqstts::tPending:
     return true;
     break;
-  case tsqchrns::tCompleted:
+  case tsqstts::tCompleted:
     return true;
     break;
   C( Event );
@@ -178,14 +202,14 @@ inline bso::sBool operator ==(
 
 # undef C
 
-# ifdef TSQCHRNS_BUFFER_
-#  define C TSQCHRNS_BUFFER_
+# ifdef TSQSTTS_BUFFER_
+#  define C TSQSTTS_BUFFER_
 # endif
 
 
 inline bso::sBool operator !=(
-  const tsqchrns::sStatus &S1,
-  const tsqchrns::sStatus &S2)
+  const tsqstts::sStatus &S1,
+  const tsqstts::sStatus &S2)
 {
     return !operator ==(S1, S2);
 }

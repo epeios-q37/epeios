@@ -164,10 +164,6 @@ namespace tme {
 		{
 		  return _Raw;
 		}
-		operator raw_time__( void ) const
-		{
-			return _Raw;
-		}
 		bso::bool__ IsSet( void )
 		{
 			return _Raw != Undefined;

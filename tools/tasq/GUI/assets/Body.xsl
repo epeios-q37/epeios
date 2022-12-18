@@ -69,7 +69,7 @@
                           <xsl:with-param name="selected">12</xsl:with-param>
                         </xsl:call-template>
                       </select>
-                      <span>:</span>
+                      <span> :</span>
                       <select id="EventTimeMinute">
                         <xsl:call-template name="TaskEventLoop">
                           <xsl:with-param name="step">5</xsl:with-param>
