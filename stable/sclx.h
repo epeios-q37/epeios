@@ -1092,6 +1092,43 @@ namespace sclx {
 
       return Values_(Links_[Id]);
     }
+    const char *Get(
+      type Id,
+      qCBUFFERh &Buffer) const
+    {
+      return Get(Id).Convert(Buffer);
+    }
+    template <typename t> bso::sBool Get(
+      type Id,
+      t &Number) const
+    {
+      return Get(Id).ToNumber(Number);
+    }
+    void Get(
+      type Id,
+      dte::sDate &Date,
+      dte::eFormat Format) const
+    {
+    qRH;
+      qCBUFFERh Buffer;
+    qRB;
+      Date.Init(Get(Id, Buffer), Format);
+    qRR;
+    qRT;
+    qRE;
+    }
+    void Get(
+      type Id,
+      tme::sTime &Time) const
+    {
+    qRH;
+      qCBUFFERh Buffer;
+    qRB;
+      Time.Init(Get(Id, Buffer));
+    qRR;
+    qRT;
+    qRE;
+    }
   };
 
 // 'typedef SXLX_VALUESr(…) …'

@@ -59,6 +59,26 @@ eType tsqstts::GetType(const str::dString &Pattern)
 	return stsfsm::GetId(Pattern, TypeAutomat_, t_Undefined, t_amount);
 }
 
+#define C( name )	case u##name : return #name; break
+
+const char *tsqstts::GetLabel(eUnit Unit)
+{
+	switch ( Unit ) {
+	C( Day );
+	C( Week );
+	C( Month );
+	C( Year );
+	default:
+		qRFwk();
+		break;
+	}
+
+	return NULL;	// To avoid a warning.
+}
+
+#undef C
+
+
 qGCTOR( tsqstts )
 {
 	FillTypeAutomat_();

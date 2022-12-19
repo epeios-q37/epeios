@@ -14,6 +14,11 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2022-12-19
+- DTE: [extn];
+- SCLX: [extn];
+- XML: [extn];
+
 ## 2022-12-18
 - DTE: removing dubious automatic conversion ti `tDate`;
 - TME: removing dubious automatic conversion ti `tTime`;

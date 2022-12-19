@@ -373,7 +373,10 @@ namespace {
     case tsqstts::tEvent:
       Displayed.Init(L_( iTaskEventFeatures ));
       Values.Add(iTaskEventDate, Status.Event.Date, dte::fDDMMYYYY);
-      Values.Add(iTaskEventTime, Status.Event.Time);
+      if ( Status.Event.Time.IsSet() ) {
+        Values.Add(iTaskEventTimeHour, Status.Event.Time.Hours());
+        Values.Add(iTaskEventTimeMinute, Status.Event.Time.Minutes());
+      }
       break;
     case tsqstts::tRecurrent:
       Displayed.Init(L_( iTaskRecurrentFeatures ));
@@ -481,14 +484,49 @@ namespace {
   {
   qRH;
     rValues Values;
+    tme::sHours Hours = 0;
+    tme::sMinutes Minutes = 0;
+    tsqstts::tUnit Unit = tsqstts::u_Undefined;
+    qCBUFFERh Buffer;
   qRB;
     Values.Init();
 
-    Values.Fetch(Session, iTitleEdition, iTaskStatusType);
+    Values.Fetch(Session,
+      iTitleEdition, iTaskStatusType,
+      iTaskEventDate, iTaskEventTimeHour, iTaskEventTimeMinute,
+      iTaskTimelyDateLatest, iTaskTimelyDateEarliest,
+      iTaskRecurrentSpan, iTaskRecurrentUnit);
 
     Title.Append(Values.Get(iTitleEdition));
 
     Status.Type = (tsqstts::eType)Values.Get(iTaskStatusType).ToU8();
+
+    switch( Status.Type ) {
+    case tsqstts::tPending:
+      break;
+    case tsqstts::tEvent:
+      Values.Get(iTaskEventDate, Status.Event.Date, dte::fDDMMYYYY);
+
+      Values.Get(iTaskEventTimeHour, Hours);
+      Values.Get(iTaskEventTimeMinute, Minutes);
+      Status.Event.Time.Init(Hours, Minutes);
+      break;
+    case tsqstts::tTimely:
+      Values.Get(iTaskTimelyDateLatest, Status.Timely.Latest, dte::fDDMMYYYY);
+      Values.Get(iTaskTimelyDateEarliest, Status.Timely.Earliest, dte::fDDMMYYYY);
+      break;
+    case tsqstts::tRecurrent:
+      Values.Get(iTaskRecurrentSpan, Status.Recurrent.Span);
+
+      Values.Get(iTaskRecurrentUnit, Unit);
+      Status.Recurrent.Unit = (tsqstts::eUnit)Unit;
+      break;
+    case tsqstts::tCompleted:
+      break;
+    default:
+      qRGnr();
+      break;
+    }
 
     Session.Execute("markdown.value();", Description);
   qRR;

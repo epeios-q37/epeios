@@ -39,6 +39,10 @@ namespace tsqstts {
     t_Default = tPending
   };
 
+  const char *GetLabel(eType Type);
+
+  eType GetType(const str::dString &Pattern);
+
   typedef bso::sU8 sSpan;
 
   qENUM( Unit ) {
@@ -50,9 +54,7 @@ namespace tsqstts {
     u_Undefined
   };
 
-  const char *GetLabel(eType Type);
-
-  eType GetType(const str::dString &Pattern);
+  const char *GetLabel(eUnit Unit);
 
   struct sStatus
   {

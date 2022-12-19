@@ -6,14 +6,12 @@
   xmlns:xpp="http://epeios.q37.info/ns/xpp">
   <xpp:expand href="item.sub.xsl" />
   <xsl:output method="html" indent="yes" />
-  <xsl:template match="/TasQ">
-    <xsl:apply-templates select="Corpus" />
-  </xsl:template>
   <xsl:template name="TaskEventLoop">
     <xsl:param name="i">0</xsl:param>
     <xsl:param name="step">1</xsl:param>
     <xsl:param name="last" />
-    <xsl:param name="selected" />
+    <xsl:param
+      name="selected" />
     <option>
       <xsl:attribute name="value">
         <xsl:value-of select="$i" />
@@ -32,7 +30,7 @@
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
-  <xsl:template match="Corpus">
+  <xsl:template match="/TasQ">
     <div style="display: flex; flex-direction: column; width: 700px;">
       <fieldset>
         <fieldset id="Tree" style="height: 200px; overflow: auto;"></fieldset>
@@ -44,52 +42,7 @@
         <div>
           <fieldset id="TitleView"></fieldset>
           <input style="width: 100%;" class="hide" id="TitleEdition" />
-          <div id="TaskStatusEdition" class="hide">
-            <div style="display: flex; flex-direction: row;">
-              <xsl:apply-templates select="StatusTypes" />
-              <div id="TaskTimelyFeatures" class="hide">
-                <label>
-                  <span>Before:</span>
-                  <input id="TaskTimelyDateEarliest" placeholder="Earliest" title="Earliest" class="date"></input>
-                </label>
-                <label>
-                  <span>After:</span>
-                  <input id="TaskTimelyDateLatest" placeholder="Latest" title="Latest" class="date"></input>
-                </label>
-              </div>
-              <div id="TaskEventFeatures" class="hide">
-                <div style="display: flex; flex-direction: row;">
-                  <input id="TaskEventDate" class="date"></input>
-                  <div id="TaskEventTime">
-                    <div style="display: flex; flex-direction: row;">
-                      <select id="EventTimeHour">
-                        <xsl:call-template name="TaskEventLoop">
-                          <xsl:with-param name="step">1</xsl:with-param>
-                          <xsl:with-param name="last">23</xsl:with-param>
-                          <xsl:with-param name="selected">12</xsl:with-param>
-                        </xsl:call-template>
-                      </select>
-                      <span> :</span>
-                      <select id="EventTimeMinute">
-                        <xsl:call-template name="TaskEventLoop">
-                          <xsl:with-param name="step">5</xsl:with-param>
-                          <xsl:with-param name="last">55</xsl:with-param>
-                        </xsl:call-template>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div id="TaskRecurrentFeatures" class="hide">
-                <input id="TaskReccurentSpan" min="1" type="number" />
-                <select id="TaskRecurrentUnit">
-                  <option value="Days">Days</option>
-                  <option value="Weeks">Weeks</option>
-                  <option value="Months">Months</option>
-                </select>
-              </div>
-            </div>
-          </div>
+          <xsl:apply-templates select="Corpus/Task" />
           <div>
             <fieldset id="DescriptionView" style="height: 100px; overflow: auto;"></fieldset>
             <textarea class="hide" id="DescriptionEdition"></textarea>
@@ -104,15 +57,71 @@
       </fieldset>
     </div>
   </xsl:template>
-  <xsl:template match="StatusTypes">
+  <xsl:template match="Corpus/Task">
+    <xsl:apply-templates select="Status" />
+  </xsl:template>
+  <xsl:template match="Corpus/Task/Status">
+    <div id="TaskStatusEdition" class="hide">
+      <div style="display: flex; flex-direction: row;">
+        <xsl:apply-templates select="Types" />
+        <div id="TaskTimelyFeatures" class="hide">
+          <label>
+            <span>Before:</span>
+            <input id="TaskTimelyDateEarliest" placeholder="Earliest" title="Earliest" class="date"></input>
+          </label>
+          <label>
+            <span>After:</span>
+            <input id="TaskTimelyDateLatest" placeholder="Latest" title="Latest" class="date"></input>
+          </label>
+        </div>
+        <div id="TaskEventFeatures" class="hide">
+          <div style="display: flex; flex-direction: row;">
+            <input id="TaskEventDate" class="date"></input>
+            <div id="TaskEventTime">
+              <div style="display: flex; flex-direction: row;">
+                <select id="TaskEventTimeHour">
+                  <xsl:call-template name="TaskEventLoop">
+                    <xsl:with-param name="step">1</xsl:with-param>
+                    <xsl:with-param name="last">23</xsl:with-param>
+                    <xsl:with-param name="selected">12</xsl:with-param>
+                  </xsl:call-template>
+                </select>
+                <span>:</span>
+                <select id="TaskEventTimeMinute">
+                  <xsl:call-template name="TaskEventLoop">
+                    <xsl:with-param name="step">5</xsl:with-param>
+                    <xsl:with-param name="last">55</xsl:with-param>
+                  </xsl:call-template>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="TaskRecurrentFeatures" class="hide">
+          <input id="TaskRecurrentSpan" min="1" type="number" />
+          <xsl:apply-templates select="Unites" />
+        </div>
+      </div>
+    </div>
+  </xsl:template>
+  <xsl:template match="Task/Status/Types">
     <select id="TaskStatusType" xdh:onevent="SelectTaskType">
       <xsl:apply-templates select="Type" />
     </select>
   </xsl:template>
-  <xsl:template match="Type">
+  <xsl:template match="Task/Status/Types/Type">
     <option value="{@id}">
       <xsl:value-of select="@Label" />
     </option>
-    <xsl:apply-templates select="Type" />
+  </xsl:template>
+  <xsl:template match="Task/Status/Unites">
+    <select id="TaskRecurrentUnit">
+      <xsl:apply-templates select="Unit" />
+    </select>
+  </xsl:template>
+  <xsl:template match="Task/Status/Unites/Unit">
+    <option value="{@id}">
+      <xsl:value-of select="@Label" />
+    </option>
   </xsl:template>
 </xsl:stylesheet>

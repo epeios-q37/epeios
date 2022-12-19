@@ -171,6 +171,22 @@ namespace tme {
 		const char *ASCII(
 			buffer__ &Buffer,
 			format__ Format = f_Default ) const;
+    sHours Hours(void) const
+    {
+      return _H();
+    }
+    sMinutes Minutes(void) const
+    {
+      return _M();
+    }
+    sSeconds Secondes(void) const
+    {
+      return S_();
+    }
+    sTicks Ticks(void) const
+    {
+      return _T();
+    }
 	};
 }
 

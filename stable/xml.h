@@ -551,7 +551,18 @@ namespace xml {
 		eStatus Put(
 			const str::dString &XML,
 			xtf::sPos &ErrorPosition);	// Only valid when returned valus != 'sOK'.
-		qRODISCLOSEr( eLayout, Outfit )
+    template <typename type, int amount> void Put(
+      const char *TagName,
+      const char *(* GetLabel)(type e))
+    {
+      for(bso::tEnum I = 0; I < amount; I++) {
+        PushTag(TagName);
+        PutAttribute("id", I);
+        PutAttribute("Label", GetLabel((type)I));
+        PopTag();
+      }
+    }
+    qRODISCLOSEr( eLayout, Outfit )
 		qRODISCLOSEr( eSpecialCharHandling, SpecialCharHandling )
 	};
 }

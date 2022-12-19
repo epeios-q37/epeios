@@ -42,16 +42,20 @@ namespace {
 void tsqxmlw::WriteCorpus(xml::rWriter &Writer)
 {
   Writer.PushTag(L_( Corpus ));
-  Writer.PushTag(L_( StatusTypes));
+  Writer.PushTag(L_( Task )) ;
+  Writer.PushTag(L_( Status )) ;
 
-  for(bso::tEnum I = 0; I < tsqstts::t_amount; I++) {
-    Writer.PushTag(L_( Type ) );
-    Writer.PutAttribute(L_( Id ), I);
-    Writer.PutAttribute(L_( Label ), tsqstts::GetLabel((tsqstts::eType)I));
-    Writer.PopTag();
-  }
+  Writer.PushTag(L_( Types));
+  Writer.Put<tsqstts::eType, tsqstts::t_amount>(L_( Type ), tsqstts::GetLabel);
+  Writer.PopTag();  // Types
 
-  Writer.PopTag();
+  Writer.PushTag(L_( Unites ));
+  Writer.Put<tsqstts::eUnit, tsqstts::u_amount>(L_( Unit ), tsqstts::GetLabel);
+  Writer.PopTag();  // Unites
+
+  Writer.PopTag();  // Status.
+  Writer.PopTag();  // Task.
+  Writer.PopTag();  // Corpus;
 }
 
 void tsqxmlw::WriteCorpus(str::dString &XML)

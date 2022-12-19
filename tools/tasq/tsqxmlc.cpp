@@ -33,9 +33,11 @@ const char *tsqxmlc::GetLabel(eToken Token)
   switch ( Token ) {
   C_( TasQ );
   C_( Corpus );
-  C_( StatusTypes );
+  C_( Status );
+  C_( Types );
   C_( Type );
   C_( Tasks );
+  C_( Task );
   C_( Items );
   C_( Item );
   C_( RootTask );
@@ -46,12 +48,12 @@ const char *tsqxmlc::GetLabel(eToken Token)
   C_( Selected );
   C_( Title );
   C_( Description );
-  C_( Status );
   C_( Date );
   C_( Time );
   C_( Latest );
   C_( Earliest );
   C_( Span );
+  C_( Unites );
   C_( Unit );
     break;
 /*
