@@ -514,7 +514,7 @@ namespace {
         break;
       case tRecurrent:
         Parser.Attribute(tSpan, Span);
-        Links.Unit.Get(Parser.Attribute<bso::tEnum>(eToken::tUnit));
+        Unit = Links.Unit.Get(Parser.Attribute<bso::tEnum>(eToken::tUnit));
 
         Status.Init(Span, Unit);
         break;
@@ -697,13 +697,14 @@ namespace {
         break;
       case rClosingTag:
         switch( Parser.Tag() ) {
+        case tTasks:
         case tItems:
           break;
         case tItem:
           Row = Bundle.Tasks.Parent(Row);
           break;
-        case tDescription:
         case tStatus:
+        case tDescription:
           break;
         default:
           qRGnr();

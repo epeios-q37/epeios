@@ -160,7 +160,7 @@ namespace tsqbndl {
       const str::dString &Title,
       sTRow Row)
     {
-      return Add(Title, str::Empty, sStatus(), Row);
+      return Add(Title, str::Empty, sStatus(tsqstts::t_Default), Row);
     }
     sTRow UpdateTaskDescription(
       sTRow Row,

@@ -41,7 +41,7 @@ namespace tsqxmlw {
     FF_( Description ),
     FF_( Readable ),
     ffAll = ( ( 1 << f_amount_ ) - 1 ),
-    ffExport = ffAll & ffReadable,
+    ffExport = ffAll & ~ffReadable,
     ffDisplay = ffAll & ~ffDescription
   };
 
