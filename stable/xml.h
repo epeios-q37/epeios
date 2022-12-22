@@ -1109,6 +1109,16 @@ namespace xml {
 
       return true;
     }
+    template <typename type> type GetAttribute(
+      sTRow Row,
+      token Token) const
+    {
+      type Value;
+
+      GetAttribute(Row, Token, Value);
+
+      return Value;
+    }
     void Pop(void)
     {
       sTag<token,amount,undefined> Tag;

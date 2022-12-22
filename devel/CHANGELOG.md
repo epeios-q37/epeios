@@ -14,6 +14,10 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2022-12-21
+- TOL: [extn];
+- XML: [extn];
+
 ## 2022-12-19
 - DTE: [extn];
 - SCLX: [extn];

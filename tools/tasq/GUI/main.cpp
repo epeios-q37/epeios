@@ -268,9 +268,9 @@ namespace {
     XML.Init();
 
     if ( Row == qNIL )
-      tsqxmlw::Write(Bundle, tsqxmlw::ffDisplay, XML);
+      tsqxmlw::WriteAllTasks(Bundle, tsqxmlw::ffDisplay, XML);
     else
-      tsqxmlw::Write(Row, Bundle, tsqxmlw::ffDisplay, XML);
+      tsqxmlw::WriteTask(Row, Bundle, tsqxmlw::ffDisplay, XML);
 
     Dress_(Id, Position, XML, XSLEntry, Session);
   qRR;

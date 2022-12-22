@@ -56,6 +56,8 @@ namespace tsqstts {
 
   const char *GetLabel(eUnit Unit);
 
+  eUnit GetUnit(const str::dString &Pattern);
+
   struct sStatus
   {
   public:

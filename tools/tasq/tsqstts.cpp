@@ -78,10 +78,27 @@ const char *tsqstts::GetLabel(eUnit Unit)
 
 #undef C
 
+namespace {
+	stsfsm::wAutomat UnitAutomat_;
+
+	void FillUnitAutomat_( void )
+	{
+		UnitAutomat_.Init();
+		stsfsm::Fill<eUnit>(UnitAutomat_, u_amount, GetLabel);
+	}
+}
+
+eUnit tsqstts::GetUnit(const str::dString &Pattern)
+{
+	return stsfsm::GetId(Pattern, UnitAutomat_, u_Undefined, u_amount);
+}
+
+
 
 qGCTOR( tsqstts )
 {
 	FillTypeAutomat_();
+	FillUnitAutomat_();
 }
 
 

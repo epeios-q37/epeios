@@ -31,7 +31,7 @@ const char *tsqxmlc::GetLabel(eToken Token)
   const char *Label = NULL;
 
   switch ( Token ) {
-  C_( TasQ );
+  C_( TASq );
   C_( Corpus );
   C_( Status );
   C_( Types );
@@ -41,6 +41,7 @@ const char *tsqxmlc::GetLabel(eToken Token)
   C_( Items );
   C_( Item );
   C_( RootTask );
+  C_( Amount );
   case tId:
     Label = "id";
     break;

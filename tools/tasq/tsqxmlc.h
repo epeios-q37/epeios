@@ -26,7 +26,7 @@
 
 namespace tsqxmlc {
   qENUM( Token ) {
-    tTasQ,
+    tTASq,
     tCorpus,
     tStatus,
     tTypes,
@@ -36,6 +36,7 @@ namespace tsqxmlc {
     tItems,
     tItem,
     tRootTask,
+    tAmount,
     tId,
     tLabel,
     tSelected,

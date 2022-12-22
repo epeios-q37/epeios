@@ -35,7 +35,7 @@ namespace task = tsqtsk;
 namespace {
   void WriteRoot_(xml::rWriter &Writer )
   {
-    Writer.PushTag(L_( TasQ ));
+    Writer.PushTag(L_( TASq ));
   }
 }
 
@@ -46,10 +46,12 @@ void tsqxmlw::WriteCorpus(xml::rWriter &Writer)
   Writer.PushTag(L_( Status )) ;
 
   Writer.PushTag(L_( Types));
+  Writer.PutAttribute(L_( Amount ), (bso::tEnum)t_amount);
   Writer.Put<tsqstts::eType, tsqstts::t_amount>(L_( Type ), tsqstts::GetLabel);
   Writer.PopTag();  // Types
 
   Writer.PushTag(L_( Unites ));
+  Writer.PutAttribute(L_( Amount ), (bso::tEnum)tsqstts::u_amount);
   Writer.Put<tsqstts::eUnit, tsqstts::u_amount>(L_( Unit ), tsqstts::GetLabel);
   Writer.PopTag();  // Unites
 
@@ -166,8 +168,7 @@ namespace {
     task::sTask Task;
     tsqstts::sStatus Status;
   qRB;
-    if ( Flags & ffId )
-      Writer.PutAttribute(L_( Id ), *Row);
+    Writer.PutAttribute(L_( Id ), *Row);
 
     Task.Init();
     Bundle.Tasks.Recall(Row, Task);
@@ -232,7 +233,7 @@ namespace {
 
 }
 
-void tsqxmlw::Write(
+void tsqxmlw::WriteTask(
   task::sRow Row,
   const tsqbndl::dBundle &Bundle,
   int Flags,
@@ -249,7 +250,7 @@ void tsqxmlw::Write(
   Writer.PopTag();
 }
 
-void tsqxmlw::Write(
+void tsqxmlw::WriteTask(
   task::sRow Row,
   const tsqbndl::dBundle &Bundle,
   int Flags,
@@ -262,13 +263,13 @@ qRB;
   Flow.Init(XML);
   Writer.Init(Flow, xml::oIndent);
 
-  Write(Row, Bundle, Flags, Writer);
+  WriteTask(Row, Bundle, Flags, Writer);
 qRR;
 qRT;
 qRE;
 }
 
-void tsqxmlw::Write(
+void tsqxmlw::WriteAllTasks(
   const tsqbndl::dBundle &Bundle,
   int Flags,
   xml::rWriter &Writer)
@@ -279,15 +280,14 @@ void tsqxmlw::Write(
 
   Row = Bundle.RootTask();
 
-  if ( Flags & ffId )
-    Writer.PutAttribute(L_( RootTask ), *Row);
+  Writer.PutAttribute(L_( RootTask ), *Row);
 
   Write_(Row, Bundle, Flags, Writer);
 
   Writer.PopTag();
 }
 
-void tsqxmlw::Write(
+void tsqxmlw::WriteAllTasks(
   const tsqbndl::dBundle &Bundle,
   int Flags,
   str::dString &XML)
@@ -301,7 +301,7 @@ qRB;
 
   WriteRoot_(Writer);
 
-  Write(Bundle, Flags, Writer);
+  WriteAllTasks(Bundle, Flags, Writer);
 
   Writer.PopTag();
 qRR;

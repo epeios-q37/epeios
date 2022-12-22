@@ -30,7 +30,6 @@
 namespace tsqxmlw {
   qENUM( Filter ) {
     fDescription_,
-    fId_,
     fReadable_,
     f_amount_,
     f_Undefined_,
@@ -40,10 +39,9 @@ namespace tsqxmlw {
 
   qENUM( FilterFlag ) {
     FF_( Description ),
-    FF_( Id ),
     FF_( Readable ),
     ffAll = ( ( 1 << f_amount_ ) - 1 ),
-    ffExport = ffAll & ~( ffId | ffReadable ),
+    ffExport = ffAll & ffReadable,
     ffDisplay = ffAll & ~ffDescription
   };
 
@@ -53,24 +51,24 @@ namespace tsqxmlw {
 
   void WriteCorpus(str::dString &XML);
 
-  void Write(
+  void WriteTask(
     tsqtsk::sRow Row,
     const tsqbndl::dBundle &Bundle,
     int Flags,
     xml::rWriter &Writer);
 
-  void Write(
+  void WriteTask(
     tsqtsk::sRow Row,
     const tsqbndl::dBundle &Bundle,
     int Flags,
     str::dString &XML);
 
-  void Write(
+  void WriteAllTasks(
     const tsqbndl::dBundle &Bundle,
     int Flags,
     xml::rWriter &Writer);
 
-  void Write(
+  void WriteAllTasks(
     const tsqbndl::dBundle &Bundle,
     int Flags,
     str::dString &XML);

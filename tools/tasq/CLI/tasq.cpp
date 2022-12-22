@@ -23,6 +23,7 @@
 #include "registry.h"
 
 #include "tsqbndl.h"
+#include "tsqxmlc.h"
 #include "tsqxmlp.h"
 #include "tsqxmlw.h"
 
@@ -82,9 +83,10 @@ namespace {
 
       Writer.Init(Rack.Init(XMLFilename), xml::lIndent);
 
-      Writer.PushTag("TasQ");
+      Writer.PushTag(tsqxmlc::GetLabel(tsqxmlc::tTASq));
 
-      tsqxmlw::Write(tsqbndl::CGet(Guard), tsqxmlw::ffExport, Writer);
+      tsqxmlw::WriteCorpus(Writer);
+      tsqxmlw::WriteAllTasks(tsqbndl::CGet(Guard), tsqxmlw::ffExport, Writer);
 
       Writer.PopTag();
     } else {
@@ -114,9 +116,6 @@ namespace {
       Initialized = true;
 
       Parser.Init(Rack.Init(XMLFilename), xml::eh_Default);
-
-      if ( ( Parser.Parse(xml::tfStartTagClosed) != xml::tStartTagClosed ) || ( Parser.TagName() != "TasQ") )
-        qRFwk();
 
       tsqxmlp::Parse(Parser, tsqbndl::Get(Guard));
     } else {

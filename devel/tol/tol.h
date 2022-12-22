@@ -101,6 +101,10 @@ namespace str {
     {\
       V_ = qNIL;\
     }\
+    void Init(void)\
+    {\
+      V_ = qNIL;\
+    }\
   }
 
 # define qROW( name ) TOL_ROW_( s##name )
