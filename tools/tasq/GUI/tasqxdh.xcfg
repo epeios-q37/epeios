@@ -10,7 +10,7 @@
 				<DBFilename>/home/csimon/Misc/TasQ/DB</DBFilename>
 			</xpp:ifeq>
 			<xpp:ifeq select="Update" value="">
-				<DBFileAffix>./Test</DBFileAffix>
+				<DBFileAffix>./Main</DBFileAffix>
 			</xpp:ifeq>
 			<Language>en</Language>
 		</Parameters>

@@ -1100,9 +1100,22 @@ namespace sclx {
     }
     template <typename t> bso::sBool Get(
       type Id,
-      t &Number) const
+      t &Number,
+      qRPD) const
     {
-      return Get(Id).ToNumber(Number);
+      if ( !Get(Id).ToNumber(Number) )
+        if ( qRPT )
+          return false;
+
+      return true;
+    }
+    template <typename t> t Get(type Id) const
+    {
+      t Value;
+
+      Get(Id, Value);
+
+      return Value;
     }
     void Get(
       type Id,

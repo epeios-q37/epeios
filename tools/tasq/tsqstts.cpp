@@ -29,11 +29,9 @@ using namespace tsqstts;
 const char *tsqstts::GetLabel(eType Type)
 {
 	switch ( Type ) {
-	C( Pending );
-	C( Completed );
+	C( Timeless );
 	C( Event );
 	C( Timely );
-	C( Recurrent );
 	default:
 		qRFwk();
 		break;

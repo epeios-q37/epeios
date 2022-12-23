@@ -14,6 +14,12 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2022-12-23
+- DTE: [extn];
+- SCLX: [extn];
+- TME: [extn];
+- XML: rewriting `rXParser`;
+
 ## 2022-12-21
 - TOL: [extn];
 - XML: [extn];

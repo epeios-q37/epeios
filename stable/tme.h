@@ -188,6 +188,13 @@ namespace tme {
       return _T();
     }
 	};
+
+	inline bso::sBool operator ==(
+    time__ T1,
+    time__ T2)
+  {
+    return T1() == T2();
+  }
 }
 
 /*************/

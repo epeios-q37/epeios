@@ -42,15 +42,19 @@ namespace tsqtsk {
       Title,
       Description;
     tsqstts::sRow Status;
+    bso::sU8
+      Completion: 4,
+      Priority: 4;
     void reset(bso::sBool P = true)
     {
       tol::reset(P, Title, Description, Status);
+      Completion = Priority = 0;
     }
     qCDTOR(sTask);
     void Init(void)
     {
-      Title = Description = qNIL;
-      Status = qNIL;
+      tol::Init(Title, Description, Status);
+      Completion = Priority = 0;
     }
   };
 

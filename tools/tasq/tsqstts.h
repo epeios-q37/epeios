@@ -29,14 +29,12 @@
 
 namespace tsqstts {
   qENUM( Type ) {
-    tPending,   // Task is pending; NOTA: not directly used by this library; is implicit when sRow == qNIL.
+    tTimeless,   // Task with no time constriant.
     tEvent,     // Task is an event (date and hour).
     tTimely,    // Due task (due date and begin date, which, by default, is the date when the task was crated.
-    tRecurrent,
-    tCompleted, // Task is completed
     t_amount,
     t_Undefined,
-    t_Default = tPending
+    t_Default = tTimeless
   };
 
   const char *GetLabel(eType Type);
@@ -58,11 +56,27 @@ namespace tsqstts {
 
   eUnit GetUnit(const str::dString &Pattern);
 
+  struct sRecurrence
+  {
+    sSpan Span; // If 0, no recurrence.
+    eUnit Unit;
+    void reset(bso::sBool = true)
+    {
+      Span = 0;
+      Unit = u_Undefined;
+    }
+    qCDTOR( sRecurrence );
+    void Init(void)
+    {
+      Span = 0;
+      Unit = u_Undefined;
+    }
+  };
+
   struct sStatus
   {
   public:
     eType Type;
-    dte::sDate Latest;  // For 'tDue' tasks.
     union {
       struct {
         dte::sDate Date;
@@ -80,19 +94,12 @@ namespace tsqstts {
           tol::Init(Latest, Earliest);
         }
       } Timely;
-      struct {
-        sSpan Span;
-        eUnit Unit;
-        void Init(void)
-        {
-          Span = 0;
-          Unit = u_Undefined;
-        }
-      } Recurrent;
     };
+    sRecurrence Recurrence;
     void reset(bso::sBool P = true)
     {
       Type = t_Undefined;
+      Recurrence.reset(P);
     }
     explicit sStatus(eType Type)
     {
@@ -115,19 +122,16 @@ namespace tsqstts {
     {
       this->Type = Type;
 
+      Recurrence.Init();
+
       switch( Type ) {
-      case tPending:
+      case tTimeless:
         break;
       case tEvent:
         Event.Init();
         break;
       case tTimely:
         Timely.Init();
-        break;
-      case tRecurrent:
-        Recurrent.Init();
-        break;
-      case tCompleted:
         break;
       default:
         qRGnr();
@@ -136,30 +140,25 @@ namespace tsqstts {
     }
     void Init(
       dte::sDate Date,
-      tme::sTime Time)
+      tme::sTime Time,
+      sRecurrence Recurrence = sRecurrence() )
     {
       Type = tEvent;
 
       Event.Date = Date;
       Event.Time = Time;
+      this->Recurrence = Recurrence;
     }
     void Init(
       dte::sDate Latest,
-      dte::sDate Earliest )
+      dte::sDate Earliest,
+      sRecurrence Recurrence = sRecurrence() )
     {
       Type = tTimely;
 
       Timely.Latest = Latest;
       Timely.Earliest = Earliest;
-    }
-    void Init(
-      sSpan Span,
-      eUnit Unit)
-    {
-      Type = tRecurrent;
-
-      Recurrent.Span = Span;
-      Recurrent.Unit = Unit;
+      this->Recurrence = Recurrence;
     }
   };
 
@@ -180,6 +179,13 @@ namespace tsqstts {
     break
 
 inline bso::sBool operator ==(
+  const tsqstts::sRecurrence &R1,
+  const tsqstts::sRecurrence &R2)
+{
+  return ( R1.Span == R2.Span ) && ( R1.Span != 0 ? R1.Unit == R2.Unit : true );
+}
+
+inline bso::sBool operator ==(
   const tsqstts::sStatus &S1,
   const tsqstts::sStatus &S2)
 {
@@ -187,15 +193,21 @@ inline bso::sBool operator ==(
     return false;
 
   switch ( S1.Type ) {
-  case tsqstts::tPending:
+  case tsqstts::tTimeless:
     return true;
     break;
-  case tsqstts::tCompleted:
-    return true;
-    break;
-  C( Event );
-  C( Timely );
-  C( Recurrent );
+  case tsqstts::tEvent:
+    return
+      ( S1.Event.Date == S2.Event.Date )
+      && ( S1.Event.Time == S2.Event.Time)
+      && ( S1.Recurrence == S2.Recurrence);
+      break;
+  case tsqstts::tTimely:
+    return
+      ( S1.Timely.Latest == S2.Timely.Latest )
+      && ( S1.Timely.Earliest == S2.Timely.Earliest )
+      && ( S1.Recurrence == S2.Recurrence);
+      break;
   default:
     qRGnr();
     break;

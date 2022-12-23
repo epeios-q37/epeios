@@ -46,12 +46,12 @@ void tsqxmlw::WriteCorpus(xml::rWriter &Writer)
   Writer.PushTag(L_( Status )) ;
 
   Writer.PushTag(L_( Types));
-  Writer.PutAttribute(L_( Amount ), (bso::tEnum)t_amount);
+  Writer.PutAttribute(L_( Amount ), (tsqstts::tType)tsqstts::t_amount);
   Writer.Put<tsqstts::eType, tsqstts::t_amount>(L_( Type ), tsqstts::GetLabel);
   Writer.PopTag();  // Types
 
   Writer.PushTag(L_( Unites ));
-  Writer.PutAttribute(L_( Amount ), (bso::tEnum)tsqstts::u_amount);
+  Writer.PutAttribute(L_( Amount ), (tsqstts::tUnit)tsqstts::u_amount);
   Writer.Put<tsqstts::eUnit, tsqstts::u_amount>(L_( Unit ), tsqstts::GetLabel);
   Writer.PopTag();  // Unites
 
@@ -129,13 +129,11 @@ namespace {
     {
       Writer.PushTag(L_( Status ));
 
-      Writer.PutAttribute(L_( Type ), (bso::tEnum)Status.Type);
+      Writer.PutAttribute(L_( Type ), (tsqstts::tType)Status.Type);
 
       switch ( Status.Type ) {
-      case tsqstts::tPending:
+      case tsqstts::tTimeless:
         qRGnr();
-        break;
-      case tsqstts::tCompleted:
         break;
       case tsqstts::tEvent:
         _::Write(Status.Event.Date, tDate, Flags, Writer);
@@ -145,13 +143,16 @@ namespace {
         _::Write(Status.Timely.Latest, tLatest, Flags, Writer);
         _::Write(Status.Timely.Earliest, tEarliest, Flags, Writer);
         break;
-      case tsqstts::tRecurrent:
-        Writer.PutAttribute(L_( Span ), Status.Recurrent.Span);
-        Writer.PutAttribute(L_( Unit ), (bso::tEnum)Status.Recurrent.Unit);
-        break;
       default:
         qRGnr();
         break;
+      }
+
+      if ( Status.Recurrence.Span != 0 ) {
+        Writer.PushTag(L_( Recurrence ));
+        Writer.PutAttribute(L_( Span ), Status.Recurrence.Span);
+        Writer.PutAttribute(L_( Unit ), (tsqstts::tUnit)Status.Recurrence.Unit);
+        Writer.PopTag();
       }
 
       Writer.PopTag();

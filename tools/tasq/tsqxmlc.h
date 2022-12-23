@@ -31,6 +31,7 @@ namespace tsqxmlc {
     tStatus,
     tTypes,
     tType,
+    tRecurrence,
     tTasks,
     tTask,
     tItems,

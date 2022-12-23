@@ -36,6 +36,7 @@ const char *tsqxmlc::GetLabel(eToken Token)
   C_( Status );
   C_( Types );
   C_( Type );
+  C_( Recurrence );
   C_( Tasks );
   C_( Task );
   C_( Items );

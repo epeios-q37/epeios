@@ -391,6 +391,13 @@ namespace dte {
 		return bso::Compare( Date1(), Date2() );
 	}
 
+	inline bso::sBool operator ==(
+		const date__ &Date1,
+		const date__ &Date2 )
+  {
+    return Compare(Date1, Date2) == 0;
+  }
+
 	inline txf::text_oflow__ &operator <<(
 		txf::text_oflow__ &Flow,
 		date__ Date )

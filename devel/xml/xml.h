@@ -894,7 +894,7 @@ namespace xml {
 			str::string_ &AttributeName,
 			bso::sChar &AttributeDelimiter,
 			str::string_ &Value,	// Contient la valeur d'une balise ('tag') our d'un attribut, en fonction de la valeur retourne ('tTag' ou 'tAttribute').
-			xml::dump_ &Dump,
+			dump_ &Dump,
 			status__ &Status,
 			int TokenToReport = tfAll )	// 'Status' initialis seulement si valeur retourne == 'tError'.
 		{
@@ -1009,241 +1009,307 @@ namespace xml {
 
   typedef stkcrt::qCSTACKw(str::dString, sVRow_) rValues_;
 
-  template <typename token, int amount, token undefined> struct sTag
+  qENUM( Realm ) {
+    rTagClosed,
+    rValue,
+    rElementClosed,
+    rProcessed,
+    r_amount,
+    r_Undefined
+  };
+
+  typedef bso::sU8 sAmount_;
+  qCDEF(sAmount_, AmountMax_, bso::U8Max);
+
+  template <typename item, int amount, item undefined> struct sElement_
   {
+  private:
+    item Tag_;
+    sVRow_ Attributes_[amount];
+    sAmount_ Amount_;
   public:
-    token Token;
-    sVRow_ Attributes[amount];
-    sdr::sSize Amount;
     void reset(bso::sBool P = true)
     {
-      Token = undefined;
-      memset(Attributes, -1, sizeof(Attributes));
-      Amount = 0;
+      Tag_ = undefined;
+      memset(Attributes_, -1, sizeof(Attributes_));
+      Amount_ = 0;
     }
     void Init(void)
     {
-      reset();
+      Tag_ = undefined;
+      memset(Attributes_, -1, sizeof(Attributes_));
+      Amount_ = 0;
+    }
+    sAmount_ GetAmount(void) const
+    {
+      return Amount_;
+    }
+    bso::sBool HasTag(void) const
+    {
+      return Tag_ != undefined;
+    }
+    void SetTag(item Item)
+    {
+      if ( Item > amount )
+        qRFwk();
+
+      if ( HasTag() )
+        qRFwk();
+
+      Tag_ = Item;
+    }
+    item GetTag(void) const
+    {
+      if ( !HasTag() )
+        qRFwk();
+
+      return Tag_;
+    }
+    bso::sBool HasAttribute(item Item) const
+    {
+      if ( Item > amount )
+        qRFwk();
+
+      return Attributes_[Item] != qNIL;
+    }
+    void SetAttribute(
+      item Item,
+      sVRow_ Row)
+    {
+      if ( HasAttribute(Item) )
+        qRFwk();
+
+      if ( Amount_ >= AmountMax_ )
+        qRFwk();
+
+      Attributes_[Item] = Row;
+    }
+    sVRow_ GetAttribute(item Item) const
+    {
+      if ( !HasAttribute(Item) )
+        qRFwk();
+
+       return Attributes_[Item];
     }
   };
 
-  qROW( TRow );
+  qROW( TRow_ );
 
-  template <typename token, int amount, token undefined> qTCLONE(stkbch::qBSTACKw(sTag<qCOVER3(token,amount,undefined)>, sTRow), rTags_);
+  template <typename item, int amount, item undefined> qTCLONE(stkbch::qBSTACKw(sElement_<qCOVER3(item,amount,undefined)>, sTRow_), rElements_);
 
-  template <typename token, int amount, token undefined> class rBundle
+  template <typename item, int amount, item undefined> class rBundle_
   {
   private:
     rValues_ Values_;
-    rTags_<token,amount,undefined> Tags_;
+    rElements_<item,amount,undefined> Elements_;
+    sElement_<item,amount,undefined> Element_;  // Current element.
+    sVRow_ Value_; // Current element value.
   public:
     void reset(bso::sBool P = true )
     {
-      tol::reset(P, Values_, Tags_);
+      tol::reset(P, Values_, Elements_, Element_, Value_);
     }
-    qCDTOR( rBundle );
+    qCDTOR( rBundle_ );
     void Init(void)
     {
-      tol::Init(Values_, Tags_);
+      tol::Init(Values_, Elements_, Element_, Value_);
     }
     bso::sBool IsEmpty(void) const
     {
-      return Tags_.Amount() == 0;
+      return Elements_.Amount() == 0;
     }
-    bso::sBool HasAttribute(
-      sTRow Row,
-      token Token) const
+    void SetTag(item Item)
     {
-      sTag<token,amount,undefined> Tag;
-
-      Tag.Init();
-      Tags_.Recall(Row, Tag);
-
-      return Tag.Attributes[Token] != qNIL;
+      return Element_.SetTag(Item);
     }
-    const str::dString &GetAttribute(
-      sTRow Row,
-      token Token) const
+    item Tag(void) const
     {
-      sTag<token,amount,undefined> Tag;
+      return Element_.GetTag();
+    }
+    void SetValue(const str::dString &Value)
+    {
+      if ( Value_ != qNIL )
+        qRFwk();
 
-      Tag.Init();
-      Tags_.Recall(Row, Tag);
-
-      if ( Tag.Attributes[Token] != qNIL )
-        return Values_(Tag.Attributes[Token]);
+      Value_ = Values_.Push(Value);
+    }
+    const str::dString &Value(void) const
+    {
+      if ( Value_ == qNIL )
+        return str::Empty;
+      else
+        return Values_(Value_);
+    }
+    bso::sBool HasAttribute(item Item) const
+    {
+      return Element_.HasAttribute(Item);
+    }
+    void SetAttribute(
+      item Item,
+      const str::dString &Value)
+    {
+      return Element_.SetAttribute(Item, Values_.Push(Value));
+    }
+    const str::dString &Attribute(item Item) const
+    {
+      if ( HasAttribute(Item) )
+        return Values_(Element_.GetAttribute(Item));
       else
         return str::Empty;
     }
-    template <typename t> bso::sBool GetAttribute(
-      sTRow Row,
-      token Token,
+    template <typename t> bso::sBool Attribute(
+      item Item,
       t &Number,
       qRPD) const
     {
-      if ( !HasAttribute(Row, Token) ) {
+      if ( !HasAttribute(Item) ) {
         if ( qRPT )
           qRFwk();
         else
           return false;
       }
 
-      GetAttribute(Row, Token).ToNumber(Number);
+      Attribute(Item).ToNumber(Number);
 
       return true;
     }
-    bso::sBool GetAttribute(
-      sTRow Row,
-      token Token,
+    bso::sBool Attribute(
+      item Item,
       bso::tEnum &Number,
       qRPD) const
     {
-      if ( !HasAttribute(Row, Token) ) {
+      if ( !HasAttribute(Item) ) {
         if ( qRPT )
           qRFwk();
         else
           return false;
       }
 
-      GetAttribute(Row, Token).ToNumber(Number);
+      Attribute(Item).ToNumber(Number);
 
       return true;
     }
-    template <typename type> type GetAttribute(
-      sTRow Row,
-      token Token) const
+    template <typename type> type Attribute(item Item) const
     {
       type Value;
 
-      GetAttribute(Row, Token, Value);
+      Attribute(Item, Value);
 
       return Value;
     }
     void Pop(void)
     {
-      sTag<token,amount,undefined> Tag;
+      sAmount_ Amount = Element_.GetAmount();
 
-      Tag.Init();
-      Tags_.Pop(Tag);
-
-      while ( Tag.Amount-- )
+      if ( Value_ != qNIL ) {
         Values_.Pop();
-    }
-    sVRow_ Push(const str::dString &Value)
-    {
-      return Values_.Push(Value);
-    }
-    sTRow Push(const sTag<token,amount,undefined> &Tag)
-    {
-      return Tags_.Push(Tag);
-    }
-    sTRow Parent(sTRow Row) const
-    {
-      return Tags_.Previous(Row);
-    }
-    sTRow Top(void) const
-    {
-      return Tags_.Last();
-    }
-    sTag<token,amount,undefined> Tag(sTRow Row) const
-    {
-      return Tags_(Row);
-    }
-  };
-
-  template <typename token, int amount, token undefined> class cXParser
-  {
-  protected:
-    virtual void XMLOnStartTagClosed(
-      token Tag,
-      sTRow Row,
-      const rBundle<token,amount,undefined> &Bundle) = 0;
-    virtual void XMLOnEndTag(
-      token Tag,
-      sTRow Row,
-      const str::dString &Value,
-      const rBundle<token,amount,undefined> &Bundle) = 0;
-  public:
-    void OnStartTagClosed(
-      token Tag,
-      sTRow Row,
-      const rBundle<token,amount,undefined> &Bundle)
-    {
-      return XMLOnStartTagClosed(Tag, Row, Bundle);
-    }
-    void OnEndTag(
-      token Tag,
-      sTRow Row,
-      const str::dString &Value,
-      const rBundle<token,amount,undefined> &Bundle)
-    {
-      return XMLOnEndTag(Tag, Row, Value, Bundle);
-    }
-  };
-
-  template <typename token, int amount, token undefined> inline void Parse(
-    xml::rParser &Parser,
-    cXParser<token,amount,undefined> &Callback,
-    token (*GetToken)(const str::dString &Pattern))
-  {
-  qRH;
-    bso::sBool Continue = true;
-    rBundle<token,amount,undefined> Bundle;
-    sTag<token,amount,undefined> Tag;
-    token Token = undefined;
-    str::wString Value;
-    stkcrt::qCSTACKwl(str::dString) Values;
-  qRB;
-    tol::Init(Bundle, Value, Values);
-
-    while ( Continue ) {
-      switch( Parser.Parse(xml::tfAllButUseless) ) {
-      case xml::tStartTag:
-        Values.Push(Value);
-        Value.Init();
-        Tag.Init();
-        Tag.Token = GetToken(Parser.TagName());
-        break;
-      case xml::tAttribute:
-        Token = GetToken(Parser.AttributeName());
-
-        if ( Tag.Attributes[Token] != qNIL )
-          qRFwk();
-
-        Tag.Attributes[Token] = Bundle.Push(Parser.Value());
-        Tag.Amount++;
-        break;
-      case xml::tStartTagClosed:
-        Callback.OnStartTagClosed(Tag.Token, Bundle.Push(Tag), Bundle);
-        break;
-      case xml::tValue:
-      case xml::tCData:
-        Value.Init(Parser.Value());
-        break;
-      case xml::tEndTag:
-        if ( Bundle.IsEmpty() ) {
-          Continue = false;
-        } else {
-          Callback.OnEndTag(Bundle.Tag(Bundle.Top()).Token, Bundle.Top(),Value, Bundle);
-          Bundle.Pop();
-          Value.Init(Values(Values.Pop()));
-        }
-        break;
-      case xml::t_Processed:
-        if ( !Bundle.IsEmpty() )
-          qRFwk();
-
-        Continue = false;
-        break;
-      default:
-        qRFwk();
-        break;
+        Value_ = qNIL;
       }
+
+      while ( Amount-- )
+        Values_.Pop();
+
+      Elements_.Pop(Element_);
     }
-  qRR;
-  qRT;
-  qRE;
-  }
+    void Push(void)
+    {
+      if ( Element_.HasTag() ) {
+        Elements_.Push(Element_);
+        Element_.Init();
+
+        if ( Value_ != qNIL ) {
+          Values_.Pop();
+          Value_ = qNIL;
+        }
+      } else if ( !IsEmpty() )
+        qRFwk();
+    }
+  };
+
+  template <typename item, int amount, item undefined> class rXParser
+  : public rBundle_<item,amount,undefined>
+  {
+  private:
+    qRMV(rParser, P_, Parser_);
+    item (*GI_)(const str::dString &Pattern);
+    bso::sBool Pop_;
+    item GetItem_(const str::dString &Pattern)
+    {
+      if ( GI_ == NULL )
+        qRFwk();
+
+      return GI_(Pattern);
+    }
+  public:
+    void reset(bso::sBool P = true)
+    {
+      tol::reset(P, Parser_, GI_,Pop_);
+      rBundle_<item,amount,undefined>::reset(P);
+    }
+    qCDTOR( rXParser );
+    void Init(
+      rParser &Parser,
+      item GetItem(const str::dString &Pattern))
+    {
+      Parser_ = &Parser;
+      GI_ = GetItem;
+      Pop_ = false;
+      rBundle_<item,amount,undefined>::Init();
+    }
+    eRealm Parse(void)
+    {
+      eRealm Realm = r_Undefined;
+      bso::sBool Continue = true;
+
+      if ( Pop_ ) {
+        this->Pop();
+        Pop_ = false;
+      }
+
+      while ( Continue ) {
+        switch( P_().Parse(tfAllButUseless) ) {
+        case tStartTag:
+          this->Push();
+          this->SetTag(GetItem_(P_().TagName()));
+          break;
+        case tAttribute:
+          this->SetAttribute(GetItem_(P_().AttributeName()), P_().Value());
+          break;
+        case tStartTagClosed:
+          Realm = rTagClosed;
+          Continue = false;
+          break;
+        case tValue:
+        case tCData:
+          this->SetValue(P_().Value());
+          Realm = rValue;
+          Continue = false;
+          break;
+        case tEndTag:
+          if ( this->IsEmpty() ) {
+            Realm = rProcessed;
+          } else {
+            Realm = rElementClosed;
+            Pop_ = true;
+          }
+          Continue = false;
+          break;
+        case t_Processed:
+          if ( !this->IsEmpty() )
+            qRFwk();
+
+          Realm = rProcessed;
+          Continue = false;
+          break;
+        default:
+          qRFwk();
+          break;
+        }
+      }
+
+      return Realm;
+    }
+  };
 
 	// Transformation des caractres spciaux, comm '<' qui devient '&lt;'.
 	void TransformUsingEntities(
@@ -1276,7 +1342,7 @@ namespace xml {
 
 	template <typename i> void PutValue(
 		i Value,
-		xml::rWriter &Writer )
+		rWriter &Writer )
 	{
 		bso::integer_buffer__ IBuffer;
 
@@ -1286,7 +1352,7 @@ namespace xml {
 	template <typename s, typename i> void PutValue(
 		i Value,
 		const s &Name,
-		xml::rWriter &Writer )
+		rWriter &Writer )
 	{
 		bso::integer_buffer__ IBuffer;
 
@@ -1296,7 +1362,7 @@ namespace xml {
 	template <typename s, typename i> void PutAttribute(
 		const s &Name,
 		i Value,
-		xml::rWriter &Writer )
+		rWriter &Writer )
 	{
 		bso::integer_buffer__ IBuffer;
 

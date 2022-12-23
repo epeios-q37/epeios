@@ -350,8 +350,9 @@ namespace {
     sSession &Session)
   {
   qRH;
-    str::wStrings All;
-    str::wString Displayed;
+    str::wStrings
+      All,
+      Displayed;
     str::wString Script;
     rTValues_ Values;
   qRB;
@@ -361,27 +362,21 @@ namespace {
     Values.Add(iTaskStatusType, (tsqstts::tType)Status.Type);
 
     switch( Status.Type ) {
-    case tsqstts::tPending:
-    case tsqstts::tCompleted:
+    case tsqstts::tTimeless:
       Displayed.Init();
       break;
     case tsqstts::tTimely:
-      Displayed.Init(L_( iTaskTimelyFeatures));
+      Displayed.Init(L_( iTaskTimelyFeatures), L_( iTaskRecurrentFeatures ));
       Values.Add(iTaskTimelyDateLatest, Status.Timely.Latest, dte::fDDMMYYYY);
       Values.Add(iTaskTimelyDateEarliest, Status.Timely.Earliest, dte::fDDMMYYYY);
       break;
     case tsqstts::tEvent:
-      Displayed.Init(L_( iTaskEventFeatures ));
+      Displayed.Init(L_( iTaskEventFeatures ), L_( iTaskRecurrentFeatures ));
       Values.Add(iTaskEventDate, Status.Event.Date, dte::fDDMMYYYY);
       if ( Status.Event.Time.IsSet() ) {
         Values.Add(iTaskEventTimeHour, Status.Event.Time.Hours());
         Values.Add(iTaskEventTimeMinute, Status.Event.Time.Minutes());
       }
-      break;
-    case tsqstts::tRecurrent:
-      Displayed.Init(L_( iTaskRecurrentFeatures ));
-      Values.Add(iTaskRecurrentSpan, Status.Recurrent.Span);
-      Values.Add(iTaskRecurrentUnit, (tsqstts::tUnit)Status.Recurrent.Unit);
       break;
     default:
       qRGnr();
@@ -404,8 +399,12 @@ namespace {
     }
 
     Session.AddClasses(All, L_( cHide ));
+
+    Values.Add(iTaskRecurrentSpan, Status.Recurrence.Span);
+    Values.Add(iTaskRecurrentUnit, (tsqstts::tUnit)Status.Recurrence.Unit);
     Values.Push(Session);
-    Session.RemoveClass(Displayed, L_( cHide ));
+
+    Session.RemoveClasses(Displayed, L_( cHide ));
   qRR;
   qRT;
   qRE;
@@ -446,7 +445,7 @@ qRB;
   CBNDL();
 
   Session.IsNew = true;
-  DressTaskEdition_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), tsqstts::sStatus(tsqstts::tPending), Session);
+  DressTaskEdition_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), tsqstts::sStatus(tsqstts::t_Default), Session);
 qRR;
 qRT;
 qRE;
@@ -486,7 +485,6 @@ namespace {
     rValues Values;
     tme::sHours Hours = 0;
     tme::sMinutes Minutes = 0;
-    tsqstts::tUnit Unit = tsqstts::u_Undefined;
     qCBUFFERh Buffer;
   qRB;
     Values.Init();
@@ -502,7 +500,7 @@ namespace {
     Status.Type = (tsqstts::eType)Values.Get(iTaskStatusType).ToU8();
 
     switch( Status.Type ) {
-    case tsqstts::tPending:
+    case tsqstts::tTimeless:
       break;
     case tsqstts::tEvent:
       Values.Get(iTaskEventDate, Status.Event.Date, dte::fDDMMYYYY);
@@ -515,18 +513,13 @@ namespace {
       Values.Get(iTaskTimelyDateLatest, Status.Timely.Latest, dte::fDDMMYYYY);
       Values.Get(iTaskTimelyDateEarliest, Status.Timely.Earliest, dte::fDDMMYYYY);
       break;
-    case tsqstts::tRecurrent:
-      Values.Get(iTaskRecurrentSpan, Status.Recurrent.Span);
-
-      Values.Get(iTaskRecurrentUnit, Unit);
-      Status.Recurrent.Unit = (tsqstts::eUnit)Unit;
-      break;
-    case tsqstts::tCompleted:
-      break;
     default:
       qRGnr();
       break;
     }
+
+    Values.Get(iTaskRecurrentSpan, Status.Recurrence.Span);
+    Status.Recurrence.Unit = (tsqstts::eUnit)Values.Get<tsqstts::tUnit>(iTaskRecurrentUnit);
 
     Session.Execute("markdown.value();", Description);
   qRR;
