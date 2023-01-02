@@ -54,7 +54,7 @@ namespace {
 	: public xdhcdc::cSingle
 	{
   private:
-    main::sSession Session_;
+    main::rSession Session_;
 	protected:
 		virtual bso::sBool XDHCDCInitialize(
 			xdhcuc::cSingle &Callback,

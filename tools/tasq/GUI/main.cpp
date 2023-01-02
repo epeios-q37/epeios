@@ -26,13 +26,13 @@
 
 using namespace main;
 
-sclx::action_handler<sSession> main::Core;
+sclx::action_handler<rSession> main::Core;
 
 #define D_( name )\
   namespace actions_ {\
-    SCLX_ADec( sSession, name );\
+    SCLX_ADec( rSession, name );\
   }\
-  SCLX_ADef( sSession, actions_, name )
+  SCLX_ADef( rSession, actions_, name )
 
 namespace {
   qENUM( Id_ ) {
@@ -157,31 +157,25 @@ namespace {
 #define L_(name)  GetLabel_(name)
 
 namespace {
-  qENUM( Mode_ ) {
-    mView,
-    mEdition,
-    m_amount,
-    m_Undefined
-  };
-
-  void GlobalDressing_(
-    eMode_ Mode,
-    sSession &Session)
+  void GlobalDressing_(rSession &Session)
   {
   qRH;
     str::wStrings ViewIds, EditionIds, Ids;
-
+    eState State = s_Undefined;
   qRB;
     ViewIds.Init(L_( iTree ), L_( iTitleView ), L_( iDescriptionView ), L_( iEdit ), L_( iNew ), L_( iDelete ));
     EditionIds.Init(L_( iTitleEdition ), L_( iDescriptionEdition ), L_( iSubmit ), L_( iCancel ), L_( iTaskStatusEdition));
 
-    switch( Mode ) {
-    case mView:
+    State = Session.States.Top();
+
+    switch( State ) {
+    case sTaskView:
       Session.AddClasses(EditionIds, L_( cHide ));
       Session.RemoveClasses(ViewIds, L_( cHide ));
       Session.Execute("markdown.toTextArea(); markdown = null;");
       break;
-    case mEdition:
+    case sTaskCreation:
+    case sTaskModification:
       Session.AddClasses(ViewIds,  L_( cHide ));
       Session.RemoveClasses(EditionIds,  L_( cHide ));
       break;
@@ -208,7 +202,7 @@ namespace {
   void Unfold_(
     tsqtsk::sRow Row,
     const tsqtsk::dXTasks &Tasks,
-    sSession &Session)
+    rSession &Session)
   {
   qRH;
     bso::pInteger Buffer;
@@ -231,7 +225,7 @@ namespace {
     sclx::ePosition Position,
     const str::dString &XML,
     const rgstry::rTEntry &XSLEntry,
-    sSession &Session)
+    rSession &Session)
   {
   qRH;
     str::wString XSL, Base64XSL, XSLAsURI;
@@ -260,7 +254,7 @@ namespace {
     sclx::ePosition Position,
     const rgstry::rTEntry &XSLEntry,
     const tsqbndl::dBundle &Bundle,
-    sSession &Session)
+    rSession &Session)
   {
   qRH;
     str::wString XML;
@@ -292,13 +286,15 @@ qRB;
   XML.Init();
   tsqxmlw::WriteCorpus(XML);
 
+  Session.States.Push(sTaskView);
+
   Dress_(str::Empty, sclx::pInner, XML, registry::definition::Body, Session);
 
   CBNDL();
 
   DressTaskTree_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
 
-  GlobalDressing_(mView, Session);
+  GlobalDressing_(Session);
 qRR;
 qRT;
 qRE;
@@ -334,7 +330,7 @@ qRB;
 
   Session.Selected = Row == Bundle.RootTask() ? qNIL : Row;
 
-  GlobalDressing_(mView, Session);
+  GlobalDressing_(Session);
 qRR;
 qRT;
 qRE;
@@ -347,7 +343,7 @@ namespace {
 namespace {
   void DressTaskStatusEdition_(
     tsqstts::sStatus Status,
-    sSession &Session)
+    rSession &Session)
   {
   qRH;
     str::wStrings
@@ -415,7 +411,7 @@ namespace {
     const str::dString &Description,
     bso::sBool SelectedIsRoot,
     const tsqstts::sStatus &Status,
-    sSession &Session)
+    rSession &Session)
   {
   qRH;
     str::wString Script, EscapedDescription;
@@ -428,7 +424,7 @@ namespace {
 
     DressTaskStatusEdition_(Status, Session);
 
-    GlobalDressing_(mEdition, Session);
+    GlobalDressing_(Session);
 
     Session.Focus(L_( iTitleEdition ));
   qRR;
@@ -444,7 +440,7 @@ qRH;
 qRB;
   CBNDL();
 
-  Session.IsNew = true;
+  Session.States.Push(sTaskCreation);
   DressTaskEdition_(str::Empty, str::Empty, Bundle.IsRoot(Session.Selected()), tsqstts::sStatus(tsqstts::t_Default), Session);
 qRR;
 qRT;
@@ -463,7 +459,7 @@ qRB;
   tol::Init(Title, Description, Status);
   Bundle.Get(Session.Selected(), Title, Description, Status);
 
-  Session.IsNew = false;
+  Session.States.Push(sTaskModification);
   DressTaskEdition_(Title, Description, Bundle.IsRoot(Session.Selected()), Status, Session);
 qRR;
 qRT;
@@ -476,7 +472,7 @@ namespace {
 
 namespace {
   void RetrieveContent_(
-    sSession &Session,
+    rSession &Session,
     str::dString &Title,
     str::dString &Description,
     tsqstts::sStatus &Status)
@@ -539,17 +535,19 @@ qRB;
 
   RetrieveContent_(Session, NewTitle, NewDescription, NewStatus);
 
-  if ( !Session.IsNew ) {
+  if ( Session.States.Top() != sTaskCreation ) {
     CBNDL();
 
     Bundle.Get(Session.Selected(), OldTitle, OldDescription, OldStatus);
   }
 
   if ( ( OldTitle != NewTitle) || ( OldDescription != NewDescription ) || ( OldStatus != NewStatus ) ) {
-    if ( Session.ConfirmB(str::wString("Are sure you want to cancel your modifications?")) )
-      GlobalDressing_(mView, Session);
+    if ( Session.ConfirmB(str::wString("Are sure you want to cancel your modifications?")) ) {
+      Session.States.Pop();
+      GlobalDressing_(Session);
+    }
   } else
-    GlobalDressing_(mView, Session);
+    GlobalDressing_(Session);
 qRR;
 qRT;
 qRE;
@@ -576,7 +574,7 @@ qRB;
   } else {
     BNDL();
 
-    if ( Session.IsNew ) {
+    if ( Session.State() == sTaskCreation ) {
       tsqtsk::sRow
         Parent = Session.Selected,
         New = Bundle.Add(Title, Description, Status, Parent);
@@ -587,20 +585,22 @@ qRB;
           Session.AddClass(L_( iTree ), L_( cSelected ) );
         } else
           DressTaskTree_(Parent, str::wString(Session.Parent(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
+      } else if ( Parent == qNIL ) {
+        DressTaskTree_(New, str::wString(Session.NextSibling(Session.FirstChild(str::wString(bso::Convert(*Bundle.RootTask(), Buffer)), IdBuffer), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
       } else {
-        DressTaskTree_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(Parent == qNIL ? *Bundle.RootTask() : *Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+        DressTaskTree_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
       }
 
       Unfold_(New, Bundle.Tasks, Session);
-
-      Session.IsNew = false;
-    } else {
+    } else if ( Session.State() == sTaskModification ) {
       Bundle.Set(Title, Description, Session.Selected);
 
       Session.SetValue(bso::Convert(*Session.Selected, Buffer), Title);
-    }
+    } else
+      qRGnr();
 
-    GlobalDressing_(mView, Session);
+    Session.States.Pop();
+    GlobalDressing_(Session);
   }
 qRR;
 qRT;
@@ -627,14 +627,14 @@ namespace {
 
   namespace _ {
     template <typename action> void Add(
-      sclx::action_handler<sSession> &Core,
+      sclx::action_handler<rSession> &Core,
       action &Action )
     {
         Core.Add(Action.Name, Action);
     }
 
     template <typename action, typename... actions> void Add(
-      sclx::action_handler<sSession> &Core,
+      sclx::action_handler<rSession> &Core,
       action &Action,
       actions &...Actions)
     {

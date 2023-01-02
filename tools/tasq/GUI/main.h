@@ -28,30 +28,48 @@
 # include "tol.h"
 
 namespace main {
-  class sSession
+
+  qENUM ( State ) {
+    sTaskView,
+    sTaskCreation,
+    sTaskModification,
+    s_amount,
+    s_Undefined
+  };
+
+  qROW( Row );
+
+  typedef stkbch::qBSTACKd( eState, sRow ) dStates;
+  qW( States );
+
+  class rSession
   : public sclx::sProxy
   {
   public:
+    wStates States;
     tsqtsk::sRow Selected;
-    bso::sBool IsNew;
     void reset(bso::sBool P = true)
     {
       sProxy::reset(P);
+      States.reset(P);
       Selected = qNIL;
-      IsNew = false;
     }
-    qCDTOR( sSession );
+    qCDTOR( rSession );
     void Init(
 			xdhcuc::cSingle &Callback,
 			const scli::sInfo &Info)
     {
       sProxy::Init(Callback, Info, sclx::xfh_Default);
+      States.Init();
       Selected = qNIL;
-      IsNew = false;
+    }
+    eState State(void) const
+    {
+      return States.Top();
     }
   };
 
-  extern sclx::action_handler<sSession> Core;
+  extern sclx::action_handler<rSession> Core;
 }
 
 

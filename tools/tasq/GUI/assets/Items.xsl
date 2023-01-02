@@ -10,18 +10,16 @@
     <xsl:apply-templates select="Tasks" />
   </xsl:template>
   <xsl:template match="Tasks">
-    <ul class="tree">
-      <li>
-        <xsl:call-template name="Item">
-          <xsl:with-param name="Id" select="@RootTask" />
-          <xsl:with-param name="Label">Tasks</xsl:with-param>
-          <xsl:with-param name="Style">border: double; padding: 0 5px 0 5px;</xsl:with-param>
-        </xsl:call-template>
-      </li>
-    </ul>
+    <div class="tree">
+      <xsl:attribute name="id">
+        <xsl:value-of select="@RootTask" />
+      </xsl:attribute>
+      <span>Tasks</span>
+      <xsl:apply-templates select="Items" />
+    </div>
   </xsl:template>
   <xsl:template match="Items">
-    <ul>
+    <ul style="margin-top: 0;">
       <xsl:apply-templates select="Item" />
     </ul>
   </xsl:template>
