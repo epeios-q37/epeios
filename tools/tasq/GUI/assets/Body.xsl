@@ -43,10 +43,10 @@
           <fieldset id="TitleView"></fieldset>
           <input style="width: 100%;" class="hide" id="TitleEdition" />
           <xsl:apply-templates select="Corpus/Task" />
-          <div>
-            <fieldset id="DescriptionView" style="height: 100px; overflow: auto;"></fieldset>
-            <textarea class="hide" id="DescriptionEdition"></textarea>
-          </div>
+          <fieldset style="height: 200px; overflow: auto;">
+            <div style="height: 100%;" id="DescriptionView"></div>
+            <textarea style="height: 100%;" class="hide" id="DescriptionEdition"></textarea>
+          </fieldset>
           <div class="buttons">
             <button id="Edit" xdh:onevent="Edit">Edit</button>
             <button id="Submit" xdh:onevent="Submit">Submit</button>

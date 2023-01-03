@@ -11,10 +11,12 @@
   </xsl:template>
   <xsl:template match="Tasks">
     <div class="tree">
-      <xsl:attribute name="id">
-        <xsl:value-of select="@RootTask" />
-      </xsl:attribute>
-      <span>Tasks</span>
+      <span xdh:onevent="Select" style="font-weight: bolder;" class="item">
+        <xsl:attribute name="id">
+          <xsl:value-of select="@RootTask" />
+        </xsl:attribute>
+        <xsl:text>Tasks</xsl:text>
+      </span>
       <xsl:apply-templates select="Items" />
     </div>
   </xsl:template>

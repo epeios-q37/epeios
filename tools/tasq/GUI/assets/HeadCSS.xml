@@ -22,7 +22,7 @@
 }
 
 .CodeMirror {
-  height: 500px;
+  height: 100%;
 }
     </xpp:bloc>
     <xpp:expand href="HeadCSSTree.xml" />

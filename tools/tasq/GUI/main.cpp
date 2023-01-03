@@ -163,7 +163,7 @@ namespace {
     str::wStrings ViewIds, EditionIds, Ids;
     eState State = s_Undefined;
   qRB;
-    ViewIds.Init(L_( iTree ), L_( iTitleView ), L_( iDescriptionView ), L_( iEdit ), L_( iNew ), L_( iDelete ));
+    ViewIds.Init(L_( iTitleView ), L_( iDescriptionView ), L_( iEdit ), L_( iNew ), L_( iDelete ));
     EditionIds.Init(L_( iTitleEdition ), L_( iDescriptionEdition ), L_( iSubmit ), L_( iCancel ), L_( iTaskStatusEdition));
 
     State = Session.States.Top();
@@ -524,33 +524,83 @@ namespace {
   }
 }
 
+namespace {
+  bso::sBool HasChanged_(
+    const str::dString &NewTitle,
+    const str::dString &NewDescription,
+    const tsqstts::sStatus &NewStatus,
+    tsqtsk::sRow Current,
+    const tsqbndl::dBundle &Bundle)
+  {
+    bso::sBool HasChanged = false;
+  qRH;
+    str::wString CurrentTitle, CurrentDescription;
+    tsqstts::sStatus CurrentStatus;
+  qRB;
+    tol::Init(CurrentTitle, CurrentDescription, CurrentStatus);
+
+    if ( Current != qNIL )
+      Bundle.Get(Current, CurrentTitle, CurrentDescription, CurrentStatus);
+
+    HasChanged = ( CurrentTitle != NewTitle) || ( CurrentDescription != NewDescription ) || ( CurrentStatus != NewStatus );
+  qRR;
+  qRT;
+  qRE;
+    return HasChanged;
+  }
+}
+
 D_( Cancel )
 {
 qRH;
   BGRD;
-  str::wString NewTitle, OldTitle, NewDescription, OldDescription;
-  tsqstts::sStatus NewStatus, OldStatus;
+  str::wString Title, Description;
+  tsqstts::sStatus Status;
 qRB;
-  tol::Init(NewTitle, OldTitle, NewDescription, OldDescription, NewStatus, OldStatus);
+  tol::Init(Title, Description, Status);
 
-  RetrieveContent_(Session, NewTitle, NewDescription, NewStatus);
+  RetrieveContent_(Session, Title, Description, Status);
 
-  if ( Session.States.Top() != sTaskCreation ) {
-    CBNDL();
+  CBNDL();
 
-    Bundle.Get(Session.Selected(), OldTitle, OldDescription, OldStatus);
-  }
-
-  if ( ( OldTitle != NewTitle) || ( OldDescription != NewDescription ) || ( OldStatus != NewStatus ) ) {
-    if ( Session.ConfirmB(str::wString("Are sure you want to cancel your modifications?")) ) {
+  if ( !HasChanged_(Title, Description, Status, ( Session.States.Top() != sTaskCreation ? Session.Selected() : qNIL ), Bundle )
+       || Session.ConfirmB(str::wString("Are sure you want to cancel your modifications?")) ) {
       Session.States.Pop();
       GlobalDressing_(Session);
-    }
-  } else
-    GlobalDressing_(Session);
+  }
 qRR;
 qRT;
 qRE;
+}
+
+namespace {
+  void HandleTaskCreation_(
+    tsqtsk::sRow Parent,
+    tsqtsk::sRow New,
+    rSession &Session,
+    tsqbndl::dBundle &Bundle)
+  {
+  qRH;
+    bso::pInteger Buffer;
+    qCBUFFERh IdBuffer;
+  qRB;
+    if ( Bundle.Tasks.ChildAmount(Parent == qNIL ? Bundle.RootTask() : Parent) == 1 ) {
+      if ( Parent == qNIL ) {
+        DressTaskTree_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
+        Session.AddClass(L_( iTree ), L_( cSelected ) );
+      } else
+        DressTaskTree_(Parent, str::wString(Session.Parent(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
+    } else if ( Parent == qNIL ) {
+      DressTaskTree_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(*Bundle.RootTask(), Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+    } else {
+      DressTaskTree_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+    }
+
+    Unfold_(New, Bundle.Tasks, Session);
+  qRR;
+  qRT;
+  qRE;
+  }
 }
 
 D_( Submit )
@@ -558,7 +608,6 @@ D_( Submit )
 qRH;
   BGRD;
   str::wString Title, Description, XML;
-  qCBUFFERh IdBuffer;
   bso::pInteger Buffer;
   tsqstts::sStatus Status;
 qRB;
@@ -574,30 +623,18 @@ qRB;
   } else {
     BNDL();
 
-    if ( Session.State() == sTaskCreation ) {
-      tsqtsk::sRow
-        Parent = Session.Selected,
-        New = Bundle.Add(Title, Description, Status, Parent);
-
-      if ( Bundle.Tasks.ChildAmount(Parent == qNIL ? Bundle.RootTask() : Parent) == 1 ) {
-        if ( Parent == qNIL ) {
-          DressTaskTree_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
-          Session.AddClass(L_( iTree ), L_( cSelected ) );
-        } else
-          DressTaskTree_(Parent, str::wString(Session.Parent(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
-      } else if ( Parent == qNIL ) {
-        DressTaskTree_(New, str::wString(Session.NextSibling(Session.FirstChild(str::wString(bso::Convert(*Bundle.RootTask(), Buffer)), IdBuffer), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
-      } else {
-        DressTaskTree_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
-      }
-
-      Unfold_(New, Bundle.Tasks, Session);
-    } else if ( Session.State() == sTaskModification ) {
+    switch ( Session.State() ) {
+    case sTaskCreation:
+      HandleTaskCreation_(Session.Selected, Bundle.Add(Title, Description, Status, Session.Selected), Session, Bundle);
+      break;
+    case sTaskModification:
       Bundle.Set(Title, Description, Session.Selected);
-
       Session.SetValue(bso::Convert(*Session.Selected, Buffer), Title);
-    } else
+      break;
+    default:
       qRGnr();
+      break;
+    }
 
     Session.States.Pop();
     GlobalDressing_(Session);
