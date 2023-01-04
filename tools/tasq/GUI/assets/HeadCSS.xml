@@ -21,8 +21,8 @@
   margin-top: 5px;
 }
 
-.CodeMirror {
-  height: 100%;
+.CodeMirror, .CodeMirror-scroll {
+	min-height: 100px;
 }
     </xpp:bloc>
     <xpp:expand href="HeadCSSTree.xml" />

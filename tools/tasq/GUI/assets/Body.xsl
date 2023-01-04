@@ -36,21 +36,21 @@
         <fieldset id="Tree" style="height: 200px; overflow: auto;"></fieldset>
         <div class="buttons">
           <button id="New" xdh:onevent="New">New</button>
-        </div>
+          <button id="Edit" xdh:onevent="Edit">Edit</button>
+          <button id="Delete" xdh:onevent="Delete">Delete</button>
+      </div>
       </fieldset>
       <fieldset>
         <div>
           <fieldset id="TitleView"></fieldset>
           <input style="width: 100%;" class="hide" id="TitleEdition" />
           <xsl:apply-templates select="Corpus/Task" />
-          <fieldset style="height: 200px; overflow: auto;">
-            <div style="height: 100%;" id="DescriptionView"></div>
-            <textarea style="height: 100%;" class="hide" id="DescriptionEdition"></textarea>
+          <fieldset>
+            <div style="height: 100px; overflaow: auto;" id="DescriptionView"></div>
+            <textarea class="hide" id="DescriptionEdition"></textarea>
           </fieldset>
           <div class="buttons">
-            <button id="Edit" xdh:onevent="Edit">Edit</button>
             <button id="Submit" xdh:onevent="Submit">Submit</button>
-            <button id="Delete" xdh:onevent="Delete">Delete</button>
             <button id="Cancel" xdh:onevent="Cancel">Cancel</button>
           </div>
         </div>
