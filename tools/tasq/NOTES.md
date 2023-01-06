@@ -1,5 +1,7 @@
 # Notes concernant l'utilitaire *tasq* (toutes variantes)
 
-## Versipon *GUI*
+## Versipn *GUI*
 
 Sélecteur de date : https://mymth.github.io/vanillajs-datepicker
+
+*<SimpleMD*.
