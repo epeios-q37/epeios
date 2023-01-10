@@ -173,8 +173,8 @@ namespace {
 		namespace {
 			namespace {
 				void Initialize_(
-						xdhcuc::cGlobal &Upstream,
-						xdhups::rAgent &Agent)
+          xdhcuc::cGlobal &Upstream,
+          xdhups::rAgent &Agent)
 				{
 				qRH
 					str::wString Identification, XDHLibrary;

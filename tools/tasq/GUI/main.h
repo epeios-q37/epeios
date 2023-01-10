@@ -33,6 +33,7 @@ namespace main {
     sTaskView,
     sTaskCreation,
     sTaskModification,
+    sTaskMoving,
     s_amount,
     s_Undefined
   };

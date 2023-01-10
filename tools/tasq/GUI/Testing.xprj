@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Projects>
   <Project target="faasq">
-    <Parameters Setup_="faas-2">
+    <Parameters Setup="faas">
       <XDHLibrary>/home/csimon/bin/tasqxdh</XDHLibrary>
     </Parameters>
   </Project>

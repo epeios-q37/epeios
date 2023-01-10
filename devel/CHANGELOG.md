@@ -14,6 +14,9 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2023-01-10
+- IDXBTQ: [adpt];
+
 ## 2022-12-23
 - DTE: [extn];
 - SCLX: [extn];

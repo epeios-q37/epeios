@@ -55,6 +55,7 @@ namespace {
     iNew,
     iEdit,
     iDelete,
+    iMove,
     iTitleEdition,
     iDescriptionEdition,
     iSubmit,
@@ -90,6 +91,7 @@ namespace {
     C_( New );
     C_( Edit );
     C_( Delete );
+    C_( Move );
     C_( TitleEdition );
     C_( DescriptionEdition );
     C_( Submit );
@@ -157,41 +159,220 @@ namespace {
 #define L_(name)  GetLabel_(name)
 
 namespace {
+  namespace _ {
+    typedef bso::sByte tIds[i_amount/8+1];
+
+    namespace _ {
+      namespace _ {
+        bso::sSize Offset(eId_ Id)
+        {
+          return Id / 8;
+        }
+      }
+
+      bso::sByte Mask(eId_ Id)
+      {
+        return 1 << (Id % 8);
+      }
+
+      bso::sByte &Offset(
+        tIds &Ids,
+        eId_ Id)
+      {
+        return Ids[_::Offset(Id)];
+      }
+
+      bso::sByte Offset(
+        const tIds &Ids,
+        eId_ Id)
+      {
+        return Ids[_::Offset(Id)];
+      }
+    }
+
+    const tIds &Set(
+      eId_ Id,
+      tIds &Ids,
+      bso::sBool V = true)
+    {
+      if ( V )
+        _::Offset(Ids, Id) |= _::Mask(Id);
+      else
+        _::Offset(Ids, Id) &= ~_::Mask(Id);
+
+      return Ids;
+    }
+
+    bso::sBool Value(
+      const tIds &Ids,
+      eId_ Id)
+    {
+      return _::Offset(Ids, Id) & _::Mask(Id);
+    }
+
+    const tIds &Set(
+      tIds &Ids,
+      bso::sBool V,
+      eId_ Id)
+    {
+      return Set(Id, Ids, V);
+    }
+
+    template <typename ...ids> const tIds &Set(
+      tIds &Ids,
+      bso::sBool V,
+      eId_ Id,
+      ids ...IdList)
+    {
+      Set(Ids, V, IdList...);
+
+      return Set(Id, Ids, V);
+    }
+  }
+
+  class sIds_
+  {
+  private:
+    _::tIds Ids_;
+    void Reset(void)
+    {
+      memset(&Ids_, sizeof(Ids_), 0);
+    }
+  public:
+    void reset(bso::sBool P = true)
+    {
+      Reset();
+    }
+    qCDTOR( sIds_ );
+    template <typename ...ids> sIds_(ids ...IdList)
+    {
+      Init();
+
+      Put(IdList...);
+    }
+    void Init(void)
+    {
+      Reset();
+    }
+    template <typename ...ids> void Put(ids ...IdList)
+    {
+      _::Set(Ids_, true, IdList...);
+    }
+    void Fill(str::dStrings &Ids) const
+    {
+      for ( eId_ Id = (eId_)0; Id < i_amount; (*(tId_ *)&Id)++ )
+        if ( _::Value(Ids_, Id) )
+          Ids.Append(GetLabel_(Id));
+    }
+  };
+
+  namespace _ {
+    void HideShow(
+      const sIds_ &Ids,
+      rSession &Session,
+      bso::sBool Hide)
+    {
+    qRH;
+      str::wStrings IdLabels;
+    qRB;
+      IdLabels.Init();
+
+      Ids.Fill(IdLabels);
+
+      if ( Hide )
+        Session.AddClasses(IdLabels, L_( cHide ) );
+      else
+        Session.RemoveClasses(IdLabels, L_( cHide ) );
+    qRR;
+    qRT;
+    qRE;
+    }
+
+    void DisableEnable(
+      const sIds_ &Ids,
+      rSession &Session,
+      bso::sBool Disable)
+    {
+    qRH;
+      str::wStrings IdLabels;
+    qRB;
+      IdLabels.Init();
+
+      Ids.Fill(IdLabels);
+
+      if ( Disable )
+        Session.DisableElements(IdLabels);
+      else
+        Session.EnableElements(IdLabels);
+    qRR;
+    qRT;
+    qRE;
+    }
+  }
+
+  void Hide_(
+    const sIds_ &Ids,
+    rSession &Session)
+  {
+    return _::HideShow(Ids, Session, true);
+  }
+
+  void Show_(
+    const sIds_ &Ids,
+    rSession &Session)
+  {
+    return _::HideShow(Ids, Session, false);
+  }
+
+  void Disable_(
+    const sIds_ &Ids,
+    rSession &Session)
+  {
+    return _::DisableEnable(Ids, Session, true);
+  }
+
+  void Enable_(
+    const sIds_ &Ids,
+    rSession &Session)
+  {
+    return _::DisableEnable(Ids, Session, false);
+  }
+
+  const sIds_ ViewIds_(iTitleView, iDescriptionView, iEdit, iNew, iDelete,  iMove);
+  const sIds_ EditionIds_(iTitleEdition, iDescriptionEdition, iSubmit, iCancel, iTaskStatusEdition);
+}
+
+
+namespace {
   void GlobalDressing_(rSession &Session)
   {
   qRH;
-    str::wStrings ViewIds, EditionIds, Ids;
     eState State = s_Undefined;
   qRB;
-    ViewIds.Init(L_( iTitleView ), L_( iDescriptionView ), L_( iEdit ), L_( iNew ), L_( iDelete ));
-    EditionIds.Init(L_( iTitleEdition ), L_( iDescriptionEdition ), L_( iSubmit ), L_( iCancel ), L_( iTaskStatusEdition));
-
     State = Session.States.Top();
 
     switch( State ) {
     case sTaskView:
-      Session.AddClasses(EditionIds, L_( cHide ));
-      Session.RemoveClasses(ViewIds, L_( cHide ));
+      Hide_(EditionIds_, Session);
+      Show_(ViewIds_, Session);
       Session.Execute("markdown.toTextArea(); markdown = null;");
       break;
     case sTaskCreation:
     case sTaskModification:
-      Session.AddClasses(ViewIds,  L_( cHide ));
-      Session.RemoveClasses(EditionIds,  L_( cHide ));
+      Show_(EditionIds_, Session);
+      Hide_(ViewIds_, Session);
       break;
     default:
       qRGnr();
       break;
     }
 
-    Ids.Init();
-
-    Ids.AppendMulti( L_( iEdit ), L_ ( iDelete ) );
+    sIds_ Ids(iEdit, iDelete, iMove);
 
     if ( Session.Selected == qNIL )
-      Session.DisableElements( Ids );
+      Disable_(Ids, Session);
     else
-      Session.EnableElements( Ids );
+      Enable_(Ids, Session);
   qRR;
   qRT;
   qRE;

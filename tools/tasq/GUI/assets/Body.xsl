@@ -38,7 +38,8 @@
           <button id="New" xdh:onevent="New">New</button>
           <button id="Edit" xdh:onevent="Edit">Edit</button>
           <button id="Delete" xdh:onevent="Delete">Delete</button>
-      </div>
+          <button id="Move" xdh:onevent="Move">Move</button>
+        </div>
       </fieldset>
       <fieldset>
         <div>
