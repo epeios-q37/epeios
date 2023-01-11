@@ -38,3 +38,19 @@ const char *messages::GetLabel( eName Name )
 
 #undef C
 
+#include "str.h"
+
+void Test(const str::dString &)
+{
+
+}
+
+
+void Essai(void)
+{
+  str::wString T1;
+
+  Test(T1);
+
+  Test("toto");
+}

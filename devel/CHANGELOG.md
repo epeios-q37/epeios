@@ -14,6 +14,10 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2023-01-11
+- BCH: simplification by removinf sizehandler template parameter, which was only used by the *STR* library;
+- STR: [adpt];
+
 ## 2023-01-10
 - IDXBTQ: [adpt];
 
