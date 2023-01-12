@@ -159,112 +159,17 @@ namespace {
 #define L_(name)  GetLabel_(name)
 
 namespace {
-  namespace _ {
-    typedef bso::sByte tIds[i_amount/8+1];
-
-    namespace _ {
-      namespace _ {
-        bso::sSize Offset(eId_ Id)
-        {
-          return Id / 8;
-        }
-      }
-
-      bso::sByte Mask(eId_ Id)
-      {
-        return 1 << (Id % 8);
-      }
-
-      bso::sByte &Offset(
-        tIds &Ids,
-        eId_ Id)
-      {
-        return Ids[_::Offset(Id)];
-      }
-
-      bso::sByte Offset(
-        const tIds &Ids,
-        eId_ Id)
-      {
-        return Ids[_::Offset(Id)];
-      }
-    }
-
-    const tIds &Set(
-      eId_ Id,
-      tIds &Ids,
-      bso::sBool V = true)
-    {
-      if ( V )
-        _::Offset(Ids, Id) |= _::Mask(Id);
-      else
-        _::Offset(Ids, Id) &= ~_::Mask(Id);
-
-      return Ids;
-    }
-
-    bso::sBool Value(
-      const tIds &Ids,
-      eId_ Id)
-    {
-      return _::Offset(Ids, Id) & _::Mask(Id);
-    }
-
-    const tIds &Set(
-      tIds &Ids,
-      bso::sBool V,
-      eId_ Id)
-    {
-      return Set(Id, Ids, V);
-    }
-
-    template <typename ...ids> const tIds &Set(
-      tIds &Ids,
-      bso::sBool V,
-      eId_ Id,
-      ids ...IdList)
-    {
-      Set(Ids, V, IdList...);
-
-      return Set(Id, Ids, V);
-    }
-  }
-
-  class sIds_
-  {
-  private:
-    _::tIds Ids_;
-    void Reset(void)
-    {
-      memset(&Ids_, sizeof(Ids_), 0);
-    }
+  class gl_ {
   public:
-    void reset(bso::sBool P = true)
+    static const char *GetLabel(eId_ Id)
     {
-      Reset();
-    }
-    qCDTOR( sIds_ );
-    template <typename ...ids> sIds_(ids ...IdList)
-    {
-      Init();
-
-      Put(IdList...);
-    }
-    void Init(void)
-    {
-      Reset();
-    }
-    template <typename ...ids> void Put(ids ...IdList)
-    {
-      _::Set(Ids_, true, IdList...);
-    }
-    void Fill(str::dStrings &Ids) const
-    {
-      for ( eId_ Id = (eId_)0; Id < i_amount; (*(tId_ *)&Id)++ )
-        if ( _::Value(Ids_, Id) )
-          Ids.Append(GetLabel_(Id));
+      return ::GetLabel_(Id);
     }
   };
+
+  typedef sclx::sIds<eId_, i_amount, gl_> sIds_;
+  typedef sclx::rValues<eId_, i_amount, gl_> rValues_;
+  typedef sclx::rTValues<eId_, i_amount, gl_> rTValues_;
 
   namespace _ {
     void HideShow(
@@ -272,41 +177,10 @@ namespace {
       rSession &Session,
       bso::sBool Hide)
     {
-    qRH;
-      str::wStrings IdLabels;
-    qRB;
-      IdLabels.Init();
-
-      Ids.Fill(IdLabels);
-
       if ( Hide )
-        Session.AddClasses(IdLabels, L_( cHide ) );
+        Session.AddClasses(Ids, L_( cHide ) );
       else
-        Session.RemoveClasses(IdLabels, L_( cHide ) );
-    qRR;
-    qRT;
-    qRE;
-    }
-
-    void DisableEnable(
-      const sIds_ &Ids,
-      rSession &Session,
-      bso::sBool Disable)
-    {
-    qRH;
-      str::wStrings IdLabels;
-    qRB;
-      IdLabels.Init();
-
-      Ids.Fill(IdLabels);
-
-      if ( Disable )
-        Session.DisableElements(IdLabels);
-      else
-        Session.EnableElements(IdLabels);
-    qRR;
-    qRT;
-    qRE;
+        Session.RemoveClasses(Ids, L_( cHide ) );
     }
   }
 
@@ -322,20 +196,6 @@ namespace {
     rSession &Session)
   {
     return _::HideShow(Ids, Session, false);
-  }
-
-  void Disable_(
-    const sIds_ &Ids,
-    rSession &Session)
-  {
-    return _::DisableEnable(Ids, Session, true);
-  }
-
-  void Enable_(
-    const sIds_ &Ids,
-    rSession &Session)
-  {
-    return _::DisableEnable(Ids, Session, false);
   }
 
   const sIds_ ViewIds_(iTitleView, iDescriptionView, iEdit, iNew, iDelete,  iMove);
@@ -370,9 +230,9 @@ namespace {
     sIds_ Ids(iEdit, iDelete, iMove);
 
     if ( Session.Selected == qNIL )
-      Disable_(Ids, Session);
+      Session.Disable(Ids);
     else
-      Enable_(Ids, Session);
+      Session.Enable(Ids);
   qRR;
   qRT;
   qRE;
@@ -473,7 +333,7 @@ qRB;
 
   CBNDL();
 
-  DressTaskTree_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
+  DressTaskTree_(qNIL, L_( iTree ), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
 
   GlobalDressing_(Session);
 qRR;
@@ -515,10 +375,6 @@ qRB;
 qRR;
 qRT;
 qRE;
-}
-
-namespace {
-  typedef SCLX_TVALUESr(eId_, i_amount, GetLabel_) rTValues_;
 }
 
 namespace {
@@ -648,10 +504,6 @@ qRE;
 }
 
 namespace {
-  typedef SCLX_VALUESr(eId_, i_amount, GetLabel_) rValues;
-}
-
-namespace {
   void RetrieveContent_(
     rSession &Session,
     str::dString &Title,
@@ -659,18 +511,18 @@ namespace {
     tsqstts::sStatus &Status)
   {
   qRH;
-    rValues Values;
+    rValues_ Values;
     tme::sHours Hours = 0;
     tme::sMinutes Minutes = 0;
     qCBUFFERh Buffer;
   qRB;
     Values.Init();
 
-    Values.Fetch(Session,
+    Values.Fetch(Session, sIds_(
       iTitleEdition, iTaskStatusType,
       iTaskEventDate, iTaskEventTimeHour, iTaskEventTimeMinute,
       iTaskTimelyDateLatest, iTaskTimelyDateEarliest,
-      iTaskRecurrentSpan, iTaskRecurrentUnit);
+      iTaskRecurrentSpan, iTaskRecurrentUnit));
 
     Title.Append(Values.Get(iTitleEdition));
 
@@ -745,7 +597,7 @@ qRB;
   CBNDL();
 
   if ( !HasChanged_(Title, Description, Status, ( Session.States.Top() != sTaskCreation ? Session.Selected() : qNIL ), Bundle )
-       || Session.ConfirmB(str::wString("Are sure you want to cancel your modifications?")) ) {
+       || Session.ConfirmB("Are sure you want to cancel your modifications?") ) {
       Session.States.Pop();
       GlobalDressing_(Session);
   }
@@ -767,14 +619,14 @@ namespace {
   qRB;
     if ( Bundle.Tasks.ChildAmount(Parent == qNIL ? Bundle.RootTask() : Parent) == 1 ) {
       if ( Parent == qNIL ) {
-        DressTaskTree_(qNIL, str::wString(L_( iTree )), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
+        DressTaskTree_(qNIL, L_( iTree ), sclx::pInner, registry::definition::XSLFiles::Items, Bundle, Session);
         Session.AddClass(L_( iTree ), L_( cSelected ) );
       } else
-        DressTaskTree_(Parent, str::wString(Session.Parent(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
+        DressTaskTree_(Parent, Session.Parent(bso::Convert(*Parent, Buffer), IdBuffer), sclx::pInner, registry::definition::XSLFiles::Item, Bundle, Session);
     } else if ( Parent == qNIL ) {
-      DressTaskTree_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(*Bundle.RootTask(), Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+      DressTaskTree_(New, Session.NextSibling(bso::Convert(*Bundle.RootTask(), Buffer), IdBuffer), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
     } else {
-      DressTaskTree_(New, str::wString(Session.NextSibling(str::wString(bso::Convert(*Parent, Buffer)), IdBuffer)), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
+      DressTaskTree_(New, Session.NextSibling(bso::Convert(*Parent, Buffer), IdBuffer), sclx::pEnd, registry::definition::XSLFiles::Item, Bundle, Session);
     }
 
     Unfold_(New, Bundle.Tasks, Session);
@@ -799,7 +651,7 @@ qRB;
   Title.StripChars();
 
   if ( Title.Amount() == 0 ) {
-    Session.AlertB(str::wString("Title can not be empty!"));
+    Session.AlertB("Title can not be empty!");
     Session.Focus(L_( iTitleEdition ));
   } else {
     BNDL();

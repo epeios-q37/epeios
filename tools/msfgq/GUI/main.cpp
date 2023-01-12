@@ -315,7 +315,7 @@ namespace {
       OctaveOverflow = GetABC_(XMelody, Session.Width, true, ABC);
 
       if ( OctaveOverflow != 0 )
-        Session.AlertB(str::wString("Octave error !!!"));
+        Session.AlertB("Octave error !!!");
       else {
         Script.Init("load(\"");
         Script.Append(ABC);
@@ -414,16 +414,16 @@ namespace {
       XHTML.Init();
 
       if ( FillMidiInDevices_(Device, XHTML) )
-        Session.RemoveAttribute(str::wString(Session.Parent("beautiful-piano", CBuffer)), str::wString("open"));
+        Session.RemoveAttribute(Session.Parent("beautiful-piano", CBuffer), "open");
       else
         Session.SetValue("MidiIn", "None");
 
-      Session.End(str::wString("MidiIn"), XHTML);
+      Session.End("MidiIn", XHTML);
 
       /*
       XHTML.Init();
       FillMidiOutDevices_(XHTML);
-      Session.Inner(str::wString("MidiOut"), XHTML);
+      Session.Inner("MidiOut", XHTML);
       */
 
       Session.SetValue("AccidentalAmount", bso::Convert(abs(XMelody.Signature.Key), IBuffer));
@@ -436,11 +436,11 @@ namespace {
 
       Session.SetValue("Octave", bso::Convert(XMelody.BaseOctave, IBuffer));
 
-      UpdateUIWidth_(str::wString(bso::Convert(Session.Width, IBuffer)), Session);
+      UpdateUIWidth_(bso::Convert(Session.Width, IBuffer), Session);
 
       XHTML.Init();
       GetScriptsXHTML_(XHTML);
-      Session.End(str::wString("Scripts"), XHTML);
+      Session.End("Scripts", XHTML);
     qRR;
     qRT;
     qRE;
@@ -789,8 +789,8 @@ qRB;
 	OFlow.reset();
 
 	if ( EmbedScriptResult ) {
-    Session.Inner(str::wString("Output"), Output);
-    Session.Execute(str::wString("resizeOutputIFrame();"));
+    Session.Inner("Output", Output);
+    Session.Execute("resizeOutputIFrame();");
     Session.SetAttribute(Session.Parent("Output", Buffer), "open", "true");
     Session.ScrollTo("Output");
   } else

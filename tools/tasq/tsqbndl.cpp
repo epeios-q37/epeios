@@ -100,7 +100,7 @@ namespace {
       const char *Description,
       sTRow Row)
     {
-      return Add(str::wString(Title), str::wString(Description), Row);
+      return Add(Title, Description, Row);
     }
   }
 

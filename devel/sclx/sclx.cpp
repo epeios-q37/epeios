@@ -262,7 +262,7 @@ namespace {
 		else
 			TranslateAndPutInXML_( Message, Language, XML );
 
-		EncodeXML_( str::wString( AlertBaseXSL_ ), XSL );
+		EncodeXML_(AlertBaseXSL_, XSL );
 	}
 }
 
@@ -429,7 +429,7 @@ qRB
 
 	SetXMLAndXSL_( Message, MessageLanguage, XML, XSL );
 
-	Confirmation = Confirm_( XML, XSL, str::wString(), CloseTextLanguage );
+	Confirmation = Confirm_( XML, XSL, str::Empty, CloseTextLanguage );
 qRR
 qRT
 qRE
@@ -464,14 +464,14 @@ qRB
 		Message.Init();
 		if ( scle::GetPendingErrorTranslation( Language, Message, err::hUserDefined ) ) {
 			scle::ResetPendingError();
-			Proxy.AlertU( Message, str::wString(), Language );
+			Proxy.AlertU( Message, str::Empty, Language );
 		}
 		break;
 	case err::t_Free:
-		Proxy.AlertB( str::wString("???") );
+		Proxy.AlertB("???");
 		break;
 	default:
-		Proxy.AlertB( str::wString(err::Message( ErrBuffer )) );
+		Proxy.AlertB(err::Message(ErrBuffer));
 		break;
 	}
 
@@ -663,42 +663,6 @@ qRB;
 	Process_("GetMarks_1", &MergedMarks, Ids);
 
 	xdhcmn::FlatSplit(MergedMarks, Marks);
-qRR;
-qRT;
-qRE;
-}
-
-void sclx::sProxy::EnableElements( const str::dStrings &Ids )
-{
-  Process_("EnableElements_1", NULL, Ids);
-}
-
-void sclx::sProxy::EnableElement(	const str::dString &Id )
-{
-qRH;
-  str::wStrings Ids;
-qRB;
-  Ids.Init(Id);
-
-  EnableElements(Ids);
-qRR;
-qRT;
-qRE;
-}
-
-void sclx::sProxy::DisableElements( const str::dStrings &Ids )
-{
-  Process_("DisableElements_1", NULL, Ids);
-}
-
-void sclx::sProxy::DisableElement( const str::dString &Id )
-{
-qRH;
-  str::wStrings Ids;
-qRB;
-  Ids.Init(Id);
-
-  DisableElements(Ids);
 qRR;
 qRT;
 qRE;

@@ -9,10 +9,14 @@
 - [impr]: improvement;
 - [obvs]: obvious modifications;
 - [rvrt]: reverting modifications;
+- [simp]: simplification;
 - [stdz]: modification to comply with cusrrent standards;
 - [trvl]: trivial modifications;
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
+
+## 2023-01-12
+- SCLX: [simpl], [adpt];
 
 ## 2023-01-11
 - BCH: simplification by removinf sizehandler template parameter, which was only used by the *STR* library;
@@ -4523,6 +4527,7 @@
 [impr]:#Improvement
 [obvs]:#Obvious
 [rvrt]:#Reverting
+[simp]:#Simplification
 [stdz]:#Standardization
 [trvl]:#Trivial
 [typo]:#Typography
@@ -4542,7 +4547,7 @@ Creation of the library.
 
 ### Extension (extn)
 
-The library is extended.
+The library is extended (adding functionalities).
 
 ### Improvement (impr)
 
@@ -4555,6 +4560,10 @@ Obvious modifications; look at source code diffs.
 ### Reverting (rvrt)
 
 Reverting previous modifications.
+
+### Simplification (simp)
+
+The library is simplified.
 
 ### Standardization (stdz)
 
