@@ -435,7 +435,7 @@ namespace {
 
     Values.Add(iTaskRecurrentSpan, Status.Recurrence.Span);
     Values.Add(iTaskRecurrentUnit, (tsqstts::tUnit)Status.Recurrence.Unit);
-    Values.Push(Session);
+    Session.SetValues(Values);
 
     Session.RemoveClasses(Displayed, L_( cHide ));
   qRR;
@@ -518,11 +518,12 @@ namespace {
   qRB;
     Values.Init();
 
-    Values.Fetch(Session, sIds_(
+    Session.GetValues(sIds_(
       iTitleEdition, iTaskStatusType,
       iTaskEventDate, iTaskEventTimeHour, iTaskEventTimeMinute,
       iTaskTimelyDateLatest, iTaskTimelyDateEarliest,
-      iTaskRecurrentSpan, iTaskRecurrentUnit));
+      iTaskRecurrentSpan, iTaskRecurrentUnit),
+      Values);
 
     Title.Append(Values.Get(iTitleEdition));
 
@@ -643,6 +644,7 @@ qRH;
   str::wString Title, Description, XML;
   bso::pInteger Buffer;
   tsqstts::sStatus Status;
+  rTValues_ Values;
 qRB;
   tol::Init(Title, Description, Status);
 
@@ -662,7 +664,11 @@ qRB;
       break;
     case sTaskModification:
       Bundle.Set(Title, Description, Session.Selected);
-      Session.SetValue(bso::Convert(*Session.Selected, Buffer), Title);
+      Values.Init();
+      Values.Add(bso::Convert(*Session.Selected, Buffer), Title);
+      Values.Add(iTitleView, Title);
+      Values.Add(iDescriptionView, Description);
+      Session.SetValues(Values);
       break;
     default:
       qRGnr();

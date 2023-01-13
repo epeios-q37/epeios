@@ -193,13 +193,6 @@ namespace str {
 
 			Init(Seed, Row);
 		}
-		string_( char C )
-		: E_BUNCH_( bso::char__ )(EmbeddedStatic_)
-		{
-			reset( false );
-
-			Init( C );
-		}
 		string_( const string_ &String )
 		: E_BUNCH_( bso::char__ )(EmbeddedStatic_)
 		{
@@ -886,46 +879,46 @@ namespace str {
 	: public tstrings_<row>
 	{
 	public:
-        using tstrings_<row>::tstrings_;
-        using tstrings_<row>::Init;
-				template <typename ...s> row Init(const s &...Strings)
-				{
-				  Init();
+    using tstrings_<row>::tstrings_;
+    using tstrings_<row>::Init;
+    template <typename ...s> row Init(const s &...Strings)
+    {
+      Init();
 
-				  return AppendMulti(Strings...);
-				}
-        using tstrings_<row>::Append;
-        sdr::sRow Append(const char *String)
-        {
-            return tstrings_<row>::Append(wString(String));
-        }
-        sdr::sRow AppendMulti(const char *String)
-        {
-            return Append(String);
-        }
-        sdr::sRow AppendMulti(const string &String)
-        {
-            return tstrings_<row>::Append(String);
-        }
-        sdr::sRow AppendMulti(const string_ &String)
-        {
-            return tstrings_<row>::Append(String);
-        }
-				template <typename f, typename ...o> row AppendMulti(
-					const f &First,
-					const o &...Others)
-				{
-					row Row = Append(First);
+      return AppendMulti(Strings...);
+    }
+    using tstrings_<row>::Append;
+    sdr::sRow Append(const char *String)
+    {
+        return tstrings_<row>::Append(wString(String));
+    }
+    sdr::sRow AppendMulti(const char *String)
+    {
+        return Append(String);
+    }
+    sdr::sRow AppendMulti(const string &String)
+    {
+        return tstrings_<row>::Append(String);
+    }
+    sdr::sRow AppendMulti(const string_ &String)
+    {
+        return tstrings_<row>::Append(String);
+    }
+    template <typename f, typename ...o> row AppendMulti(
+      const f &First,
+      const o &...Others)
+    {
+      row Row = Append(First);
 
-					AppendMulti(Others...);
+      AppendMulti(Others...);
 
-					return Row;
-				}
-			};
+      return Row;
+    }
+  };
 
 //	template <typename row> qTCLONE(dTStrings_<row>, dTStrings);
 
-    typedef dTStrings_<sdr::sRow> dStrings;
+  typedef dTStrings_<sdr::sRow> dStrings;
 
 	qW1(TStrings_);
 
@@ -933,19 +926,19 @@ namespace str {
 	: public wTStrings_<row>
 	{
 	public:
-        using wTStrings_<row>::wTStrings_;
-        using wTStrings_<row>::Init;
-        using wTStrings_<row>::operator =;
-        void Init( const str::dString &String)
-        {
-            Init();
-            wTStrings_<row>::Append(String);
-        }
-        void Init( const bso::sChar *String)
-        {
-            Init();
-            wTStrings_<row>::Append(String);
-        }
+    using wTStrings_<row>::wTStrings_;
+    using wTStrings_<row>::Init;
+    using wTStrings_<row>::operator =;
+    void Init( const str::dString &String)
+    {
+        Init();
+        wTStrings_<row>::Append(String);
+    }
+    void Init( const bso::sChar *String)
+    {
+        Init();
+        wTStrings_<row>::Append(String);
+    }
 		wTStrings(void) // Needed by 'Windows'.
 		: wTStrings_<row>()
 		{}

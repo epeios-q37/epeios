@@ -15,6 +15,11 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2023-01-13
+- SCLX: [simpl], [extn], [impr];
+- STR: removing implicit conversion from `char` to `dString`, which causes problems with *enum*s;
+
+
 ## 2023-01-12
 - SCLX: [simpl], [adpt];
 

@@ -36,6 +36,73 @@ sclx::action_handler<sSession> main::Core;
 mscmdd::rRFlow main::MidiRFlow;
 
 namespace {
+  qENUM( Id_ ) {
+    iWidthRangeInput,
+    iWidthNumberInput,
+    iMidiIn,
+    iAccidentalAmount,
+    iAccidental,
+    iNumerator,
+    iDenominator,
+    iOctave,
+    iScripts,
+    iEmbedded,
+    iOutput,
+    i_amount,
+    i_Undefined
+  };
+
+#define C_( name )\
+  case i##name:\
+  return #name;\
+  break
+
+  const char *GetLabel_( eId_ Id )
+  {
+    switch ( Id ) {
+    C_( WidthRangeInput );
+    C_( WidthNumberInput );
+    C_( MidiIn );
+    C_( AccidentalAmount );
+    C_( Accidental );
+    C_( Numerator );
+    C_( Denominator );
+    C_( Octave );
+    C_( Scripts );
+    C_( Embedded );
+    C_( Output );
+/*
+    C_(  );
+*/
+    default:
+      qRGnr();
+      break;
+
+    }
+
+    return NULL;  // To avoid a warning.
+  }
+
+#undef C_
+
+  namespace _ {
+    class gl {
+    public:
+      static const char *GetLabel(eId_ Id)
+      {
+        return ::GetLabel_(Id);
+      }
+    };
+  }
+
+  typedef sclx::sIds<eId_, i_amount, _::gl> sIds_;
+  typedef sclx::rValues<eId_, i_amount, _::gl> rValues_;
+  typedef sclx::rTValues<eId_, i_amount, _::gl> rTValues_;
+}
+
+#define L_(name)  GetLabel_(name)
+
+namespace {
   namespace {
     bso::sBool Fill_(
       const str::dString  &Id,
@@ -385,14 +452,14 @@ namespace {
     sSession &Session)
     {
     qRH;
-      str::wStrings Ids, Values;
+      rTValues_ Values;
     qRB;
-      tol::Init(Ids, Values);
+      Values.Init();
 
-      Ids.AppendMulti("WidthRangeInput", "WidthNumberInput");
-      Values.AppendMulti(Value, Value);
+      Values.Add(iWidthRangeInput, Value);
+      Values.Add(iWidthNumberInput, Value);
 
-      Session.SetValues(Ids, Values);
+      Session.SetValues(Values);
     qRR;
     qRT;
     qRE;
@@ -407,18 +474,21 @@ namespace {
       mscmld::eAccidental Accidental = mscmld::a_Undefined;
       bso::pInt IBuffer;
       qCBUFFERh CBuffer;
+      rTValues_ Values;
     qRB;
       Device.Init();
       midiq::GetDeviceInId(Device);
 
       XHTML.Init();
 
+      Values.Init();
+
       if ( FillMidiInDevices_(Device, XHTML) )
         Session.RemoveAttribute(Session.Parent("beautiful-piano", CBuffer), "open");
       else
-        Session.SetValue("MidiIn", "None");
+        Values.Add(iMidiIn, "None");
 
-      Session.End("MidiIn", XHTML);
+      Session.End(L_( iMidiIn ), XHTML);
 
       /*
       XHTML.Init();
@@ -426,21 +496,23 @@ namespace {
       Session.Inner("MidiOut", XHTML);
       */
 
-      Session.SetValue("AccidentalAmount", bso::Convert(abs(XMelody.Signature.Key), IBuffer));
+      Values.Add(iAccidentalAmount, abs(XMelody.Signature.Key));
 
       Accidental = XMelody.Signature.Key ? XMelody.Signature.Key > 0 ? mscmld::aSharp : mscmld::aFlat : XMelody.Accidental;
-      Session.SetValue("Accidental", mscmld::GetLabel(Accidental));
+      Values.Add(iAccidental, mscmld::GetLabel(Accidental));
 
-      Session.SetValue("Numerator", bso::Convert(XMelody.Signature.Time.Numerator(), IBuffer));
-      Session.SetValue("Denominator", bso::Convert(XMelody.Signature.Time.Denominator(), IBuffer));
+      Values.Add(iNumerator, XMelody.Signature.Time.Numerator());
+      Values.Add(iDenominator, XMelody.Signature.Time.Denominator());
 
-      Session.SetValue("Octave", bso::Convert(XMelody.BaseOctave, IBuffer));
+      Values.Add(iOctave, XMelody.BaseOctave);
+
+      Session.SetValues(Values);
 
       UpdateUIWidth_(bso::Convert(Session.Width, IBuffer), Session);
 
       XHTML.Init();
       GetScriptsXHTML_(XHTML);
-      Session.End("Scripts", XHTML);
+      Session.End(L_( iScripts ), XHTML);
     qRR;
     qRT;
     qRE;
@@ -502,13 +574,16 @@ namespace {
     sSession &Session)
   {
   qRH;
-    str::wString RawKey, RawAccidental;
+    rValues_ Values;
+    str::wString RawAccidental;
   qRB;
-    tol::Init(RawAccidental, RawKey);
-    Session.GetValue("AccidentalAmount", RawKey);
-    Session.GetValue("Accidental", RawAccidental);
+    tol::Init(Values, RawAccidental);
 
-    melody::HandleKeyAndAccidental(RawKey.ToU8(), mscmld::GetAccidental(RawAccidental), XMelody);
+    Session.GetValues(sIds_(iAccidentalAmount, iAccidental), Values);
+
+    Values.Get(iAccidental, RawAccidental);
+
+    melody::HandleKeyAndAccidental(Values.Get<bso::sU8>(iAccidentalAmount), mscmld::GetAccidental(RawAccidental), XMelody);
   qRR;
   qRT;
   qRE;
@@ -740,7 +815,7 @@ qRH;
 	int C;
 	bso::sBool EmbedScriptResult = false;
 qRB;
-  EmbedScriptResult = Session.GetBoolValue("Embedded");
+  EmbedScriptResult = Session.GetBoolValue(L_( iEmbedded ));
 
   tol::Init(Mark, Script, Mime);
   Session.GetMark(Id, Mark);
@@ -789,10 +864,10 @@ qRB;
 	OFlow.reset();
 
 	if ( EmbedScriptResult ) {
-    Session.Inner("Output", Output);
+    Session.Inner(L_( iOutput ), Output);
     Session.Execute("resizeOutputIFrame();");
     Session.SetAttribute(Session.Parent("Output", Buffer), "open", "true");
-    Session.ScrollTo("Output");
+    Session.ScrollTo(L_( iOutput ));
   } else
     Session.Execute(Output);
 qRR;
@@ -889,11 +964,14 @@ qRE;
 D_( SetTimeSignature )
 {
 qRH;
-  qCBUFFERh Buffer;
+  rValues_ Values;
   melody::hGuard Guard;
   mscmld::sSignatureTime Signature;
 qRB;
-  Signature.Init(str::wString(Session.GetValue("Numerator", Buffer)).ToU8(), str::wString(Session.GetValue("Denominator", Buffer)).ToU8());
+  Values.Init();
+  Session.GetValues(sIds_(iNumerator, iDenominator), Values);
+
+  Signature.Init(Values.Get<bso::sU8>(iNumerator), Values.Get<bso::sU8>(iDenominator));
 
   if ( !Signature.IsValid() )
     qRGnr();
@@ -923,7 +1001,7 @@ qRB;
   if ( !DisplayMelody_(XMelody, Session) ) {
     bso::pInt Buffer;
     XMelody.BaseOctave = BaseOctaveBackup;
-    Session.SetValue("Octave", bso::Convert(XMelody.BaseOctave, Buffer));
+    Session.SetValue(L_( iOctave ), bso::Convert(XMelody.BaseOctave, Buffer));
   }
 qRR;
 qRT;

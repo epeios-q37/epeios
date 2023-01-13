@@ -283,7 +283,6 @@ qRT
 qRE
 }
 
-
 void sclx::sProxy::Alert_(
 	const str::dString &XML,
 	const str::dString &XSL,
@@ -291,7 +290,7 @@ void sclx::sProxy::Alert_(
 	const char *Language )
 {
 qRH
-	str::string CloseText;
+	str::wString CloseText;
 qRB
 	CloseText.Init();
 	scll::GetTranslation( SCLX_NAME "_CloseText", Language, CloseText );
@@ -629,40 +628,6 @@ qRB;
     Classes.Append(Class);
 
   HandleClasses_(Action, Ids, Classes);
-qRR;
-qRT;
-qRE;
-}
-
-void sclx::sProxy::GetValues(
-	const str::dStrings &Ids,
-	str::dStrings &Values)
-{
-qRH;
-	str::wString MergedValues;
-qRB;
-	MergedValues.Init();
-
-	Process_("GetValues_1", &MergedValues, Ids);
-
-	xdhcmn::FlatSplit(MergedValues, Values);
-qRR;
-qRT;
-qRE;
-}
-
-void sclx::sProxy::GetMarks(
-	const str::dStrings &Ids,
-	str::dStrings &Marks)
-{
-qRH;
-	str::wString MergedMarks;
-qRB;
-	MergedMarks.Init();
-
-	Process_("GetMarks_1", &MergedMarks, Ids);
-
-	xdhcmn::FlatSplit(MergedMarks, Marks);
 qRR;
 qRT;
 qRE;
