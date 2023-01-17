@@ -35,7 +35,7 @@
 				<Unit>3</Unit>
 				<Value>60</Value>
 			</Tempo>
-			<BaseOctave>3</BaseOctave>
+			<BaseOctave>4</BaseOctave>
 			<Width>15</Width>
 			<xpp:bloc>
 				<xpp:bloc><!--- Some macro for the script-->

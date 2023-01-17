@@ -42,7 +42,6 @@ namespace melody {
   {
   public:
     mscmld::sRow Row;
-    mscmld::sOctave BaseOctave;
     mscmld::sSignature Signature;
     mscmld::eAccidental Accidental; // Accidental to use for altered notes when in C key.
     bso::sBool Overwrite;
@@ -50,7 +49,6 @@ namespace melody {
     {
       wMelody::reset(P);
       Row = qNIL;
-      BaseOctave = mscmld::UndefinedOctave;
       Signature.reset(P);
       Accidental = mscmld::a_Undefined;
       Overwrite = false;
@@ -60,7 +58,6 @@ namespace melody {
     {
       wMelody::Init();
       Row = qNIL;
-      BaseOctave = 2;
       Signature.Init();
       Accidental = mscmld::aSharp;
       Overwrite = false;

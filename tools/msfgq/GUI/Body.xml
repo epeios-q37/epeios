@@ -128,6 +128,8 @@
         <button xdh:onevent="Append">Append</button>
         <button xdh:onevent="Suppr">Suppr.</button>
         <button xdh:onevent="Clear">Clear all</button>
+        <button onclick="activate()">Play</button>
+        <button onclick="T('OscGen', {wave: 'saw', mul: 0.25}).play().noteOnWithFreq(500, 100);">Play</button>
       </fieldset>
     </fieldset>
     <fieldset>

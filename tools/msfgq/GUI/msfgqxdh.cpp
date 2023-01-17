@@ -73,15 +73,15 @@ namespace {
       const str::dString &Id,
       const str::dString &Action) override
       {
-      qRH;
+      qRFH;
 			  qCBUFFERh IdBuffer, ActionBuffer;
-      qRB;
+      qRFB;
         Action.Convert(ActionBuffer);
 
 			  main::Core.Launch(Session_, Id.Convert(IdBuffer), ActionBuffer == NULL || ActionBuffer[0] == 0 ? "OnNewSession" : ActionBuffer, xdhcdc::m_Undefined); // Last parameter is not used.
-      qRR;
-      qRT;
-      qRE;
+      qRFR;
+      qRFT;
+      qRFE(sclm::ErrorDefaultHandling());
         return true;
       }
   public:

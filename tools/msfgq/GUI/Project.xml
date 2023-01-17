@@ -32,6 +32,7 @@
 				<xpp:expand select="FBLF"/>
       </Modules>
 			<Modules Group="MSC">
+				<Module>mscabc</Module>
 				<Module>mscmdd</Module>
 				<Module>mscmdf</Module>
 				<Module>mscmdm</Module>

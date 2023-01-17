@@ -35,16 +35,19 @@ namespace main {
   qCDEF(sWidth, UndefinedWidth, bso::U8Max);
   qCDEF(sWidth, WidthMin, 10);
   qCDEF(sWidth, WidthMax, 25);
+  qCDEF(mscmld::sOctave, BaseOctaveMax, 9);
 
   class sSession
   : public sclx::sProxy
   {
   public:
     sWidth Width;
+    mscmld::sOctave BaseOctave;
     void reset(bso::sBool P = true)
     {
       sProxy::reset(P);
       Width = UndefinedWidth;
+      BaseOctave = mscmld::UndefinedOctave;
     }
     qCDTOR( sSession );
     void Init(

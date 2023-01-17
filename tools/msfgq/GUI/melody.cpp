@@ -96,7 +96,6 @@ namespace {
 
 void melody::Initialize(void)
 {
-  XMelody_.BaseOctave = sclm::MGetU8(registry::parameter::BaseOctave, 9);
   XMelody_.Signature = GetRegistrySignature_();
   XMelody_.Accidental = GetRegistryAccidental_();
 }
@@ -112,7 +111,7 @@ bso::sS8 melody::Handle(
   sNote Note,
   rXMelody &XMelody)
 {
-  bso::sS8 RelativeOctave = GetOctave(Note, XMelody.Accidental) - XMelody.BaseOctave;
+  bso::sS8 RelativeOctave = GetOctave(Note, XMelody.Accidental) - 3;
 
   if ( RelativeOctave < 0 )
     return RelativeOctave;

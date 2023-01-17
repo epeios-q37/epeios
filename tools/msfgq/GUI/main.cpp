@@ -22,6 +22,7 @@
 #include "midiq.h"
 #include "registry.h"
 
+#include "mscabc.h"
 #include "mscmdd.h"
 
 #include "mthrtn.h"
@@ -198,176 +199,8 @@ namespace {
   SCLX_ADef( sSession, actions_, name )
 
 namespace {
-  namespace _ {
-    bso::sS8 Convert(
-      const mscmld::sNote &Note,
-      mscmld::sOctave BaseOctave,
-      mscmld::eAccidental Accidental,
-      const char *Separator,
-      txf::sWFlow &Flow)
-    {
-      const char *Label = NULL;
-      bso::sS8 RawDuration = 0;
-      mthrtn::wRational Duration;
-      bso::sS8 RelativeOctave;
-      bso::pInteger NBuffer, DBuffer;
-      char PitchNotation[] = {0,0,0};
-      mscmld::sAltPitch Pitch;
-
-      Pitch.Init();
-
-      mscmld::Convert(Note, Accidental, Pitch);
-
-      Label = mscmld::GetLabel(Pitch);
-      RawDuration = Note.Duration.Base;
-
-      Duration.Init(mthrtn::wRational(1,1 << (RawDuration - 1)) * mthrtn::wRational(( 2 << Note.Duration.Modifier ) - 1, 1 << Note.Duration.Modifier));
-      RelativeOctave = Pitch.Octave - BaseOctave;
-
-
-      if ( Pitch.Name == mscmld::pnRest ) {
-        Flow << "z";
-      } else {
-        if ( RelativeOctave < 0 )
-          return RelativeOctave;
-
-        if ( RelativeOctave > 3 )
-          return RelativeOctave - 3;
-
-        if ( strlen(Label) != 1 )
-          qRGnr();
-
-        switch ( RelativeOctave ) {
-        case 0:
-          PitchNotation[1] = ',';
-        case 1:
-          PitchNotation[0] = toupper(Label[0]);
-          break;
-        case 3:
-          PitchNotation[1] = '\'';
-        case 2:
-          PitchNotation[0] = tolower(Label[0]);
-          break;
-        default:
-          qRGnr();
-          break;
-        }
-
-        switch ( Pitch.Accidental ) {
-        case mscmld::aSharp:
-          Flow << '^';
-          break;
-        case mscmld::aFlat:
-          Flow << '_';
-          break;
-        case mscmld::aNatural:
-          break;
-        default:
-          qRGnr();
-          break;
-        }
-
-        Flow << PitchNotation;
-      }
-
-      Flow << bso::Convert(Duration.N.GetU32(), NBuffer) << '/' << bso::Convert(Duration.D.GetU32(), DBuffer);
-
-      if ( Note.Duration.TiedToNext )
-        Flow << '-';
-
-      Flow << " [|]" << Separator;
-
-      return 0;
-    }
-
-    namespace _ {
-      qCDEFC(EscapedNL, "\\n");
-      qCDEFC(NL, "\n");
-    }
-
-    bso::sS8 Convert(
-      const mscmld::dMelody &Melody,
-      mscmld::sOctave BaseOctave,
-      mscmld::eAccidental Accidental,
-      bso::sBool EscapeNL,
-      bso::sU8 Width,
-      txf::sWFlow &Flow)
-    {
-      bso::sS8 Return = 0;
-      mscmld::sRow Row = Melody.First();
-      bso::sUHuge Counter = 1;
-
-      const char *&NL = EscapeNL ? _::EscapedNL : _::NL;
-
-      Flow << "X: 1" << NL << "T:" << NL << "L: 1" << NL << "K: C" << NL;
-
-      if ( Row == qNIL )
-        Flow << "[|]";
-
-      while ( ( Return == 0 ) && ( Row != qNIL ) ) {
-        Return = Convert(Melody(Row), BaseOctave, Accidental, Counter++ % Width ? " " : NL, Flow);
-
-        Row = Melody.Next(Row);
-      }
-
-      return Return;
-    }
-  }
-
-  bso::sS8 GetABC_(
-    const mscmld::dMelody &Melody,
-    mscmld::sOctave BaseOctave,
-    mscmld::eAccidental Accidental,
-    bso::sBool EscapeNL,
-    bso::sU8 Width,
-    txf::sWFlow &Flow)
-  {
-    return _::Convert(Melody, BaseOctave, Accidental, EscapeNL, Width, Flow);
-  }
-
-  bso::sS8 GetABC_(
-    const melody::rXMelody &XMelody,
-    sWidth Width,
-    bso::sBool EscapeNL,
-    txf::sWFlow &Flow)
-  {
-    return GetABC_(XMelody, XMelody.BaseOctave, XMelody.Accidental, EscapeNL, Width, Flow);
-  }
-
-  bso::sS8 GetABC_(
-    const melody::rXMelody &XMelody,
-    sWidth Width,
-    bso::sBool EscapeNL,
-    str::dString &ABC)
-  {
-    bso::sS8 Return = 0;
-  qRH;
-    flx::rStringTWFlow Flow;
-  qRB;
-    Flow.Init(ABC);
-
-    Return = GetABC_(XMelody, Width, EscapeNL, Flow);
-  qRR;
-  qRT;
-  qRE;
-    return Return;
-  }
 
   namespace {
-    namespace {
-      void HighlightNote_(
-        mscmld::sRow Row,
-        str::dString &Script)
-      {
-        bso::pInt Buffer;
-
-        Script.Append("highlightNote(\"");
-        if ( Row != qNIL)
-          Script.Append(bso::Convert(*Row, Buffer));
-        Script.Append("\");");
-      }
-    }
-
     bso::sBool DisplayMelody_(
       const melody::rXMelody &XMelody,
       main::sSession &Session)
@@ -376,21 +209,17 @@ namespace {
     qRH;
       str::wString ABC, Script;
       bso::sS8 OctaveOverflow = 0;
+      bso::pInt Buffer;
     qRB;
       tol::Init(ABC, Script);
 
-      OctaveOverflow = GetABC_(XMelody, Session.Width, true, ABC);
+      OctaveOverflow = mscabc::Convert(XMelody, XMelody.Accidental, Session.Width, true, ABC);
 
       if ( OctaveOverflow != 0 )
         Session.AlertB("Octave error !!!");
       else {
-        Script.Init("load(\"");
-        Script.Append(ABC);
-        Script.Append("\");");
-
-        HighlightNote_(XMelody.Row, Script);
-
-        Script.Append("updatePlayer();");
+        Script.Init();
+        flx::rStringTOFlow(Script) << "renderABC(\"" << ABC << "\");" << "highlightNote(\"" << ( XMelody.Row == qNIL ? "" : bso::Convert(*XMelody.Row, Buffer) ) << "\");" << "updatePlayer();";
 
         Session.Execute(Script);
 
@@ -504,7 +333,7 @@ namespace {
       Values.Add(iNumerator, XMelody.Signature.Time.Numerator());
       Values.Add(iDenominator, XMelody.Signature.Time.Denominator());
 
-      Values.Add(iOctave, XMelody.BaseOctave);
+      Values.Add(iOctave, Session.BaseOctave);
 
       Session.SetValues(Values);
 
@@ -533,6 +362,8 @@ qRB;
   if ( Session.Width < WidthMin )
     sclr::ReportBadOrNoValueForEntryErrorAndAbort(registry::parameter::Width);
 
+  Session.BaseOctave = sclm::MGetU8(registry::parameter::BaseOctave, BaseOctaveMax);
+
   Body.Init();
   sclm::MGetValue(registry::definition::Body, Body);
 
@@ -556,12 +387,12 @@ qRH;
   str::wString Script;
   melody::hGuard Guard;
 qRB;
-  Script.Init("ABCJS.synth.playEvent([{\"cmd\":\"note\", \"pitch\":");
-  Script.Append(Id);
-  Script.Append(",\"durationInMeasures\":0.125,\"start\":0, \"volume\":70,\"instrument\":0,\"gap\":0}], [], 1000).then(function (response) {console.log(\"note played\");}).catch(function (error) {	console.log(\"error playing note\", error);});");
+  CXMEL();
+
+  Script.Init();
+  flx::rStringTWFlow(Script) << "play(" << Id << ");";
   Session.Execute(Script);
 
-  CXMEL();
   DisplayMelody_(XMelody, Session);
 qRR;
 qRT;
@@ -747,7 +578,6 @@ namespace {
   void ToXML_(
     const mscmld::dMelody &Melody,
     mscmld::eAccidental Accidental,
-    mscmld::sOctave BaseOctave,
     txf::sWFlow &Flow)
   {
   qRH;
@@ -759,7 +589,6 @@ namespace {
 
     Writer.PushTag("Melody");
     Writer.PutAttribute("Amount", Melody.Amount() );
-    Writer.PutAttribute("BaseOctave", BaseOctave);
 
     mscmld::WriteXML(Melody, Accidental, Writer);
 
@@ -773,7 +602,7 @@ namespace {
     const melody::rXMelody &XMelody,
     txf::sWFlow &Flow)
   {
-    ToXML_(XMelody, XMelody.Accidental, XMelody.BaseOctave, Flow);
+    ToXML_(XMelody, XMelody.Accidental, Flow);
 
     Flow << txf::nl;  // Without this, with an empty melody the root 'Melody' will not be available for the script.
   }
@@ -794,7 +623,7 @@ namespace {
       B64Flow.Init(Flow.Flow(), cdgb64::fURL);
       B64TWFlow.Init(B64Flow);
 
-      GetABC_(XMelody, Width, false, B64TWFlow);
+      mscabc::Convert(XMelody, XMelody.Accidental, Width, false, B64TWFlow);
     qRR;
     qRT;
     qRE;
@@ -950,10 +779,19 @@ D_( Keyboard )
 {
 qRH;
   melody::hGuard Guard;
+  str::wString Script;
+  mscmld::sPitch Pitch;
 qRB;
   XMEL();
 
-  melody::Handle(mscmld::sNote(str::wString(Id+1).ToU8() + 5 + XMelody.BaseOctave * 12, mscmld::sDuration(3), XMelody.Signature), XMelody);
+  Pitch = str::wString(Id+1).ToU8() + 5 + Session.BaseOctave * 12;
+
+  Script.Init();
+  flx::rStringTWFlow(Script) << "play(" << (bso::sUInt)Pitch << ");";
+
+  Session.Execute(Script);
+
+  melody::Handle(mscmld::sNote(Pitch, mscmld::sDuration(3), XMelody.Signature), XMelody);
 
   DisplayMelody_(XMelody, Session);
 qRR;
@@ -994,14 +832,14 @@ qRH;
 qRB;
   XMEL();
 
-  BaseOctaveBackup = XMelody.BaseOctave;
+  BaseOctaveBackup = Session.BaseOctave;
 
-  str::wString(Session.GetValue(Id, Buffer)).ToNumber(XMelody.BaseOctave, str::sULimit<bso::sU8>(9));
+  str::wString(Session.GetValue(Id, Buffer)).ToNumber(Session.BaseOctave, str::sULimit<bso::sU8>(9));
 
   if ( !DisplayMelody_(XMelody, Session) ) {
     bso::pInt Buffer;
-    XMelody.BaseOctave = BaseOctaveBackup;
-    Session.SetValue(L_( iOctave ), bso::Convert(XMelody.BaseOctave, Buffer));
+    Session.BaseOctave = BaseOctaveBackup;
+    Session.SetValue(L_( iOctave ), bso::Convert(Session.BaseOctave, Buffer));
   }
 qRR;
 qRT;

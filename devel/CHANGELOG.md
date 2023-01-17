@@ -15,6 +15,12 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2023-01-17
+- FLX:
+  - removing duplicates,
+  - adding `operator ()` returning base class to string stuff to simplify use (see *mscabc.h* for example);
+- MSCABC: [crtn];
+
 ## 2023-01-13
 - SCLX: [simpl], [extn], [impr];
 - STR: removing implicit conversion from `char` to `dString`, which causes problems with *enum*s;

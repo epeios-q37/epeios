@@ -162,7 +162,7 @@ qRB;
         if ( Header.MIDIEvent.Event == midNoteOn )
           if  ( Data( Data.Last() ) != 0 ) {
             if ( Handle_(Data(Data.First())) == 0 )
-              sclx::Broadcast(str::wString("Hit"), str::wString(bso::Convert(Data(Data.First()), Buffer)));
+              sclx::Broadcast("Hit", bso::Convert(Data(Data.First()), Buffer));
   //					mtx::Lock( Shared.Mutex );
             /*if ( Shared.Row != qNIL ) {
               Shared.Melody->InsertAt(Note, Shared.Row);
