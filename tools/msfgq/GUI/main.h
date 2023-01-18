@@ -41,13 +41,15 @@ namespace main {
   : public sclx::sProxy
   {
   public:
-    sWidth Width;
     mscmld::sOctave BaseOctave;
+    sWidth Width;
+    mscmld::sRow Row;
     void reset(bso::sBool P = true)
     {
       sProxy::reset(P);
-      Width = UndefinedWidth;
       BaseOctave = mscmld::UndefinedOctave;
+      Width = UndefinedWidth;
+      Row = qNIL;
     }
     qCDTOR( sSession );
     void Init(

@@ -46,6 +46,8 @@ namespace {
     iNumerator,
     iDenominator,
     iOctave,
+    iBegin,
+    iEnd,
     iScripts,
     iEmbedded,
     iOutput,
@@ -69,6 +71,8 @@ namespace {
     C_( Numerator );
     C_( Denominator );
     C_( Octave );
+    C_( Begin );
+    C_( End );
     C_( Scripts );
     C_( Embedded );
     C_( Output );
@@ -219,7 +223,7 @@ namespace {
         Session.AlertB("Octave error !!!");
       else {
         Script.Init();
-        flx::rStringTOFlow(Script) << "renderABC(\"" << ABC << "\");" << "highlightNote(\"" << ( XMelody.Row == qNIL ? "" : bso::Convert(*XMelody.Row, Buffer) ) << "\");" << "updatePlayer();";
+        flx::rStringTOFlow(Script) << "renderABC(\"" << ABC << "\");" << "highlightNote(\"" << ( Session.Row == qNIL ? "" : bso::Convert(*Session.Row, Buffer) ) << "\");" << "updatePlayer();";
 
         Session.Execute(Script);
 
@@ -462,7 +466,7 @@ D_( SelectNote )
 
   melody::rXMelody &XMelody = melody::Get(Guard);
 
-  str::wString(Id).ToNumber(*XMelody.Row);
+  str::wString(Id).ToNumber(*Session.Row);
   DisplayMelody_(XMelody, Session);
 }
 
@@ -473,15 +477,15 @@ qRH;
 qRB;
   XMEL();
 
-  if ( XMelody.Row != qNIL ) {
-    mscmld::sNote Note = XMelody(XMelody.Row);
+  if ( Session.Row != qNIL ) {
+    mscmld::sNote Note = XMelody(Session.Row);
 
     Note.Pitch = mscmld::pRest;
     Note.Duration.TiedToNext = false;
 
-    XMelody.Store(Note, XMelody.Row);
+    XMelody.Store(Note, Session.Row);
 
-    XMelody.Row = XMelody.Next(XMelody.Row);
+    Session.Row = XMelody.Next(Session.Row);
 
     DisplayMelody_(XMelody, Session);
   }
@@ -497,14 +501,14 @@ qRH;
 qRB;
   XMEL();
 
-  if ( XMelody.Row != qNIL ) {
-    mscmld::sNote Note = XMelody(XMelody.Row);
+  if ( Session.Row != qNIL ) {
+    mscmld::sNote Note = XMelody(Session.Row);
 
     str::wString(Id).ToNumber(Note.Duration.Base);
 
-    XMelody.Store(Note, XMelody.Row);
+    XMelody.Store(Note, Session.Row);
 
-    XMelody.Row = XMelody.Next(XMelody.Row);
+    Session.Row = XMelody.Next(Session.Row);
 
     DisplayMelody_(XMelody, Session);
   }
@@ -520,15 +524,15 @@ qRH;
 qRB;
   XMEL();
 
-  if ( XMelody.Row != qNIL ) {
-    mscmld::sNote Note = XMelody(XMelody.Row);
+  if ( Session.Row != qNIL ) {
+    mscmld::sNote Note = XMelody(Session.Row);
 
     if ( Note.Duration.Modifier >= 3 )
       Note.Duration.Modifier = 0;
     else
       Note.Duration.Modifier++;
 
-    XMelody.Store(Note, XMelody.Row);
+    XMelody.Store(Note, Session.Row);
 
     DisplayMelody_(XMelody, Session);
   }
@@ -544,21 +548,21 @@ qRH;
 qRB;
   XMEL();
 
-  if ( XMelody.Row != qNIL ) {
-    mscmld::sNote Note = XMelody(XMelody.Row);
+  if ( Session.Row != qNIL ) {
+    mscmld::sNote Note = XMelody(Session.Row);
 
     if ( Note.Pitch != mscmld::pRest ) {
       if ( Note.Duration.TiedToNext ) {
         Note.Duration.TiedToNext = false;
-        XMelody.Store(Note, XMelody.Row);
+        XMelody.Store(Note, Session.Row);
       } else {
         Note.Duration.TiedToNext = true;
-        XMelody.Store(Note, XMelody.Row);
+        XMelody.Store(Note, Session.Row);
         Note.Duration.TiedToNext = false;
         Note.Duration.Modifier = 0;
         Note.Duration.Base = 3;
 
-        mscmld::sRow Row = XMelody.Next(XMelody.Row);
+        mscmld::sRow Row = XMelody.Next(Session.Row);
 
         if ( Row == qNIL )
           XMelody.Append(Note);
@@ -704,31 +708,59 @@ qRT;
 qRE;
 }
 
-D_( Cursor )
+D_( Begin )
 {
 qRH;
-  str::wString Cursor;
   melody::hGuard Guard;
 qRB;
-  Cursor.Init();
+  CXMEL();
 
-  Session.GetValue(Id, Cursor);
+  Session.Row = XMelody.First();
 
-  XMEL();
-  XMelody.Overwrite = Cursor == "Overwrite";
+  DisplayMelody_(XMelody, Session);
 qRR;
 qRT;
 qRE;
 }
 
-D_( Append )
+D_( Previous )
 {
 qRH;
   melody::hGuard Guard;
 qRB;
-  XMEL();
+  CXMEL();
 
-  XMelody.Row = qNIL;
+  Session.Row = XMelody.Previous(Session.Row);
+
+  DisplayMelody_(XMelody, Session);
+qRR;
+qRT;
+qRE;
+}
+
+D_( Next )
+{
+qRH;
+  melody::hGuard Guard;
+qRB;
+  CXMEL();
+
+  Session.Row = XMelody.Next(Session.Row);
+
+  DisplayMelody_(XMelody, Session);
+qRR;
+qRT;
+qRE;
+}
+
+D_( End )
+{
+qRH;
+  melody::hGuard Guard;
+qRB;
+  CXMEL();
+
+  Session.Row = XMelody.Last();
 
   DisplayMelody_(XMelody, Session);
 qRR;
@@ -740,17 +772,17 @@ D_( Suppr )
 {
 qRH;
   melody::hGuard Guard;
-  bso::sBool IsLast = false;
 qRB;
-  XMEL();
+  if ( Session.Row != qNIL ) {
 
-  if ( XMelody.Row != qNIL ) {
-    IsLast = XMelody.Row == XMelody.Last();
+    XMEL();
 
-    XMelody.Remove(XMelody.Row);
+    bso::sBool IsLast = Session.Row == XMelody.Last();
+
+    XMelody.Remove(Session.Row);
 
     if ( IsLast )
-      XMelody.Row = qNIL;
+      Session.Row = XMelody.Last();
 
     DisplayMelody_(XMelody, Session);
   }
@@ -767,7 +799,7 @@ qRB;
   XMEL();
 
   XMelody.wMelody::Init();
-  XMelody.Row = qNIL;
+  Session.Row = qNIL;
 
   DisplayMelody_(XMelody, Session);
 qRR;
@@ -781,6 +813,7 @@ qRH;
   melody::hGuard Guard;
   str::wString Script;
   mscmld::sPitch Pitch;
+  mscmld::sNote Note;
 qRB;
   XMEL();
 
@@ -791,7 +824,14 @@ qRB;
 
   Session.Execute(Script);
 
-  melody::Handle(mscmld::sNote(Pitch, mscmld::sDuration(3), XMelody.Signature), XMelody);
+  Note.Init(Pitch, mscmld::sDuration(3), XMelody.Signature);
+
+  if ( Session.Row == qNIL )
+    Session.Row = XMelody.Append(Note);
+  else {
+    XMelody.InsertAt(Note, XMelody.Next(Session.Row) );
+    Session.Row = XMelody.Next(Session.Row);
+  }
 
   DisplayMelody_(XMelody, Session);
 qRR;
@@ -873,7 +913,6 @@ qRB;
 
   CXMEL();
   DisplayMelody_(XMelody, Session);
-
 qRR;
 qRT;
 qRE;
@@ -905,7 +944,7 @@ namespace {
     _::Add(Core,
       OnNewSession, Hit, SetAccidental, SetAccidentalAmount, Refresh,
       SelectNote, Rest, Duration, Dot, Tie,
-      Execute, Cursor, Append, Suppr, Clear,
+      Execute, Begin, Previous, Next, End, Suppr, Clear,
       Keyboard, Test, SetTimeSignature, SetOctave, ChangeWidth );
   }
 }

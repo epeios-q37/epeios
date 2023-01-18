@@ -106,7 +106,7 @@ rXMelody &melody::Get(hGuard &Guard)
 
   return XMelody_;
 }
-
+/*
 bso::sS8 melody::Handle(
   sNote Note,
   rXMelody &XMelody)
@@ -129,7 +129,7 @@ bso::sS8 melody::Handle(
 
   return 0;
 }
-
+*/
 namespace {
   void UpdateSignatureKey_(
     sSignatureKey Key,

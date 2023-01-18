@@ -43,7 +43,7 @@
           <option value="16">16</option>
         </select>
       </fieldset>
-      <fieldset class="neat">
+      <fieldset style="display: none;" class="neat">
         <legend>Octave</legend>
         <input id="Octave" xdh:onevent="SetOctave" type="number" size="1" min="0" max="9" value="4" />
       </fieldset>
@@ -116,20 +116,14 @@
         </fieldset>
       </span>
       <fieldset style="display: flex; align-items: center; gap:5px;">
-        <legend>Cursor</legend>
-        <fieldset xdh:radio="Cursor" xdh:onevent="Cursor">
-          <label>
-            <input name="Cursor" type="radio" value="Insert" checked="checked">Insert</input>
-          </label>
-          <label>
-            <input name="Cursor" type="radio" value="Overwrite">Overwrite</input>
-          </label>
-        </fieldset>
-        <button xdh:onevent="Append">Append</button>
+        <button xdh:onevent="Begin;">|&lt;</button>
+        <button xdh:onevent="Previous">&lt;</button>
+        <button xdh:onevent="Next">&gt;</button>
+        <button xdh:onevent="End">&gt;|</button>
+        <span></span>
         <button xdh:onevent="Suppr">Suppr.</button>
         <button xdh:onevent="Clear">Clear all</button>
         <button onclick="activate()">Play</button>
-        <button onclick="T('OscGen', {wave: 'saw', mul: 0.25}).play().noteOnWithFreq(500, 100);">Play</button>
       </fieldset>
     </fieldset>
     <fieldset>

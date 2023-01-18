@@ -570,15 +570,24 @@ namespace mscmld {
 		{
 			reset( false );
 
-			this->Pitch = Pitch;
-			this->Duration = Duration;
-			this->Signature = Signature;
+			Init(Pitch, Duration, Signature);
 		}
 		void Init( void )
 		{
 			Pitch = p_Undefined;
 			Duration.Init();
 			Signature.Init();
+		}
+		void Init(
+			const sPitch &Pitch,
+			const sDuration &Duration,
+			const sSignature &Signature )
+		{
+			Init();
+
+			this->Pitch = Pitch;
+			this->Duration = Duration;
+			this->Signature = Signature;
 		}
 		bso::bool__ IsValid( void ) const
 		{
