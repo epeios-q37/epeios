@@ -44,12 +44,14 @@ namespace main {
     mscmld::sOctave BaseOctave;
     sWidth Width;
     mscmld::sRow Row;
+    bso::sBool MidiInAvailable;
     void reset(bso::sBool P = true)
     {
       sProxy::reset(P);
       BaseOctave = mscmld::UndefinedOctave;
       Width = UndefinedWidth;
       Row = qNIL;
+      MidiInAvailable = false;
     }
     qCDTOR( sSession );
     void Init(
@@ -62,7 +64,29 @@ namespace main {
     }
   };
 
-  extern sclx::action_handler<sSession> Core;
+  extern class sActionHelper
+  : public sclx::cActionHelper<sSession>
+  {
+  protected:
+		bso::bool__ SCLXOnBeforeAction(
+			sSession &Session,
+			const char *Id,
+			const char *Action ) override
+    {
+      return true;
+    }
+		void SCLXOnAfterAction(
+			sSession &Session,
+			const char *Id,
+			const char *Action ) override;
+		bso::bool__ SCLXOnClose( sSession &Session ) override
+		{
+		  return true;
+		}
+  } ActionHelper;
+
+  typedef sclx::rActionsHandler<sSession> rCore;
+  extern rCore Core;
 
   extern mscmdd::rRFlow MidiRFlow;
 }

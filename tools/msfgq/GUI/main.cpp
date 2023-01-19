@@ -32,22 +32,70 @@
 
 using namespace main;
 
-sclx::action_handler<sSession> main::Core;
+sActionHelper main::ActionHelper;
+
+rCore main::Core;
 
 mscmdd::rRFlow main::MidiRFlow;
+
+namespace {
+  namespace _ {
+    mtx::rMutex Mutex;
+    const sSession *Owner = NULL;
+  }
+
+  void InitializeMidiInOwning_(void)
+  {
+    _::Mutex = mtx::Create();
+    _::Owner = NULL;
+  }
+
+  bso::sBool IsMidiInOwner_(const sSession &Session )
+  {
+    bso::sBool IsOwner = false;
+  qRH;
+    mtx::rHandle Handler;
+  qRB;
+    Handler.InitAndLock(_::Mutex);
+
+    IsOwner = _::Owner == &Session;
+  qRR;
+  qRT;
+  qRE;
+    return IsOwner;
+  }
+
+  void GrabMidiIn_(const sSession &Session )
+  {
+  qRH;
+    mtx::rHandle Handler;
+  qRB;
+    Handler.InitAndLock(_::Mutex);
+
+    _::Owner = &Session;
+  qRR;
+  qRT;
+  qRE;
+  }
+}
 
 namespace {
   qENUM( Id_ ) {
     iWidthRangeInput,
     iWidthNumberInput,
     iMidiIn,
+    iGrabMidiIn,
     iAccidentalAmount,
     iAccidental,
     iNumerator,
     iDenominator,
     iOctave,
-    iBegin,
-    iEnd,
+    iFirst,
+    iPrevious,
+    iNext,
+    iLast,
+    iSuppr,
+    iClear,
     iScripts,
     iEmbedded,
     iOutput,
@@ -66,13 +114,18 @@ namespace {
     C_( WidthRangeInput );
     C_( WidthNumberInput );
     C_( MidiIn );
+    C_( GrabMidiIn );
     C_( AccidentalAmount );
     C_( Accidental );
     C_( Numerator );
     C_( Denominator );
     C_( Octave );
-    C_( Begin );
-    C_( End );
+    C_( First );
+    C_( Previous );
+    C_( Next );
+    C_( Last );
+    C_( Suppr );
+    C_( Clear );
     C_( Scripts );
     C_( Embedded );
     C_( Output );
@@ -103,9 +156,52 @@ namespace {
   typedef sclx::sIds<eId_, i_amount, _::gl> sIds_;
   typedef sclx::rValues<eId_, i_amount, _::gl> rValues_;
   typedef sclx::rTValues<eId_, i_amount, _::gl> rTValues_;
+
+  sIds_
+    Navigation_(iFirst, iPrevious, iNext, iLast),
+    Removing_(iSuppr, iClear),
+    All_(Navigation_, Removing_, iGrabMidiIn);
 }
 
+#define XMEL() melody::rXMelody &XMelody = melody::Get(Guard)
+#define CXMEL() const XMEL()
+
 #define L_(name)  GetLabel_(name)
+
+void main::sActionHelper::SCLXOnAfterAction(
+  sSession &Session,
+  const char *Id,
+  const char *Action)
+{
+qRH;
+  sIds_ Ids;
+  melody::hGuard Guard;
+qRB;
+  Ids.Init();
+
+  CXMEL();
+
+  if ( Session.Row == qNIL )
+    Ids .Put(Navigation_, Removing_);
+  else {
+    if ( Session.Row == XMelody.First() )
+      Ids.Put(iFirst, iPrevious);
+    if ( Session.Row == XMelody.Last() )
+      Ids.Put(iNext, iLast);
+  }
+
+  if ( !Session.MidiInAvailable || IsMidiInOwner_(Session) )
+    Ids.Put(iGrabMidiIn);
+
+  Session.Disable(Ids);
+
+  Ids.Invert(All_);
+
+  Session.Enable(Ids);
+qRR;
+qRT;
+qRE;
+}
 
 namespace {
   namespace {
@@ -203,7 +299,6 @@ namespace {
   SCLX_ADef( sSession, actions_, name )
 
 namespace {
-
   namespace {
     bso::sBool DisplayMelody_(
       const melody::rXMelody &XMelody,
@@ -219,7 +314,7 @@ namespace {
 
       OctaveOverflow = mscabc::Convert(XMelody, XMelody.Accidental, Session.Width, true, ABC);
 
-      if ( OctaveOverflow != 0 )
+      if ( false && ( OctaveOverflow != 0 ) )
         Session.AlertB("Octave error !!!");
       else {
         Script.Init();
@@ -298,10 +393,11 @@ namespace {
     qRE;
   }
 
-  void UpdateUI_(
+  bso::sBool SetUI_(
     const melody::rXMelody &XMelody,
     sSession &Session)
     {
+      bso::sBool MidiInAvailable = false;
     qRH;
       str::wString XHTML, Device;
       mscmld::eAccidental Accidental = mscmld::a_Undefined;
@@ -316,7 +412,7 @@ namespace {
 
       Values.Init();
 
-      if ( FillMidiInDevices_(Device, XHTML) )
+      if ( ( MidiInAvailable = FillMidiInDevices_(Device, XHTML) ) )
         Session.RemoveAttribute(Session.Parent("beautiful-piano", CBuffer), "open");
       else
         Values.Add(iMidiIn, "None");
@@ -349,11 +445,9 @@ namespace {
     qRR;
     qRT;
     qRE;
+      return MidiInAvailable;
     }
 }
-
-#define XMEL() melody::rXMelody &XMelody = melody::Get(Guard)
-#define CXMEL() const XMEL()
 
 D_( OnNewSession )
 {
@@ -374,7 +468,7 @@ qRB;
   Session.Inner(str::Empty, Body);
 
   CXMEL();
-  UpdateUI_(XMelody, Session);
+  Session.MidiInAvailable = SetUI_(XMelody, Session);
 
   Session.Execute("createStylesheet();");
 
@@ -385,19 +479,35 @@ qRT;
 qRE;
 }
 
+D_( GrabMidiIn )
+{
+  GrabMidiIn_(Session);
+}
+
 D_( Hit )
 {
 qRH;
   str::wString Script;
   melody::hGuard Guard;
+  mscmld::sNote Note;
 qRB;
-  CXMEL();
-
   Script.Init();
   flx::rStringTWFlow(Script) << "play(" << Id << ");";
   Session.Execute(Script);
 
-  DisplayMelody_(XMelody, Session);
+  if ( IsMidiInOwner_(Session ) ) {
+      XMEL();
+      Note.Init(str::wString(Id).ToU8(), mscmld::sDuration(3), XMelody.Signature);
+
+    if ( Session.Row == qNIL )
+      Session.Row = XMelody.Append(Note);
+    else {
+      XMelody.InsertAt(Note, XMelody.Next(Session.Row) );
+      Session.Row = XMelody.Next(Session.Row);
+    }
+
+    DisplayMelody_(XMelody, Session);
+  }
 qRR;
 qRT;
 qRE;
@@ -708,7 +818,7 @@ qRT;
 qRE;
 }
 
-D_( Begin )
+D_( First )
 {
 qRH;
   melody::hGuard Guard;
@@ -753,7 +863,7 @@ qRT;
 qRE;
 }
 
-D_( End )
+D_( Last )
 {
 qRH;
   melody::hGuard Guard;
@@ -923,14 +1033,14 @@ namespace {
 
   namespace _ {
     template <typename action> void Add(
-      sclx::action_handler<sSession> &Core,
+      rCore &Core,
       action &Action )
     {
         Core.Add(Action.Name, Action);
     }
 
     template <typename action, typename... actions> void Add(
-      sclx::action_handler<sSession> &Core,
+      rCore &Core,
       action &Action,
       actions &...Actions)
     {
@@ -939,12 +1049,12 @@ namespace {
     }
   }
 
-  void Register_(void)
+  void RegisterActions_(void)
   {
     _::Add(Core,
-      OnNewSession, Hit, SetAccidental, SetAccidentalAmount, Refresh,
+      OnNewSession, Hit, GrabMidiIn, SetAccidental, SetAccidentalAmount, Refresh,
       SelectNote, Rest, Duration, Dot, Tie,
-      Execute, Begin, Previous, Next, End, Suppr, Clear,
+      Execute, First, Previous, Next, Last, Suppr, Clear,
       Keyboard, Test, SetTimeSignature, SetOctave, ChangeWidth );
   }
 }
@@ -953,5 +1063,6 @@ namespace {
 
 qGCTOR( main ) {
   Core.Init();
-  Register_();
+  RegisterActions_();
+  InitializeMidiInOwning_();
 }

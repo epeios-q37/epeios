@@ -15,12 +15,16 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2023-01-19
+- MSCABC: [impr];
+- SCLX: [extn], [impr];
+
 ## 2023-01-18
 - MSCMLD: [extn];
 
 ## 2023-01-17
 - FLX:
-  - removing duplicates,
+  - removing duplicates;
   - adding `operator ()` returning base class to string stuff to simplify use (see *mscabc.h* for example);
 - MSCABC: [crtn];
 

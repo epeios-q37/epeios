@@ -130,7 +130,7 @@ namespace sclx {
 
 	template <typename session> E_TTCLONE_( bch::E_BUNCHt_( cAction<session> *, crow__ ), action_callbacks_ );
 
-	template <typename session> class action_handler_
+	template <typename session> class actions_handler_
 	{
 	private:
 		cAction<session> *Get_( const str::string_ &Action ) const
@@ -149,7 +149,7 @@ namespace sclx {
 		};
 		stsfsm::automat_ Automat;
 		action_callbacks_<session> Callbacks;
-		action_handler_( s &S )
+		actions_handler_( s &S )
 		: Automat( S.Automat ),
 			Callbacks( S.Callbacks )
 		{}
@@ -163,7 +163,7 @@ namespace sclx {
 			Automat.plug( AS );
 			Callbacks.plug( AS );
 		}
-		action_handler_ &operator =( const action_handler_ &AH )
+		actions_handler_ &operator =( const actions_handler_ &AH )
 		{
 			Automat = AH.Automat;
 			Callbacks = AH.Callbacks;
@@ -196,7 +196,7 @@ namespace sclx {
 		}
 	};
 
-	E_AUTO1( action_handler );
+	E_AUTO1( actions_handler );
 
 	template <typename session> class cActionHelper
 	{
@@ -205,7 +205,10 @@ namespace sclx {
 			session &Session,
 			const char *Id,
 			const char *Action ) = 0;
-		virtual void SCLXOnRefresh( session &Session ) = 0;
+		virtual void SCLXOnAfterAction(
+			session &Session,
+			const char *Id,
+			const char *Action ) = 0;
 		virtual bso::bool__ SCLXOnClose( session &Session ) = 0;
 	public:
 		void reset( bso::bool__ = true )
@@ -224,9 +227,12 @@ namespace sclx {
 		{
 			return SCLXOnBeforeAction( Session, Id, Action );
 		}
-		void OnRefresh( session &Session )
+		void OnAfterAction(
+			session &Session,
+			const char *Id,
+			const char *Action )
 		{
-			return SCLXOnRefresh( Session );
+			return SCLXOnAfterAction( Session, Id, Action );
 		}
 		bso::bool__ OnClose( session &Session )
 		{
@@ -234,7 +240,7 @@ namespace sclx {
 		}
 	};
 
-	class rActionHelper
+	class rActions
 	{
 	private:
 		stsfsm::wAutomat Automat_;
@@ -243,7 +249,7 @@ namespace sclx {
 		{
 			Automat_.reset( P );
 		}
-		qCDTOR( rActionHelper );
+		qCDTOR( rActions );
 		void Init( void )
 		{
 			Automat_.Init();
@@ -339,6 +345,56 @@ namespace sclx {
       Set_(V, IdList...);
       Set_(Id, V);
     }
+    void Set_(
+      const sIds<type, amount, gl> &Ids,
+      bso::sBool V)
+    {
+      for ( int Id = 0; Id < amount; Id++ )
+        if ( Ids.IsSet((type)Id) )
+          Set_(V, (type)Id);
+    }
+    void Set_(
+      bso::sBool V,
+      const sIds<type, amount, gl> &Ids)
+    {
+      Set_(Ids, V);
+    }
+    template <typename ...ids> void Set_(
+      bso::sBool V,
+      const sIds<type, amount, gl> &Ids,
+      ids ...IdList)
+    {
+      Set_(V, IdList...);
+      Set_(Ids, V);
+    }
+    bso::sBool IsSet_(type Id) const
+    {
+      return Block_(Id) & Mask_(Id);
+    }
+    void Invert_(type Id)
+    {
+      Set_(Id, !IsSet_(Id));
+    }
+    void Invert_(const sIds<type, amount, gl> &Ids)
+    {
+      for ( int Id = 0; Id < amount; Id++ )
+        if ( Ids.IsSet((type)Id) )
+          Invert_((type)Id);
+    }
+    template <typename ...ids> void Invert_(
+      type Id,
+      const ids &...IdList)
+    {
+      Invert_(IdList...);
+      Invert_(Id);
+    }
+    template <typename ...ids> void Invert_(
+      const sIds<type, amount, gl> &Ids,
+      const ids &...IdList)
+    {
+      Invert_(IdList...);
+      Invert_(Ids);
+    }
   public:
     void Reset(void)
     {
@@ -364,9 +420,18 @@ namespace sclx {
     {
       Set_(true, IdList...);
     }
+    template <typename ...ids> void Remove(ids ...IdList)
+    {
+      Set_(false, IdList...);
+    }
+    // Inverts the state of the items in 'IdList'.
+    template <typename ...ids> void Invert(ids ...IdList)
+    {
+      Invert_(IdList...);
+    }
     bso::sBool IsSet(type Id) const
     {
-      return Block_(Id) & Mask_(Id);
+      return IsSet_(Id);
     }
     void Fill(
       str::dStrings &Ids,
@@ -1364,5 +1429,13 @@ public:\
 }
 
 }
+
+/*************/
+/**** NEW ****/
+/*************/
+
+namespace sclx {
+  template <typename session> qTCLONE(actions_handler<session>, rActionsHandler);
+};
 
 #endif

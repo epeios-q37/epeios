@@ -200,7 +200,7 @@
 	<xsl:template match="Pitch" mode="First">
     <xsl:text> </xsl:text>
 		<xsl:apply-templates select="." mode="Common"/>
-    <xsl:variable name="OffO" select="number(@Octave) - number(/Melody/@BaseOctave)"/>
+    <xsl:variable name="OffO" select="number(@Octave) - 4"/>
     <xsl:if test="$OffO != 0">
       <xsl:call-template name="OctaveUpOrDown">
         <xsl:with-param name="Amount" select="$OffO"/>

@@ -6,6 +6,7 @@
         <select id="MidiIn">
           <option disabled="true" value="None">Select a device</option>
         </select>
+        <button id="GrabMidiIn" xdh:onevent="GrabMidiIn">Grab</button>
         <!--input xdh:onevent="Refresh" type="image" style="width:20px; height: 20px;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABHNCSVQICAgIfAhkiAAAAVNJREFUOE/t1EsrBlEYwPFxSS7Z2hrklj0pxAeQtc+gfAKy8SFQygbxFSQsLBQLS0lZo1xzLfz/OvM2jZlhz1O/5sx5npl3zpxn3ij6c1FVsuJ6cv0YRRzqzjnu4ACvaEIvjvCBwmgns4I7POEyeOZ4gwX0YR7LKI02stt4wTom0BM43sQjzuBTWlMYLtNftHAGDTmVLcztwiVqLaemMjXM6BYbaMwp9Afm8IDcG1ZnLhrhvA6rcFnpcH4K06gJ+TeOvppK1KZPGHfgHieZ+eR0i8E+3sOEXXKVrs3esOA+X9O+1+OyAnPZJbtzzej+6ULynZiEXVEYQ2Tss6JNSS50w2yfawwW3o1E0ja+aNsmb6edm4U1NribVRoxWV++F/gUNnNXMM7RpzdnTYxfRStVi3D5fnoXga3k3BJifIuyPweXMoAx+G3byKfYwyF8yv+Iok/EGUn4rtKSKQAAAABJRU5ErkJggg==" /-->
       </fieldset>
       <fieldset class="neat">
@@ -116,13 +117,13 @@
         </fieldset>
       </span>
       <fieldset style="display: flex; align-items: center; gap:5px;">
-        <button xdh:onevent="Begin;">|&lt;</button>
-        <button xdh:onevent="Previous">&lt;</button>
-        <button xdh:onevent="Next">&gt;</button>
-        <button xdh:onevent="End">&gt;|</button>
+        <button id="First" xdh:onevent="First">|&lt;</button>
+        <button id="Previous" xdh:onevent="Previous">&lt;</button>
+        <button id="Next" xdh:onevent="Next">&gt;</button>
+        <button id="Last" xdh:onevent="Last">&gt;|</button>
         <span></span>
-        <button xdh:onevent="Suppr">Suppr.</button>
-        <button xdh:onevent="Clear">Clear all</button>
+        <button id="Suppr" xdh:onevent="Suppr">Suppr.</button>
+        <button id="Clear" xdh:onevent="Clear">Clear all</button>
         <button onclick="activate()">Play</button>
       </fieldset>
     </fieldset>

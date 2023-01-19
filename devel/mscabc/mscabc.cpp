@@ -35,9 +35,8 @@ namespace _ {
     const char *Label = NULL;
     bso::sS8 RawDuration = 0;
     mthrtn::wRational Duration;
-    bso::sS8 RelativeOctave;
     bso::pInteger NBuffer, DBuffer;
-    char PitchNotation[] = {0,0,0};
+    char PitchNotation[] = {0, 0, 0, 0, 0};
     mscmld::sAltPitch Pitch;
 
     Pitch.Init();
@@ -48,29 +47,32 @@ namespace _ {
     RawDuration = Note.Duration.Base;
 
     Duration.Init(mthrtn::wRational(1,1 << (RawDuration - 1)) * mthrtn::wRational(( 2 << Note.Duration.Modifier ) - 1, 1 << Note.Duration.Modifier));
-    RelativeOctave = Pitch.Octave - 4;
 
     if ( Pitch.Name == mscmld::pnRest ) {
       Flow << "z";
     } else {
-      if ( RelativeOctave < 0 )
-        return RelativeOctave;
-
-      if ( RelativeOctave > 3 )
-        return RelativeOctave - 3;
-
       if ( strlen(Label) != 1 )
         qRGnr();
 
-      switch ( RelativeOctave ) {
-      case 0:
-        PitchNotation[1] = ',';
+      switch ( Pitch.Octave ) {
       case 1:
+        PitchNotation[4] = ',';
+      case 2:
+        PitchNotation[3] = ',';
+      case 3:
+        PitchNotation[2] = ',';
+      case 4:
+        PitchNotation[1] = ',';
+      case 5:
         PitchNotation[0] = toupper(Label[0]);
         break;
-      case 3:
+      case 9:
+        PitchNotation[3] = '\'';
+      case 8:
+        PitchNotation[2] = '\'';
+      case 7:
         PitchNotation[1] = '\'';
-      case 2:
+      case 6:
         PitchNotation[0] = tolower(Label[0]);
         break;
       default:

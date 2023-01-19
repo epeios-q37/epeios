@@ -77,8 +77,12 @@ namespace {
 			  qCBUFFERh IdBuffer, ActionBuffer;
       qRFB;
         Action.Convert(ActionBuffer);
+        Id.Convert(IdBuffer);
 
-			  main::Core.Launch(Session_, Id.Convert(IdBuffer), ActionBuffer == NULL || ActionBuffer[0] == 0 ? "OnNewSession" : ActionBuffer, xdhcdc::m_Undefined); // Last parameter is not used.
+        if ( main::ActionHelper.OnBeforeAction(Session_, IdBuffer, ActionBuffer ) ) {
+          main::Core.Launch(Session_, IdBuffer, ActionBuffer == NULL || ActionBuffer[0] == 0 ? "OnNewSession" : ActionBuffer, xdhcdc::m_Undefined); // Last parameter is not used.
+          main::ActionHelper.OnAfterAction(Session_, IdBuffer, ActionBuffer);
+        }
       qRFR;
       qRFT;
       qRFE(sclm::ErrorDefaultHandling());
