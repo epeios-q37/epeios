@@ -101,6 +101,10 @@ function activate() {
   } else {
     console.log("audio is not supported on this browser");
   };
+
+  keyboardJS.bind('a', (e) => {
+    console.log('a is pressed');
+  });
 }
 
 function play(note) {
