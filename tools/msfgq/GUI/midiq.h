@@ -43,7 +43,7 @@ namespace midiq {
     }
   };
 
-  void HandleInput(
+  void _HandleInput(
     void *UP,
     mtk::gBlocker &Blocker);
 

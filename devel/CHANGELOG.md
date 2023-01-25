@@ -15,6 +15,9 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2023-01-25
+- SCLX: [impr];
+
 ## 2023-01-19
 - MSCABC: [impr];
 - SCLX: [extn], [impr];

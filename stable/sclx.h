@@ -105,8 +105,8 @@ namespace sclx {
 		xfh_Default = xfhRegistry,
 	};
 
-# define SCLX_ADec( session, name )\
-	extern class s##name\
+# define SCLX_ADec( session, label )\
+	extern class s##label\
 	: public sclx::cAction<session>\
 	{\
 	protected:\
@@ -115,13 +115,13 @@ namespace sclx {
 			const char *Id,\
 			xdhcdc::eMode Mode ) override;\
 	public:\
-		static const char *Name;\
-	} name
+		static const char *Label;\
+	} label
 
-# define SCLX_ADef( session, owner, name )\
-	owner::s##name owner::name;\
-	const char *owner::s##name::Name = #name;\
-	void owner::s##name::SCLXLaunch(\
+# define SCLX_ADef( session, owner, label )\
+	owner::s##label owner::label;\
+	const char *owner::s##label::Label = #label;\
+	void owner::s##label::SCLXLaunch(\
 		session &Session,\
 		const char *Id,\
 		xdhcdc::eMode Mode )
@@ -1396,7 +1396,7 @@ namespace sclx {
 
 	void Broadcast(
 		const str::dString &Action,
-		const str::dString &Id);
+		const str::dString &Id = str::Empty);
 
 	inline void LoadXSLAndTranslateTags(
 		const rgstry::tentry__ &FileName,

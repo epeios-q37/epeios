@@ -107,7 +107,7 @@ const str::dString &midiq::GetDeviceOutId(str::dString &Id)
   return GetDeviceId_(mscmdd::wOut, registry::parameter::devices::out::Policy, registry::parameter::devices::out::Value, Id);
 }
 
-void midiq::HandleInput(
+void midiq::_HandleInput(
   void *UP,
   mtk::gBlocker &Blocker)
 {

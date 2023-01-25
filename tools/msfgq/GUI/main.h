@@ -37,6 +37,14 @@ namespace main {
   qCDEF(sWidth, WidthMax, 25);
   qCDEF(mscmld::sOctave, BaseOctaveMax, 9);
 
+  qENUM( DeviceStatus ) {
+    dsUnavailable,
+    dsAvailaible,
+    dsSelected,
+    ds_amount,
+    ds_Undefined
+  };
+
   class sSession
   : public sclx::sProxy
   {
@@ -44,14 +52,14 @@ namespace main {
     mscmld::sOctave BaseOctave;
     sWidth Width;
     mscmld::sRow Row;
-    bso::sBool MidiInAvailable;
+    eDeviceStatus MidiIn;
     void reset(bso::sBool P = true)
     {
       sProxy::reset(P);
       BaseOctave = mscmld::UndefinedOctave;
       Width = UndefinedWidth;
       Row = qNIL;
-      MidiInAvailable = false;
+      MidiIn = ds_Undefined;
     }
     qCDTOR( sSession );
     void Init(
@@ -64,7 +72,7 @@ namespace main {
     }
   };
 
-  extern class sActionHelper
+  extern class rActionHelper
   : public sclx::cActionHelper<sSession>
   {
   protected:
@@ -83,6 +91,20 @@ namespace main {
 		{
 		  return true;
 		}
+  public:
+    sclx::rActions
+      Before, After;
+    void reset(bso::sBool P = true)
+    {
+      tol::reset(P, Before, After);
+    }
+    qCDTOR(rActionHelper);
+    void Init(void)
+    {
+      reset();
+
+      tol::Init(Before, After);
+    }
   } ActionHelper;
 
   typedef sclx::rActionsHandler<sSession> rCore;

@@ -81,6 +81,33 @@ var controlOptions = {
   displayClock: true,
 };
 
+function bindKey(key, action, id = 'dummy') {
+  keyboardJS.bind(key, (e) => {
+    console.log("'" + key + "' is pressed.");
+    launchEvent(id + "|DUMMY|click||((click|" + action + "))");
+  });
+}
+
+function bindKeys(bindings) {
+  for (const [key, value] of Object.entries(bindings)) {
+    if ( Array.isArray( value ))
+      bindKey(key, value[0], value[1]);
+    else
+      bindKey(key, value);
+  }
+}
+
+var keyBindings = {
+  'left': 'Previous',
+  'right': 'Next',
+  'del': 'Delete',
+  'backspace': 'Backspace',
+  '0': 'Rest',
+  'num0': 'Rest',
+  'num.': 'Dot',
+  'num-': 'Tie',
+};
+
 function activate() {
   if (ABCJS.synth.supportsAudio()) {
     synthControl = new ABCJS.synth.SynthController();
@@ -102,9 +129,12 @@ function activate() {
     console.log("audio is not supported on this browser");
   };
 
-  keyboardJS.bind('a', (e) => {
-    console.log('a is pressed');
-  });
+  for ( i = 1; i != 8; i++ ) {
+    keyBindings[i.toString()] = ['Duration', i.toString()];
+    keyBindings['num' + i] = ['Duration', i.toString()];
+  }
+
+  bindKeys(keyBindings);
 }
 
 function play(note) {

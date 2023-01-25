@@ -122,7 +122,7 @@
         <button id="Next" xdh:onevent="Next">&gt;</button>
         <button id="Last" xdh:onevent="Last">&gt;|</button>
         <span></span>
-        <button id="Suppr" xdh:onevent="Suppr">Suppr.</button>
+        <button id="Delete" xdh:onevent="Delete">Delete</button>
         <button id="Clear" xdh:onevent="Clear">Clear all</button>
         <button onclick="activate()">Play</button>
       </fieldset>

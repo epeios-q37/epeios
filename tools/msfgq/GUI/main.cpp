@@ -32,52 +32,11 @@
 
 using namespace main;
 
-sActionHelper main::ActionHelper;
+rActionHelper main::ActionHelper;
 
 rCore main::Core;
 
 mscmdd::rRFlow main::MidiRFlow;
-
-namespace {
-  namespace _ {
-    mtx::rMutex Mutex;
-    const sSession *Owner = NULL;
-  }
-
-  void InitializeMidiInOwning_(void)
-  {
-    _::Mutex = mtx::Create();
-    _::Owner = NULL;
-  }
-
-  bso::sBool IsMidiInOwner_(const sSession &Session )
-  {
-    bso::sBool IsOwner = false;
-  qRH;
-    mtx::rHandle Handler;
-  qRB;
-    Handler.InitAndLock(_::Mutex);
-
-    IsOwner = _::Owner == &Session;
-  qRR;
-  qRT;
-  qRE;
-    return IsOwner;
-  }
-
-  void GrabMidiIn_(const sSession &Session )
-  {
-  qRH;
-    mtx::rHandle Handler;
-  qRB;
-    Handler.InitAndLock(_::Mutex);
-
-    _::Owner = &Session;
-  qRR;
-  qRT;
-  qRE;
-  }
-}
 
 namespace {
   qENUM( Id_ ) {
@@ -160,7 +119,7 @@ namespace {
   sIds_
     Navigation_(iFirst, iPrevious, iNext, iLast),
     Removing_(iSuppr, iClear),
-    All_(Navigation_, Removing_, iGrabMidiIn);
+    All_(Navigation_, Removing_, iGrabMidiIn, iMidiIn);
 }
 
 #define XMEL() melody::rXMelody &XMelody = melody::Get(Guard)
@@ -168,39 +127,65 @@ namespace {
 
 #define L_(name)  GetLabel_(name)
 
-void main::sActionHelper::SCLXOnAfterAction(
-  sSession &Session,
-  const char *Id,
-  const char *Action)
-{
-qRH;
-  sIds_ Ids;
-  melody::hGuard Guard;
-qRB;
-  Ids.Init();
-
-  CXMEL();
-
-  if ( Session.Row == qNIL )
-    Ids .Put(Navigation_, Removing_);
-  else {
-    if ( Session.Row == XMelody.First() )
-      Ids.Put(iFirst, iPrevious);
-    if ( Session.Row == XMelody.Last() )
-      Ids.Put(iNext, iLast);
+namespace {
+  namespace _ {
+    mtx::rMutex Mutex;
+    str::wString DeviceId;
+    const sSession *Owner = NULL;
   }
 
-  if ( !Session.MidiInAvailable || IsMidiInOwner_(Session) )
-    Ids.Put(iGrabMidiIn);
+  void InitializeMidiInOwning_(void)
+  {
+    _::Mutex = mtx::Create();
+    _::DeviceId.Init();
+    _::Owner = NULL;
+  }
 
-  Session.Disable(Ids);
+  bso::sBool IsMidiInOwner_(const sSession &Session )
+  {
+    bso::sBool IsOwner = false;
+  qRH;
+    mtx::rHandle Handler;
+  qRB;
+    Handler.InitAndLock(_::Mutex);
 
-  Ids.Invert(All_);
+    IsOwner = _::Owner == &Session;
+  qRR;
+  qRT;
+  qRE;
+    return IsOwner;
+  }
 
-  Session.Enable(Ids);
-qRR;
-qRT;
-qRE;
+  namespace _ {
+    void LaunchMidiIn(sSession &Session)
+    {
+      midiq::sShared Shared;
+
+      _::DeviceId.Init();
+      Session.GetValue(L_( iMidiIn ), _::DeviceId);
+
+      Shared.RFlow = &main::MidiRFlow;
+      Shared.MIDIDeviceIn = &_::DeviceId;
+
+      mtk::Launch(midiq::_HandleInput, &Shared);
+    }
+  }
+
+  void GrabMidiIn_(sSession &Session )
+  {
+  qRH;
+    mtx::rHandle Handler;
+  qRB;
+    Handler.InitAndLock(_::Mutex);
+
+    if ( _::DeviceId.Amount() == 0 )
+      _::LaunchMidiIn(Session);
+
+    _::Owner = &Session;
+  qRR;
+  qRT;
+  qRE;
+  }
 }
 
 namespace {
@@ -278,9 +263,11 @@ namespace {
   {
     bso::sBool Available = false;
   qRH;
+    str::wString Id;
     str::wStrings Ids, Names;
   qRB;
-    tol::Init(Ids, Names);
+    tol::Init(Id, Ids, Names);
+    midiq::GetDeviceInId(Id);
 
     mscmdd::GetMidiOutDeviceNames(Ids, Names);
 
@@ -300,7 +287,7 @@ namespace {
 
 namespace {
   namespace {
-    bso::sBool DisplayMelody_(
+    bso::sBool Display_(
       const melody::rXMelody &XMelody,
       main::sSession &Session)
     {
@@ -405,9 +392,6 @@ namespace {
       qCBUFFERh CBuffer;
       rTValues_ Values;
     qRB;
-      Device.Init();
-      midiq::GetDeviceInId(Device);
-
       XHTML.Init();
 
       Values.Init();
@@ -468,12 +452,73 @@ qRB;
   Session.Inner(str::Empty, Body);
 
   CXMEL();
-  Session.MidiInAvailable = SetUI_(XMelody, Session);
+  Session.MidiIn = SetUI_(XMelody, Session) ? dsAvailaible : dsUnavailable;
 
   Session.Execute("createStylesheet();");
 
-  DisplayMelody_(XMelody, Session);
   Session.Execute("activate()");
+qRR;
+qRT;
+qRE;
+}
+
+namespace {
+  void UpdateUI_(
+    sSession &Session,
+    const melody::rXMelody &XMelody)
+  {
+  qRH;
+    sIds_ Ids;
+  qRB;
+    Ids.Init(); // First contains ids of element which had to be disabled!
+
+    if ( !XMelody.Exists(Session.Row) )
+      Session.Row = XMelody.Last();
+
+    if ( Session.Row == qNIL )
+      Ids.Put(Navigation_, Removing_);
+    else {
+      if ( Session.Row == XMelody.First() )
+        Ids.Put(iFirst, iPrevious);
+      if ( Session.Row == XMelody.Last() )
+        Ids.Put(iNext, iLast);
+    }
+
+    switch ( Session.MidiIn ) {
+    case dsUnavailable:
+      Ids.Put(iGrabMidiIn, iMidiIn);
+      break;
+    case dsAvailaible:
+      break;
+    case dsSelected:
+      Ids.Put(iMidiIn);
+      if ( IsMidiInOwner_(Session) )
+        Ids.Put(iGrabMidiIn);
+      break;
+    default:
+      qRGnr();
+      break;
+    }
+
+    Session.Disable(Ids);
+
+    Ids.Invert(All_);
+
+    Session.Enable(Ids);
+
+    Display_(XMelody, Session);
+  qRR;
+  qRT;
+  qRE;
+  }
+}
+
+D_( UpdateUI )
+{
+qRH;
+  melody::hGuard Guard;
+qRB;
+  UpdateUI_(Session, melody::Get(Guard));
 qRR;
 qRT;
 qRE;
@@ -505,8 +550,6 @@ qRB;
       XMelody.InsertAt(Note, XMelody.Next(Session.Row) );
       Session.Row = XMelody.Next(Session.Row);
     }
-
-    DisplayMelody_(XMelody, Session);
   }
 qRR;
 qRT;
@@ -543,8 +586,6 @@ qRB;
   XMEL();
 
   HandleKeyAndAccidental_(XMelody, Session);
-
-  DisplayMelody_(XMelody, Session);
 qRR;
 qRT;
 qRE;
@@ -572,12 +613,15 @@ D_( Refresh )
 
 D_( SelectNote )
 {
+qRH;
   melody::hGuard Guard;
-
-  melody::rXMelody &XMelody = melody::Get(Guard);
-
+qRB;
   str::wString(Id).ToNumber(*Session.Row);
-  DisplayMelody_(XMelody, Session);
+
+  UpdateUI_(Session, melody::Get(Guard));
+qRR;
+qRT;
+qRE;
 }
 
 D_( Rest )
@@ -596,8 +640,6 @@ qRB;
     XMelody.Store(Note, Session.Row);
 
     Session.Row = XMelody.Next(Session.Row);
-
-    DisplayMelody_(XMelody, Session);
   }
 qRR;
 qRT;
@@ -618,9 +660,8 @@ qRB;
 
     XMelody.Store(Note, Session.Row);
 
-    Session.Row = XMelody.Next(Session.Row);
-
-    DisplayMelody_(XMelody, Session);
+    if ( Session.Row != XMelody.Last() )
+      Session.Row = XMelody.Next(Session.Row);
   }
 qRR;
 qRT;
@@ -643,8 +684,6 @@ qRB;
       Note.Duration.Modifier++;
 
     XMelody.Store(Note, Session.Row);
-
-    DisplayMelody_(XMelody, Session);
   }
 qRR;
 qRT;
@@ -665,6 +704,7 @@ qRB;
       if ( Note.Duration.TiedToNext ) {
         Note.Duration.TiedToNext = false;
         XMelody.Store(Note, Session.Row);
+        XMelody.Remove(XMelody.Next(Session.Row));
       } else {
         Note.Duration.TiedToNext = true;
         XMelody.Store(Note, Session.Row);
@@ -679,8 +719,6 @@ qRB;
         else
           XMelody.InsertAt(Note, Row);
       }
-
-      DisplayMelody_(XMelody, Session);
     }
   }
 qRR;
@@ -825,9 +863,11 @@ qRH;
 qRB;
   CXMEL();
 
-  Session.Row = XMelody.First();
+  if ( Session.Row != XMelody.First() ) {
+    Session.Row = XMelody.First();
 
-  DisplayMelody_(XMelody, Session);
+    UpdateUI_(Session, XMelody);
+  }
 qRR;
 qRT;
 qRE;
@@ -840,9 +880,11 @@ qRH;
 qRB;
   CXMEL();
 
-  Session.Row = XMelody.Previous(Session.Row);
+  if ( Session.Row != XMelody.First() ) {
+    Session.Row = XMelody.Previous(Session.Row);
 
-  DisplayMelody_(XMelody, Session);
+    UpdateUI_(Session, XMelody);
+  }
 qRR;
 qRT;
 qRE;
@@ -855,9 +897,11 @@ qRH;
 qRB;
   CXMEL();
 
-  Session.Row = XMelody.Next(Session.Row);
+  if ( Session.Row != XMelody.Last() ) {
+    Session.Row = XMelody.Next(Session.Row);
 
-  DisplayMelody_(XMelody, Session);
+    UpdateUI_(Session, XMelody);
+  }
 qRR;
 qRT;
 qRE;
@@ -870,31 +914,56 @@ qRH;
 qRB;
   CXMEL();
 
-  Session.Row = XMelody.Last();
+  if ( Session.Row != XMelody.Last() ) {
+    Session.Row = XMelody.Last();
 
-  DisplayMelody_(XMelody, Session);
+    UpdateUI_(Session, XMelody);
+  }
 qRR;
 qRT;
 qRE;
 }
 
-D_( Suppr )
+namespace {
+  mscmld::sRow Delete_(
+    mscmld::sRow Row,
+    melody::rXMelody &XMelody)
+  {
+    bso::sBool IsLast = Row == XMelody.Last();
+
+    XMelody.Remove(Row);
+
+    if ( IsLast )
+      Row = XMelody.Last();
+
+    return Row;
+  }
+}
+
+D_( Delete )
 {
 qRH;
   melody::hGuard Guard;
 qRB;
+  XMEL();
+
   if ( Session.Row != qNIL ) {
+    Session.Row = Delete_(Session.Row, XMelody);
+  }
+qRR;
+qRT;
+qRE;
+}
 
-    XMEL();
+D_( Backspace )
+{
+qRH;
+  melody::hGuard Guard;
+qRB;
+  XMEL();
 
-    bso::sBool IsLast = Session.Row == XMelody.Last();
-
-    XMelody.Remove(Session.Row);
-
-    if ( IsLast )
-      Session.Row = XMelody.Last();
-
-    DisplayMelody_(XMelody, Session);
+  if ( Session.Row != XMelody.First() ) {
+    Session.Row = Delete_(XMelody.Previous(Session.Row), XMelody);
   }
 qRR;
 qRT;
@@ -910,8 +979,6 @@ qRB;
 
   XMelody.wMelody::Init();
   Session.Row = qNIL;
-
-  DisplayMelody_(XMelody, Session);
 qRR;
 qRT;
 qRE;
@@ -942,8 +1009,6 @@ qRB;
     XMelody.InsertAt(Note, XMelody.Next(Session.Row) );
     Session.Row = XMelody.Next(Session.Row);
   }
-
-  DisplayMelody_(XMelody, Session);
 qRR;
 qRT;
 qRE;
@@ -986,7 +1051,7 @@ qRB;
 
   str::wString(Session.GetValue(Id, Buffer)).ToNumber(Session.BaseOctave, str::sULimit<bso::sU8>(9));
 
-  if ( !DisplayMelody_(XMelody, Session) ) {
+  if ( !Display_(XMelody, Session) ) {
     bso::pInt Buffer;
     Session.BaseOctave = BaseOctaveBackup;
     Session.SetValue(L_( iOctave ), bso::Convert(Session.BaseOctave, Buffer));
@@ -1021,11 +1086,22 @@ qRB;
 
   Session.Width = Width;
 
-  CXMEL();
-  DisplayMelody_(XMelody, Session);
+  Display_(melody::Get(Guard), Session);
 qRR;
 qRT;
 qRE;
+}
+
+#undef L_
+#define L_(name)  actions_::s##name::Label
+
+void main::rActionHelper::SCLXOnAfterAction(
+  sSession &Session,
+  const char *Id,
+  const char *Action)
+{
+  if ( strcmp(L_( UpdateUI ), Action ) )
+    sclx::Broadcast(L_( UpdateUI ));
 }
 
 namespace {
@@ -1036,7 +1112,7 @@ namespace {
       rCore &Core,
       action &Action )
     {
-        Core.Add(Action.Name, Action);
+        Core.Add(Action.Label, Action);
     }
 
     template <typename action, typename... actions> void Add(
@@ -1052,17 +1128,22 @@ namespace {
   void RegisterActions_(void)
   {
     _::Add(Core,
-      OnNewSession, Hit, GrabMidiIn, SetAccidental, SetAccidentalAmount, Refresh,
+      OnNewSession, UpdateUI, Hit, GrabMidiIn, SetAccidental, SetAccidentalAmount, Refresh,
       SelectNote, Rest, Duration, Dot, Tie,
-      Execute, First, Previous, Next, Last, Suppr, Clear,
+      Execute, First, Previous, Next, Last, Delete, Backspace, Clear,
       Keyboard, Test, SetTimeSignature, SetOctave, ChangeWidth );
   }
 }
 
 #define R_( name ) Add_(main::Core, actions_::name)
 
+
 qGCTOR( main ) {
   Core.Init();
   RegisterActions_();
   InitializeMidiInOwning_();
+  ActionHelper.Init();
+
+  // ActionHelper.Before.Add();
+  ActionHelper.After.Add(L_( UpdateUI ), L_( SelectNote ), L_( First ), L_( Previous ), L_( Next ), L_( Last ), L_( SetOctave ), L_( ChangeWidth ));
 }

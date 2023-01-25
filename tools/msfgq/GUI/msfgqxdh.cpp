@@ -32,22 +32,7 @@ const scli::sInfo &sclx::SCLXInfo( void )
 
 void sclx::SCLXInitialization( xdhcdc::eMode Mode )
 {
-qRH;
-  midiq::sShared Shared;
-  str::wString Device;
-qRB;
   melody::Initialize();
-
-  Device.Init();
-  midiq::GetDeviceInId(Device);
-
-  Shared.RFlow = &main::MidiRFlow;
-  Shared.MIDIDeviceIn = &Device;
-
-  mtk::Launch(midiq::HandleInput, &Shared);
-qRR;
-qRT;
-qRE;
 }
 
 namespace {
@@ -79,9 +64,10 @@ namespace {
         Action.Convert(ActionBuffer);
         Id.Convert(IdBuffer);
 
-        if ( main::ActionHelper.OnBeforeAction(Session_, IdBuffer, ActionBuffer ) ) {
+        if ( main::ActionHelper.Before.Search(ActionBuffer) || main::ActionHelper.OnBeforeAction(Session_, IdBuffer, ActionBuffer ) ) {
           main::Core.Launch(Session_, IdBuffer, ActionBuffer == NULL || ActionBuffer[0] == 0 ? "OnNewSession" : ActionBuffer, xdhcdc::m_Undefined); // Last parameter is not used.
-          main::ActionHelper.OnAfterAction(Session_, IdBuffer, ActionBuffer);
+          if ( !main::ActionHelper.After.Search(ActionBuffer) )
+            main::ActionHelper.OnAfterAction(Session_, IdBuffer, ActionBuffer);
         }
       qRFR;
       qRFT;
