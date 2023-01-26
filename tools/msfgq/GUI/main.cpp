@@ -186,18 +186,32 @@ namespace {
   qRT;
   qRE;
   }
+
+  bso::sBool IsMidiInActivated_(void)
+  {
+    bso::sBool Activated = false;
+  qRH;
+    mtx::rHandle Handler;
+  qRB;
+    Handler.InitAndLock(_::Mutex);
+
+    Activated = _::DeviceId.Amount() != 0;
+  qRR;
+  qRT;
+  qRE;
+    return Activated;
+  }
 }
 
 namespace {
   namespace {
-    bso::sBool Fill_(
+    void Fill_(
       const str::dString  &Id,
       const str::dStrings &Ids,
       const str::dStrings &Names,
       txf::rWFlow &XHTML)
     {
       sdr::sRow Row = Ids.First();
-      bso::sBool Available = false;
 
       if ( Ids.Amount() != Names.Amount() )
         qRGnr();
@@ -205,37 +219,31 @@ namespace {
       while ( Row != qNIL ) {
         XHTML << "<option value=\"" << Ids(Row) << "\" ";
 
-        if ( Ids(Row) == Id ) {
-          Available = true;
+        if ( Ids(Row) == Id )
           XHTML << " selected=\"true\"";
-        }
 
-        XHTML <<  " disabled=\"true\">" << Names(Row) << " (" << Ids(Row) << ")" << "</option>" << txf::nl;
+        XHTML <<  '>' << Names(Row) << " (" << Ids(Row) << ")" << "</option>" << txf::nl;
         Row = Ids.Next(Row);
       }
-
-      return Available;
     }
   }
 
-  bso::sBool Fill_(
+  void Fill_(
     const str::dString  &Id,
     const str::dStrings &Ids,
     const str::dStrings &Names,
     str::dString &XHTML)
   {
-    bso::sBool Available = false;
   qRH;
     flx::rStringWDriver SDriver;
     txf::rWFlow TFlow;
   qRB;
     SDriver.Init(XHTML);
     TFlow.Init(SDriver);
-    Available = Fill_(Id, Ids, Names, TFlow);
+    Fill_(Id, Ids, Names, TFlow);
   qRR;
   qRT;
   qRE;
-    return Available;
   }
 
   bso::sBool FillMidiInDevices_(
@@ -248,9 +256,10 @@ namespace {
   qRB;
     tol::Init(Ids, Names);
 
-    mscmdd::GetMidiInDeviceNames(Ids, Names);
+    Available = mscmdd::GetMidiInDeviceNames(Ids, Names) != 0;
 
-    Available = Fill_(Id, Ids, Names, XHTML);
+    if ( Available )
+      Fill_(Id, Ids, Names, XHTML);
   qRR;
   qRT;
   qRE;
@@ -269,9 +278,10 @@ namespace {
     tol::Init(Id, Ids, Names);
     midiq::GetDeviceInId(Id);
 
-    mscmdd::GetMidiOutDeviceNames(Ids, Names);
+    Available = mscmdd::GetMidiOutDeviceNames(Ids, Names) != 0;
 
-    Available = Fill_(Id, Ids, Names, XHTML);
+    if ( Available )
+      Fill_(Id, Ids, Names, XHTML);
   qRR;
   qRT;
   qRE;
@@ -401,7 +411,8 @@ namespace {
       else
         Values.Add(iMidiIn, "None");
 
-      Session.End(L_( iMidiIn ), XHTML);
+      if ( XHTML.Amount() )
+        Session.Inner(L_( iMidiIn ), XHTML);
 
       /*
       XHTML.Init();
@@ -452,7 +463,7 @@ qRB;
   Session.Inner(str::Empty, Body);
 
   CXMEL();
-  Session.MidiIn = SetUI_(XMelody, Session) ? dsAvailaible : dsUnavailable;
+  Session.MidiInAvailable = SetUI_(XMelody, Session);
 
   Session.Execute("createStylesheet();");
 
@@ -484,21 +495,15 @@ namespace {
         Ids.Put(iNext, iLast);
     }
 
-    switch ( Session.MidiIn ) {
-    case dsUnavailable:
-      Ids.Put(iGrabMidiIn, iMidiIn);
-      break;
-    case dsAvailaible:
-      break;
-    case dsSelected:
-      Ids.Put(iMidiIn);
+    if ( Session.MidiInAvailable ) {
+      if ( IsMidiInActivated_() ) {
+        Ids.Put(iMidiIn);
+
       if ( IsMidiInOwner_(Session) )
         Ids.Put(iGrabMidiIn);
-      break;
-    default:
-      qRGnr();
-      break;
-    }
+      }
+    } else
+      Ids.Put(iGrabMidiIn, iMidiIn);
 
     Session.Disable(Ids);
 
@@ -536,9 +541,11 @@ qRH;
   melody::hGuard Guard;
   mscmld::sNote Note;
 qRB;
-  Script.Init();
-  flx::rStringTWFlow(Script) << "play(" << Id << ");";
-  Session.Execute(Script);
+  if ( IsMidiInOwner_(Session) ) {
+    Script.Init();
+    flx::rStringTWFlow(Script) << "play(" << Id << ");";
+    Session.Execute(Script);
+  }
 
   if ( IsMidiInOwner_(Session ) ) {
       XMEL();

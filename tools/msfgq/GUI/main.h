@@ -37,14 +37,6 @@ namespace main {
   qCDEF(sWidth, WidthMax, 25);
   qCDEF(mscmld::sOctave, BaseOctaveMax, 9);
 
-  qENUM( DeviceStatus ) {
-    dsUnavailable,
-    dsAvailaible,
-    dsSelected,
-    ds_amount,
-    ds_Undefined
-  };
-
   class sSession
   : public sclx::sProxy
   {
@@ -52,14 +44,14 @@ namespace main {
     mscmld::sOctave BaseOctave;
     sWidth Width;
     mscmld::sRow Row;
-    eDeviceStatus MidiIn;
+    bso::sBool MidiInAvailable;
     void reset(bso::sBool P = true)
     {
       sProxy::reset(P);
       BaseOctave = mscmld::UndefinedOctave;
       Width = UndefinedWidth;
       Row = qNIL;
-      MidiIn = ds_Undefined;
+      MidiInAvailable = false;
     }
     qCDTOR( sSession );
     void Init(
