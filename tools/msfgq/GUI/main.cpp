@@ -187,7 +187,7 @@ namespace {
   qRE;
   }
 
-  bso::sBool IsMidiInActivated_(void)
+  bso::sBool IsMidiInActivated_(str::wString *Id = NULL)
   {
     bso::sBool Activated = false;
   qRH;
@@ -196,11 +196,21 @@ namespace {
     Handler.InitAndLock(_::Mutex);
 
     Activated = _::DeviceId.Amount() != 0;
+
+    if ( Activated && ( Id != NULL ) )
+      Id->Append(_::DeviceId);
+
   qRR;
   qRT;
   qRE;
     return Activated;
   }
+
+  bso::sBool IsMidiInActivated_(str::wString &Id)
+  {
+    return IsMidiInActivated_(&Id);
+  }
+
 }
 
 namespace {
@@ -246,7 +256,7 @@ namespace {
   qRE;
   }
 
-  bso::sBool FillMidiInDevices_(
+  bso::sBool _FillMidiInDevices_(
     const str::dString &Id,
     str::dString &XHTML)
   {
@@ -272,11 +282,9 @@ namespace {
   {
     bso::sBool Available = false;
   qRH;
-    str::wString Id;
     str::wStrings Ids, Names;
   qRB;
-    tol::Init(Id, Ids, Names);
-    midiq::GetDeviceInId(Id);
+    tol::Init(Ids, Names);
 
     Available = mscmdd::GetMidiOutDeviceNames(Ids, Names) != 0;
 
@@ -396,17 +404,18 @@ namespace {
     {
       bso::sBool MidiInAvailable = false;
     qRH;
-      str::wString XHTML, Device;
+      str::wString DeviceId, XHTML;
       mscmld::eAccidental Accidental = mscmld::a_Undefined;
       bso::pInt IBuffer;
       qCBUFFERh CBuffer;
       rTValues_ Values;
     qRB;
-      XHTML.Init();
+      tol::Init(DeviceId, XHTML, Values);
 
-      Values.Init();
+      if ( !IsMidiInActivated_(DeviceId) )
+        midiq::GetDeviceInId(DeviceId);
 
-      if ( ( MidiInAvailable = FillMidiInDevices_(Device, XHTML) ) )
+      if ( ( MidiInAvailable = _FillMidiInDevices_(DeviceId, XHTML) ) )
         Session.RemoveAttribute(Session.Parent("beautiful-piano", CBuffer), "open");
       else
         Values.Add(iMidiIn, "None");
