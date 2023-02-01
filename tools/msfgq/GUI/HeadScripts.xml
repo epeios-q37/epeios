@@ -79,6 +79,7 @@ var controlOptions = {
   displayPlay: true,
   displayProgress: true,
   displayClock: true,
+  displayWarp: true,
 };
 
 function bindKey(key, action, id = 'dummy') {
@@ -109,6 +110,13 @@ var keyBindings = {
 };
 
 function activate() {
+  for ( i = 1; i != 8; i++ ) {
+    keyBindings[i.toString()] = ['Duration', i.toString()];
+    keyBindings['num' + i] = ['Duration', i.toString()];
+  }
+
+  bindKeys(keyBindings);
+  
   if (ABCJS.synth.supportsAudio()) {
     synthControl = new ABCJS.synth.SynthController();
     synthControl.load("#audio", null, controlOptions);
@@ -128,13 +136,6 @@ function activate() {
   } else {
     console.log("audio is not supported on this browser");
   };
-
-  for ( i = 1; i != 8; i++ ) {
-    keyBindings[i.toString()] = ['Duration', i.toString()];
-    keyBindings['num' + i] = ['Duration', i.toString()];
-  }
-
-  bindKeys(keyBindings);
 }
 
 function play(note) {
@@ -149,14 +150,10 @@ function play(note) {
     console.log("error playing note", error);
   });
   }
-/*
-function activate() {
-  loadScript("https://cdn.jsdelivr.net/npm/abcjs@6.1.3/dist/abcjs-basic.js", activate_);
-}
-*/
+
 function updatePlayer() {
   if (ABCJS.synth.supportsAudio()) {
-    synthControl.load("#audio", null, controlOptions);
+/*    synthControl.load("#audio", null, controlOptions); */
     var midiBuffer = new ABCJS.synth.CreateSynth();
     midiBuffer.init({
       visualObj: visualObj[0],
@@ -166,7 +163,7 @@ function updatePlayer() {
     }).then(function () {
       synthControl.setTune(visualObj[0], true).then(function (response) {
       document.querySelector(".abcjs-inline-audio").classList.remove("disabled");
-      synthControl.setWarp("100");
+/*      synthControl.setWarp("100"); */
       })
     });
   } else {

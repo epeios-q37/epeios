@@ -45,7 +45,10 @@
 			<xpp:set name="HomePath" value="/Users/csimon/"/>
 		</xpp:ifeq>
 		<xpp:ifeq select="env" value="packing">
+      <!--
 			<xpp:set name="HomePath" value="h:/"/>
+      -->
+			<xpp:set name="HomePath" value="/home/csimon/"/>
 		</xpp:ifeq>
 		<xpp:ifeq select="env" value="FreeBSD">
 			<xpp:set name="HomePath" value="/usr/home/csimon/"/>
