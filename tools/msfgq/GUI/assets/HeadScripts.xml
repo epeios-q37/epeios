@@ -84,8 +84,9 @@ var controlOptions = {
 
 function bindKey(key, action, id = 'dummy') {
   keyboardJS.bind(key, (e) => {
-    console.log("'" + key + "' is pressed.");
-    launchEvent(id + "|DUMMY|click||((click|" + action + "))");
+    console.log(e, e.target.nodeName, "'" + key + "' is pressed.");
+    if ( !['TEXTAREA','SELECT','INPUT'].includes(e.target.nodeName.toUpperCase()))
+      launchEvent(id + "|DUMMY|click||((click|" + action + "))");
   });
 }
 
@@ -107,6 +108,8 @@ var keyBindings = {
   'num0': 'Rest',
   'num.': 'Dot',
   'num-': 'Tie',
+  'end': 'Last',
+  'home': 'First',
 };
 
 function activate() {

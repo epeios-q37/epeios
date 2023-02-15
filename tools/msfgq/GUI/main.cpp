@@ -53,7 +53,7 @@ namespace {
     iPrevious,
     iNext,
     iLast,
-    iSuppr,
+    iDelete,
     iClear,
     iScripts,
     iEmbedded,
@@ -83,7 +83,7 @@ namespace {
     C_( Previous );
     C_( Next );
     C_( Last );
-    C_( Suppr );
+    C_( Delete );
     C_( Clear );
     C_( Scripts );
     C_( Embedded );
@@ -118,7 +118,7 @@ namespace {
 
   sIds_
     Navigation_(iFirst, iPrevious, iNext, iLast),
-    Removing_(iSuppr, iClear),
+    Removing_(iDelete, iClear),
     All_(Navigation_, Removing_, iGrabMidiIn, iMidiIn);
 }
 

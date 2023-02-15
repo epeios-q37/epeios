@@ -88,10 +88,10 @@
     <Definitions>
 			<XDHTML xpp:attribute="ScriptsVersion,XDHScriptsVersion"/>
 			<Head>
-				<xpp:expand href="Head.xml"/>
+				<xpp:expand href="assets/Head.xml"/>
 			</Head>
 			<Body>
-				<xpp:expand href="Body.xml"/>
+				<xpp:expand href="assets/Body.xml"/>
 			</Body>
 			<!--Script>base64 test.png</Script-->
 			<!--Script>while read x ; do echo $x ; done</Script-->
