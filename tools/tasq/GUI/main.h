@@ -70,7 +70,8 @@ namespace main {
     }
   };
 
-  extern sclx::action_handler<rSession> Core;
+  typedef sclx::rActionsHandler<rSession> rCore;
+  extern rCore Core;
 }
 
 

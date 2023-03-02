@@ -8,7 +8,7 @@ bookCollapseSection: true
 
 ## Présentation
 
-Les différentes étapes qui composent cette activité permettent de programmer un [jeu du pendu](https://fr.wikipedia.org/wiki/Le_Pendu_(jeu)) qui ressemblera à ça :
+Les différentes étapes qui composent cette activité permettent de programmer un [jeu du pendu](https://fr.wikipedia.org/wiki/Le_Pendu_(jeu)) qui ressemblera à ça :
 
 ![](assets/Pendu.png)
 

@@ -9,11 +9,11 @@ weight: 1
 
 De nos jour, la plupart des jeunes possèdent un smartphone, auquel il sont très attachés. Il est donc plus facile de les intéresser au numérique en général et à la programmation en particulier avec des activités impliquant leur smartphone. 
 
-De ce fait, les programmes proposés ici ont une véritable interface graphique, au lieu de l'habituelle et austère interface texte. De plus, un lien  généré au lancement des programmes permet d'y accéder à partir d'un smartphone, ou de n'importe quel dispositif équipé d'un navigateur web moderne connecté à internet. Grâce à ce lien, également disponible ous forme de [code QR](https://fr.wikipedia.org/wiki/Code_QR), il est possible de donner à n'importe qui, fût-il à l'autre bout du monde, accès au programme.
+De ce fait, les exercices proposés ici ont une véritable interface graphique, au lieu de l'habituelle et austère interface texte. De plus, un lien généré au lancement des programmes, également disponible sous forme de [code QR](https://fr.wikipedia.org/wiki/Code_QR), correspondants permet d'y accéder à partir d'un smartphone, ou de n'importe quel dispositif équipé d'un navigateur web moderne connecté à internet.
 
 Vous trouverez plus de détails sur ce type d'activités à l'adresse <https://q37.info/s/knf9hdwp>.
 
-Chaque activité est découpée en étapes qui portent chacune sur l'élaboration d'une fonctionnalité du programme, Cela facilite l'assimilation des différents concepts informatiques, la maîtrise de ces concepts n'étant pas une fin en soi, mais un moyen pour aboutir au programme final.
+Chaque activité est découpée en étapes qui portent chacune sur l'élaboration d'une fonctionnalité du programme. Cela facilite l'assimilation des différents concepts informatiques, la maîtrise de ces concepts n'étant pas une fin en soi, mais un moyen pour aboutir au programme final.
 
 Bien que s'appuyant sur le langage *Python*, ces activités portent sur la programmation en générale, et pas que sur la programmation en *Python*. C'est pour cela que les solutions générales seront données avant les solutions propres à *Python*.
 
@@ -25,7 +25,7 @@ Ces activités sont conçues pour être utilisés dans le cadre d'une découvert
 
 Chaque activité a un dépôt dédié destiné aux élèves dont l'adresse est indiquée à la page propre à chaque activité. https://q37.info/s/f7f3kr37 reprend le contenu de l'ensemble de ces dépôts, en y ajoutant des informations utiles aux enseignants, notamment les solutions des différentes missions d'une activité. De ce fait, ce dernier dépôt est réservé aux intervenants.
 
-Les solutions aux activités présentées dans cette notice peuvent être vue à l'œuvre en allant à l'adresse https://q37.info/s/hvw7fdkf.
+Les solutions aux activités présentées dans cette notice peuvent être visualisés en allant à l'adresse https://q37.info/s/hvw7fdkf.
 
 Si vous avez des retours à faire concernant ces activités, vous pouvez contacter l'auteur à l'adresse <https://q37.info/s/ggq7x4w7>, ou passer par le dépôt maître, d'où sont dérivés les deux dépôts présentés ici, à l'adresse <https://q37.info/s/f7f3kr37>.
 
@@ -41,9 +41,9 @@ Les activités consistent à écrire du code dans le fichier `main.py` situé à
 
 Pour une utilisation en ligne en utilisant un navigateur web, sans rien avoir à installer, il suffit de suivre le lien suivant : https://q37.info/s/7zcvn3fx. Cela ouvre une session dans *Replit*, un environnement de développement en ligne.
 
-Un premier lancement installera les fichiers adéquat dans le dépôt *Replit* (clonage du dépôt de l'activité concernée). Les lancements ultérieurs exécuteront le fichier `main.py` qui est celui 
+Un premier lancement installera les fichiers adéquat dans le dépôt *Replit* (clonage du dépôt de l'activité concernée). Les lancements ultérieurs exécuteront le fichier `main.py`.
 
-Comme ci-dessus, l'activité consistera à écrire du code dans le fichier `main.py`. Pour lancer l'activité, après avoir cliqué sur le bouton vert, une URL s'affichera que l'on cliquera pour acceder à l'interface de l'activité.
+Comme ci-dessus, l'activité consistera à écrire du code dans le fichier `main.py`. Pour lancer l'activité, après avoir cliqué sur le bouton vert, une URL s'affichera que l'on cliquera pour accéder à l'interface de l'activité.
 
 Pour revenir au code source, on fermera l'onglet (ou la fenêtre) qui s'est ouverte suite au click sur l'URL. Pour relancer l'application, il suffira de cliquer à nouveau sur le bouton vert (dont le libellé change en fonction du contexte).
 

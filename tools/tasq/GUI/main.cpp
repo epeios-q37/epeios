@@ -26,7 +26,7 @@
 
 using namespace main;
 
-sclx::action_handler<rSession> main::Core;
+rCore main::Core;
 
 #define D_( name )\
   namespace actions_ {\
@@ -703,14 +703,14 @@ namespace {
 
   namespace _ {
     template <typename action> void Add(
-      sclx::action_handler<rSession> &Core,
+      rCore &Core,
       action &Action )
     {
-        Core.Add(Action.Name, Action);
+        Core.Add(Action.Label, Action);
     }
 
     template <typename action, typename... actions> void Add(
-      sclx::action_handler<rSession> &Core,
+      rCore &Core,
       action &Action,
       actions &...Actions)
     {

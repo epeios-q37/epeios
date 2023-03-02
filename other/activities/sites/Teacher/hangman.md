@@ -7,7 +7,6 @@ markup:
     endLevel: 2
     ordered: false
     startLevel: 2
-
 ---
 <style>
   h2 {
@@ -24,15 +23,26 @@ markup:
 
 # Le jeu du pendu
 
-## Version élèves
+## Présentation
 
-- Dépôt *GitHub* : https://q37.info/s/9mfgr4xh
-- utilisation :
-  - en ligne (dépôt *Replit*, commun à toutes les activités) : https://q37.info/s/7zcvn3fx,
-  - locale :
-    - fichier *zip* : https://q37.info/s/x74psdc4,
-    - ou cloner le dépôt *GitHub* ci-dessus,
-- documentation (commune à toutes les activités) : https://q37.info/s/b44jhpkd.
+Cet exercice consiste à programmer une version du fameux jeu du pendu qui ressemble à ça :
+
+![](/assets/Hangman.png)
+
+Comme vous le verrez dans la notice élève donnée ci-dessous, ces derniers n'auront pas à écrire de code manipulant l'interface graphique.
+
+En outre, pour un surcroît de motivation, vous pourrez exceptionnellement les autoriser à manipuler le jeu à partir de leur smartphone en leur faisant scanner le code QR généré à chaque lancement du jeu.
+
+## Documents pour les élèves
+
+Les élèves utiliseront la notice correspondant à cet exercice disponible à l'adresse https://q37.info/s/b44jhpkd.
+
+Pour une utilisation en ligne à l'aide de *Replit*, on utilisera le dépôt à l'adresse https://q37.info/s/7zcvn3fx.
+
+Pour une utilisation locale, ou pourra leur faire, au choix, :
+
+- décompresser l'archive *zip* à l'adresse https://q37.info/s/x74psdc4,
+- cloner le dépôt *GitHub* à l'adresse https://q37.info/s/9mfgr4xh.
 
 ## Étape *A*
 
