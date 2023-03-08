@@ -36,6 +36,26 @@ En créant, dans le répertoire de l'application, un fichier `__main__.py` conte
 - `python3 -m pipenv shell` : créer un environnement d'exécution python isolé.
 - `python3 -m pipenv clean` : désinstalle tout les *package* de l'environnement d'exécution.
 
+### *Pyodide*
+
+*Pyodide* (https://pyodide.org/) est un interpréteur *Python* s'exécutant dans un navigateur, et donc d'exécuter des programmes *Python* sans rien avoir à installer au préalable. Il permettrait de se passer de *Replit.com*. il se présente sous la forme d'un script *JS*.
+
+Accessible sous forme de *REPL* à l'adrese suivante : https://pyodide.org/en/stable/console.html
+
+L'interpréteur est *CPython* compilé en *WASM*. Malheureusement, il n'est actuellement pas capable de gérer les *sockets* à cause de ce problème : https://pyodide.org/en/stable/project/roadmap.html#synchronous-io (issue *GitHub* : https://github.com/pyodide/pyodide/issues/140). Ainsi, le code suivant :
+
+```python
+import socket
+socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+socket.connect(("atlastk.org",80))
+```
+
+provoque l'erreur suivante :
+
+> Traceback (most recent call last):
+> File "&lt;console&gt;", line 1, in <module>
+> BlockingIOError: [Errno 26] Operation in progress
+
 ## Publication sur *PyPI*
 
 **Effacer, si nécessaire, la variable d'environnement `PYTHONPATH` (`unset PYTHONPATH`).**
