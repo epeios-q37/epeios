@@ -715,7 +715,7 @@ namespace bso {
 
 # ifdef CPE_F_64BITS
 #  define BSO_ENDIANESS_SEAL_SIZE 8
-# elif defined( CPE_F_32BITS
+# elif defined( CPE_F_32BITS )
 #  define BSO_ENDIANESS_SEAL_SIZE 4
 # else
 #  error
