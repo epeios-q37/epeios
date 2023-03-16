@@ -138,7 +138,7 @@
             <input id="WidthNumberInput" xdh:onevent="ChangeWidth" type="number" min="10" max="25"
               size="2" />
           </span>
-          <input></input>
+          <!--input></input-->
         </fieldset>
       </span>
       <fieldset style="display: flex; align-items: center; gap:5px;">
@@ -149,7 +149,7 @@
         <span></span>
         <button id="Delete" xdh:onevent="Delete">Delete</button>
         <button id="Clear" xdh:onevent="Clear">Clear all</button>
-        <button onclick="activate()">Play</button>
+        <!--button onclick="activate()">Play</button-->
       </fieldset>
     </fieldset>
     <fieldset>
