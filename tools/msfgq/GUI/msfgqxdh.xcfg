@@ -132,7 +132,7 @@
 						<xpp:expand select="xmld2ly"/>
 						<xpp:bloc>" - | </xpp:bloc>
 						<xpp:expand select="Lilypond"/>
-						</xpp:bloc>
+					</xpp:bloc>
 				</xpp:define>
 				<Script id="png" Label="PNG" Mime="image/png">
 					<xpp:bloc></xpp:bloc>
