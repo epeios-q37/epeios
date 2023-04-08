@@ -1,23 +1,21 @@
 <iframe style="border: none;"
   src="FaaSDesc.php?text=WW91IHdpbGwgc2VlIGhlcmUgc29tZSB3aWRnZXRzIGluIGFjdGlvbi4gQ29ycmVzcG9uZGluZyBIVE1MIGNvZGUgd2lsbCBiZSBkaXNwbGF5ZWQu"></iframe>
 <div>
-  <center id="Regular" class="hidden">
-    <select id="List" xdh:onevent="Select">
-    </select>
-  </center>
   <div id="Retrieving">
     <span>Importing </span>
     <output id="RetrievedWidget">(please wait…)</output>
-    <span> widget HTML code. </span>
+    <span> widget. </span>
   </div>
   <br />
 </div>
 <fieldset class="hidden" id="button">
+  <legend>Button</legend>
   <fieldset>
     <button xdh:onevent="btSubmit">A button</button>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -29,9 +27,10 @@ CALLBACKS = {
   "btSubmit": lambda dom: dom.alert("Click on button detected!"),
 }      </pre>
     </fieldset>
+  </details>
   </fieldset>
-</fieldset>
 <fieldset class="hidden" id="password">
+  <Legend>Password</legend>
   <fieldset>
     <input type="password" xdh:onevent="pwSubmit" placeholder="Password" />
     <span>Submitted password: </span>
@@ -39,9 +38,9 @@ CALLBACKS = {
       <span>Type a password and hit the <span style="font-weight: bold;">Enter</span> key</span>
     </output>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
-    <fieldset>
+  <hr/>
+  <details>
+    <summary>Source code</summary>    <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
     </fieldset>
@@ -52,9 +51,10 @@ CALLBACKS = {
   "pwSubmit": lambda dom, id: dom.setValue("pwOutput", dom.getValue(id)),
 }      </pre>
     </fieldset>
-  </fieldset>
+  </details>
 </fieldset>
 <fieldset class="hidden" id="checkbox">
+  <legend>Checkbox</legend>
   <fieldset>
     <div>
       <p>Specify the type of vehicle you own:</p>
@@ -85,8 +85,9 @@ CALLBACKS = {
       <button xdh:onevent="cbSubmit">Submit</button>
     </div>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -99,9 +100,10 @@ CALLBACKS = {
   "cbSubmit": lambda dom: dom.alert(str(dom.getValues(["cbBicycle", "cbCar","cbPirogue"]))),
 }      </pre>
     </fieldset>
-  </fieldset>
+  </details>
 </fieldset>
 <fieldset class="hidden" id="radio">
+  <legend>Radio button</legend>
   <fieldset>
     <div>
       <div>How to contact you:</p>
@@ -135,8 +137,9 @@ CALLBACKS = {
         </select>
       </div>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -150,9 +153,10 @@ CALLBACKS = {
   "rdReset": lambda dom: dom.setValues({"rdSelect": "None", "rdRadios": ""}),
 }      </pre>
     </fieldset>
-  </fieldset>
+  </details>
 </fieldset>
 <fieldset class="hidden" id="datalist">
+  <legend>Datalist</legend>
   <fieldset>
     <span>
       <input list="dlFlavors" xdh:onevent="dlSubmit" placeholder="Select a flavor" />
@@ -170,8 +174,9 @@ CALLBACKS = {
       </span>
     </output>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -198,9 +203,10 @@ CALLBACKS = {
   "dlSubmit": acDlSubmit,
 }      </pre>
     </fieldset>
-  </fieldset>
+  </details>
 </fieldset>
 <fieldset class="hidden" id="date">
+  <legend>Date</legend>
   <fieldset>
     <input type="date" xdh:onevent="dtSelect" />
     <span>Selected date: </span>
@@ -208,8 +214,9 @@ CALLBACKS = {
       <span>Click on the date selector</span>
     </output>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -224,6 +231,7 @@ CALLBACKS = {
   </fieldset>
 </fieldset>
 <fieldset class="hidden" id="color">
+  <legend>Color</legend>
   <fieldset>
     <input type="color" id="clColor" xdh:onevent="clSelect" />
     <span>Selected color: </span>
@@ -231,8 +239,9 @@ CALLBACKS = {
       <span>Click on the color selector</span>
     </output>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -244,9 +253,10 @@ CALLBACKS = {
   "clSelect": lambda dom, id: dom.setValue("clOutput", dom.getValue(id)),
 }      </pre>
     </fieldset>
-  </fieldset>
+  </details>
 </fieldset>
 <fieldset class="hidden" id="range/meter">
+  <legend>Range/meter</legend>
   <fieldset style="display: flex; flex-direction: row; align-items: center; gap: 5px;">
     <label style="display: flex; align-items: center;">
       <span>Volume: </span>
@@ -255,8 +265,9 @@ CALLBACKS = {
     <input type="number" id="rgNumber"  xdh:onevent="rgSubmit" min="0" max="15" value="5" size="2"/>
     <meter id="rgMeter" min="0" max="15" low="5" high="10" optimum="3" value="5"/>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -277,9 +288,10 @@ def acRgSubmit(dom, id):
   "rgSubmit": acRgSubmit,
 }      </pre>
     </fieldset>
-  </fieldset>
+  </details>
 </fieldset>
 <fieldset class="hidden" id="select">
+  <legend>Select</legend>
   <fieldset>
     <select xdh:onevent="slSelect">
       <option selected disabled>-- Select a dinausor --</option>
@@ -313,8 +325,9 @@ def acRgSubmit(dom, id):
     <div>Select the above <a href="#" target="_self" xdh:onevent="slRadio">radio widget</a> to see how to
       programmatically select an item from a list box.</div>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -340,9 +353,10 @@ CALLBACKS = {
   "slToggle": lambda dom, id: dom.disableElement("slOthers") if dom.getValue(id) == 'true' else dom.enableElement("slOthers"),
 }      </pre>
     </fieldset>
-  </fieldset>
+  </details>
 </fieldset>
 <fieldset class="hidden" id="CKEditor">
+  <legend>CKEditor</legend>
   <fieldset>
     <textarea id="ckInput"
       xdh:widget_="ckeditor|{entities: false, enterMode : CKEDITOR.ENTER_BR, linkShowTargetTab: false}|val\(\)|"></textarea>
@@ -353,8 +367,9 @@ CALLBACKS = {
       </output>
     </fieldset>
   </fieldset>
-  <fieldset>
-    <legend>Source code</legend>
+  <hr/>
+  <details>
+    <summary>Source code</summary>
     <fieldset>
       <legend>HTML</legend>
       <pre class="lang-html"></pre>
@@ -366,5 +381,5 @@ CALLBACKS = {
   "ckSubmit": lambda dom, id: dom.setValue("ckOutput", dom.getValue("ckInput")),
 }      </pre>
     </fieldset>
-  </fieldset>
+  </details>
 </fieldset>

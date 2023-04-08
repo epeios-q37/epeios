@@ -232,7 +232,9 @@ namespace {
 				URL.Init();
 				csdcmn::Get(Proxy, URL);
 
-				cio::COut << URL << txf::nl << txf::commit;
+				cio::COut << URL << txf::nl;
+				cio::COut << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << txf::nl;
+        cio::COut << "Open above URL in a web browser (click, right click or copy/paste). Enjoy!" << txf::nl << txf::commit;
 
 				ATKEnvVar.Init();
 

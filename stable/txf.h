@@ -32,7 +32,7 @@
 
 // TeXt Flow
 
-# include <ctype.h>
+// # include <ctype.h>
 # include <limits.h>
 
 # include "err.h"

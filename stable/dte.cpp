@@ -21,7 +21,7 @@
 
 #include "dte.h"
 
-#include <ctype.h>
+// #include <ctype.h>
 #include <time.h>
 
 
@@ -47,7 +47,7 @@
 
   NOTE : date before J.C. are not supported yet.
 
-*/			
+*/
 
 
 

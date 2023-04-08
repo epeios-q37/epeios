@@ -38,7 +38,7 @@
 #include "bso.h"
 #include "fdr.h"
 
-#include <ctype.h>
+// #include <ctype.h>
 
 namespace cdgb64 {
 

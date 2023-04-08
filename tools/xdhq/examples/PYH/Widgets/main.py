@@ -48,9 +48,9 @@ def clean(s,i):
   return s.strip(" \n").replace ("    <","<").replace("xdh:widget_","xdh:widget"),i
 
 def displayCode(dom,element,i):
-  source = dom.firstChild(element);
+  source = dom.nextSibling(dom.firstChild(element));
   code,i = clean(dom.getValue(source),i)
-  dom.setValue(dom.nextSibling(dom.firstChild(dom.nextSibling(dom.firstChild(dom.nextSibling(source))))), html.escape(code))
+  dom.setValue(dom.nextSibling(dom.firstChild(dom.nextSibling(dom.firstChild(dom.nextSibling(dom.nextSibling(source)))))), html.escape(code))
 
   return i
 
@@ -62,35 +62,23 @@ def acConnect(dom):
   i = 0
 
   target = ""
-  list = "<option disabled selected value> -- Select a widget -- </option>"
 
   while current != "":
     id = dom.getAttribute(current,"id")
     dom.setValue("RetrievedWidget", id)
-    list += f'<option value="{id}">{id}</option>'
     i = displayCode(dom,current,i)
     current = dom.nextSibling(current)
+    dom.removeClass(id, "hidden")
+    dom.scrollTo(id)
+
+  dom.scrollTo(dom.firstChild(""))
 
   dom.executeVoid("document.querySelectorAll('pre').forEach((block) => {hljs.highlightBlock(block);});")
 
   dom.setAttribute("ckInput","xdh:widget",dom.getAttribute("ckInput","xdh:widget_"))
   dom.after("ckInput","")
-  dom.inner("List", list)
 
   dom.addClass("Retrieving","hidden")
-  dom.removeClass("Regular","hidden")
-
-def acSelect(dom,id,widget=""):
-  global target
-
-  if ( widget != "" ):
-    dom.setValue("List", widget)  
-
-  if target:
-    dom.addClass(target,"hidden")
-  target = dom.getValue(id)
-  dom.removeClass(target, "hidden")
-
 
 def dlShape(flavors):
   html = atlastk.create_HTML()
@@ -140,7 +128,6 @@ def acSlAdd(dom):
 
 CALLBACKS = {
   "": acConnect,
-  "Select": acSelect,
 
   "btSubmit": lambda dom: dom.alert("Click on button detected!"),
 
@@ -164,7 +151,7 @@ CALLBACKS = {
   "slSelect": lambda dom, id: dom.setValue("slOutput", dom.getValue(id)),
   "slAdd": acSlAdd,
   "slToggle": lambda dom, id: dom.disableElement("slOthers") if dom.getValue(id) == 'true' else dom.enableElement("slOthers"),
-  "slRadio": lambda dom: acSelect(dom, "List", "radio"),
+  "slRadio": lambda dom: dom.scrollTo("radio"),
 
   "ckSubmit": lambda dom, id: dom.setValue("ckOutput", dom.getValue("ckInput")),
 }
