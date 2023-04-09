@@ -27,9 +27,7 @@ import os, sys
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append("../../atlastk")
 
-import atlastk, html
-
-target = ""
+import atlastk, html, re
 
 """
 From here and up to and including the 'acConnect' function,
@@ -37,48 +35,37 @@ to simplify the writing of the program, there are a lot a quirks
 which should not be used by regular developers.
 """
 
-def clean(s,i):
-  pattern = f' id="_CGN{i}"'
+def clean(s):
+  return re.sub(' id="_CGN.*?"', '', s).strip(" \n").replace ("    <", "<").replace("xdh:widget_", "xdh:widget")
 
-  while pattern in s:
-    s = s.replace(pattern, "")
-    i += 1
-    pattern = f' id="_CGN{i}"'
 
-  return s.strip(" \n").replace ("    <","<").replace("xdh:widget_","xdh:widget"),i
-
-def displayCode(dom,element,i):
+def displayCode(dom, element):
   source = dom.nextSibling(dom.firstChild(element));
-  code,i = clean(dom.getValue(source),i)
+  code = clean(dom.getValue(source))
   dom.setValue(dom.nextSibling(dom.firstChild(dom.nextSibling(dom.firstChild(dom.nextSibling(dom.nextSibling(source)))))), html.escape(code))
 
-  return i
 
 def acConnect(dom):
-  global target
-
   dom.inner("", open("Main.html").read())
-  current = dom.nextSibling(dom.nextSibling(dom.firstChild("")))
-  i = 0
+  last = dom.nextSibling(dom.nextSibling(dom.firstChild("")))
+  current = dom.lastChild(dom.parent(last))
 
-  target = ""
-
-  while current != "":
-    id = dom.getAttribute(current,"id")
+  dom.setAttribute("ckInput", "xdh:widget", dom.getAttribute("ckInput", "xdh:widget_"))
+  dom.after("ckInput", "")
+  
+  while True:
+    id = dom.getAttribute(current, "id")
     dom.setValue("RetrievedWidget", id)
-    i = displayCode(dom,current,i)
-    current = dom.nextSibling(current)
+    displayCode(dom,current)
     dom.removeClass(id, "hidden")
-    dom.scrollTo(id)
-
-  dom.scrollTo(dom.firstChild(""))
+    if current == last:
+      break
+    current = dom.previousSibling(current)
 
   dom.executeVoid("document.querySelectorAll('pre').forEach((block) => {hljs.highlightBlock(block);});")
 
-  dom.setAttribute("ckInput","xdh:widget",dom.getAttribute("ckInput","xdh:widget_"))
-  dom.after("ckInput","")
+  dom.addClass("Retrieving", "hidden")
 
-  dom.addClass("Retrieving","hidden")
 
 def dlShape(flavors):
   html = atlastk.create_HTML()
@@ -92,6 +79,7 @@ def dlShape(flavors):
 
 dlFlavors = ["Vanilla", "Chocolate", "Caramel", "Mint"]  
 
+
 def acDlSubmit(dom, id):
   global dlFlavors
 
@@ -103,6 +91,7 @@ def acDlSubmit(dom, id):
     dom.inner("dlFlavors", dlShape(dlFlavors))
   dom.setValue("dlOutput", flavor)
 
+
 def acRgSubmit(dom, id):
   value = dom.getValue(id)
 
@@ -111,6 +100,7 @@ def acRgSubmit(dom, id):
     "rgNumber": value,
     "rgMeter": value
   })
+
 
 def slEmbed(other):
   html = atlastk.create_HTML()
@@ -121,10 +111,12 @@ def slEmbed(other):
 
   return html
 
+
 def acSlAdd(dom):
   dom.begin("slOthers", slEmbed(dom.getValue("slInput")))
   dom.setValue("slInput", "")
   dom.focus("slInput")  
+
 
 CALLBACKS = {
   "": acConnect,
@@ -134,7 +126,7 @@ CALLBACKS = {
   "pwSubmit": lambda dom, id: dom.setValue("pwOutput", dom.getValue(id)),
 
   "cbSelect": lambda dom, id: dom.setValue("cbOutput", "{} ({})".format(id, dom.getValue(id))),
-  "cbSubmit": lambda dom: dom.alert(str(dom.getValues(["cbBicycle", "cbCar","cbPirogue"]))),
+  "cbSubmit": lambda dom: dom.alert(str(dom.getValues(["cbBicycle", "cbCar", "cbPirogue"]))),
 
   "rdCheck": lambda dom, id: dom.setValue("rdSelect", dom.getValue(id)),
   "rdSelect": lambda dom, id: dom.setValue("rdRadios", dom.getValue(id)),
@@ -155,5 +147,6 @@ CALLBACKS = {
 
   "ckSubmit": lambda dom, id: dom.setValue("ckOutput", dom.getValue("ckInput")),
 }
+
 
 atlastk.launch(CALLBACKS, None, open("Head.html").read())

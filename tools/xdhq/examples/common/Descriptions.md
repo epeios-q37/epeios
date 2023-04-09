@@ -61,7 +61,7 @@ Source code is available for [*Java*](https://repl.it/@AtlasTK/atlas-java#exampl
 
 ## `Widgets` ([file](./Widgets/Main.html))
 
-You will see here some widgets in action. Corresponding HTML code will be displayed.
+You will see here some widgets in action. Click on *Source code* to see corresponding HTML and Python code.
 
 ## Misc
 
