@@ -15,6 +15,10 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+
+## 2023-04-11
+- FLW ; fixing https://github.com/epeios-q37/faasq/issues/2;
+
 ## 2023-01-25
 - SCLX: [impr];
 

@@ -30,9 +30,9 @@
 #define TXF_DBG
 #endif
 
-// TeXt Flow
+// TeXt Flow 
 
-// # include <ctype.h>
+# include <ctype.h>
 # include <limits.h>
 
 # include "err.h"
@@ -226,7 +226,7 @@ namespace txf {
 		{
 			return Lire_();
 		}
-		bso::sBool Dismiss(
+		bso::sBool Dismiss( 
 			bso::sBool Unlock = true,
 			qRPD )
 		{
@@ -403,7 +403,7 @@ namespace txf {
 			bso::sBool Unlock = true,
 			qRPD )
 		{
-			if ( IsInitialized() )
+			if ( IsInitialized() ) 
 				return Commit_( Unlock, ErrHandling );
 
 			return true;
