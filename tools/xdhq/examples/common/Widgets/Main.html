@@ -8,7 +8,7 @@
   <br />
 </div>
 <fieldset class="hidden" id="button">
-  <legend>Button</legend>
+  <legend class="widget">button</legend>
   <fieldset>
     <button xdh:onevent="btSubmit">A button</button>
   </fieldset>
@@ -29,7 +29,7 @@ CALLBACKS = {
   </details>
 </fieldset>
 <fieldset class="hidden" id="password">
-  <Legend>Password</legend>
+  <legend class="widget">password</legend>
   <fieldset>
     <input type="password" xdh:onevent="pwSubmit" placeholder="Password" />
     <span>Submitted password: </span>
@@ -54,7 +54,7 @@ CALLBACKS = {
   </details>
 </fieldset>
 <fieldset class="hidden" id="checkbox">
-  <legend>Checkbox</legend>
+  <legend class="widget">checkbox</legend>
   <fieldset>
     <div>
       <p>Specify the type of vehicle you own:</p>
@@ -103,7 +103,7 @@ CALLBACKS = {
   </details>
 </fieldset>
 <fieldset class="hidden" id="radio">
-  <legend>Radio button</legend>
+  <legend class="widget">radio</legend>
   <fieldset>
     <div>
       <div>How to contact you:</p>
@@ -156,7 +156,7 @@ CALLBACKS = {
   </details>
 </fieldset>
 <fieldset class="hidden" id="datalist">
-  <legend>Datalist</legend>
+  <legend class="widget">datalist</legend>
   <fieldset>
     <span>
       <input list="dlFlavors" xdh:onevent="dlSubmit" placeholder="Select a flavor" />
@@ -204,7 +204,7 @@ CALLBACKS = {
   </details>
 </fieldset>
 <fieldset class="hidden" id="date">
-  <legend>Date</legend>
+  <legend class="widget">date</legend>
   <fieldset>
     <input type="date" xdh:onevent="dtSelect" />
     <span>Selected date: </span>
@@ -229,7 +229,7 @@ CALLBACKS = {
 </fieldset>
 </fieldset>
 <fieldset class="hidden" id="color">
-  <legend>Color</legend>
+  <legend class="widget">color</legend>
   <fieldset>
     <input type="color" id="clColor" xdh:onevent="clSelect" />
     <span>Selected color: </span>
@@ -254,7 +254,7 @@ CALLBACKS = {
   </details>
 </fieldset>
 <fieldset class="hidden" id="range/meter">
-  <legend>Range/meter</legend>
+  <legend class="widget">range/meter</legend>
   <fieldset style="display: flex; flex-direction: row; align-items: center; gap: 5px;">
     <label style="display: flex; align-items: center;">
       <span>Volume: </span>
@@ -282,14 +282,15 @@ def acRgSubmit(dom, id):
     "rgMeter": value
   })        
 
-  CALLBACKS = {
+
+CALLBACKS = {
   "rgSubmit": acRgSubmit,
 }      </pre>
     </fieldset>
   </details>
 </fieldset>
 <fieldset class="hidden" id="select">
-  <legend>Select</legend>
+  <legend class="widget">select</legend>
   <fieldset>
     <select xdh:onevent="slSelect">
       <option selected disabled>-- Select a dinausor --</option>
@@ -334,17 +335,19 @@ def acRgSubmit(dom, id):
       <legend>Python</legend>
       <pre class="lang-python">
 def slEmbed(other):
-  html = atlastk.create_HTML()
+  html = atlastk.createHTML()
   html.pushTag("option")
   html.putAttribute("selected", "selected")
   html.putValue(other)
   return html
+
 
 def acSlAdd(dom):
   dom.begin("slOthers", slEmbed(dom.getValue("slInput")))
   dom.setValue("slInput", "")
   dom.focus("slInput")  
   
+
 CALLBACKS = {
   "slSelect": lambda dom, id: dom.setValue("slOutput", dom.getValue(id)),
   "slAdd": acSlAdd,
@@ -354,7 +357,7 @@ CALLBACKS = {
   </details>
 </fieldset>
 <fieldset class="hidden" id="CKEditor">
-  <legend>CKEditor</legend>
+  <legend class="widget">CKEditor</legend>
   <fieldset>
     <textarea id="ckInput"
       xdh:widget_="ckeditor|{entities: false, enterMode : CKEDITOR.ENTER_BR, linkShowTargetTab: false}|val\(\)|"></textarea>

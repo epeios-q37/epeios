@@ -40,9 +40,12 @@ def clean(s):
 
 
 def displayCode(dom, element):
-  source = dom.nextSibling(dom.firstChild(element));
+# source = dom.nextSibling(dom.firstChild(element));
+  source = dom.executeString(f"getOrGenerateId(getElement('{element}').firstElementChild.nextElementSibling);")
   code = clean(dom.getValue(source))
-  dom.setValue(dom.nextSibling(dom.firstChild(dom.nextSibling(dom.firstChild(dom.nextSibling(dom.nextSibling(source)))))), html.escape(code))
+  # target = dom.nextSibling(dom.firstChild(dom.nextSibling(dom.firstChild(dom.nextSibling(dom.nextSibling(source))))))
+  target = dom.executeString(f"getOrGenerateId(getElement('{source}').nextElementSibling.nextElementSibling.firstElementChild.nextElementSibling.firstElementChild.nextElementSibling);")
+  dom.setValue(target, html.escape(code))
 
 
 def acConnect(dom):
@@ -50,14 +53,11 @@ def acConnect(dom):
   last = dom.nextSibling(dom.nextSibling(dom.firstChild("")))
   current = dom.lastChild(dom.parent(last))
 
-  dom.setAttribute("ckInput", "xdh:widget", dom.getAttribute("ckInput", "xdh:widget_"))
-  dom.after("ckInput", "")
-  
   while True:
-    id = dom.getAttribute(current, "id")
-    dom.setValue("RetrievedWidget", id)
+    widget = dom.getAttribute(current, "id")
+    dom.setValue("RetrievedWidget", widget)
     displayCode(dom,current)
-    dom.removeClass(id, "hidden")
+    dom.removeClass(widget, "hidden")
     if current == last:
       break
     current = dom.previousSibling(current)
@@ -65,6 +65,9 @@ def acConnect(dom):
   dom.executeVoid("document.querySelectorAll('pre').forEach((block) => {hljs.highlightBlock(block);});")
 
   dom.addClass("Retrieving", "hidden")
+
+  dom.setAttribute("ckInput", "xdh:widget", dom.getAttribute("ckInput", "xdh:widget_"))
+  dom.after("ckInput", "")
 
 
 def dlShape(flavors):
@@ -103,7 +106,7 @@ def acRgSubmit(dom, id):
 
 
 def slEmbed(other):
-  html = atlastk.create_HTML()
+  html = atlastk.createHTML()
 
   html.pushTag("option")
   html.putAttribute("selected", "selected")
