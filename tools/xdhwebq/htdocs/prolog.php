@@ -20,7 +20,7 @@ along with xdhwebq. If not, see <http://www.gnu.org/licenses/>.
 
 $out = str_replace(array("\r", "\n", "\t"), '',<<<MLS
 	<!DOCTYPE html>
-	<html xmlns:xdh="http://q37.info/ns/xdh">
+	<html xmlns:xdh="http://q37.info/ns/xdh" style="height: 100%;">
 		<head>
 			<!-- If modified, report modification in "xdhcefq.html" from "xdhcefq" -->
 			<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
@@ -35,15 +35,18 @@ $out = str_replace(array("\r", "\n", "\t"), '',<<<MLS
 			<script data-goatcounter="https://faas.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>		
 			<!--link rel="stylesheet" href="https://unpkg.com/marx-css/css/marx.min.css"-->
 			<style id="XDHStyle">
+				html, body {
+					margin: 0;
+				}
 				.xdh_style {
-					display: table;
-					margin: 20px auto auto auto;
+					margin: 10px auto auto auto;
+					flex-grow: 1;
 				}
 			</style>
 			<style id="XDHStyleJupyter">
 				.xdh_style {
 					display: table;
-					margin: 20px auto auto auto;
+					margin: 10px auto auto auto;
 				}
 			</style>
 			<!-- BEGIN of the user head section -->
@@ -58,7 +61,7 @@ $head
 			</script>
 		</head>
 		<!--body id="Root" xdh:onevents="(keypress|About|SC+a)(keypress|Q37Refresh|SC+r)"-->
-		<body onload="ignition('$token','$id',$qrcodeOnly);">
+		<body onload="ignition('$token','$id',$qrcodeOnly);" style="display: flex; flex-flow: column; height: 100%;">
 			<div class="xdh_style">
 				<noscript>
 					<div style="display: table; margin: 50px auto auto auto;">
@@ -70,12 +73,12 @@ $head
 				<input type="hidden" id="LoginUserID" value="$UserID"/>
 				<input type="hidden" id="LoginPassword" value="$Password"/>
 			</div>
-			<div $additional>
+			<span $additional>
 				<iframe style="border: none; width: 100%; height: 50px;"></iframe>
-			</div>
+			</span>
 			<!-- There must be one and only one element here, even an empty one, for the 'More' section to be handled correctly. -->
 			<!--iframe style="border: none; width: 100%; height: 0px;" src="sponsors.php?$parameters"></iframe-->
-			<span/>
+			<span></span>
 		</body>
 	</html>
 MLS

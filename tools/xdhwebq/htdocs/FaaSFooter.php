@@ -45,7 +45,7 @@ echo <<<EOS
       background: #ffffff;
       border-radius: 8px;
       position: relative;
-      width: 400px;
+      width: 300px;
     }
 
     details .summary-title {
@@ -62,7 +62,6 @@ echo <<<EOS
     details .summary-content {
       border-top: 1px solid #e2e8f0;
       cursor: default;
-      padding: 1em;
       font-weight: 300;
       line-height: 1.5;
     }
@@ -101,21 +100,21 @@ echo <<<EOS
       display: none;
     }
 
-    @keyframes fadeInDown {
+    @keyframes fadeIn {
       0% {
         opacity: 0;
-        transform: translateY(-5em);
+//        transform: translateY(-5em);
       }
 
       100% {
         opacity: 1;
-        transform: translateY(0);
+        //transform: translateY(0);
       }
     }
 
     details[open] {
-      animation-name: fadeInDown;
-      animation-duration: 1s;
+      animation-name: fadeIn;
+      animation-duration: 2s;
     }
 
     summary {
@@ -125,7 +124,7 @@ echo <<<EOS
 </head>
 
 <body
-  onload="new QRCode('qrcode', {width:125, height:125, correctLevel: QRCode.CorrectLevel.L}).makeCode('$url');adjustHeight();">
+  onload="new QRCode('qrcode', {width:100, height:100, correctLevel: QRCode.CorrectLevel.L}).makeCode('$url');adjustHeight();">
   <details ontoggle="adjustHeight();" $detailsOpenAttribute>
     <summary> <span class="summary-title">More…</span>
       <div class="summary-chevron-up">
@@ -137,18 +136,16 @@ echo <<<EOS
       </div>
     </summary>
     <div class="summary-content">
-      <hr />
       <span style="display: table; margin: 10px auto 5px auto; text-align: center;">
-        <span><a href="https://en.wikipedia.org/wiki/QR_code" target="_blank">QR code</a> to scan with a mobile device,</span>
-        <br />
-        <span style="margin: auto;">or to click to open a new session.</span>
+        <span>Scan/click to open</span>
+        <br/>
+        <span>another session:</span>
       </span>
       <div style="display: flex; justify-content: space-around;">
         <a style="cursor: pointer;" target="_blank" href="$url">
           <div id="qrcode"></div>
         </a>
       </div>
-      <hr />
       <div style="display: table; padding: 10px; margin: auto;">
         <div style="display: table; padding: 10px;">
           <div
