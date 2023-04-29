@@ -1,15 +1,16 @@
 import atlastk
 
 BODY = """
-<div>
-<fieldset style="width: max-content; height: 100%; display: flex; flex-flow: column;">
+<div style="width: max-content; height: 100%; display: flex; flex-flow: column; border: solid 1px; padding: 5px;">
+<legend>test</legend>
   <div>
   <input type="text">
   <button>Submit</button>
     </div>
   <p style="height: 10px; margin: 0px;"/>
-  <fieldset style="flex-grow: 1;"></fieldset>
-</fieldset>
+  <div style="flex-grow: 1; border: solid  1px;">
+  <div>test</div>
+  </div>
 </div>
 """
 

@@ -62,7 +62,7 @@ $head
 		</head>
 		<!--body id="Root" xdh:onevents="(keypress|About|SC+a)(keypress|Q37Refresh|SC+r)"-->
 		<body onload="ignition('$token','$id',$qrcodeOnly);" style="display: flex; flex-flow: column; height: 100%;">
-			<div class="xdh_style">
+			<span class="xdh_style">
 				<noscript>
 					<div style="display: table; margin: 50px auto auto auto;">
 						<fieldset>
@@ -70,11 +70,9 @@ $head
 						</fieldset>
 					</div>
 				</noscript>
-				<input type="hidden" id="LoginUserID" value="$UserID"/>
-				<input type="hidden" id="LoginPassword" value="$Password"/>
-			</div>
+			</span>
 			<span $additional>
-				<iframe style="border: none; width: 100%; height: 50px;"></iframe>
+				<iframe style="border: none;  background-color: salmon;" width="100%"></iframe>
 			</span>
 			<!-- There must be one and only one element here, even an empty one, for the 'More' section to be handled correctly. -->
 			<!--iframe style="border: none; width: 100%; height: 0px;" src="sponsors.php?$parameters"></iframe-->

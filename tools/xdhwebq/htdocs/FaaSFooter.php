@@ -31,9 +31,9 @@ echo <<<EOS
   <script>
     function adjustHeight() {
       let iframe = window.frameElement;
-      iframe.style.height = '50px';
+      iframe.height = '50px';
       let body = document.body;
-      iframe.style.height = body.scrollHeight + 'px';
+      iframe.height = body.scrollHeight + 'px';
     }
   </script>
   <style>
