@@ -1,17 +1,16 @@
 import atlastk
 
 BODY = """
-<div style="width: max-content; height: 100%; display: flex; flex-flow: column; border: solid 1px; padding: 5px;">
-<legend>test</legend>
-  <div>
-  <input type="text">
-  <button>Submit</button>
-    </div>
+<fieldset style="width: max-content; height: 100%; display: flex; flex-flow: column; box-sizing: border-box;">
+  <fieldset style="flex-grow: 1;">
+    <div>test</div>
+  </fieldset>
   <p style="height: 10px; margin: 0px;"/>
-  <div style="flex-grow: 1; border: solid  1px;">
-  <div>test</div>
+  <div>
+    <input type="text">
+    <button>Submit</button>
   </div>
-</div>
+</fieldset>
 """
 
 def acConnect(dom):

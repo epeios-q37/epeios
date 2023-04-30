@@ -72,7 +72,7 @@ $head
 				</noscript>
 			</span>
 			<span $additional>
-				<iframe style="border: none;  background-color: salmon;" width="100%"></iframe>
+				<iframe frameborder="0" width="100%"></iframe>
 			</span>
 			<!-- There must be one and only one element here, even an empty one, for the 'More' section to be handled correctly. -->
 			<!--iframe style="border: none; width: 100%; height: 0px;" src="sponsors.php?$parameters"></iframe-->
