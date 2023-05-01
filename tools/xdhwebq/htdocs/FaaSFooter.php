@@ -23,6 +23,7 @@ const PATTERN = "_supplier=qrcode";
 $rawUrl = $_REQUEST['url'];
 $url = str_replace("&" . PATTERN, "", $rawUrl);
 $detailsOpenAttribute = strpos($rawUrl, PATTERN) ? 'open="open"' : "";
+$qrCodeId = "QRCode";
 
 echo <<<EOS
 <head>
@@ -34,6 +35,7 @@ echo <<<EOS
       iframe.height = '50px';
       let body = document.body;
       iframe.height = body.scrollHeight + 'px';
+      document.getElementById("$qrCodeId").scrollIntoView();
     }
   </script>
   <style>
@@ -124,7 +126,7 @@ echo <<<EOS
 </head>
 
 <body
-  onload="new QRCode('qrcode', {width:100, height:100, correctLevel: QRCode.CorrectLevel.L}).makeCode('$url');adjustHeight();">
+  onload="new QRCode('$qrCodeId', {width:100, height:100, correctLevel: QRCode.CorrectLevel.L}).makeCode('$url');adjustHeight();">
   <details ontoggle="adjustHeight();" $detailsOpenAttribute>
     <summary> <span class="summary-title">More…</span>
       <div class="summary-chevron-up">
@@ -143,7 +145,7 @@ echo <<<EOS
       </span>
       <div style="display: flex; justify-content: space-around;">
         <a style="cursor: pointer;" target="_blank" href="$url">
-          <div id="qrcode"></div>
+          <div id="$qrCodeId"></div>
         </a>
       </div>
       <div style="display: table; padding: 10px; margin: auto;">

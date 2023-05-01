@@ -3,10 +3,8 @@
 Descriptions ajoutées dans la page HTML principale de chacune des démonstrations.
 
 - Sélectionner la description au format *Markdown* avec la souris ;
-- <u>soit</u> :
-  - lancer `ATKDescGen`,
-  - (cette tâche n'est disponible qu'avec le *folder* *Meta*) *Shift-Ctrl-B* + *entrée* (ou *Command Palette…*, *Tasks: Run Task*, *FaaS Description generator*) ;
-- Coller le presse-papier (*CTRL-V*) comme (en remplacement de la) première ligne du fichier *HTML*.
+- lancer `ATKDescGen` ;
+- coller le presse-papier (*CTRL-V*) comme (en remplacement de la) première ligne du fichier *HTML*.
 
 
 ## `15-puzzle` ([file](./15-puzzle/Main.html))
@@ -70,6 +68,8 @@ You will see here some widgets in action. Click on *Source code* to see correspo
 *Java* *Node.js* *Perl* *Python* *Ruby*
 
 ### `tasks.json`
+
+NOTA: **Ne plus utiliser !!! Utiliser `ATKDescGen`** (voir début de ce fichier).
 
 Commande utilisée dans `~/.config/VSCodium/User/tasks.json` :
 
