@@ -39,8 +39,8 @@ $out = str_replace(array("\r", "\n", "\t"), '',<<<MLS
 					margin: 0;
 				}
 				.xdh_style {
-					margin: 10px auto auto auto;
-					flex-grow: 1;
+					margin: 5px auto auto auto;
+					height: calc(100% - 10px);
 				}
 			</style>
 			<style id="XDHStyleJupyter">

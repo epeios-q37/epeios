@@ -1,25 +1,36 @@
 import atlastk
 
 BODY = """
-<fieldset style="width: max-content; height: 100%; display: flex; flex-flow: column; box-sizing: border-box;">
-  <fieldset style="flex-grow: 1;">
-    <div id="Output" style="display: flex; flex-direction: column-reverse; height: 100%;"/>
+<fieldset style="width: min-content; height: 100%; display: flex; flex-flow: column; box-sizing: border-box;">
+  <fieldset id="Output" style="display: flex; flex-direction: column-reverse; height: 100%; overflow: auto; overflow-wrap: anywhere;">
   </fieldset>
   <p style="height: 10px; margin: 0px;"/>
-  <div>
+  <div style="display: flex;">
     <input id="Input" xdh:onevent="Submit" type="text" placeholder="pseudo"/>
     <button xdh:onevent="Submit">Submit</button>
   </div>
 </fieldset>
 """
 
-def acConnect(dom):
+class Profile:
+  def __init__(self):
+    self.pseudo = ""
+
+def acConnect(profile, dom):
   dom.inner("", BODY)
   dom.focus("Input")
 
-def acSubmit(dom):
-  dom.begin("Output", f"<div>Hello, <i>{dom.getValue('Input')}</i>!</div>")
-  dom.setAttribute("Input", "placeholder", "Message");
+def acSubmit(profile, dom):
+  input = dom.getValue('Input').strip()
+
+  if input:
+    if profile.pseudo:
+      dom.begin("Output", f"<div><span style='color: red;'>{profile.pseudo}</span>: {input}!</div>")
+    else:
+      profile.pseudo = input
+      dom.begin("Output", f"<div>Hello, <i>{input}</i>!</div>")
+      dom.setAttribute("Input", "placeholder", "Message");
+
   dom.setValue("Input", "")
   dom.focus("Input")
 
@@ -28,4 +39,4 @@ CALLBACKS = {
   "Submit": acSubmit
 }
 
-atlastk.launch(CALLBACKS)
+atlastk.launch(CALLBACKS, Profile)
