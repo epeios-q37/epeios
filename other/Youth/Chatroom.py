@@ -18,6 +18,7 @@ class Profile:
 
 def acConnect(profile, dom):
   dom.inner("", BODY)
+  dom.disableElement("XDHStyleBodyMinHeight")
   dom.focus("Input")
 
 def acSubmit(profile, dom):
