@@ -1,9 +1,28 @@
 import atlastk
 
+HEAD = """
+<title>My chatroom</title>
+<style>
+.me, .other {
+  border-radius: 10px;
+  padding: 5px;
+  margin: 1px;
+}
+.me {
+  margin-left: 15px;
+  background-color: lightcyan;
+}
+.other {
+  margin-right: 15px;
+  background-color: lightyellow;
+}
+</style>
+"""
+
 BODY = """
 <fieldset style="width: min-content; height: 100%; display: flex; flex-flow: column; box-sizing: border-box;">
-  <fieldset id="Output" style="display: flex; flex-direction: column-reverse; height: 100%; overflow: auto; overflow-wrap: anywhere;">
-  </fieldset>
+  <output id="Output" style="display: flex; flex-direction: column-reverse; height: 100%; overflow: auto; overflow-wrap: anywhere;">
+  </output>
   <p style="height: 10px; margin: 0px;"/>
   <div style="display: flex;">
     <input id="Input" xdh:onevent="Submit" type="text" placeholder="pseudo"/>
@@ -12,21 +31,28 @@ BODY = """
 </fieldset>
 """
 
+message = ""
+
 class Profile:
   def __init__(self):
     self.pseudo = ""
+
 
 def acConnect(profile, dom):
   dom.inner("", BODY)
   dom.disableElement("XDHStyleBodyMinHeight")
   dom.focus("Input")
 
+
 def acSubmit(profile, dom):
+  global message
   input = dom.getValue('Input').strip()
 
   if input:
     if profile.pseudo:
-      dom.begin("Output", f"<div><span style='color: red;'>{profile.pseudo}</span>: {input}!</div>")
+      dom.begin("Output", f"<div class='me'>{input}!</div>")
+      message = input
+      atlastk.broadcastAction("Display", str(profile.pseudo))
     else:
       profile.pseudo = input
       dom.begin("Output", f"<div>Hello, <i>{input}</i>!</div>")
@@ -35,9 +61,16 @@ def acSubmit(profile, dom):
   dom.setValue("Input", "")
   dom.focus("Input")
 
+
+def acDisplay(profile, dom, id):
+  if id != profile.pseudo:
+    dom.begin("Output", f"<div class='other'><span style='font-style: oblique;'>{id}</span>: {message}!</div>")
+
+
 CALLBACKS = {
   "": acConnect,
-  "Submit": acSubmit
+  "Submit": acSubmit,
+  "Display": acDisplay
 }
 
-atlastk.launch(CALLBACKS, Profile)
+atlastk.launch(CALLBACKS, Profile, HEAD)
