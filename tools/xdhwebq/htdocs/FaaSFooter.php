@@ -139,7 +139,7 @@ echo <<<EOS
     </summary>
     <div class="summary-content">
       <span style="display: table; margin: 10px auto 5px auto; text-align: center;">
-        <span>Scan/click to open</span>
+        <span>Scan or click to open</span>
         <br/>
         <span>another session:</span>
       </span>

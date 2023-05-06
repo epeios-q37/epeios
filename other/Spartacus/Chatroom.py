@@ -25,7 +25,7 @@ BODY = """
   </output>
   <p style="height: 10px; margin: 0px;"/>
   <div style="display: flex;">
-    <input id="Input" xdh:onevent="Submit" type="text" placeholder="pseudo"/>
+    <input id="Input" xdh:onevent="Submit" type="text" placeholder="Pseudo"/>
     <button xdh:onevent="Submit">Submit</button>
   </div>
 </fieldset>
@@ -40,7 +40,7 @@ class Profile:
 
 def acConnect(profile, dom):
   dom.inner("", BODY)
-  dom.disableElement("XDHStyleBodyMinHeight")
+  dom.enableElement("XDHFullHeight")
   dom.focus("Input")
 
 
