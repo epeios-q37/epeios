@@ -1,7 +1,7 @@
 import atlastk
 
 HEAD = """
-<title>My chatroom</title>
+<title>Messages | Zelbinium</title>
 <style>
 .me, .other {
   border-radius: 10px;
@@ -20,7 +20,7 @@ HEAD = """
 """
 
 BODY = """
-<fieldset style="width: min-content; height: 100%; display: flex; flex-flow: column; box-sizing: border-box;">
+<fieldset style="width: min-content; height: 100%; max-height: 500px; display: flex; flex-flow: column; box-sizing: border-box;">
   <output id="Output" style="display: flex; flex-direction: column-reverse; height: 100%; overflow: auto; overflow-wrap: anywhere;">
   </output>
   <p style="height: 10px; margin: 0px;"/>
