@@ -50,7 +50,7 @@ def acSubmit(profile, dom):
 
   if input:
     if profile.pseudo:
-      dom.begin("Output", f"<div class='me'>{input}!</div>")
+      dom.begin("Output", f"<div class='me'>{input}</div>")
       message = input
       atlastk.broadcastAction("Display", str(profile.pseudo))
     else:
@@ -64,7 +64,7 @@ def acSubmit(profile, dom):
 
 def acDisplay(profile, dom, id):
   if id != profile.pseudo:
-    dom.begin("Output", f"<div class='other'><span style='font-style: oblique;'>{id}</span>: {message}!</div>")
+    dom.begin("Output", f"<div class='other'><span style='font-style: oblique;'>{id}</span>: {message}</div>")
 
 
 CALLBACKS = {
