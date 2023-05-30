@@ -420,6 +420,7 @@ BODY = """
 """
 
 HEAD = """
+<title>Blackjack | Zelbinium</title>
 <style>
   @keyframes fadeIn {
     0% {

@@ -180,7 +180,7 @@ CALLBACKS = {
 }
 
 HEAD = """
-<title>Mancala</title>
+<title>Mancala | Zelbinium</title>
 <style>
   .store_fieldset {
     position: relative;

@@ -159,6 +159,7 @@ CALLBACKS = {
 }
 
 HEAD = """
+<title>Flooder | Zelbinium</title>
 <style>
   td {
     text-align: center;
