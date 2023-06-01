@@ -70,8 +70,11 @@ def getDeck():
   return deck
 
 
-def getSVGCard(indice):
-  return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" height="243.137" width="167.575" viewBox="-.2 -236 167.575 243.137">' + SVG_CARDS[indice] + '</svg>'
+def getSVGCard(indice, idx):
+  style = ""
+  if idx != 0:
+    style=' style="position: relative; top: -185px; margin-bottom: -185px;"'
+  return f'<span{style}><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" height="243.137" width="167.575" viewBox="-.2 -236 167.575 243.137">' + SVG_CARDS[indice] + '</svg></span>'
 
 
 def getHandValue(cards):
@@ -102,7 +105,7 @@ def getHandValue(cards):
 
 def getSVGCards(cards):
   """Display all the cards in the cards list."""
-  return "".join(getSVGCard(card) for card in reversed(cards))
+  return "".join(getSVGCard(card, idx) for idx, card in enumerate(cards))
 
 
 def notify(dom, text, id="hint"):
