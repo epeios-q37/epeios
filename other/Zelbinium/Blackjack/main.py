@@ -157,7 +157,7 @@ def letDealerPlay():
 
 
 def acConnect(dom):
-  dom.inner("", '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="0" height="0">' + SVG_DEFS + '</svg>' + BODY)
+  dom.inner("", '<div style="display: none"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="0" height="0">' + SVG_DEFS + '</svg></div>' + BODY)
   turnInProgress = bet > 0 or len(playerHand) >= 2
   displayHand(dom, 'dealer', dealerHand, False )
   displayHand(dom, 'player', playerHand, turnInProgress )

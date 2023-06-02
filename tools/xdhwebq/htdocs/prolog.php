@@ -45,7 +45,7 @@ $out = str_replace(array("\r", "\n", "\t"), '',<<<MLS
           min-height: 100%;
         }
         .xdh_style {
-          margin: 5px auto auto auto;
+          margin: 10px auto auto auto;
           height: calc(100% - 10px);
         }
       </style>
