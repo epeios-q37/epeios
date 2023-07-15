@@ -7,33 +7,33 @@ HEAD = """
  
 BODY = """
 <fieldset>
- <input id="Input" data-xdh-onevent="Submit" value="World"/>
+ <input id="Input" data-xdh-onevent="Submit" placeholder="Enter a name here" value="World"/>
  <button data-xdh-onevent="Submit">Hello</button>
  <hr/>
  <fieldset>
-  <output id="Output">Greetings displayed here!</output>
+  <output id="Output"></output>
  </fieldset>
 </fieldset>
 """
  
-def ac_connect(dom):
+def acConnect(dom):
   dom.inner("", BODY)
   dom.focus("Input")
  
-def ac_submit(dom):
+def acSubmit(dom):
   global name
-  name = dom.get_value("Input")
-  dom.set_value("Input", "")
+  name = dom.getValue("Input")
+  dom.setValue("Input", "")
   dom.focus("Input")
-  atlastk.broadcast_action("Refresh")
+  atlastk.broadcastAction("Refresh")
 
-def ac_refresh(dom):
+def acDisplay(dom):
   dom.begin("Output", f"<div>Hello, {name}!</div>")
  
 CALLBACKS = {
-  "": ac_connect,
-  "Submit": ac_submit,
-  "Refresh": ac_refresh
+  "": acConnect,
+  "Submit": acSubmit,
+  "Refresh": acDisplay
 }
  
 atlastk.launch(CALLBACKS, headContent=HEAD)
