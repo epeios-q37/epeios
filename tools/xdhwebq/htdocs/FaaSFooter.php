@@ -28,7 +28,6 @@ $qrCodeId = "QRCode";
 echo <<<EOS
 <head>
   <script src="qrcode.min.js"></script>
-  <script src="clipboard.min.js"></script>
   <script>
     function adjustHeight() {
       let iframe = window.frameElement;
@@ -102,10 +101,29 @@ echo <<<EOS
     from {opacity: 0;}
     to {opacity:1 ;}
   }
+
+  .hidden {
+    display: none;
+  }
   </style>
   <script>
+  function prepare() {
+    new QRCode('$qrCodeId', {width:100, height:100, correctLevel: QRCode.CorrectLevel.L}).makeCode('$url');
+    adjustHeight();
+
+    let id = undefined;
+    
+    if ( navigator.share ) {
+      id = "Share";
+    } else {
+      id = "Copy";
+    }
+
+    document.getElementById(id).classList.remove("hidden");
+  }
+
   function copy() {
-    if (window.isSecureContext) {
+    if ( window.isSecureContext ) {
       navigator.clipboard.writeText("$url");
       var popup = document.getElementById("copyReport");
       popup.classList.toggle("show");
@@ -113,28 +131,38 @@ echo <<<EOS
     } else
       alert("Clipboard copy not available in this context.\\nPlease copy the URL directly from the address bar of your browser.");
   }
-  </script>  
+
+  function share() {
+    if (navigator.share) { 
+      navigator.share({
+        text: "Atlas toolkit",
+        url: "$url"
+      }).then(() => {
+         console.log('Thanks for sharing!');
+      })
+    } else
+        alert("Sharing not available in this context.\\nPlease copy/paste the URL directly from the address bar of your browser to the application you want to share with.");
+  }
+</script>
 </head>
 
-<body onload="new QRCode('$qrCodeId', {width:100, height:100, correctLevel: QRCode.CorrectLevel.L}).makeCode('$url');adjustHeight();">
+<body onload="prepare()">
   <div>
     <div style="justify-content: space-around; display: flex;">
       <span>
-        <!--img title="Share" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAY1JREFUSEu11D9IllEUx/GPgwQlBLlFSyFWEkRBQkRhqyIEClkEDRUNjU21JEREERHZVC4iIjYI2VbZ4BK0JOngZn+IliCaIoqUA1d4eXjV+7zv452eeznP73vPOb9zW2zxatlifc0AdqMbn/AR/+tdtlHADZzAG3RgLy7iRxHSCKAXfbhWI9aDy7hQBWAMN/GtIPYaAf9be95IBi8whN8FwDQu4WezgAk8R4DW1k68xKlmShQiz7CM47idmrwfj/AQr8oA9mAf5tGJx7iFqHU7wklHE/AJPpSxaThkAHPox5+0/152MOs1eRdmcQz/EPunGCwrHvH1AIcwXBCcwtmqAK14j3NYQgxRfF+tChA6XXiAHficnoPI4GtZSO6gBTAseheHsZB8v7IZMBcQOvfRhhkcwcH0wG0IyQVsxyjO19z4evL+242yyAXEtJ7BvRqxkziQSrcuIxcQzhpPbloryR1MYrGKDELjNK7gHWJWQnikyiaH1rb0Ln3Br83E15vknP+yY3J7kC1YDFwFs5xCGUoFddYAAAAASUVORK5CYII="/>
-        <span style="vertical-align: middle; height: 100%; display: inline-block;">:</span-->
-        <!--a style="color: transparent;" target="_blank" href="$url">
-          <img title="Open another session" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAVtJREFUSEvd1T1LHVEQh/GfSHwhKDEp7MQmKbQU8wFiaRNSmNgJFoJgnSY2dhaCnS8gJGVA0N4Ugk0KIVUUO0s7QcRGURnYhcty7nJy75WA0yzszplnzn9mZ7o8sXU9cXzNAL14i3hW7RQ36MN4kwTPcB3fUoB5LOAPLhMBfiAgkUD4NtpAcXYR2ynAEkbxFXf/KF8E38M5jrFZBbzBLqZw32LwVUScVynANCaw0kbwA3xpBviMoZKcCXlZ3HoNv4ozHQOkggejI4CyoKF5yNJo0V09+Fstcq5EzTJPqtr4H+QA6jIvAf14gatWbvAOwziqaYKZolm2WgHkNFdHilwHesaATxjBeo7QNT5z6MZOtchjWMZsm4CYot/xOzWuf2IDhy1CJvENH/GQArxGLJSTYgSkFk6KPYgPCEBIdFE6pTZavIvR/b6YKTmXuS024H51l/y3pZ+TdZbPI18eRxnb8aT1AAAAAElFTkSuQmCC"/>
-        </a-->
         <span onclick="toggle();" style="cursor: pointer">
-            <img title="Displays the QR code to scan to access the application" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAQ9JREFUSEu1lLENAjEQBOdFA1AIJFQABRBRBogKSKACRBuQUABUQEQhUAKyZKT1iUNnrP/o9V7/2Ht719Hz0/X8fxQwAbbA0EBfwA54AOu8dgQi+gJwAubA3QCmwBVYAre8NgMi+gKgm5Wh3713T+8CVsAAOJhTewBP7wI2+UgWoDVQmKevtsi1QhYKqzVFZyAV71eR1YqIvrjBOMd0ZFL0BPY5pmpFRF8Aeuk5tUivn4q5EOIFSM1lNUmSvmvxVVPcQK/vAby0eIlqsijSdNWzKNKArkWR2WJt/FYD1TQ1Wih1miL11LPCFt+DfFL31yzS+P4NiMycaosis0WtizRm0yyKNGZTo1VbFNpQK3oD3s5tGW4LqcAAAAAASUVORK5CYII="/>
+          <img title="Displays the QR code to scan to access the application" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAQ9JREFUSEu1lLENAjEQBOdFA1AIJFQABRBRBogKSKACRBuQUABUQEQhUAKyZKT1iUNnrP/o9V7/2Ht719Hz0/X8fxQwAbbA0EBfwA54AOu8dgQi+gJwAubA3QCmwBVYAre8NgMi+gKgm5Wh3713T+8CVsAAOJhTewBP7wI2+UgWoDVQmKevtsi1QhYKqzVFZyAV71eR1YqIvrjBOMd0ZFL0BPY5pmpFRF8Aeuk5tUivn4q5EOIFSM1lNUmSvmvxVVPcQK/vAby0eIlqsijSdNWzKNKArkWR2WJt/FYD1TQ1Wih1miL11LPCFt+DfFL31yzS+P4NiMycaosis0WtizRm0yyKNGZTo1VbFNpQK3oD3s5tGW4LqcAAAAAASUVORK5CYII="/>
         </span>
-        <span class="popup" onclick="copy()">
-          <img title="Copies the link to the application in the clipboard" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAONJREFUSEvt1cFJQ0EQxvFfSrCDkAZysAFz85CruYghaAsWYAHpIenAS+6xBG1A7MBbiOBBBjYQw9u3L+E9BMnAXJbh+883LDM9HUevY31/DnjCGJ8VTqO5DSbY5iZRchCAl5T7Glf4wCVmuMlBcoA5hhjgoQKwDw4Ht8nJ16GTHGCNEXIODt8Dco37NgH9NKbQXGKRmvrFONVBiEfu4hXPbQKqPs1urK04OAOUvul5RP9oRFPc1RylC0S+4w2Px+6i0sGLtR0Zy68y6nbRd0k9db86BdBAu1lJ6aI1U6mp6hzwA2dATRlJV2KvAAAAAElFTkSuQmCC"/>
+        <span id="Copy" class="popup hidden" onclick="copy()">
+          <img title="Copies the link of the application to the clipboard" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAONJREFUSEvt1cFJQ0EQxvFfSrCDkAZysAFz85CruYghaAsWYAHpIenAS+6xBG1A7MBbiOBBBjYQw9u3L+E9BMnAXJbh+883LDM9HUevY31/DnjCGJ8VTqO5DSbY5iZRchCAl5T7Glf4wCVmuMlBcoA5hhjgoQKwDw4Ht8nJ16GTHGCNEXIODt8Dco37NgH9NKbQXGKRmvrFONVBiEfu4hXPbQKqPs1urK04OAOUvul5RP9oRFPc1RylC0S+4w2Px+6i0sGLtR0Zy68y6nbRd0k9db86BdBAu1lJ6aI1U6mp6hzwA2dATRlJV2KvAAAAAElFTkSuQmCC"/>
           <span class="popuptext" style="width: max-content;" id="copyReport">Link to application copied</span> 
+        </span>
+        <span id="Share" style="cursor: pointer;" class="hidden" onclick="share()">
+          <img title="Shares the link of the application" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAAAAADFHGIkAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAnRSTlMA/1uRIrUAAAEbSURBVCjPY/iPAzCgC1wpjyy7hEViJot+giHzNAyJ+6yF//7/K2G9gy4xh+EdkPzEMANdYhXDdSB5m2E5msRlDwbTa/9vmMt8RpF4msJsscyAgZNB/yrE8ncLWpd8/P+phltlFdDmcxvO/oM4d7sQnyGPWK2EcN8PFA8+4wn78v+jL0PWezSfz2J8A6QfMixDD5LZjK+B9D2GFegSL/gCPvx/686Q+ho9EPeKcWlxSLXK8rd/QwvdTyt6Vn/5/7WFT37R3/9/j608+gctdF9msxrO02IUYNS4gB66N/0YrO79v28j+RE9EFcy3AI7cSm6xFyGt0DyI8NMdImH7NlA+/PY7mFE7Xw2jQgt1jlYEsOt+sS6G9hSCQwAAM2v3hG+ldp/AAAAAElFTkSuQmCC"/>
         </span>
       </span>
       <a href="https://zelbinium.q37.info" target="_blank">
-        <img title="To reduce the impact of social media on our kids by stimulating their creativity: Zelbinium!" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAACXBIWXMAAAsTAAALEwEAmpwYAAADqUlEQVQ4y31UXUwcVRQ+d+bO7O/szrI7LARk+bGpg0vbtApbSy3SDU26oqaN+qBJbRoTE1OjNn3wwaT6oD5pjFETTTT6YIxJi+mDv4lELW2hVqhARRbaUNT9aQv7OzC/14ehy7jDch9Ozpz7ne9+5557Bl09HWc4L+3xYzdPO3mK5SnGj7AXaC9CbkS5AJwAACADWSGGBEbZ0IpELRhKTpdzupTTynmtWELRaBQAEEKmNRfcWZVP65YVQFGUaSlCCPx/WSO1fHsKJoSwGA12O3q7A5EOwRmolw0us4Sv3ShPXk13dW395NNvisWVSoJVTiVCCKEFQXiiGx9LcHdFOGBdeYm+VUA6YfkAv227mEjsb2lpHBmZUFWtVnWmjwEgVyJvnylN3ijcyusGWYf27Yv2xGK/j89IklxLUSWIAeC7aR0h4w73OvTAwH0A5NLY1Ia1VGCmT9W6xYawr/+hnRPj08m5v02A1dpFUbW6c+TpBxkWf/TxECGb9auayEpBCOlorTt8KPbjD6MXLs5UbQGAYRh2adSGb+Sl4/2yrLzz7te1HpFdI2WXE9/XFutp++DDb1PpHACcOvXc0aOPAMChx3p2bG8xwY/GG8V2t5WumsjPMSePx86fn/3iqzEzeGBgLwAdCnInXn7y8cO7CSFb2nwvPCsm+kJWadV39PwznQiM1978voJQVEVVV+PxXWNjU02NPADsjTWNjKaFOmbj0gBgZ6cvEW969Y3hm7elClE6vcQwjmDQNzW90BDmXU4sKzC/UGwOs9YOrBMxGL14JPLlUPLi5Yy12NS/2bs7mlOp5cXFbF3Q19cbuTSeTl4vCkHG51mbeQSW9h8bDKWz0vufJaua/efMfP/+3efO/TFx5Toh5OBA9K/5pctTOUnSHu71IoCuBoNGQAuCAAA72tmDe7hX3ltUVMM6loSQTOa2rmk/Df9WKsv1Idfwr7Nz8zd1Hf5JrQ7ucbX61QtJo6Qg1LtLfKqHFu/h3jojZZY1RSMUQg4HdrkdYYGPtDarqvbzL1fsE289DyGEywrc306Hm5nPX48Y7gByh7C73uGpd3hCs3P500OjZ8+ObDgTFclrM3xvp+hi0QOdjm2iry7sJ9ibzdPXFsoTk+l0tgCA7OdX/WfXtkRRtCPsyWbOJgVSmwy01TEH1Y6p9BfNDcVZP4e9PuzhaVeAZgMU66MwhzCHKA+i3ICcAABklZAVopdBL+lakSh5XV7WV3NaOaeW82qh9B+JkPDUpfvU0gAAAABJRU5ErkJggg=="/>
+        <img title="Cyberaddiction, cyberbullying...: Zelbinium, so that smartphones no longer put our children in danger!" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAACXBIWXMAAAsTAAALEwEAmpwYAAADqUlEQVQ4y31UXUwcVRQ+d+bO7O/szrI7LARk+bGpg0vbtApbSy3SDU26oqaN+qBJbRoTE1OjNn3wwaT6oD5pjFETTTT6YIxJi+mDv4lELW2hVqhARRbaUNT9aQv7OzC/14ehy7jDch9Ozpz7ne9+5557Bl09HWc4L+3xYzdPO3mK5SnGj7AXaC9CbkS5AJwAACADWSGGBEbZ0IpELRhKTpdzupTTynmtWELRaBQAEEKmNRfcWZVP65YVQFGUaSlCCPx/WSO1fHsKJoSwGA12O3q7A5EOwRmolw0us4Sv3ShPXk13dW395NNvisWVSoJVTiVCCKEFQXiiGx9LcHdFOGBdeYm+VUA6YfkAv227mEjsb2lpHBmZUFWtVnWmjwEgVyJvnylN3ijcyusGWYf27Yv2xGK/j89IklxLUSWIAeC7aR0h4w73OvTAwH0A5NLY1Ia1VGCmT9W6xYawr/+hnRPj08m5v02A1dpFUbW6c+TpBxkWf/TxECGb9auayEpBCOlorTt8KPbjD6MXLs5UbQGAYRh2adSGb+Sl4/2yrLzz7te1HpFdI2WXE9/XFutp++DDb1PpHACcOvXc0aOPAMChx3p2bG8xwY/GG8V2t5WumsjPMSePx86fn/3iqzEzeGBgLwAdCnInXn7y8cO7CSFb2nwvPCsm+kJWadV39PwznQiM1978voJQVEVVV+PxXWNjU02NPADsjTWNjKaFOmbj0gBgZ6cvEW969Y3hm7elClE6vcQwjmDQNzW90BDmXU4sKzC/UGwOs9YOrBMxGL14JPLlUPLi5Yy12NS/2bs7mlOp5cXFbF3Q19cbuTSeTl4vCkHG51mbeQSW9h8bDKWz0vufJaua/efMfP/+3efO/TFx5Toh5OBA9K/5pctTOUnSHu71IoCuBoNGQAuCAAA72tmDe7hX3ltUVMM6loSQTOa2rmk/Df9WKsv1Idfwr7Nz8zd1Hf5JrQ7ucbX61QtJo6Qg1LtLfKqHFu/h3jojZZY1RSMUQg4HdrkdYYGPtDarqvbzL1fsE289DyGEywrc306Hm5nPX48Y7gByh7C73uGpd3hCs3P500OjZ8+ObDgTFclrM3xvp+hi0QOdjm2iry7sJ9ibzdPXFsoTk+l0tgCA7OdX/WfXtkRRtCPsyWbOJgVSmwy01TEH1Y6p9BfNDcVZP4e9PuzhaVeAZgMU66MwhzCHKA+i3ICcAABklZAVopdBL+lakSh5XV7WV3NaOaeW82qh9B+JkPDUpfvU0gAAAABJRU5ErkJggg=="/>
       </a>
       <a href="https://atlastk.org" target="_blank">
         <img title="Powered by the Atlas toolkit" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAbpJREFUSEul1E2IT2EUBvDfZHyUZkOJsNAsRo2ylA0LaWQjZGUslWZlLJCPko+wYkqUsvHRbIZhpWwsfGQ7FAmRj5W1hRWdeqdub/d/7/u/825u3fc9z3POc55zBpSfrVje8HwOv/P7gUL8cdxreTuDA10IIuuP+IXTNSRHsB9jeNaF4DzOYBteZgDr8QFP67KPt20SrUvZP8KhmuwfYhdG8a1OwjaCaezBRnzPAHYmSU7hcq/+NBGEa14hJDqXASzBWyzCJvztlyCI32AtRvAnA4isL2F30r+nwXpVEHrfTbrfz6JX4zMG8aJyN4ubJS6at+VPhEz/sqBVuINl6f92LMZZXCwhuJD8XmfLPP4KTuA6JktctAZfUtavKwFPcCMDuIajiO+x0ibn5Q9hC25hogJSBF4yaMdxFZuTLSOmVZZqNU1zEB7/hK/YkYL6Am+rYB9iFezF4zStJ5saWtLk6pvn2IDhZL++wZsqiOX1DtGDlegE3kRwGwfxAIf7laWtySvwA0vTMoshCp/nE91z/7QRxGSGW+IsCLxOonlrRnMXDF5HELs9mjuVdksnWdokCge976p53pj/x8VXGXemjWsAAAAASUVORK5CYII="/>
@@ -143,7 +171,7 @@ echo <<<EOS
     <a style="color: transparent;" target="_blank" href="$url">
       <div title="$url" style="display: none; justify-content: space-around; padding: 5px 0px 10px" id="$qrCodeId"></div>
     </a>
-    </div>
+  </div>
 </body>
 EOS;
 ?>
