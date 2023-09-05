@@ -135,7 +135,6 @@ echo <<<EOS
   function share() {
     if (navigator.share) { 
       navigator.share({
-        text: "Atlas toolkit",
         url: "$url"
       }).then(() => {
          console.log('Thanks for sharing!');
