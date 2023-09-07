@@ -1,0 +1,45 @@
+<title>Widgets | Zelbinium</title>
+
+<!-- HTML Syntax highlighting -->
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"></script>
+
+<!-- CKEditor -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+  integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g=" crossorigin="anonymous"></script>
+<script src="https://cdn.ckeditor.com/4.8.0/standard/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/4.8.0/standard/adapters/jquery.js"></script>
+
+<style>
+  output, .widget {
+    font-family: monospace;
+    font-size: large;
+    background-color: cornsilk ;
+  }
+
+  details {
+    cursor: pointer;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  output > span {
+    all: initial;
+    background-color: lightgrey;
+    font-style: oblique;
+  }
+
+  output > span::before {
+    content: '('
+  }
+
+  output > span::after {
+    content: ')'
+  }
+
+  .hljs {
+    margin: 0px;
+  }
+</style>
