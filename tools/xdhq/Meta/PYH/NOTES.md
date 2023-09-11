@@ -2,7 +2,7 @@
 
 Concerne le code *Python* <u>et</u> natif.
 
-> Le répertoire `Examples/AlSweigart` rdt indépendant et contient son propre `NOTES.md` !
+> Le répertoire `Examples/AlSweigart` est indépendant et contient son propre `NOTES.md` !
 
 ## Exemple de description en anglais (obsolete):
 
@@ -134,15 +134,17 @@ Dans `RTW/atlas-python` :
 
 ### Dépôts ne s'appuyant pas sur *Pypi*
 
-Ces projets embarquent le *toolkit* *Atlas*, généralement pour en simplifier l'installation, et ne s'appuie pas dur le paquet hébergé sur *Pypi*. La commande `ATKAtlasPack` crée le fichier `Atlas.zip` utilisé par ces projets.
+Ces projets embarquent le *toolkit* *Atlas*, généralement pour en simplifier l'installation, et ne s'appuie pas dur le paquet hébergé sur *Pypi*. La commande `ATKAtlasPack` crée le fichier `atlastk.zip` utilisé par ces projets.
 
 **Attention** : mettre à jour le dépôt *GitHub*, ainsi que l'éventuel dépôt *Replit*.
 
+### 0.13.3
+
+- https://github.com/epeios-q37/AlSweigartTheBigBookPython (mettre à jour manuellement après avoir utilisé `ATKAtlasPack` pour générer `atlastk.zip`) ;
+ 
 ### 0.13.2
 
 ### 0.13.1
-
-- https://github.com/epeios-q37/AlSweigartBigBookPython
 
 ### 0.13
 

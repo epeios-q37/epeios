@@ -1,4 +1,4 @@
-> **Cyberaddiction, cyberbullying...: [*Zelbinium*](https://q37.info/s/sqtv9trv), so that smartphones no longer put our children in danger!**
+> **Cyberaddiction, cyberbullying, pedocriminality…: [*Zelbinium*](https://q37.info/s/sqtv9trv), or how the *Atlas* toolkit helps to prevent the risks related to smartphone use!**
 
 # *@LMCT@* version of the *Atlas* toolkit
 
