@@ -115,7 +115,7 @@ def notify(dom, text, id="hint"):
 
 def testAction(dom, action, playerHand, bet):
   """ Tests if an action is allowed and displays a message if not."""
-  """ See 'ac…' functions for the meanong of 'action'."""
+  """ See 'ac…' functions for the meaning of 'action'."""
   """ if 'bet' < 0, the turn is over. """
   playerHandSize = len(playerHand)
   
