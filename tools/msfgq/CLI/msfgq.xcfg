@@ -24,8 +24,8 @@
         <xpp:expand select="LinuxDevices"/>
       </Devices>
 			<Signature>
-				<Time>3/4</Time>
-				<Key>-3</Key>
+				<Time>4/4</Time>
+				<Key>1</Key>
 			</Signature>
 			<Tempo>
 				<Unit>3</Unit>
