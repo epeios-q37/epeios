@@ -543,17 +543,32 @@ D_( GrabMidiIn )
   GrabMidiIn_(Session);
 }
 
-D_( Hit )
+namespace {
+   void Play_(
+    mscmld::sPitch Pitch,
+    sSession &Session)
+    {
+    qRH;
+      str::wString Script;
+    qRB;
+      Script.Init();
+      flx::rStringTWFlow(Script) << "play(" << (bso::sUInt)Pitch << ");";
+//      cio::COut << Script << txf::nl << txf::commit;
+      Session.Execute(Script);
+    qRR;
+    qRT;
+    qRE;
+    }
+}
+
+D_( MidiKeyboard )
 {
 qRH;
-  str::wString Script;
   melody::hGuard Guard;
   mscmld::sNote Note;
 qRB;
   if ( IsMidiInOwner_(Session) ) {
-    Script.Init();
-    flx::rStringTWFlow(Script) << "play(" << Id << ");";
-    Session.Execute(Script);
+      Play_(atoi(Id), Session);
   }
 
   if ( IsMidiInOwner_(Session ) ) {
@@ -644,19 +659,16 @@ D_( Rest )
 {
 qRH;
   melody::hGuard Guard;
+  mscmld::sNote Note;
 qRB;
   XMEL();
 
-  if ( Session.Row != qNIL ) {
-    mscmld::sNote Note = XMelody(Session.Row);
+  Note.Init(mscmld::pRest, mscmld::sDuration(3), XMelody.Signature);
 
-    Note.Pitch = mscmld::pRest;
-    Note.Duration.TiedToNext = false;
-
-    XMelody.Store(Note, Session.Row);
-
-    Session.Row = XMelody.Next(Session.Row);
-  }
+  if ( Session.Row == qNIL )
+    Session.Row = XMelody.Append(Note);
+  else
+    XMelody.InsertAt(Note, Session.Row );
 qRR;
 qRT;
 qRE;
@@ -675,6 +687,9 @@ qRB;
     str::wString(Id).ToNumber(Note.Duration.Base);
 
     XMelody.Store(Note, Session.Row);
+
+    if ( Note.Pitch != mscmld::pRest )
+      Play_(Note.Pitch, Session);
 
     if ( Session.Row != XMelody.Last() )
       Session.Row = XMelody.Next(Session.Row);
@@ -1000,11 +1015,10 @@ qRT;
 qRE;
 }
 
-D_( Keyboard )
+D_( ComputerKeyboard )
 {
 qRH;
   melody::hGuard Guard;
-  str::wString Script;
   mscmld::sPitch Pitch;
   mscmld::sNote Note;
 qRB;
@@ -1012,10 +1026,7 @@ qRB;
 
   Pitch = str::wString(Id+1).ToU8() + 5 + Session.BaseOctave * 12;
 
-  Script.Init();
-  flx::rStringTWFlow(Script) << "play(" << (bso::sUInt)Pitch << ");";
-
-  Session.Execute(Script);
+  Play_(Pitch, Session);
 
   Note.Init(Pitch, mscmld::sDuration(3), XMelody.Signature);
 
@@ -1144,10 +1155,10 @@ namespace {
   void RegisterActions_(void)
   {
     _::Add(Core,
-      OnNewSession, UpdateUI, Hit, GrabMidiIn, SetAccidental, SetAccidentalAmount, Refresh,
+      OnNewSession, UpdateUI, MidiKeyboard, GrabMidiIn, SetAccidental, SetAccidentalAmount, Refresh,
       SelectNote, Rest, Duration, Dot, Tie,
       Execute, First, Previous, Next, Last, Delete, Backspace, Clear,
-      Keyboard, Test, SetTimeSignature, SetOctave, ChangeWidth );
+      ComputerKeyboard, Test, SetTimeSignature, SetOctave, ChangeWidth );
   }
 }
 

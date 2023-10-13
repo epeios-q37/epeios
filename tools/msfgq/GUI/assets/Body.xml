@@ -161,82 +161,82 @@
       <summary>Keyboard</summary>
       <ul id="beautiful-piano">
         <li>
-          <div id="k0" xdh:onevent="Keyboard" class="anchor F3"></div>
+          <div id="k0" xdh:onevent="ComputerKeyboard" class="anchor F3"></div>
         </li>
         <li>
-          <div id="k2" xdh:onevent="Keyboard" class="anchor G3"></div>
-          <span id="k1" xdh:onevent="Keyboard" class="Fs3 Gb3"></span>
+          <div id="k2" xdh:onevent="ComputerKeyboard" class="anchor G3"></div>
+          <span id="k1" xdh:onevent="ComputerKeyboard" class="Fs3 Gb3"></span>
         </li>
         <li>
-          <div id="k4" xdh:onevent="Keyboard" class="anchor A3"></div>
-          <span id="k3" xdh:onevent="Keyboard" class="Gs3 Ab3"></span>
+          <div id="k4" xdh:onevent="ComputerKeyboard" class="anchor A3"></div>
+          <span id="k3" xdh:onevent="ComputerKeyboard" class="Gs3 Ab3"></span>
         </li>
         <li>
-          <div id="k6" xdh:onevent="Keyboard" class="anchor B3"></div>
-          <span id="k5" xdh:onevent="Keyboard" class="As3 Bb3"></span>
+          <div id="k6" xdh:onevent="ComputerKeyboard" class="anchor B3"></div>
+          <span id="k5" xdh:onevent="ComputerKeyboard" class="As3 Bb3"></span>
         </li>
         <li>
-          <div id="k7" xdh:onevent="Keyboard" class="anchor C4"></div>
+          <div id="k7" xdh:onevent="ComputerKeyboard" class="anchor C4"></div>
         </li>
         <li>
-          <div id="k9" xdh:onevent="Keyboard" class="anchor D4"></div>
-          <span id="k8" xdh:onevent="Keyboard" class="Cs4 Db4"></span>
+          <div id="k9" xdh:onevent="ComputerKeyboard" class="anchor D4"></div>
+          <span id="k8" xdh:onevent="ComputerKeyboard" class="Cs4 Db4"></span>
         </li>
         <li>
-          <div id="k11" xdh:onevent="Keyboard" class="anchor E4"></div>
-          <span id="k10" xdh:onevent="Keyboard" class="Ds4 Eb4"></span>
+          <div id="k11" xdh:onevent="ComputerKeyboard" class="anchor E4"></div>
+          <span id="k10" xdh:onevent="ComputerKeyboard" class="Ds4 Eb4"></span>
         </li>
         <li>
-          <div id="k12" xdh:onevent="Keyboard" class="anchor F4"></div>
+          <div id="k12" xdh:onevent="ComputerKeyboard" class="anchor F4"></div>
         </li>
         <li>
-          <div id="k14" xdh:onevent="Keyboard" class="anchor G4"></div>
-          <span id="k13" xdh:onevent="Keyboard" class="Fs4 Gb4"></span>
+          <div id="k14" xdh:onevent="ComputerKeyboard" class="anchor G4"></div>
+          <span id="k13" xdh:onevent="ComputerKeyboard" class="Fs4 Gb4"></span>
         </li>
         <li>
-          <div id="k16" xdh:onevent="Keyboard" class="anchor A4"></div>
-          <span id="k15" xdh:onevent="Keyboard" class="Gs4 Ab4"></span>
+          <div id="k16" xdh:onevent="ComputerKeyboard" class="anchor A4"></div>
+          <span id="k15" xdh:onevent="ComputerKeyboard" class="Gs4 Ab4"></span>
         </li>
         <li>
-          <div id="k18" xdh:onevent="Keyboard" class="anchor B4"></div>
-          <span id="k17" xdh:onevent="Keyboard" class="As4 Bb4"></span>
+          <div id="k18" xdh:onevent="ComputerKeyboard" class="anchor B4"></div>
+          <span id="k17" xdh:onevent="ComputerKeyboard" class="As4 Bb4"></span>
         </li>
         <li>
-          <div id="k19" xdh:onevent="Keyboard" class="anchor C5"></div>
+          <div id="k19" xdh:onevent="ComputerKeyboard" class="anchor C5"></div>
         </li>
         <li>
-          <div id="k21" xdh:onevent="Keyboard" class="anchor D5"></div>
-          <span id="k20" xdh:onevent="Keyboard" class="Cs5 Db5"></span>
+          <div id="k21" xdh:onevent="ComputerKeyboard" class="anchor D5"></div>
+          <span id="k20" xdh:onevent="ComputerKeyboard" class="Cs5 Db5"></span>
         </li>
         <li>
-          <div id="k23" xdh:onevent="Keyboard" class="anchor E5"></div>
-          <span id="k22" xdh:onevent="Keyboard" class="Ds5 Eb5"></span>
+          <div id="k23" xdh:onevent="ComputerKeyboard" class="anchor E5"></div>
+          <span id="k22" xdh:onevent="ComputerKeyboard" class="Ds5 Eb5"></span>
         </li>
         <li>
-          <div id="k24" xdh:onevent="Keyboard" class="anchor F5"></div>
+          <div id="k24" xdh:onevent="ComputerKeyboard" class="anchor F5"></div>
         </li>
         <li>
-          <div id="k26" xdh:onevent="Keyboard" class="anchor G5"></div>
-          <span id="k25" xdh:onevent="Keyboard" class="Fs5 Gb5"></span>
+          <div id="k26" xdh:onevent="ComputerKeyboard" class="anchor G5"></div>
+          <span id="k25" xdh:onevent="ComputerKeyboard" class="Fs5 Gb5"></span>
         </li>
         <li>
-          <div id="k28" xdh:onevent="Keyboard" class="anchor A5"></div>
-          <span id="k27" xdh:onevent="Keyboard" class="Gs5 Ab5"></span>
+          <div id="k28" xdh:onevent="ComputerKeyboard" class="anchor A5"></div>
+          <span id="k27" xdh:onevent="ComputerKeyboard" class="Gs5 Ab5"></span>
         </li>
         <li>
-          <div id="k30" xdh:onevent="Keyboard" class="anchor B5"></div>
-          <span id="k29" xdh:onevent="Keyboard" class="As5 Bb5"></span>
+          <div id="k30" xdh:onevent="ComputerKeyboard" class="anchor B5"></div>
+          <span id="k29" xdh:onevent="ComputerKeyboard" class="As5 Bb5"></span>
         </li>
         <li>
-          <div id="k31" xdh:onevent="Keyboard" class="anchor C6"></div>
+          <div id="k31" xdh:onevent="ComputerKeyboard" class="anchor C6"></div>
         </li>
         <li>
-          <div id="k33" xdh:onevent="Keyboard" class="anchor D6"></div>
-          <span id="k32" xdh:onevent="Keyboard" class="Cs6 Db6"></span>
+          <div id="k33" xdh:onevent="ComputerKeyboard" class="anchor D6"></div>
+          <span id="k32" xdh:onevent="ComputerKeyboard" class="Cs6 Db6"></span>
         </li>
         <li>
-          <div id="k35" xdh:onevent="Keyboard" class="anchor E6"></div>
-          <span id="k34" xdh:onevent="Keyboard" class="Ds6 Eb6"></span>
+          <div id="k35" xdh:onevent="ComputerKeyboard" class="anchor E6"></div>
+          <span id="k34" xdh:onevent="ComputerKeyboard" class="Ds6 Eb6"></span>
         </li>
       </ul>
     </details>

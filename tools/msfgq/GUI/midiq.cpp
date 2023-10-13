@@ -144,7 +144,7 @@ qRB;
       if ( Header.EventType == etMIDI )
         if ( Header.MIDIEvent.Event == midNoteOn )
           if  ( Data( Data.Last() ) != 0 ) {
-            sclx::Broadcast("Hit", bso::Convert(Data(Data.First()), Buffer));
+            sclx::Broadcast("MidiKeyboard", bso::Convert(Data(Data.First()), Buffer));
   //					mtx::Lock( Shared.Mutex );
             /*if ( Shared.Row != qNIL ) {
               Shared.Melody->InsertAt(Note, Shared.Row);
