@@ -665,7 +665,7 @@ qRB;
 
   Note.Init(mscmld::pRest, mscmld::sDuration(3), XMelody.Signature);
 
-  if ( Session.Row == qNIL )
+  if ( ( Session.Row == qNIL ) || ( XMelody.Next( Session.Row ) == qNIL ) )
     Session.Row = XMelody.Append(Note);
   else
     XMelody.InsertAt(Note, Session.Row );

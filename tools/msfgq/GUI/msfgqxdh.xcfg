@@ -28,8 +28,8 @@
         <xpp:expand select="LinuxDevices"/>
       </Devices>
 			<Signature>
-				<Time>2/4</Time>
-				<Key>8</Key><!-- Do NOT use 'O' for C key, but '8' or '-8' to indicate the default accidental -->
+				<Time>2/2</Time>
+				<Key>-3</Key><!-- Do NOT use 'O' for C key, but '8' or '-8' to indicate the default accidental -->
 			</Signature>
 			<Tempo>
 				<Unit>3</Unit>
