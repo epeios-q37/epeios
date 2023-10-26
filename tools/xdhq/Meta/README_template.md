@@ -1,5 +1,3 @@
-> **Cyberaddiction, cyberbullying, pedocriminality…: [*Zelbinium*](https://q37.info/s/sqtv9trv), let smartphones be the solution, not the problem!**
-
 # *@LMCT@* version of the *Atlas* toolkit
 
 [![Run on Repl.it](https://q37.info/s/kpm7xhfm.png)](https://q37.info/s/@GRSS@)  [![About online demonstrations](https://img.shields.io/badge/about-online%20demonstrations-informational)](https://q37.info/s/sssznrb4)
