@@ -1,0 +1,63 @@
+ 
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/brython@3.12.0/brython.min.js">
+    </script>
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/brython@3.12.0/brython_stdlib.js">
+    </script>
+<style type="text/css" media="screen">
+    #source {
+width:1000px;
+height: 200px;
+    }
+</style>
+</head>
+
+<body>
+
+<!-- To prevent automatic execution of scripts -->
+<brython-options ids="">
+</brython-options>
+
+<script type="text/python" id="script"/>
+</script>
+
+<div id="source">
+import atlastk
+
+print("Hello")
+print("Yo!")
+
+atlastk.test()
+</div>
+
+
+<script type="text/javascript">
+function go()
+{
+    value=editor.getValue()
+    document.getElementById('script').innerHTML=value;
+    console.log(value);
+    brython({ids:['script']})
+}
+</script>
+<br/>
+<button onclick="go();">Run</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js" integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript">
+    var editor = ace.edit("source", {showLineNumbers: true, newLineMode: "auto"});
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/python");
+</script>
+
+
+</body>
+
+</html>
