@@ -1,2 +1,7 @@
+import javascript
+
+javascript.import_js("atlastk.js", alias="atlastkjs")
+
 def test():
-    print('Test!!!')
+    print('Hello from Python!!!')
+    atlastkjs.test()
