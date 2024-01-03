@@ -25,13 +25,22 @@ height: 200px;
 <script type="text/python" id="script"/>
 </script>
 
-<div id="source">
-import atlastk
+<div id="source_" style="display: none">
+import sandbox
 
 print("Hello")
 print("Yo!")
 
-atlastk.test()
+sandbox.test()
+</div>
+
+<div id="source">
+import atlastk
+
+def test():
+  print("Yo!")
+
+atlastk.launch({"a": "b", "a c": test})
 </div>
 
 
@@ -54,6 +63,7 @@ function go()
     var editor = ace.edit("source", {showLineNumbers: true, newLineMode: "auto"});
     editor.setTheme("ace/theme/monokai");
     editor.session.setMode("ace/mode/python");
+    go();
 </script>
 
 
