@@ -3,10 +3,16 @@
 <head>
     <meta charset="utf-8">
     <script type="text/javascript"
-        src="https://cdn.jsdelivr.net/npm/brython@3.12.0/brython.min.js">
+        src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython.js">
     </script>
     <script type="text/javascript"
-        src="https://cdn.jsdelivr.net/npm/brython@3.12.0/brython_stdlib.js">
+        src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython_stdlib.js">
+    </script>
+    <script type="text/javascript" src="atlastk.js">
+
+    </script>
+    <script  type="text/javascript">
+
     </script>
 <style type="text/css" media="screen">
     #source {
@@ -37,10 +43,11 @@ sandbox.test()
 <div id="source">
 import atlastk
 
-def test():
-  print("Yo!")
+def acConnect(dom):
+    dom.debugLog()
+    dom.inner("", "&lt;h1&gt;Yo!&lt;/h1&gt;")
 
-atlastk.launch({"a": "b", "a c": test})
+atlastk.launch({"": acConnect })
 </div>
 
 
@@ -49,7 +56,7 @@ function go()
 {
     value=editor.getValue()
     document.getElementById('script').innerHTML=value;
-    console.log(value);
+//    console.log(value);
     brython({ids:['script']})
 //    window.open('http://q37.info','_blank')
 }
@@ -63,7 +70,9 @@ function go()
     var editor = ace.edit("source", {showLineNumbers: true, newLineMode: "auto"});
     editor.setTheme("ace/theme/monokai");
     editor.session.setMode("ace/mode/python");
-    go();
+//    const atlastk = require("atlastk")
+//    console.log(atlastk);
+    //go();
 </script>
 
 
