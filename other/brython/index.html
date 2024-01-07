@@ -40,14 +40,55 @@ print("Yo!")
 sandbox.test()
 </div>
 
-<div id="source">
-import atlastk
+<div id="source__" style="display: none">
+    import atlastk
 
 def acConnect(dom):
     dom.debugLog()
     dom.inner("", "&lt;h1&gt;Yo!&lt;/h1&gt;")
 
 atlastk.launch({"": acConnect })
+</div>
+
+
+<div id="source">
+import atlastk
+
+HEAD = """
+&lt;title&gt;Hello, World! | Zelbinium&lt;/title&gt;
+&lt;link rel="icon" type="image/png" href="https://zelbinium.q37.info/Avatar.png" /&gt;
+"""
+
+BODY = """
+&lt;fieldset&gt;
+  &lt;input id="input" maxlength="20" placeholder="Enter a name here" type="text"
+      xdh:onevent="Submit" value="World"/&gt;
+  &lt;button xdh:onevent="Submit"&gt;Submit&lt;/button&gt;
+  &lt;hr/&gt;
+  &lt;fieldset&gt;
+    &lt;output id="output"&gt;&lt;/output&gt;
+  &lt;/fieldset&gt;
+&lt;/fieldset&gt;
+"""
+
+def acConnect(dom):
+  dom.debugLog()
+  dom.inner("", BODY )
+  dom.focus( "input")
+
+
+def acSubmit(dom):
+  dom.setValue("output", "Hello, {}!".format(dom.getValue("input")))
+  dom.setValue("input", "")
+  dom.focus( "input")
+
+
+CALLBACKS = {
+  "": acConnect,
+  "Submit": acSubmit,
+}
+
+atlastk.launch(CALLBACKS, headContent=HEAD)
 </div>
 
 

@@ -1,6 +1,6 @@
-import javascript, sys
-
-import threading
+import javascript, sys, threading
+from collections import OrderedDict
+from browser import timer
 
 javascript.import_js("atlastkbry.js", alias="atlastkjs")
 
@@ -8,9 +8,33 @@ _VOID = 0
 _STRING = 1
 _STRINGS = 2
 
+def _split(keysAndValues):
+	keys = []
+	values = []
+
+	for key in keysAndValues:
+		keys.append(str(key))
+		values.append(str(keysAndValues[key]))
+
+	return [keys,values]
+
+def _unsplit(keys,values):
+	i = 0
+	# With 'OrderedDict', the order of the items is keeped under Python 2.
+	# This facilitates the retrieving of values by using 'values()' method.
+	# Dicts are ordered by default under Python 3.
+	keysAndValues = OrderedDict()
+	length = len(keys)
+
+	while i < length:
+		keysAndValues[keys[i]] = values[i]
+		i += 1
+
+	return keysAndValues
+
 def call_(instance, command, type, callback, *args):
-  print("qsdfqsfqsdfqsf")
-  atlastkjs.call(instance, command, type, callback, *args)
+  timer.set_timeout(atlastkjs.call, 0, instance, command, type, callback, *args)
+#  atlastkjs.call(instance, command, type, callback, *args)
   
 def voidCallback_(lock):
   print("voidCallback")
@@ -18,32 +42,59 @@ def voidCallback_(lock):
 
 def stringCallback_(jsString, lock, string):
   print("stringCallback")
-  lock.release()
   string = jsString
+  lock.release()
 
 def stringsCallback_(jsStrings, lock, strings):
   print("stringsCallback")
-  lock.release()
   strings = jsStrings
+  print("R Before")
+  lock.release()
+  print("R After")
+
+class Lock:
+  def __init__(self):
+    self.locked_ = False
+    self.lock_ = threading.Lock()
+
+  def acquire(self):
+    print("A In")
+    self.lock_.acquire()
+    while self.locked_:
+      pass
+    self.locked_ = True
+    print("A Out")
+
+  def release(self):
+    print("R In")
+    self.lock_.release()
+    self.locked_ = False
+    print("R Out")
 
 class DOM:
   def __init__(self,instance):
     self.instance = instance
 
   def call_(self, command, type, *args):
-    lock = threading.Lock()
+    lock = Lock()
 
     lock.acquire()
 
     if type == _STRING:
+      print("Awaiting string!")
       string = ""
       call_(self, command, type, lambda result : stringCallback_(result, lock, string), *args )
+      print("AS Before")
       lock.acquire()
+      print("AS After")
       return string
     elif type == _STRINGS:
+      print("Awaiting stringS!")
       strings = []
       call_(self, command, type, lambda result : stringsCallback_(result, lock, strings), *args )
+      print("ASS Before")
       lock.acquire()
+      print("ASS After")
       return strings
     elif type == _VOID:
       call_(self, command, type, lambda : voidCallback_(lock), *args )

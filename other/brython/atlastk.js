@@ -2423,6 +2423,8 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 		  "_PostProcess" in actionCallbacks
 		)
 		  callCallback(actionCallbacks["_PostProcess"], instance, id, action);
+
+		standBy(instance);
 	}
 	
 	function setResponse(type) {
@@ -2517,6 +2519,8 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 			let pending = instance_._xdh.queued.shift();
 			let type = pending.type;
 			let callback = pending.callback;
+
+			console.log("RESPONSE: ", type);
 	
 			if (callback !== undefined) {
 			  switch (type) {
@@ -2530,7 +2534,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 				  callback(string);
 				  break;
 				case types.STRINGS:
-				  // console.log("Strings: ", strings);
+				  console.log("Strings: ", strings);
 				  callback(strings);
 				  break;
 				default:
@@ -2751,27 +2755,19 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	function call_(instance, command, type, callback) {
 	  ///( Date.now(), " Command: ", command, instance._xdh.id);
 
-	  console.log("Instance: ", instance);
-	
 	  if (!instance._xdh.inProgress) exit_("Out of frame function call!");
 	
 	  let i = 4;
 	  let data = convertSInt(instance._xdh.id);
-	  let amount = arguments.length - 1;
+	  let amount = arguments.length;
 
-	  console.log("Am: ", amount);
-	  console.log("AR: ", arguments);
-	
 	  data = Buffer.concat([addString(data, command), convertUInt(type)]);
 	
 	  while (i < amount) data = addTagged(data, arguments[i++]);
 	
 	  data = Buffer.concat([data, convertUInt(types.VOID)]); // To report end of argument list.
 	
-	  console.log("Before");
 	  ws.send(data);
-	  console.log("After");
-	  console.log(callback);
 	
 	  if (type === types.VOID) {
 		if (callback !== undefined) callback();
