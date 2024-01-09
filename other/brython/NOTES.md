@@ -30,5 +30,21 @@ Attention, tous les répertoires de l'alias doivent être en exécution !
 La version *Brython* du *toolkit* *Atlas* s'appuie sur sa version *Node.js* (*NJS*). Cette dernière utilise le module *Buffer* natif de *Node.js*, qui n'est pas implémenté dans les navigateurs.
 
 
+## Redirection de l'affichage de la console vers un élément HTML
 
+https://stackoverflow.com/questions/20256760/javascript-console-log-to-html
+
+```js
+(function () {
+    var old = console.log;
+    var logger = document.getElementById('log');
+    console.log = function (message) {
+        if (typeof message == 'object') {
+            logger.innerHTML += (JSON && JSON.stringify ? JSON.stringify(message) : message) + '<br />';
+        } else {
+            logger.innerHTML += message + '<br />';
+        }
+    }
+})();
+```
  
