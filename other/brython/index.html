@@ -41,7 +41,7 @@ sandbox.test()
 </div>
 
 <div id="source__" style="display: none">
-    import atlastk
+import atlastk
 
 def acConnect(dom):
     dom.debugLog()
@@ -53,6 +53,7 @@ atlastk.launch({"": acConnect })
 
 <div id="source">
 import atlastk
+from browser import aio
 
 HEAD = """
 &lt;title&gt;Hello, World! | Zelbinium&lt;/title&gt;
@@ -71,10 +72,11 @@ BODY = """
 &lt;/fieldset&gt;
 """
 
-def acConnect(dom):
-  dom.debugLog()
-  dom.inner("", BODY )
-  dom.focus( "input")
+async def acConnect(dom):
+  # dom.debugLog()
+  print("acConnect")
+  await dom.inner("", BODY )
+  # dom.focus( "input")
 
 
 def acSubmit(dom):

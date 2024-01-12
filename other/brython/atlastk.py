@@ -20,7 +20,7 @@ def _split(keysAndValues):
 
 def _unsplit(keys,values):
 	i = 0
-	# With 'OrderedDict', the order of the items is keeped under Python 2.
+	# With 'OrderedDict', the order of the items is kept under Python 2.
 	# This facilitates the retrieving of values by using 'values()' method.
 	# Dicts are ordered by default under Python 3.
 	keysAndValues = OrderedDict()
@@ -33,8 +33,7 @@ def _unsplit(keys,values):
 	return keysAndValues
 
 def call_(instance, command, type, callback, *args):
-  timer.set_timeout(atlastkjs.call, 0, instance, command, type, callback, *args)
-#  atlastkjs.call(instance, command, type, callback, *args)
+  atlastkjs.call(instance, command, type, callback, *args)
   
 def voidCallback_(lock):
   print("voidCallback")
@@ -57,11 +56,11 @@ class Lock:
     self.locked_ = False
     self.lock_ = threading.Lock()
 
-  def acquire(self):
+  async def acquire(self):
     print("A In")
     self.lock_.acquire()
     while self.locked_:
-      pass
+      await aio.sleep(0)
     self.locked_ = True
     print("A Out")
 
@@ -75,17 +74,17 @@ class DOM:
   def __init__(self,instance):
     self.instance = instance
 
-  def call_(self, command, type, *args):
+  async def call_(self, command, type, *args):
     lock = Lock()
 
-    lock.acquire()
+    await lock.acquire()
 
     if type == _STRING:
       print("Awaiting string!")
       string = ""
       call_(self, command, type, lambda result : stringCallback_(result, lock, string), *args )
       print("AS Before")
-      lock.acquire()
+      await lock.acquire()
       print("AS After")
       return string
     elif type == _STRINGS:
@@ -93,12 +92,12 @@ class DOM:
       strings = []
       call_(self, command, type, lambda result : stringsCallback_(result, lock, strings), *args )
       print("ASS Before")
-      lock.acquire()
+      await lock.acquire()
       print("ASS After")
       return strings
     elif type == _VOID:
       call_(self, command, type, lambda : voidCallback_(lock), *args )
-      lock.acquire()
+      await lock.acquire()
     else:
       sys.exit("Unknown return type !!!")  
 
@@ -218,9 +217,9 @@ class DOM:
   def begin(self,id,xml,xsl=""):
     self._layout("afterbegin",id,xml,xsl)
 
-  def inner(self,id,xml,xsl=""):
+  async def inner(self,id,xml,xsl=""):
     print("Inner !!!")
-    self._layout("inner",id,xml,xsl)
+    await self._layout("inner",id,xml,xsl)
 
   def end(self,id,xml,xsl=""):
     self._layout("beforeend",id,xml,xsl)

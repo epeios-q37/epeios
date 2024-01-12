@@ -1,0 +1,77 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/brython@3.12.1/brython.js">
+    </script>
+    <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/brython@3.12.1/brython_stdlib.js">
+    </script>
+    </script><style type="text/css" media="screen">
+    #source {
+width:1000px;
+height: 200px;
+    }
+</style>
+</head>
+
+<body>
+
+<!-- To prevent automatic execution of scripts -->
+<brython-options ids="">
+</brython-options>
+
+<script type="text/python" id="script"/>
+</script>
+
+<div id="source">
+import asw
+from browser import aio
+
+async def callback1(ws):
+    print( "B1")
+    print(f"R0: {await ws.call('Message 1')}")
+    print( "A1")
+    print( "B2")
+    print(f"R2: {await ws.call('Message 2')}")
+    print( "A2")
+
+async def callback2(ws):
+    print("callback 2")
+
+print("Avant")
+asw.launch("ws://echo.websocket.events/", callback2, callback1)
+print("Apres")
+
+</div>
+
+
+<script type="text/javascript">
+function go()
+{
+    value=editor.getValue()
+    document.getElementById('script').innerHTML=value;
+//    console.log(value);
+    brython({ids:['script']})
+//    window.open('http://q37.info','_blank')
+}
+</script>
+<br/>
+<button onclick="go();">Run</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js" integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript">
+    var editor = ace.edit("source", {showLineNumbers: true, newLineMode: "auto"});
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/python");
+//    const atlastk = require("atlastk")
+//    console.log(atlastk);
+    go();
+</script>
+
+
+</body>
+
+</html>

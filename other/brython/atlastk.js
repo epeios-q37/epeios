@@ -2385,20 +2385,26 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  delete instances[id];
 	}
 	
-	function callCallback(callback, instance, id, action) {
+	async function callCallback(callback, instance, id, action) {
 		console.log(callback.length)
 		console.log("I2: ", instance);
 		console.log("C2: ", callback);
 
 	  switch (1) {
 		case 0:
-		  return callback();
+		  await callback();
+			break;
 		case 1:
-		  return callback(instance);
+			console.log("callCallback in!")
+		  await callback(instance);
+			console.log("callCallback out!")
+			break;
 		case 2:
-		  return callback(instance, id);
+		  await callback(instance, id);
+			break;
 		default:
-		  return callback(instance, id, action);
+		  await callback(instance, id, action);
+			break;
 	  }
 	}
 	
@@ -2408,7 +2414,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  //	console.log("Standby!!!");
 	}
 	
-	function handleLaunch(instance, id, action, actionCallbacks) {
+	async function handleLaunch(instance, id, action, actionCallbacks) {
 	  if (instance === undefined) exit_("No instance set!");
 	
 	  instance._xdh.inProgress = true;
@@ -2416,13 +2422,13 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  if (
 		action === "" ||
 		!("_PreProcess" in actionCallbacks) ||
-		callCallback(actionCallbacks["_PreProcess"], instance, id, action)
+		await callCallback(actionCallbacks["_PreProcess"], instance, id, action)
 	  )
 		if (
-		  callCallback(actionCallbacks[action], instance, id, action) &&
+		  await callCallback(actionCallbacks[action], instance, id, action) &&
 		  "_PostProcess" in actionCallbacks
 		)
-		  callCallback(actionCallbacks["_PostProcess"], instance, id, action);
+		  await callCallback(actionCallbacks["_PostProcess"], instance, id, action);
 
 		standBy(instance);
 	}
@@ -2443,11 +2449,13 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  }
 	}
 	
-	function serve(feeder, createCallback, actionCallbacks, head) {
+	async function serve(feeder, createCallback, actionCallbacks, head) {
 	  while (!feeder.isEmpty() || cont) {
 		cont = false;
 	
 		// console.log(stack)
+
+		console.log("Serve!");
 	
 		switch (top()) {
 		  case s.SERVE:
@@ -2501,7 +2509,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 		  case s.LAUNCH:
 			pop();
 			// console.log(">>>>> Action:", string, id);
-			handleLaunch(instance_, id_, string, actionCallbacks);
+			await handleLaunch(instance_, id_, string, actionCallbacks);
 			break;
 		  case s.ID:
 			pop();
@@ -2710,7 +2718,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  }
 	}
 	
-	function launch_(actionCallbacks, createCallback, head) {
+	async function launch_(actionCallbacks, createCallback, head) {
 	  log("Connecting to '" + URL_ + "'…");
 	
 	  ws = new WebSocket(URL_);
@@ -2730,7 +2738,6 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 			"BRY " + "0.0.0",
 		  ),
 		);
-		log("Yo!");
 	  };
 	  ws.onclose = function () {
 		log("DISCONNECT");
