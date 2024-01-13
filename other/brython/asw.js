@@ -72,9 +72,14 @@ async function call(message) {
 	return await receive()
 }
 
+function relay(c, aws) {
+	return { c: c, aws: aws};
+}
+
 var $module = {
 	call: call,
 	launch: launch,
+	relay: relay,
 }
 
 

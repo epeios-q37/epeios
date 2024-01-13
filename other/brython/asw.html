@@ -19,7 +19,7 @@ height: 200px;
 <body>
 
 <!-- To prevent automatic execution of scripts -->
-<brython-options ids="" debug="0">
+<brython-options ids="" debug="2">
 </brython-options>
 
 <script type="text/python" id="script"/>
@@ -38,7 +38,9 @@ async def callback1(ws):
     print( "A2")
 
 async def callback2(ws):
-    print("callback 2")
+    print("Before sleep")
+    await aio.sleep(2);
+    print("After sleep")
 
 print("Avant")
 asw.launch("ws://echo.websocket.events/", callback2, callback1)
