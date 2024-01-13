@@ -8,9 +8,9 @@ const
 	receiveCallbacksQueue = [],
 	receiveDataQueue = [];
 
-function promiseConnect() {
+function promiseConnect(URL) {
 	return new Promise(function(resolve, reject) {
-		var ws = new WebSocket('ws://echo.websocket.events/');
+		var ws = new WebSocket(URL);
 		ws.onopen = function() {
 				resolve(ws);
 		};
@@ -54,29 +54,16 @@ async function c(cb) {
 }
 
 
-async function launch(URL, uc1, uc2) {
+async function launch(URL) {
 	log("Before !")
-	ws = await promiseConnect();
+	ws = await promiseConnect(URL);
 	log("1")
-	ws.onclose = () => log("Close (" + context + ")")
+	ws.onclose = () => log("Close.")
 	log("2")
 	ws.onmessage = (event) => handleMessage(event);
 	log("3")
 	log( await receive() )
 	log("4")
-
-	ws.send("Message 0")
-	log( await receive() )
-
-	await c(uc1)
-
-	log(uc1)
-	await uc1();
-
-	log(uc2)
-	await uc2()
-
-	log("The end")
 }
 
 async function call(message) {

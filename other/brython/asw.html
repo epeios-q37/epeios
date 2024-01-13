@@ -19,7 +19,7 @@ height: 200px;
 <body>
 
 <!-- To prevent automatic execution of scripts -->
-<brython-options ids="">
+<brython-options ids="" debug="0">
 </brython-options>
 
 <script type="text/python" id="script"/>
@@ -31,7 +31,7 @@ from browser import aio
 
 async def callback1(ws):
     print( "B1")
-    print(f"R0: {await ws.call('Message 1')}")
+    print(f"R1: {await ws.call('Message 1')}")
     print( "A1")
     print( "B2")
     print(f"R2: {await ws.call('Message 2')}")

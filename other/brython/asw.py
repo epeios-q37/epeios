@@ -1,4 +1,5 @@
 import javascript
+from browser import aio
 
 print("Av.")
 javascript.import_js("asw.js", alias="asw")
@@ -10,8 +11,13 @@ class WS:
 
   def call(self, message):
     return asw.call(message)
-  
-ws_ = WS()
 
+async def launch_(URL, uc1, uc2):
+  ws_ = WS()
+  await asw.launch(URL)
+
+  await uc1(ws_)
+  await uc2(ws_)
+  
 def launch(URL, uc1, uc2):
-  asw.launch(URL, lambda : uc1(ws_), lambda : uc2(ws_) )
+  aio.run(launch_(URL, uc1, uc2))
