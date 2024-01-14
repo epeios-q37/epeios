@@ -2047,7 +2047,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	},{"buffer":2}],"atlastk":[function(require,module,exports){
 	(function (Buffer){(function (){
 	// var Buffer = require('./buffer.js');
-	const URL_ = "ws://localhost:8080/";
+	const URL_ = "ws://192.168.1.75:8080/";
 	
 	function log(Message) {
 	  console.log(Message);
@@ -2593,6 +2593,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  console.log(
 		"Open above URL in a web browser (click, right click or copy/paste). Enjoy!\n",
 	  );
+		document.getElementById("AppLauncher").href=url;
 	
 	  let ATK = getEnv("ATK").toUpperCase();
 /*	
@@ -2739,7 +2740,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  
 		if ( ws !== undefined )
 			ws.close()
-		
+
 		log("Connecting to '" + URL_ + "'…");
 
 	

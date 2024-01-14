@@ -1,4 +1,4 @@
-import javascript, sys, threading
+import javascript, sys, inspect
 from collections import OrderedDict
 from browser import aio
 
@@ -57,11 +57,9 @@ def stringsCallback_(jsStrings, lock, wrapper):
 class Lock:
   def __init__(self):
     self.locked_ = False
-    self.lock_ = threading.Lock()
 
   async def acquire(self):
     print("A In")
-    self.lock_.acquire()
     while self.locked_:
       await aio.sleep(0)
     self.locked_ = True
@@ -69,13 +67,12 @@ class Lock:
 
   def release(self):
     print("R In")
-    self.lock_.release()
     self.locked_ = False
     print("R Out")
 
 class DOM:
-  def __init__(self,instance):
-    self.instance = instance
+  def __init__(self,userObject):
+    self.userObject = userObject
 
   async def call_(self, command, type, *args):
     lock = Lock()
@@ -114,97 +111,97 @@ class DOM:
   def isQuitting(self):
     return self._dom.isQuitting()
 
-  def _execute(self,type,script):
-    return self.call_("Execute_1",type,script)
+  async def _execute(self,type,script):
+    return await self.call_("Execute_1",type,script)
 
   # Last statement of 'script' MUST be 'undefined', or the thread will be killed.
-  def executeVoid(self,script):
-    return self._execute(_VOID,script)
+  async def executeVoid(self,script):
+    return await self._execute(_VOID,script)
 
   execute_void = executeVoid
 
-  def executeString(self,script):
-    return self._execute(_STRING,script)
+  async def executeString(self,script):
+    return await self._execute(_STRING,script)
 
   execute_string = executeString
 
-  def executeStrings(self,script):
-    return self._execute(_STRINGS,script)
+  async def executeStrings(self,script):
+    return await self._execute(_STRINGS,script)
 
   execute_strings = executeStrings
 
-  def _raw_send(self,type,data):
-    return self.call_("RawSend_1",type,data)
+  async def _raw_send(self,type,data):
+    return await self.call_("RawSend_1",type,data)
 
   # Last statement of 'data' MUST be 'undefined', or the thread will be killed.
-  def rawSendVoid(self,data):
-    return self._raw_send(_VOID,data)
+  async def rawSendVoid(self,data):
+    return await self._raw_send(_VOID,data)
 
   raw_send_void = rawSendVoid
 
-  def rawSendString(self,data):
-    return self._raw_send(_STRING,data)
+  async def rawSendString(self,data):
+    return await self._raw_send(_STRING,data)
 
   raw_send_string = rawSendString
 
-  def rawSendStrings(self,data):
-    return self._raw_send(_STRINGS,data)
+  async def rawSendStrings(self,data):
+    return await self._raw_send(_STRINGS,data)
 
   raw_send_strings = rawSendStrings	
 
-  def flush(self):	# Returns when all the pending commands were executed.
-    self.call_("Flush_1",_STRING)
+  async def flush(self):	# Returns when all the pending commands were executed.
+    await self.call_("Flush_1",_STRING)
 
-  def alert(self,message):
-    self.call_( "Alert_1",_STRING,str(message) )
+  async def alert(self,message):
+    await self.call_( "Alert_1",_STRING,str(message) )
     # For the return value being 'STRING' instead of 'VOID',
     # see the 'alert' primitive in 'XDHqXDH'.
 
-  def confirm(self,message):
-    return self.call_( "Confirm_1",_STRING,message ) == "true"
+  async def confirm(self,message):
+    return await self.call_( "Confirm_1",_STRING,message ) == "true"
 
-  def _handleLayout(self,variant,id,xml,xsl):
+  async def _handleLayout(self,variant,id,xml,xsl):
     #	If 'xslFilename' is empty, 'xml' contents HTML.
     # If 'xml' is HTML and uses the compressed form, if it has a root tag, only the children will be used.
     # The corresponding primitive returns a value, which is only used internally, hence the lack of 'return'.
     # It also serves to do some synchronisation.
-    self.call_("HandleLayout_1",_STRING,variant,id,xml if isinstance(xml,str) else xml.toString(),xsl)
+    await self.call_("HandleLayout_1",_STRING,variant,id,xml if isinstance(xml,str) else xml.toString(),xsl)
 
-  def prependLayout(self,id,html):	# Deprecated!
-    self._handleLayout("Prepend",id,html,"")
+  async def prependLayout(self,id,html):	# Deprecated!
+    await self._handleLayout("Prepend",id,html,"")
 
   prepend_layout = prependLayout	# Deprecated!
 
-  def setLayout(self,id,html):	# Deprecated!
-    self._handleLayout("Set",id,html,"")
+  async def setLayout(self,id,html):	# Deprecated!
+    await self._handleLayout("Set",id,html,"")
 
   set_layout = setLayout	# Deprecated!
 
-  def appendLayout(self,id,html):	# Deprecated!
-    self._handleLayout("Append",id,html,"")
+  async def appendLayout(self,id,html):	# Deprecated!
+    await self._handleLayout("Append",id,html,"")
 
   append_layout = appendLayout	# Deprecated!
 
-  def _handleLayoutXSL(self,variant,id,xml,xsl):	# Deprecated!
+  async def _handleLayoutXSL(self,variant,id,xml,xsl):	# Deprecated!
     xslURL = xsl
 
     if True:	# Testing if 'SlfH' or 'FaaS' mode when available.
       xslURL = "data:text/xml;charset=utf-8," + _encode(_readXSLAsset(xsl))
 
-    self._handleLayout(variant,id,xml,xslURL )
+    await self._handleLayout(variant,id,xml,xslURL )
 
-  def prependLayoutXSL(self,id,xml,xsl):	# Deprecated!
-    self._handleLayoutXSL("Prepend",id,xml,xsl)
+  async def prependLayoutXSL(self,id,xml,xsl):	# Deprecated!
+    await self._handleLayoutXSL("Prepend",id,xml,xsl)
 
   prepend_layout_XSL = prependLayoutXSL	# Deprecated!
 
-  def setLayoutXSL(self,id,xml,xsl):	# Deprecated!
-    self._handleLayoutXSL("Set",id,xml,xsl)
+  async def setLayoutXSL(self,id,xml,xsl):	# Deprecated!
+    await self._handleLayoutXSL("Set",id,xml,xsl)
 
   set_layout_XSL = setLayoutXSL	# Deprecated!
 
-  def appendLayoutXSL(self,id,xml,xsl):	# Deprecated!
-    self._handleLayoutXSL("Append",id,xml,xsl)
+  async def appendLayoutXSL(self,id,xml,xsl):	# Deprecated!
+    await self._handleLayoutXSL("Append",id,xml,xsl)
 
   append_layout_XSL = appendLayoutXSL	# Deprecated!
 
@@ -214,32 +211,32 @@ class DOM:
 
     await self.call_("HandleLayout_1",_STRING,variant,id,xml if isinstance(xml,str) else xml.toString(),xsl)
 
-  def before(self,id,xml,xsl=""):
-    self._layout("beforebegin",id,xml,xsl)
+  async def before(self,id,xml,xsl=""):
+    await self._layout("beforebegin",id,xml,xsl)
 
-  def begin(self,id,xml,xsl=""):
-    self._layout("afterbegin",id,xml,xsl)
+  async def begin(self,id,xml,xsl=""):
+    await self._layout("afterbegin",id,xml,xsl)
 
   async def inner(self,id,xml,xsl=""):
     print("Inner !!!")
     await self._layout("inner",id,xml,xsl)
 
-  def end(self,id,xml,xsl=""):
-    self._layout("beforeend",id,xml,xsl)
+  async def end(self,id,xml,xsl=""):
+    await self._layout("beforeend",id,xml,xsl)
 
-  def after(self,id,xml,xsl=""):
-    self._layout("afterend",id,xml,xsl)
+  async def after(self,id,xml,xsl=""):
+    await self._layout("afterend",id,xml,xsl)
 
   # Deprecated
-  def getContents(self,ids):
-    return _unsplit(ids,self.call_("GetContents_1",_STRINGS,ids))
+  async def getContents(self,ids):
+    return _unsplit(ids,await self.call_("GetContents_1",_STRINGS,ids))
 
   # Deprecated
   get_contents = getContents
 
   # Deprecated
-  def getContent( self,id):
-    return self.getContents([id])[id]
+  async def getContent( self,id):
+    return await self.getContents([id])[id]
 
   # Deprecated
   get_content = getContent
@@ -254,28 +251,28 @@ class DOM:
 
   get_value =  getValue
 
-  def getMarks(self,ids):
-    return _unsplit(ids,self.call_("GetMarks_1",_STRINGS,ids))
+  async def getMarks(self,ids):
+    return _unsplit(ids,await self.call_("GetMarks_1",_STRINGS,ids))
 
   get_marks = getMarks
 
-  def getMark( self,id):
-    return self.get_marks([id])[id]
+  async def getMark( self,id):
+    return await self.get_marks([id])[id]
 
   get_mark = getMark
 
   # Deprecated
-  def setContents(self,ids_and_contents):
+  async def setContents(self,ids_and_contents):
     [ids,contents] = _split(ids_and_contents)
 
-    self.call_("SetContents_1",_VOID,ids,contents)
+    await self.call_("SetContents_1",_VOID,ids,contents)
 
   # Deprecated
   set_contents = setContents
 
   # Deprecated
-  def setContent(self,id,content):
-    self.set_contents({id: content})
+  async def setContent(self,id,content):
+    await self.set_contents({id: content})
 
   # Deprecated
   set_content = setContent
@@ -292,141 +289,166 @@ class DOM:
 
   set_value = setValue
 
-  def setMarks(self,ids_and_marks):
+  async def setMarks(self,ids_and_marks):
     [ids,marks] = _split(ids_and_marks)
 
-    self.call_("SetMarks_1",_VOID,ids,marks)
+    await self.call_("SetMarks_1",_VOID,ids,marks)
 
   set_marks = setMarks
 
-  def setMark(self,id,mark):
-    self.set_marks({id: mark})
+  async def setMark(self,id,mark):
+    await self.set_marks({id: mark})
 
   set_mark = setMark
 
-  def _handleClasses(self,variant,idsAndClasses):
+  async def _handleClasses(self,variant,idsAndClasses):
     [ids,classes] = _split(idsAndClasses)
 
-    self.call_("HandleClasses_1",_VOID,variant,ids,classes)
+    await self.call_("HandleClasses_1",_VOID,variant,ids,classes)
 
-  def addClasses(self,ids_and_classes):
-    self._handleClasses("Add",ids_and_classes)
+  async def addClasses(self,ids_and_classes):
+    await self._handleClasses("Add",ids_and_classes)
 
   add_classes = addClasses
 
-  def removeClasses(self,ids_and_classes):
-    self._handleClasses("Remove",ids_and_classes)
+  async def removeClasses(self,ids_and_classes):
+    await self._handleClasses("Remove",ids_and_classes)
 
   remove_classes = removeClasses		
 
-  def toggleClasses(self,ids_and_classes):
-    self._handleClasses("Toggle",ids_and_classes)
+  async def toggleClasses(self,ids_and_classes):
+    await self._handleClasses("Toggle",ids_and_classes)
 
   toggle_classes = toggleClasses
 
-  def addClass(self,id,clas ):
-    self.addClasses({id: clas})
+  async def addClass(self,id,clas ):
+    await self.addClasses({id: clas})
 
   add_class = addClass
 
-  def removeClass(self,id,class_ ):
-    self.removeClasses({id: class_})
+  async def removeClass(self,id,class_ ):
+    await self.removeClasses({id: class_})
 
   remove_class	= removeClass
 
-  def toggleClass(self,id,clas ):
-    self.toggleClasses({id: clas})
+  async def toggleClass(self,id,clas ):
+    await self.toggleClasses({id: clas})
 
   toggle_class = toggleClass
 
-  def enableElements(self,ids):
-    self.call_("EnableElements_1",_VOID,ids )
+  async def enableElements(self,ids):
+    await self.call_("EnableElements_1",_VOID,ids )
 
   enable_elements = enableElements		
 
-  def enableElement(self,id):
-    self.enableElements([id] )
+  async def enableElement(self,id):
+    await self.enableElements([id] )
 
   enable_element = enableElement		
 
-  def disableElements(self,ids):
-    self.call_("DisableElements_1",_VOID,ids )
+  async def disableElements(self,ids):
+    await self.call_("DisableElements_1",_VOID,ids )
 
   disable_elements = disableElements		
 
-  def disableElement(self,id):
-    self.disableElements([id])
+  async def disableElement(self,id):
+    await self.disableElements([id])
 
   disable_element = disableElement
 
-  def setAttribute(self,id,name,value ):
-    self.call_("SetAttribute_1",_VOID,id,name,str(value) )
+  async def setAttribute(self,id,name,value ):
+    await self.call_("SetAttribute_1",_VOID,id,name,str(value) )
 
   set_attribute = setAttribute		
 
-  def getAttribute(self,id,name):
-    return self.call_("GetAttribute_1",_STRING,id,name )
+  async def getAttribute(self,id,name):
+    return await self.call_("GetAttribute_1",_STRING,id,name )
 
   get_attribute = getAttribute		
 
-  def removeAttribute(self,id,name ):
-    self.call_("RemoveAttribute_1",_VOID,id,name )
+  async def removeAttribute(self,id,name ):
+    await self.call_("RemoveAttribute_1",_VOID,id,name )
 
   remove_attribute = removeAttribute
 
-  def setProperty(self,id,name,value ):
-    self.call_("SetProperty_1",_VOID,id,name,value )
+  async def setProperty(self,id,name,value ):
+    await self.call_("SetProperty_1",_VOID,id,name,value )
 
   set_property = setProperty		
 
-  def getProperty(self,id,name ):
-    return self.call_("GetProperty_1",_STRING,id,name )
+  async def getProperty(self,id,name ):
+    return await self.call_("GetProperty_1",_STRING,id,name )
 
   get_property = getProperty		
 
   async def focus(self,id):
     await self.call_("Focus_1",_VOID,id)
 
-  def parent(self,id):
-    return self.call_("Parent_1",_STRING,id)
+  async def parent(self,id):
+    return await self.call_("Parent_1",_STRING,id)
 
-  def firstChild(self,id):
-    return self.call_("FirstChild_1",_STRING,id)
+  async def firstChild(self,id):
+    return await self.call_("FirstChild_1",_STRING,id)
 
   first_child = firstChild
 
-  def lastChild(self,id):
-    return self.call_("LastChild_1",_STRING,id)
+  async def lastChild(self,id):
+    return await self.call_("LastChild_1",_STRING,id)
 
   last_child = lastChild
 
-  def previousSibling(self,id):
-    return self.call_("PreviousSibling_1",_STRING,id)
+  async def previousSibling(self,id):
+    return await self.call_("PreviousSibling_1",_STRING,id)
 
   previous_sibling = previousSibling		
 
-  def nextSibling(self,id):
-    return self.call_("NextSibling_1",_STRING,id)
+  async def nextSibling(self,id):
+    return await self.call_("NextSibling_1",_STRING,id)
 
   next_sibling = nextSibling
 
-  def scrollTo(self,id):
-    self.call_("ScrollTo_1",_VOID,id)
+  async def scrollTo(self,id):
+    await self.call_("ScrollTo_1",_VOID,id)
 
   scroll_to = scrollTo
 
-  def debugLog(self,switch=True):
-    self.call_("DebugLog_1",_VOID,"true" if switch else "false")
+  async def debugLog(self,switch=True):
+    await self.call_("DebugLog_1",_VOID,"true" if switch else "false")
 
-  def log(self,message):
-    self.call_("Log_1",_VOID,message)
+  async def log(self,message):
+    await self.call_("Log_1",_VOID,message)
 
 def _callback(userCallback):
   return DOM(userCallback())
 
+def buildArgs(callback, bundle):
+  amount = len(inspect.getfullargspec(callback).args)
+  args = []
+
+  instance = bundle.instance 
+  userObject = instance.userObject
+
+  if ( not(userObject)) :
+    amount += 1
+
+  if ( amount == 4 ):
+    args.insert(0,bundle.action)
+
+  if( amount >= 3 ):
+    args.insert(0,bundle.id)
+
+  if( amount >= 2 ):
+    args.insert(0,instance)
+
+  if( userObject and (amount >= 1 )):
+    args.insert(0,userObject)
+
+  return args
+
 async def handleCallbackBundle(userCallbacks, bundle):
   print(bundle)
-  await userCallbacks[bundle.action](bundle.instance)
+  callback = userCallbacks[bundle.action]
+  await callback(*buildArgs(callback, bundle))
   atlastkjs.standBy(bundle.instance)
 
 async def handleCallbackBundles(userCallbacks):
