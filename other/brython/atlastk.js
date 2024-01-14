@@ -2052,7 +2052,11 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	function log(Message) {
 	  console.log(Message);
 	}
-	
+
+	function exit_(message) {
+		throw new Error(message);
+	}
+
 	const MAIN_PROTOCOL_LABEL = "22bb5d73-924f-473f-a68a-14f41d8bfa83";
 	const MAIN_PROTOCOL_VERSION = "0";
 	
@@ -2385,40 +2389,24 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  delete instances[id];
 	}
 	
-	async function callCallback(callback, instance, id, action) {
-		console.log(callback.length)
-		console.log("I2: ", instance);
-		console.log("C2: ", callback);
-
-	  switch (1) {
-		case 0:
-		  await callback();
-			break;
-		case 1:
-			console.log("callCallback in!")
-		  await callback(instance);
-			console.log("callCallback out!")
-			break;
-		case 2:
-		  await callback(instance, id);
-			break;
-		default:
-		  await callback(instance, id, action);
-			break;
-	  }
-	}
-	
 	function standBy(instance) {
 	  ws.send(addString(convertSInt(instance._xdh.id), "#StandBy_1"));
 	  instance._xdh.inProgress = false;
 	  //	console.log("Standby!!!");
 	}
-	
-	async function handleLaunch(instance, id, action, actionCallbacks) {
+
+  const
+    receiveCallbacksQueue = [],
+    receiveDataQueue = [];
+
+	function handleLaunch(instance, id, action) {
 	  if (instance === undefined) exit_("No instance set!");
 	
 	  instance._xdh.inProgress = true;
 
+		bundle = { instance: instance, id: id, action: action }
+		log("Bundle R: " + bundle)
+/*
 	  if (
 		action === "" ||
 		!("_PreProcess" in actionCallbacks) ||
@@ -2431,6 +2419,34 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 		  await callCallback(actionCallbacks["_PostProcess"], instance, id, action);
 
 		standBy(instance);
+		*/
+		if (receiveCallbacksQueue.length !== 0) {
+				// Somebody is waiting to receive this message.
+				log("Bundle RS: " + bundle)
+				receiveCallbacksQueue.shift().resolve(bundle);
+				return;
+		}
+
+		// Enqueue.
+		log("Bundle R: " + bundle)
+		receiveDataQueue.push(bundle);
+	}
+
+	function getCallbackBundle() {
+		if (receiveDataQueue.length !== 0) {
+      // We have a message ready.
+			bundle = receiveDataQueue.shift()
+			log("Bundle S: " + bundle)
+
+      return Promise.resolve(bundle);
+    }
+
+    // Wait for the next incoming message and receive it.
+    const receivePromise = new Promise((resolve, reject) => {
+      receiveCallbacksQueue.push({ resolve, reject });
+    });
+
+  return receivePromise;
 	}
 	
 	function setResponse(type) {
@@ -2449,14 +2465,12 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  }
 	}
 	
-	async function serve(feeder, createCallback, actionCallbacks, head) {
+	function serve(feeder, createCallback, head) {
 	  while (!feeder.isEmpty() || cont) {
 		cont = false;
 	
 		// console.log(stack)
 
-		console.log("Serve!");
-	
 		switch (top()) {
 		  case s.SERVE:
 			push(s.COMMAND);
@@ -2509,7 +2523,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 		  case s.LAUNCH:
 			pop();
 			// console.log(">>>>> Action:", string, id);
-			await handleLaunch(instance_, id_, string, actionCallbacks);
+			handleLaunch(instance_, id_, string);
 			break;
 		  case s.ID:
 			pop();
@@ -2695,7 +2709,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	
 	var phase = p.HANDSHAKES;
 	
-	function onRead(data, createCallback, actionCallbacks, head) {
+	function onRead(data, createCallback, head) {
 	  // console.log(">>>>> DATA:", data.length);
 	
 	  let feeder = new Feeder(data);
@@ -2709,7 +2723,7 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 			if (!ignition(feeder)) phase = p.SERVE;
 			break;
 		  case p.SERVE:
-			serve(feeder, createCallback, actionCallbacks, head);
+			serve(feeder, createCallback, head);
 			break;
 		  default:
 			exit_("Unknown phase of value '" + step + "'!");
@@ -2718,8 +2732,16 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 	  }
 	}
 	
-	async function launch_(actionCallbacks, createCallback, head) {
-	  log("Connecting to '" + URL_ + "'…");
+	function launch_(createCallback, head) {
+		stack = new Array();
+		phase = p.HANDSHAKES;
+		token = ""
+	  
+		if ( ws !== undefined )
+			ws.close()
+		
+		log("Connecting to '" + URL_ + "'…");
+
 	
 	  ws = new WebSocket(URL_);
 	
@@ -2743,9 +2765,8 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 		log("DISCONNECT");
 	  };
 	  ws.onmessage = function (event) {
-		log("MESSAGE: " + event.data);
 		require("blob-to-buffer")(event.data, function (err, buffer) {
-		  onRead(buffer, createCallback, actionCallbacks, head);
+		  onRead(buffer, createCallback, head);
 		});
 	  };
 	}
@@ -2791,9 +2812,19 @@ require=(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c=
 		instance._xdh.queued.push(pending);
 	  } else exit_("'UNDEFINED' type not allowed here!");
 	}
+
+	function broadcastAction(action, id) {
+		if ( ( action === undefined ) || ( action === "" ) )
+			exit_("There must be an non-empty action parameter for tha broadcastAction function!");
+
+		ws.send(addString(addString(convertSInt(responseIds.BROADCAST), action), id === undefined ? "" : id ));
+	}
 	
 	module.exports.launch = launch_;
 	module.exports.call = call_;
+	module.exports.standBy = standBy;
+	module.exports.getCallbackBundle = getCallbackBundle;
+	module.exports.broadcastAction = broadcastAction;
 	
 	}).call(this)}).call(this,require("buffer").Buffer)
 	},{"blob-to-buffer":4,"buffer":2}]},{},[]);

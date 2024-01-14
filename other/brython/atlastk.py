@@ -1,6 +1,6 @@
 import javascript, sys, threading
 from collections import OrderedDict
-from browser import timer
+from browser import aio
 
 javascript.import_js("atlastkbry.js", alias="atlastkjs")
 
@@ -32,6 +32,9 @@ def _unsplit(keys,values):
 
 	return keysAndValues
 
+def broadcastAction(action, id = ""):
+  atlastkjs.broadcastAction(action, id)  
+
 def call_(instance, command, type, callback, *args):
   atlastkjs.call(instance, command, type, callback, *args)
   
@@ -39,14 +42,14 @@ def voidCallback_(lock):
   print("voidCallback")
   lock.release()
 
-def stringCallback_(jsString, lock, string):
-  print("stringCallback")
-  string = jsString
+def stringCallback_(jsString, lock, wrapper):
+  print("stringCallback: ", jsString)
+  wrapper[0] = jsString
   lock.release()
 
-def stringsCallback_(jsStrings, lock, strings):
-  print("stringsCallback")
-  strings = jsStrings
+def stringsCallback_(jsStrings, lock, wrapper):
+  print("stringsCallback: ", jsStrings)
+  wrapper[0] = jsStrings
   print("R Before")
   lock.release()
   print("R After")
@@ -81,20 +84,20 @@ class DOM:
 
     if type == _STRING:
       print("Awaiting string!")
-      string = ""
-      call_(self, command, type, lambda result : stringCallback_(result, lock, string), *args )
+      wrapper = [""]
+      call_(self, command, type, lambda result : stringCallback_(result, lock, wrapper), *args )
       print("AS Before")
       await lock.acquire()
       print("AS After")
-      return string
+      return wrapper[0]
     elif type == _STRINGS:
       print("Awaiting stringS!")
-      strings = []
-      call_(self, command, type, lambda result : stringsCallback_(result, lock, strings), *args )
+      wrapper = [[]]
+      call_(self, command, type, lambda result : stringsCallback_(result, lock, wrapper), *args )
       print("ASS Before")
       await lock.acquire()
       print("ASS After")
-      return strings
+      return wrapper[0]
     elif type == _VOID:
       call_(self, command, type, lambda : voidCallback_(lock), *args )
       await lock.acquire()
@@ -205,11 +208,11 @@ class DOM:
 
   append_layout_XSL = appendLayoutXSL	# Deprecated!
 
-  def _layout(self,variant,id,xml,xsl):
+  async def _layout(self,variant,id,xml,xsl):
     if xsl:
       xsl = "data:text/xml;charset=utf-8," + _encode(_readXSLAsset(xsl))
 
-    self.call_("HandleLayout_1",_STRING,variant,id,xml if isinstance(xml,str) else xml.toString(),xsl)
+    await self.call_("HandleLayout_1",_STRING,variant,id,xml if isinstance(xml,str) else xml.toString(),xsl)
 
   def before(self,id,xml,xsl=""):
     self._layout("beforebegin",id,xml,xsl)
@@ -241,13 +244,13 @@ class DOM:
   # Deprecated
   get_content = getContent
 
-  def getValues(self,ids):
-    return _unsplit(ids,self.call_("GetValues_1",_STRINGS,ids))
+  async def getValues(self,ids):
+    return _unsplit(ids,await self.call_("GetValues_1",_STRINGS,ids))
 
   get_values = getValues
 
-  def getValue( self,id):
-    return self.get_values([id])[id]
+  async def getValue( self,id):
+    return (await self.get_values([id]))[id]
 
   get_value =  getValue
 
@@ -277,15 +280,15 @@ class DOM:
   # Deprecated
   set_content = setContent
 
-  def setValues(self,ids_and_values):
+  async def setValues(self,ids_and_values):
     [ids,values] = _split(ids_and_values)
 
-    self.call_("SetValues_1",_VOID,ids,values)
+    await self.call_("SetValues_1",_VOID,ids,values)
 
   set_values = setValues
 
-  def setValue(self,id,value):
-    self.set_values({id: value})
+  async def setValue(self,id,value):
+    await self.set_values({id: value})
 
   set_value = setValue
 
@@ -381,8 +384,8 @@ class DOM:
 
   get_property = getProperty		
 
-  def focus(self,id):
-    self.call_("Focus_1",_VOID,id)
+  async def focus(self,id):
+    await self.call_("Focus_1",_VOID,id)
 
   def parent(self,id):
     return self.call_("Parent_1",_STRING,id)
@@ -421,7 +424,18 @@ class DOM:
 def _callback(userCallback):
   return DOM(userCallback())
 
+async def handleCallbackBundle(userCallbacks, bundle):
+  print(bundle)
+  await userCallbacks[bundle.action](bundle.instance)
+  atlastkjs.standBy(bundle.instance)
+
+async def handleCallbackBundles(userCallbacks):
+  while True:
+    bundle = await atlastkjs.getCallbackBundle()
+    aio.run(handleCallbackBundle(userCallbacks,bundle))
 
 def launch(callbacks, userCallback = lambda : None, headContent = ""):
-  atlastkjs.launch(callbacks, lambda : _callback(userCallback), headContent)
+  atlastkjs.launch(lambda : _callback(userCallback), headContent)
+
+  aio.run(handleCallbackBundles(callbacks))
 
