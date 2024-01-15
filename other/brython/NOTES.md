@@ -2,6 +2,20 @@
 
 Répertoire pour tester de *Brython* et son utilisation avec le *toolkit* *Atlas*.
 
+## Code à ajouter aprés celui généré par *browserify*
+
+```js
+atlastk = require("atlastk")
+
+var $module = {
+    call: atlastk.call,
+    launch: atlastk.launch,
+    standBy: atlastk.standBy,
+    getCallbackBundle: atlastk.getCallbackBundle,
+    broadcastAction: atlastk.broadcastAction,
+}
+```
+
 ## Divers
 
 Parce que l'inclusion de fichier ne gère pas la protocole `file:`, ces fichier doivent être servis avec un serveur *http*.
@@ -20,9 +34,10 @@ Attention, tous les répertoires de l'alias doivent être en exécution !
 
 ## Licenses
 
-- *Ace* (éfiteur en ligne) : voir https://github.com/ajaxorg/ace/blob/master/LICENSE (xemble être une license BSD) ;
+- *Ace* (éditeur en ligne) : voir https://github.com/ajaxorg/ace/blob/master/LICENSE (xemble être une license BSD) ;
 - *Brython* : *BSD 3-Clause "New" or "Revised" License* (https://github.com/brython-dev/brython/blob/master/LICENCE.txt) ;
 - https://github.com/feross/buffer (émulation du *Buffer* de *Node.js* dans un navigateur) : *MIT* (https://github.com/feross/buffer/blob/master/LICENSE) ;
+- *blob-to-buffer* : *MIT* (https://github.com/feross/blob-to-buffer/blob/master/LICENSE) ;
 - *toolkit* *Atlas* :-) : *MIT*.
 
 ## Version *Brython* (*BRY*) du *toolkit* *Atlas*

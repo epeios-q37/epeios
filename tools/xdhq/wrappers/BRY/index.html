@@ -1,0 +1,137 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <script type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython.js">
+  </script>
+  <script type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython_stdlib.js">
+  </script>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+
+<style type="text/css" media="screen">
+  #source {
+height: 200px;
+  }
+</style>
+</head>
+
+<body>
+  <script type="text/javascript">
+function launchApp(url)
+{
+  app = document.getElementById("App");
+  app.src=url;
+  app.style["display"]="initial";
+}
+  </script>
+
+<!-- To prevent automatic execution of scripts -->
+<brython-options ids="">
+</brython-options>
+
+<script type="text/python" id="script"/>
+</script>
+
+<div id="source_" style="display: none">
+import sandbox
+
+print("Hello")
+print("Yo!")
+
+sandbox.test()
+</div>
+
+<div id="source__" style="display: none">
+import atlastk
+
+def acConnect(dom):
+  dom.debugLog()
+  dom.inner("", "&lt;h1&gt;Yo!&lt;/h1&gt;")
+
+atlastk.launch({"": acConnect })
+</div>
+
+
+<div id="source">
+import atlastk
+from browser import aio
+
+HEAD = """
+&lt;title&gt;Hello, World! | Zelbinium&lt;/title&gt;
+&lt;link rel="icon" type="image/png" href="https://zelbinium.q37.info/Avatar.png" /&gt;
+"""
+
+BODY = """
+&lt;fieldset&gt;
+  &lt;input id="input" maxlength="20" placeholder="Enter a name here" type="text"
+    xdh:onevent="Submit" value="World"/&gt;
+  &lt;button xdh:onevent="Submit"&gt;Submit&lt;/button&gt;
+  &lt;hr/&gt;
+  &lt;fieldset&gt;
+  &lt;output id="output"&gt;&lt;/output&gt;
+  &lt;/fieldset&gt;
+&lt;/fieldset&gt;
+"""
+text = ""
+
+async def acConnect(dom):
+  # dom.debugLog()
+  print("acConnect")
+  await dom.inner("", BODY)
+  await dom.focus("input")
+
+
+async def acSubmit(dom):
+  global text
+  text = await dom.getValue("input")
+  atlastk.broadcastAction("Display")
+  await dom.setValue("input", "")
+  await dom.focus("input")
+
+async def acDisplay(dom):
+  await dom.setValue("output", f"Bonjour, {text}!")
+
+CALLBACKS = {
+  "": acConnect,
+  "Submit": acSubmit,
+  "Display": acDisplay
+}
+
+atlastk.launch(CALLBACKS, headContent=HEAD)
+</div>
+
+
+<script type="text/javascript">
+function go()
+{
+  value=editor.getValue()
+  document.getElementById('script').innerHTML=value;
+//    console.log(value);
+  brython({ids:['script']})
+//    window.open('http://q37.info','_blank')
+}
+</script>
+<br/>
+<button onclick="go();">Run</button>
+<br/>
+  <iframe id="App" style="width: 100%; display: none;">
+  </iframe>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js" integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript">
+  var editor = ace.edit("source", {showLineNumbers: true, newLineMode: "auto"});
+  editor.setTheme("ace/theme/monokai");
+  editor.session.setMode("ace/mode/python");
+//    const atlastk = require("atlastk")
+//    console.log(atlastk);
+  //go();
+</script>
+
+
+</body>
+
+</html>

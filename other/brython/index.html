@@ -1,28 +1,32 @@
 <html>
 
 <head>
-    <meta charset="utf-8">
-    <script type="text/javascript"
-        src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython.js">
-    </script>
-    <script type="text/javascript"
-        src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython_stdlib.js">
-    </script>
-    <script type="text/javascript" src="atlastk.js">
-
-    </script>
+  <meta charset="utf-8">
+  <script type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython.js">
+  </script>
+  <script type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython_stdlib.js">
+  </script>
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
 
 <style type="text/css" media="screen">
-    #source {
-width:1000px;
+  #source {
 height: 200px;
-    }
+  }
 </style>
 </head>
 
 <body>
+  <script type="text/javascript">
+function launchApp(url)
+{
+  app = document.getElementById("App");
+  app.src=url;
+  app.style["display"]="initial";
+}
+  </script>
 
 <!-- To prevent automatic execution of scripts -->
 <brython-options ids="">
@@ -44,8 +48,8 @@ sandbox.test()
 import atlastk
 
 def acConnect(dom):
-    dom.debugLog()
-    dom.inner("", "&lt;h1&gt;Yo!&lt;/h1&gt;")
+  dom.debugLog()
+  dom.inner("", "&lt;h1&gt;Yo!&lt;/h1&gt;")
 
 atlastk.launch({"": acConnect })
 </div>
@@ -63,11 +67,11 @@ HEAD = """
 BODY = """
 &lt;fieldset&gt;
   &lt;input id="input" maxlength="20" placeholder="Enter a name here" type="text"
-      xdh:onevent="Submit" value="World"/&gt;
+    xdh:onevent="Submit" value="World"/&gt;
   &lt;button xdh:onevent="Submit"&gt;Submit&lt;/button&gt;
   &lt;hr/&gt;
   &lt;fieldset&gt;
-    &lt;output id="output"&gt;&lt;/output&gt;
+  &lt;output id="output"&gt;&lt;/output&gt;
   &lt;/fieldset&gt;
 &lt;/fieldset&gt;
 """
@@ -88,7 +92,7 @@ async def acSubmit(dom):
   await dom.focus("input")
 
 async def acDisplay(dom):
-    await dom.setValue("output", f"Bonjour, {text}!")
+  await dom.setValue("output", f"Bonjour, {text}!")
 
 CALLBACKS = {
   "": acConnect,
@@ -103,28 +107,28 @@ atlastk.launch(CALLBACKS, headContent=HEAD)
 <script type="text/javascript">
 function go()
 {
-    value=editor.getValue()
-    document.getElementById('script').innerHTML=value;
+  value=editor.getValue()
+  document.getElementById('script').innerHTML=value;
 //    console.log(value);
-    brython({ids:['script']})
+  brython({ids:['script']})
 //    window.open('http://q37.info','_blank')
 }
 </script>
 <br/>
 <button onclick="go();">Run</button>
-<fieldset>
-    <a id="AppLauncher" href="https:/zelbinium.q37.info" target="_blank">Click to open the app.</a>
-</fieldset>
+<br/>
+  <iframe id="App" style="width: 100%; display: none;" sandbox="allow-scripts">
+  </iframe>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript" charset="utf-8"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js" integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript">
-    var editor = ace.edit("source", {showLineNumbers: true, newLineMode: "auto"});
-    editor.setTheme("ace/theme/monokai");
-    editor.session.setMode("ace/mode/python");
+  var editor = ace.edit("source", {showLineNumbers: true, newLineMode: "auto"});
+  editor.setTheme("ace/theme/monokai");
+  editor.session.setMode("ace/mode/python");
 //    const atlastk = require("atlastk")
 //    console.log(atlastk);
-    //go();
+  //go();
 </script>
 
 
