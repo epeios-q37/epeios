@@ -2,136 +2,82 @@
 
 <head>
   <meta charset="utf-8">
-  <script type="text/javascript"
-    src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython.js">
-  </script>
-  <script type="text/javascript"
-    src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython_stdlib.js">
-  </script>
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-
-<style type="text/css" media="screen">
-  #source {
-height: 200px;
-  }
-</style>
-</head>
-
-<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js"
+    integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script type="text/javascript">
-function launchApp(url)
-{
-  app = document.getElementById("App");
-  app.src=url;
-  app.style["display"]="initial";
+    function go() {
+//      document.getElementById("Brython").src = "/brython/brython.php?source=" + encodeURIComponent(editor.getValue());
+      document.getElementById("code").value = editor.getValue();
+      document.forms['myform'].submit();
 }
   </script>
+  <script type="text/javascript">
+ function escapeHtml(unsafe)
+ {
+   return unsafe
+     .replace(/&/g, "&amp;")
+     .replace(/</g, "&lt;")
+     .replace(/>/g, "&gt;")
+     .replace(/"/g, "&quot;")
+     .replace(/'/g, "&#039;");
+ }
 
-<!-- To prevent automatic execution of scripts -->
-<brython-options ids="">
-</brython-options>
-
-<script type="text/python" id="script"/>
-</script>
-
-<div id="source_" style="display: none">
-import sandbox
-
-print("Hello")
-print("Yo!")
-
-sandbox.test()
+ function getSourceCode(demo)
+ {
+   fetch('https://raw.githack.com/epeios-q37/brython/main/' + demo + '.py').then(function (response) {
+     // The API call was successful!
+     return response.text();
+   }).then(function (data) {
+     // This is the JSON from our response
+     console.log(data);
+     editor.setValue(data)
+     
+   }).catch(function (err) {
+     // There was an error
+     console.warn('Something went wrong.', err);
+   });
+ }  
+ </script>
+ <script type="text/javascript">
+    var editor = undefined;
+    function dress() {
+      editor = ace.edit("source", { showLineNumbers: true, newLineMode: "auto" });
+      editor.setTheme("ace/theme/monokai");
+      editor.session.setMode("ace/mode/python");
+      eruda.init();
+    }
+  </script>
+  <!-- Will be filled on run. -->
+  <script type="text/python" id="script"></script>
+<style type="text/css" media="screen">
+    #source {
+      height: 200px;
+      width: 550px;
+    }
+  </style>
+</head>
+<body onload="dress()">
+    <div id="source"># Type your code here or select an example below.</div>
+<div>
+  <select onchange="getSourceCode(this.value)">
+    <option disabled="true" selected="true">Select an example.</option>
+    <option value="Hello">Hello</option>
+    <option value="Messages">Messages</option>
+    <option value="FourInARow">FourInARow</option>
+  </select>
 </div>
-
-<div id="source__" style="display: none">
-import atlastk
-
-def acConnect(dom):
-  dom.debugLog()
-  dom.inner("", "&lt;h1&gt;Yo!&lt;/h1&gt;")
-
-atlastk.launch({"": acConnect })
-</div>
-
-
-<div id="source">
-import atlastk
-from browser import aio
-
-HEAD = """
-&lt;title&gt;Hello, World! | Zelbinium&lt;/title&gt;
-&lt;link rel="icon" type="image/png" href="https://zelbinium.q37.info/Avatar.png" /&gt;
-"""
-
-BODY = """
-&lt;fieldset&gt;
-  &lt;input id="input" maxlength="20" placeholder="Enter a name here" type="text"
-    xdh:onevent="Submit" value="World"/&gt;
-  &lt;button xdh:onevent="Submit"&gt;Submit&lt;/button&gt;
-  &lt;hr/&gt;
-  &lt;fieldset&gt;
-  &lt;output id="output"&gt;&lt;/output&gt;
-  &lt;/fieldset&gt;
-&lt;/fieldset&gt;
-"""
-text = ""
-
-async def acConnect(dom):
-  # dom.debugLog()
-  print("acConnect")
-  await dom.inner("", BODY)
-  await dom.focus("input")
-
-
-async def acSubmit(dom):
-  global text
-  text = await dom.getValue("input")
-  atlastk.broadcastAction("Display")
-  await dom.setValue("input", "")
-  await dom.focus("input")
-
-async def acDisplay(dom):
-  await dom.setValue("output", f"Bonjour, {text}!")
-
-CALLBACKS = {
-  "": acConnect,
-  "Submit": acSubmit,
-  "Display": acDisplay
-}
-
-atlastk.launch(CALLBACKS, headContent=HEAD)
-</div>
-
-
-<script type="text/javascript">
-function go()
-{
-  value=editor.getValue()
-  document.getElementById('script').innerHTML=value;
-//    console.log(value);
-  brython({ids:['script']})
-//    window.open('http://q37.info','_blank')
-}
-</script>
-<br/>
-<button onclick="go();">Run</button>
-<br/>
-  <iframe id="App" style="width: 100%; display: none;">
-  </iframe>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js" integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script type="text/javascript">
-  var editor = ace.edit("source", {showLineNumbers: true, newLineMode: "auto"});
-  editor.setTheme("ace/theme/monokai");
-  editor.session.setMode("ace/mode/python");
-//    const atlastk = require("atlastk")
-//    console.log(atlastk);
-  //go();
-</script>
-
-
+    <div style="margin-top: 10px; margin-bottom: 10px;">
+      <button onclick="go();">Run</button>
+    </div>
+  </div>
+  <form action="/brython/brython.php" name="myform" method="post" target="output_frame">
+    <textarea name="code" id="code" value="test"></textarea>
+    <input type="submit"/>
+</form>
+<iframe name="output_frame" src="" id="output_frame" width="100%" height="1000px">
+</iframe> 
 </body>
 
 </html>
