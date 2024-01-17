@@ -1,83 +1,76 @@
 <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript"
+      charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js"
+      integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA=="
+      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript">
+      function go() {
+        document.getElementById("source").parentNode.parentNode.removeAttribute("open");
+        document.getElementById("code").value = editor.getValue();
+        document.forms['myform'].submit();
+        document.getElementById("Brython").style["display"] = "";
+      }
+    </script>
+    <script type="text/javascript">
+      function getSourceCode(demo) {
+        fetch('https://raw.githack.com/epeios-q37/brython/main/' + demo + '.py').then(function (response) {
+          // The API call was successful!
+          return response.text();
+        }).then(function (data) {
+          // This is the JSON from our response
+          console.log(data);
+          editor.setValue(data)
+        }).catch(function (err) {
+          // There was an error
+          console.warn('Something went wrong.', err);
+        });
+      }  
+    </script>
+    <script type="text/javascript">
+      var editor = undefined;
+      function dress() {
+        editor = ace.edit("source", { showLineNumbers: true, newLineMode: "auto" });
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/python");
+        editor.setShowPrintMargin(false);
+      }
+    </script>
+    <!-- Will be filled on run. -->
+    <script type="text/python" id="script"></script>
+    <style type="text/css" media="screen">
+      #source {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript" charset="utf-8"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js"
-    integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script type="text/javascript">
-    function go() {
-//      document.getElementById("Brython").src = "/brython/brython.php?source=" + encodeURIComponent(editor.getValue());
-      document.getElementById("code").value = editor.getValue();
-      document.forms['myform'].submit();
-}
-  </script>
-  <script type="text/javascript">
- function escapeHtml(unsafe)
- {
-   return unsafe
-     .replace(/&/g, "&amp;")
-     .replace(/</g, "&lt;")
-     .replace(/>/g, "&gt;")
-     .replace(/"/g, "&quot;")
-     .replace(/'/g, "&#039;");
- }
-
- function getSourceCode(demo)
- {
-   fetch('https://raw.githack.com/epeios-q37/brython/main/' + demo + '.py').then(function (response) {
-     // The API call was successful!
-     return response.text();
-   }).then(function (data) {
-     // This is the JSON from our response
-     console.log(data);
-     editor.setValue(data)
-     
-   }).catch(function (err) {
-     // There was an error
-     console.warn('Something went wrong.', err);
-   });
- }  
- </script>
- <script type="text/javascript">
-    var editor = undefined;
-    function dress() {
-      editor = ace.edit("source", { showLineNumbers: true, newLineMode: "auto" });
-      editor.setTheme("ace/theme/monokai");
-      editor.session.setMode("ace/mode/python");
-      eruda.init();
-    }
-  </script>
-  <!-- Will be filled on run. -->
-  <script type="text/python" id="script"></script>
-<style type="text/css" media="screen">
-    #source {
-      height: 200px;
-      width: 550px;
-    }
-  </style>
-</head>
-<body onload="dress()">
-    <div id="source"># Type your code here or select an example below.</div>
-<div>
-  <select onchange="getSourceCode(this.value)">
-    <option disabled="true" selected="true">Select an example.</option>
-    <option value="Hello">Hello</option>
-    <option value="Messages">Messages</option>
-    <option value="FourInARow">FourInARow</option>
-  </select>
-</div>
-    <div style="margin-top: 10px; margin-bottom: 10px;">
-      <button onclick="go();">Run</button>
+  <body onload="dress()">
+    <details open="true">
+      <summary>Click to hide/show the source code</summary>
+      <div style="display: flex; flex-flow: column; height: 100%;">
+      <div id="source" style="height: calc(100% - 50px)"># Type your code here or select an example below.</div>
+      <div style="margin-top: 10px; margin-bottom: 10px;">
+        <button onclick="go();">Run</button>
+        <select onchange="getSourceCode(this.value)">
+          <option disabled="true" selected="true">Select an example</option>
+          <option value="Hello">Hello</option>
+          <option value="Messages">Messages</option>
+          <option value="Flooder">Flooder</option>
+          <option value="FourInARow">FourInARow</option>
+          <option value="Widgets">Widgets</option>
+        </select>
+      </div>
     </div>
-  </div>
-  <form action="/brython/brython.php" name="myform" method="post" target="output_frame">
-    <textarea name="code" id="code" value="test"></textarea>
-    <input type="submit"/>
-</form>
-<iframe name="output_frame" src="" id="output_frame" width="100%" height="1000px">
-</iframe> 
-</body>
-
+    </details>
+    <form action="/brython/brython.php" name="myform" method="post" target="Brython">
+      <input type="hidden" name="code" id="code" />
+    </form>
+    <iframe name="Brython" src="" id="Brython" width="100%" style="display: none; height: calc(100% - 30px); border: 0px;">
+    </iframe>
+  </body>
 </html>

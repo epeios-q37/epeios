@@ -372,7 +372,6 @@ function handleLaunch(instance, id, action) {
   instance._xdh.inProgress = true;
 
   bundle = { instance: instance, id: id, action: action };
-  log("Bundle R: " + bundle);
   /*
   if (
   action === "" ||
@@ -389,13 +388,11 @@ function handleLaunch(instance, id, action) {
   */
   if (receiveCallbacksQueue.length !== 0) {
     // Somebody is waiting to receive this message.
-    log("Bundle RS: " + bundle);
     receiveCallbacksQueue.shift().resolve(bundle);
     return;
   }
 
   // Enqueue.
-  log("Bundle R: " + bundle);
   receiveDataQueue.push(bundle);
 }
 
@@ -403,7 +400,6 @@ function getCallbackBundle() {
   if (receiveDataQueue.length !== 0) {
     // We have a message ready.
     bundle = receiveDataQueue.shift();
-    log("Bundle S: " + bundle);
 
     return Promise.resolve(bundle);
   }
@@ -509,8 +505,6 @@ function serve(feeder, createCallback, head) {
         let type = pending.type;
         let callback = pending.callback;
 
-        console.log("RESPONSE: ", type);
-
         if (callback !== undefined) {
           switch (type) {
             case types.UNDEFINED:
@@ -523,7 +517,6 @@ function serve(feeder, createCallback, head) {
               callback(string);
               break;
             case types.STRINGS:
-              console.log("Strings: ", strings);
               callback(strings);
               break;
             default:
@@ -729,7 +722,7 @@ function launch_(createCallback, head) {
     );
   };
   ws.onclose = function () {
-    log("DISCONNECT");
+    log("Disconnected!");
   };
   ws.onmessage = function (event) {
     require("blob-to-buffer")(event.data, function (err, buffer) {

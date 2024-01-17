@@ -2,7 +2,7 @@ import javascript, sys, inspect
 from collections import OrderedDict
 from browser import aio
 
-javascript.import_js("atlastk_20240115.js", alias="atlastkjs")
+javascript.import_js("atlastk_20240117.js", alias="atlastkjs")
 
 _VOID = 0
 _STRING = 1
@@ -39,36 +39,27 @@ def call_(instance, command, type, callback, *args):
   atlastkjs.call(instance, command, type, callback, *args)
   
 def voidCallback_(lock):
-  print("voidCallback")
   lock.release()
 
 def stringCallback_(jsString, lock, wrapper):
-  print("stringCallback: ", jsString)
   wrapper[0] = jsString
   lock.release()
 
 def stringsCallback_(jsStrings, lock, wrapper):
-  print("stringsCallback: ", jsStrings)
   wrapper[0] = jsStrings
-  print("R Before")
   lock.release()
-  print("R After")
 
 class Lock:
   def __init__(self):
     self.locked_ = False
 
   async def acquire(self):
-    print("A In")
     while self.locked_:
       await aio.sleep(0)
     self.locked_ = True
-    print("A Out")
 
   def release(self):
-    print("R In")
     self.locked_ = False
-    print("R Out")
 
 class DOM:
   def __init__(self,userObject):
@@ -80,20 +71,14 @@ class DOM:
     await lock.acquire()
 
     if type == _STRING:
-      print("Awaiting string!")
       wrapper = [""]
       call_(self, command, type, lambda result : stringCallback_(result, lock, wrapper), *args )
-      print("AS Before")
       await lock.acquire()
-      print("AS After")
       return wrapper[0]
     elif type == _STRINGS:
-      print("Awaiting stringS!")
       wrapper = [[]]
       call_(self, command, type, lambda result : stringsCallback_(result, lock, wrapper), *args )
-      print("ASS Before")
       await lock.acquire()
-      print("ASS After")
       return wrapper[0]
     elif type == _VOID:
       call_(self, command, type, lambda : voidCallback_(lock), *args )
@@ -218,7 +203,6 @@ class DOM:
     await self._layout("afterbegin",id,xml,xsl)
 
   async def inner(self,id,xml,xsl=""):
-    print("Inner !!!")
     await self._layout("inner",id,xml,xsl)
 
   async def end(self,id,xml,xsl=""):
@@ -446,7 +430,6 @@ def buildArgs(callback, bundle):
   return args
 
 async def handleCallbackBundle(userCallbacks, bundle):
-  print(bundle)
   callback = userCallbacks[bundle.action]
   await callback(*buildArgs(callback, bundle))
   atlastkjs.standBy(bundle.instance)
@@ -457,7 +440,58 @@ async def handleCallbackBundles(userCallbacks):
     aio.run(handleCallbackBundle(userCallbacks,bundle))
 
 def launch(callbacks, userCallback = lambda : None, headContent = ""):
-  atlastkjs.launch(lambda : _callback(userCallback), headContent)
+  atlastkjs.launch(lambda : _callback(userCallback), headContent.replace("_BrythonWorkaroundForClosingScriptTag_","</script>"))
 
   aio.run(handleCallbackBundles(callbacks))
+
+class XML:
+	def _write(self,value):
+		self._xml += str(value) + "\0"
+
+	def __init__(self,rootTag):
+		self._xml = ""
+		self._write("dummy")
+		self._write(rootTag)
+
+	def pushTag(self,tag):
+		self._xml += ">"
+		self._write(tag)
+
+	push_tag = pushTag
+
+	def popTag(self):
+		self._xml += "<"
+
+	pop_tag = popTag
+	
+	def putAttribute(self,name,value):
+		self._xml += "A"
+		self._write(name)
+		self._write(str(value))
+
+	put_attribute = putAttribute
+	
+	def putValue(self,value):
+		self._xml += "V"
+		self._write(str(value))
+
+	put_value = putValue		
+
+	def putTagAndValue(self,tag,value):
+		self.pushTag(tag)
+		self.putValue(value)
+		self.popTag()
+
+	put_tag_and_value = putTagAndValue
+
+	def toString(self):
+		return self._xml
+
+	to_string = toString		
+
+def createXML(root_tag):
+	return XML(root_tag)
+
+def createHTML(root_tag=""):	# If 'root_tag' is empty, there will be no root tag in the tree.
+	return XML(root_tag)
 
