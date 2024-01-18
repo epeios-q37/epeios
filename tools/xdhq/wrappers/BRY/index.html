@@ -9,10 +9,10 @@
       crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="text/javascript">
       function go() {
-        document.getElementById("source").parentNode.parentNode.removeAttribute("open");
+        document.getElementById("source").parentNode.previousElementSibling.removeAttribute("open");
+        document.getElementById("Brython").style["display"] = "";
         document.getElementById("code").value = editor.getValue();
         document.forms['myform'].submit();
-        document.getElementById("Brython").style["display"] = "";
       }
     </script>
     <script type="text/javascript">
@@ -36,6 +36,7 @@
         editor = ace.edit("source", { showLineNumbers: true, newLineMode: "auto" });
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/python");
+        editor.setFontSize(14);
         editor.setShowPrintMargin(false);
       }
     </script>
@@ -46,31 +47,88 @@
         height: 100%;
         width: 100%;
       }
+
+      details.source {
+        overflow: hidden;
+        /* Keep this line to prevent an odd blue outline around the element in Safari. */
+      }
+
+      summary.source {
+        display: block;
+      }
+
+      summary.source::-webkit-details-marker {
+        display: none;
+      }
+
+      span.source {
+        position: relative;
+        display: flex;
+        align-items: center;
+        height:40px;
+      }
+
+      span.source:hover {
+        cursor: pointer;
+      }
+
+      span.source::before {
+        content: "►";
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        margin-right: 0.5rem;
+        transition: rotate 200ms 400ms ease-out;
+      }
+
+      div.source {
+        box-sizing: border-box;
+        max-height: 0;
+        overflow: hidden;
+        padding: 0 10px;
+        transition: max-height 400ms ease-out, border 0ms 400ms linear;
+      }
+
+      details.source[open]+div.source {
+        max-height: 100%;
+        /* Set a max-height value enough to show all the content */
+        transition: max-height 400ms ease-out, border 0ms linear;
+      }
+
+      details.source[open] span.source::before {
+        rotate: 90deg;
+        transition: rotate 200ms ease-out;
+      }
     </style>
   </head>
 
   <body onload="dress()">
-    <details open="true">
-      <summary>Click to hide/show the source code</summary>
-      <div style="display: flex; flex-flow: column; height: 100%;">
-      <div id="source" style="height: calc(100% - 50px)"># Type your code here or select an example below.</div>
+    <details class="source" open="true">
+      <summary class="source">
+        <span role="term" class="source" aria-details="pure-css">Click to show.hide source code</span>
+      </summary>
+    </details>
+    <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%;">
+      <div id="source" style="height: calc(100% - 70px)"># Type your code here or select an example below.</div>
       <div style="margin-top: 10px; margin-bottom: 10px;">
         <button onclick="go();">Run</button>
         <select onchange="getSourceCode(this.value)">
           <option disabled="true" selected="true">Select an example</option>
           <option value="Hello">Hello</option>
           <option value="Messages">Messages</option>
+          <option value="Hangman">Hangman</option>
           <option value="Flooder">Flooder</option>
+          <option value="Tortoise">Tortoise</option>
           <option value="FourInARow">FourInARow</option>
           <option value="Widgets">Widgets</option>
         </select>
       </div>
     </div>
-    </details>
     <form action="/brython/brython.php" name="myform" method="post" target="Brython">
       <input type="hidden" name="code" id="code" />
     </form>
-    <iframe name="Brython" src="" id="Brython" width="100%" style="display: none; height: calc(100% - 30px); border: 0px;">
+    <iframe name="Brython" src="" id="Brython" width="100%"
+      style="display: none; height: calc(100% - 30px); border: 0px;">
     </iframe>
   </body>
 </html>

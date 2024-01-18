@@ -62,8 +62,15 @@ class Lock:
     self.locked_ = False
 
 class DOM:
-  def __init__(self,userObject):
-    self.userObject = userObject
+  def __init__(self,userCallback):
+    args=[]
+
+    if ( userCallback != None ):
+      if ( not(inspect.isclass(userCallback)) and len(inspect.getfullargspec(userCallback).args) == 1 ):
+        args.append(self)
+
+    self.userObject = userCallback(*args)
+
 
   async def call_(self, command, type, *args):
     lock = Lock()
@@ -403,7 +410,7 @@ class DOM:
     await self.call_("Log_1",_VOID,message)
 
 def _callback(userCallback):
-  return DOM(userCallback())
+  return DOM(userCallback)
 
 def buildArgs(callback, bundle):
   amount = len(inspect.getfullargspec(callback).args)
