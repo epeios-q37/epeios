@@ -1,40 +1,8 @@
 import atlastk
 from tortoise import *
 
-HTML = """
- <svg id="SVG" viewbox="-150 -150 300 300">
-  <text x="-100" y="-100">Click on a button below!</text>
- </svg>
- <div id="buttons" style="display: table; margin: 10px auto auto auto;">
-  <button id="All" data-xdh-onevent="All">All</button>
-  <button id="0" data-xdh-onevent="Draw">1</button>
-  <button id="1" data-xdh-onevent="Draw">2</button>
-  <button id="2" data-xdh-onevent="Draw">3</button>
-  <button id="3" data-xdh-onevent="Draw">4</button>
-  <button id="4" data-xdh-onevent="Draw">5</button>
- </div>
-"""
-
-HEAD = """
-<title>Turtle graphics with the Atlas toolkit</title>
-<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAAMFBMVEUEAvyEhsxERuS8urQsKuycnsRkYtzc2qwUFvRUVtysrrx0ctTs6qTMyrSUksQ0NuyciPBdAAABHklEQVR42mNgwAa8zlxjDd2A4POfOXPmzZkFCAH2M8fNzyALzDlzg2ENssCbMwkMOsgCa858YOjBKxBzRoHhD7LAHiBH5swCT9HQ6A9ggZ4zp7YCrV0DdM6pBpAAG5Blc2aBDZA68wCsZPuZU0BDH07xvHOmAGKKvgMP2NA/Zw7ADIYJXGDgLQeBBSCBFu0aoAPYQUadMQAJAE29zwAVWMCWpgB08ZnDQGsbGhpsgCqBQHNfzRkDEIPlzFmo0T5nzoMovjPHoAK8Zw5BnA5yDosDSAVYQOYMKIDZzkoDzagAsjhqzjRAfXTmzAQgi/vMQZA6pjtAvhEk0E+ATWRRm6YBZuScCUCNN5szH1D4TGdOoSrggtiNAH3vBBjwAQCglIrSZkf1MQAAAABJRU5ErkJggg==" />
-<style>
- #SVG {
-  border: 1px solid;
-  padding: 10px;
-  box-shadow: 5px 5px;
-  display: table;
-  margin: auto;
-  text-align: center;
-  width: 300px;
-  height: 300px;
- }
-</style>
-"""
-
 autoDraw = 40
 ids = ["All", "0", "1", "2", "3", "4"]
-
 
 async def koch(tortoise, l):
   if l < 3:
@@ -115,7 +83,7 @@ async def call(tortoise, dom, id):
 
 
 async def acConnect(tortoise, dom):
-  await dom.inner("", HTML)
+  await dom.inner("", BODY)
   await dom.enableElements(ids)
 
 
@@ -132,6 +100,38 @@ async def acAll(tortoise, dom, id):
 async def acDraw(tortoise, dom, id):
   await call(tortoise, dom, id)
   await dom.enableElements(ids)
+
+
+BODY = """
+ <svg id="SVG" viewbox="-150 -150 300 300">
+  <text x="-100" y="-100">Click on a button below!</text>
+ </svg>
+ <div id="buttons" style="display: table; margin: 10px auto auto auto;">
+  <button id="All" data-xdh-onevent="All">All</button>
+  <button id="0" data-xdh-onevent="Draw">1</button>
+  <button id="1" data-xdh-onevent="Draw">2</button>
+  <button id="2" data-xdh-onevent="Draw">3</button>
+  <button id="3" data-xdh-onevent="Draw">4</button>
+  <button id="4" data-xdh-onevent="Draw">5</button>
+ </div>
+"""
+
+HEAD = """
+<title>Turtle graphics with the Atlas toolkit</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAAMFBMVEUEAvyEhsxERuS8urQsKuycnsRkYtzc2qwUFvRUVtysrrx0ctTs6qTMyrSUksQ0NuyciPBdAAABHklEQVR42mNgwAa8zlxjDd2A4POfOXPmzZkFCAH2M8fNzyALzDlzg2ENssCbMwkMOsgCa858YOjBKxBzRoHhD7LAHiBH5swCT9HQ6A9ggZ4zp7YCrV0DdM6pBpAAG5Blc2aBDZA68wCsZPuZU0BDH07xvHOmAGKKvgMP2NA/Zw7ADIYJXGDgLQeBBSCBFu0aoAPYQUadMQAJAE29zwAVWMCWpgB08ZnDQGsbGhpsgCqBQHNfzRkDEIPlzFmo0T5nzoMovjPHoAK8Zw5BnA5yDosDSAVYQOYMKIDZzkoDzagAsjhqzjRAfXTmzAQgi/vMQZA6pjtAvhEk0E+ATWRRm6YBZuScCUCNN5szH1D4TGdOoSrggtiNAH3vBBjwAQCglIrSZkf1MQAAAABJRU5ErkJggg==" />
+<style>
+ #SVG {
+  border: 1px solid;
+  padding: 10px;
+  box-shadow: 5px 5px;
+  display: table;
+  margin: auto;
+  text-align: center;
+  width: 300px;
+  height: 300px;
+ }
+</style>
+"""
 
 
 atlastk.launch(

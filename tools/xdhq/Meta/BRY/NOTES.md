@@ -20,7 +20,41 @@ Comme il n'y a pas de *socket* dans les APIs disponibles avec les navigateurs We
 
 *socat* est installé par défaut sur *Ubuntu*, mais doit être installé à partir du dépôt avec *Debian*.
 
-L'ensemble est lancé de la manière suivante : `websocketd --ssl --sslcert=/var/lib/dehydrated/certs/q37.info/fullchain.pem --sslkey=/var/lib/dehydrated/certs/q37.info/privkey.pem --binary=true  --port=8080  socat - TCP4:localhost:53700`
+On se connecte à *websocktd* via *nginx*, qui prend en chargele protocole *SSL*/*TTL*, raison pour laquelle on n'utilse pas les options `--ssl` et consort de *websocketd*. Voici la partie de la configuraiton dédié à *nfingx*.
+
+```init
+# This section is common for all websockets
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
+# Section for the handling of *Brython*
+
+upstream faas {
+    server localhost:8080;
+}
+
+server {
+  …
+
+
+  location /faas/ {
+      proxy_pass http://faas;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+      proxy_set_header Host $host;
+  proxy_read_timeout 15m;
+  }  
+}
+
+```
+
+L'ensemble est lancé de la manière suivante : `websocketd --binary=true  --port=8080  socat - TCP4:localhost:53700`
+
+
 
 ### Mise en place
 

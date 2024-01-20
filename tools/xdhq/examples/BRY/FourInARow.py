@@ -175,7 +175,7 @@ CALLBACKS = {
 }
 
 HEAD = """
-<title>Four in a Row | Zelbinium</title>
+<title>Four in a Row</title>
 <style>
   td {
     text-align: center;

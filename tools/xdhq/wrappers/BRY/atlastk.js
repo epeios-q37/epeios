@@ -1,5 +1,6 @@
-// var Buffer = require('./buffer.js');
-const URL_ = "wss://faas.q37.info:8080/";
+const location = window.location;
+const URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/faas/";
+
 
 function log(Message) {
   console.log(Message);

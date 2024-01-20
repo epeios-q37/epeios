@@ -2,7 +2,7 @@ import javascript, sys, inspect
 from collections import OrderedDict
 from browser import aio
 
-javascript.import_js("atlastk_20240117.js", alias="atlastkjs")
+javascript.import_js("atlastk_20240120.js", alias="atlastkjs")
 
 _VOID = 0
 _STRING = 1
