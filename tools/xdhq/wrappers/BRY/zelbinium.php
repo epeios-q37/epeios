@@ -1,3 +1,7 @@
+<?php
+$demo = "Messages";
+
+echo <<< CONTENT
 <html>
   <head>
     <meta charset="utf-8">
@@ -30,7 +34,6 @@
     <script type="text/javascript">
       var editor = undefined;
       function dress() {
-        fillExamples();
         editor = ace.edit("Source", { showLineNumbers: true, newLineMode: "auto" });
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/python");
@@ -38,38 +41,11 @@
         editor.setShowPrintMargin(false);
       }
     </script>
-    <script type="text/javascript">
-      function fillExamples() {
-        fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/List.json').then(function (response) {
-          return response.text();
-        }).then(function (list) {
-          entries = JSON.parse(list).entries;
-
-          examples = document.getElementById("Examples");
-
-          for (let i = 0; i < entries.length; i++) {
-            entry = entries[i];
-            option = document.createElement("option");
-            option.innerText = entry;
-            option.value = entry;
-            examples.appendChild(option);
-          }
-        }).catch(function (err) {
-        console.warn('Unable to retrieve example list: ', err);
-      });
-      }
-    </script>
-    <!-- Will be filled on run. -->
     <script type="text/python" id="script"></script>
     <style type="text/css" media="screen">
       #Source {
         height: 100%;
         width: 100%;
-      }
-
-      details.source {
-        overflow: hidden;
-        /* Keep this line to prevent an odd blue outline around the element in Safari. */
       }
 
       summary.source {
@@ -117,24 +93,52 @@
         rotate: 90deg;
         transition: rotate 200ms ease-out;
       }
+
+      .dropdown {
+        display: inline-block;
+        position: relative;
+      }
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        width: 100%;
+        overflow: auto;
+        box-shadow: 0px 10px 10px 0px rgba(0,0,0,0.4);
+      }
+      .dropdown:hover .dropdown-content {
+        display: block;
+      }
+      .dropdown-content a {
+        display: block;
+        color: #000000;
+        padding: 5px;
+        text-decoration: none;
+        background-color: white;
+      }
+      .dropdown-content a:hover {
+        color: #FFFFFF;
+        background-color: #00A4BD;
+      }
     </style>
   </head>
 
-  <body onload="dress()">
+  <body onload="getSourceCode('{$demo}');dress()">
     <details class="source" open="true">
       <summary class="source" style="display: flex; ; align-items: center;">
         <span role="term" class="source" aria-details="pure-css">Source code</span>
         <span style="width: 20px;"></span>
-        <!-- Filled with the content of the 'List.json' file in the 'brython' GitHub repo.-->
-        <select id="Examples" onchange="getSourceCode(this.value)">
-          <option disabled="true" selected="true">Select an example</option>
-        </select>
+        <div class="dropdown" onclick="document.getElementById('Source').parentNode.previousElementSibling.removeAttribute('open')" style="z-index: 10;">
+          <div>Content</div>
+          <div class="dropdown-content">
+            <button onclick="editor.session.setValue('');">Clear</button>
+          </div>
+        </div>
         <span style="width: 5px;"></span>
         <button onclick="go();">Run</button>
       </summary>
     </details>
     <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%;">
-      <div id="Source" style="height: calc(100% - 50px)"># Type your code here or select an example above,
+      <div id="Source" style="height: calc(100% - 50px);"># Type your code here or select an example above,
 # and then click the 'Run' button. Enjoy!</div>
     </div>
     <form action="/brython/brython.php" name="Brython" method="post" target="Brython">
@@ -145,3 +149,5 @@
     </iframe>
   </body>
 </html>
+CONTENT
+?>

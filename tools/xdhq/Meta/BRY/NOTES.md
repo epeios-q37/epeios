@@ -6,6 +6,8 @@ Ce projet concerne la version [*Brython*](httpd://brython.info) du *toolkit* *At
 
 *Brython* permet d'exécuter du code *Python* dans le navigateur.
 
+Le fichi
+
 ## Scripts dans le *head*
 
 Pour pouvoir être pris en charge par *Brython*, le code python est placé tel quel dans un élément *script*. Si le code source *Python* contient la chaîne `</script>`, comme cela peut être le cas lorsque l'utilisateur définit un contenu pour la section *head*, le script censé contenir le code *Python* s'interrompt au niveau de cette chaîne et tout le code *python* qui suit est ignoré, entraînant une erreur de syntaxe. *CDATA* ne peut être utilisé dans ce contexte car ignoré sans un élément *script*. C'est pour cela que la chaîne `</script>` est remplacé par la chaîne `_BrythonWorkaroundForClosingScriptTag_` au niveau PHP, puis rétablie au niveau *Python*.
