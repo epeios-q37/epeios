@@ -1,7 +1,7 @@
 <?php
-$demo = "Messages";
+$demo = $_REQUEST['demo'];
 
-echo <<< CONTENT
+echo <<<CONTENT
 <html>
   <head>
     <meta charset="utf-8">
@@ -39,6 +39,7 @@ echo <<< CONTENT
         editor.session.setMode("ace/mode/python");
         editor.setFontSize(14);
         editor.setShowPrintMargin(false);
+        editor.setReadOnly(true);
       }
     </script>
     <script type="text/python" id="script"></script>
@@ -93,58 +94,29 @@ echo <<< CONTENT
         rotate: 90deg;
         transition: rotate 200ms ease-out;
       }
-
-      .dropdown {
-        display: inline-block;
-        position: relative;
-      }
-      .dropdown-content {
-        display: none;
-        position: absolute;
-        width: 100%;
-        overflow: auto;
-        box-shadow: 0px 10px 10px 0px rgba(0,0,0,0.4);
-      }
-      .dropdown:hover .dropdown-content {
-        display: block;
-      }
-      .dropdown-content a {
-        display: block;
-        color: #000000;
-        padding: 5px;
-        text-decoration: none;
-        background-color: white;
-      }
-      .dropdown-content a:hover {
-        color: #FFFFFF;
-        background-color: #00A4BD;
-      }
     </style>
   </head>
-
   <body onload="getSourceCode('{$demo}');dress()">
     <details class="source" open="true">
       <summary class="source" style="display: flex; ; align-items: center;">
         <span role="term" class="source" aria-details="pure-css">Source code</span>
         <span style="width: 20px;"></span>
-        <div class="dropdown" onclick="document.getElementById('Source').parentNode.previousElementSibling.removeAttribute('open')" style="z-index: 10;">
-          <div>Content</div>
-          <div class="dropdown-content">
-            <button onclick="editor.session.setValue('');">Clear</button>
-          </div>
-        </div>
-        <span style="width: 5px;"></span>
         <button onclick="go();">Run</button>
+        <span style="width: 10px;"></span>
+        <label>
+          <input type="checkbox" checked="true" onchange="editor.setReadOnly(this.checked);"/>
+          <span>Read-only</span>
+        </label>
       </summary>
     </details>
     <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%;">
-      <div id="Source" style="height: calc(100% - 50px);"># Type your code here or select an example above,
+      <div id="Source"># Type your code here or select an example above,
 # and then click the 'Run' button. Enjoy!</div>
     </div>
-    <form action="/brython/brython.php" name="Brython" method="post" target="Brython">
+    <form style="display:none;" action="/brython/brython.php" name="Brython" method="post" target="Brython">
       <input type="hidden" name="code" id="Code" />
     </form>
-    <iframe name="Brython" src="" id="Brython" width="100%"
+    <iframe name="Brython" sandbox="allow-popups allow-same-origin allow-forms allow-scripts" src="" id="Brython" width="100%"
       style="display: none; height: calc(100% - 50px); border: 0px;">
     </iframe>
   </body>
