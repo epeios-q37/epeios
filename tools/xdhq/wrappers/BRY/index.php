@@ -1,7 +1,8 @@
 <?php
-$demo = $_REQUEST['demo'];
 
-echo <<<CONTENT
+$demo = $_REQUEST["demo"];
+
+echo <<<BODY
 <html>
   <head>
     <meta charset="utf-8">
@@ -34,19 +35,51 @@ echo <<<CONTENT
     <script type="text/javascript">
       var editor = undefined;
       function dress() {
-        editor = ace.edit("Source", { showLineNumbers: true, newLineMode: "auto" });
+        fillExamples();
+        editor = ace.edit("Source", { showLineNumbers: true, newLineMode: "auto", readOnly: true });
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/python");
         editor.setFontSize(14);
         editor.setShowPrintMargin(false);
-        editor.setReadOnly(true);
       }
     </script>
+    <script type="text/javascript">
+      function fillExamples() {
+        fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/List.json').then(function (response) {
+          return response.text();
+        }).then(function (list) {
+          entries = JSON.parse(list).entries;
+
+          examples = document.getElementById("Examples");
+
+          for (let i = 0; i < entries.length; i++) {
+            entry = entries[i];
+            option = document.createElement("option");
+            option.innerText = entry;
+            option.value = entry;
+            examples.appendChild(option);
+          }
+
+          if ( "{$demo}" != "" ) {
+            examples.value = "{$demo}";
+            examples.dispatchEvent(new Event('change'));
+          }
+        }).catch(function (err) {
+        console.warn('Unable to retrieve example list: ', err);
+      });
+      }
+    </script>
+    <!-- Will be filled on run. -->
     <script type="text/python" id="script"></script>
     <style type="text/css" media="screen">
       #Source {
         height: 100%;
         width: 100%;
+      }
+
+      details.source {
+        overflow: hidden;
+        /* Keep this line to prevent an odd blue outline around the element in Safari. */
       }
 
       summary.source {
@@ -96,30 +129,36 @@ echo <<<CONTENT
       }
     </style>
   </head>
-  <body onload="getSourceCode('{$demo}');dress()">
+
+  <body onload="dress()">
     <details class="source" open="true">
       <summary class="source" style="display: flex; ; align-items: center;">
         <span role="term" class="source" aria-details="pure-css">Source code</span>
         <span style="width: 20px;"></span>
-        <button onclick="go();">Run</button>
-        <span style="width: 10px;"></span>
+        <!-- Filled with the content of the 'List.json' file in the 'brython' GitHub repo.-->
+        <select id="Examples" onchange="getSourceCode(this.value)">
+          <option disabled="true" selected="true" value="">Select an example</option>
+        </select>
+        <span style="width: 5px;"></span>
         <label>
           <input type="checkbox" checked="true" onchange="editor.setReadOnly(this.checked);"/>
           <span>Read-only</span>
         </label>
+        <span style="width: 5px;"></span>
+        <button onclick="go();">Run</button>
       </summary>
     </details>
     <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%;">
       <div id="Source"># Type your code here or select an example above,
 # and then click the 'Run' button. Enjoy!</div>
     </div>
-    <form style="display:none;" action="/brython/brython.php" name="Brython" method="post" target="Brython">
+    <form action="/brython/brython.php" name="Brython" method="post" target="Brython">
       <input type="hidden" name="code" id="Code" />
     </form>
-    <iframe name="Brython" sandbox="allow-popups allow-same-origin allow-forms allow-scripts" src="" id="Brython" width="100%"
+    <iframe name="Brython" src="" id="Brython" width="100%"
       style="display: none; height: calc(100% - 50px); border: 0px;">
     </iframe>
   </body>
 </html>
-CONTENT
+BODY
 ?>
