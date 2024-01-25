@@ -129,18 +129,16 @@ echo <<<EOS
       popup.classList.toggle("show");
       setTimeout(() => popup.classList.remove("show"), 2500);
     } else
-      alert("Clipboard copy not available in this context.\\nPlease copy the URL directly from the address bar of your browser.");
+      alert("Clipboard copy not available in this context.\\nPlease right click/long press the QR code.");
   }
 
   function share() {
     if (navigator.share) { 
       navigator.share({
         url: "$url"
-      }).then(() => {
-         console.log('Thanks for sharing!');
       })
     } else
-        alert("Sharing not available in this context.\\nPlease copy/paste the URL directly from the address bar of your browser to the application you want to share with.");
+        alert("Sharing not available in this context.\\nPlease right click/long press the QR code.");
   }
 </script>
 </head>

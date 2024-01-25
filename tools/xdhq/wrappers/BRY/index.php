@@ -22,6 +22,9 @@ echo <<<BODY
     </script>
     <script type="text/javascript">
       function getSourceCode(demo) {
+        document.getElementById("Brython").style["display"] = "none";
+        document.getElementById("ReadOnly").checked = true;
+        document.getElementById("ReadOnly").dispatchEvent(new Event('change'));
         fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/' + demo + '.py').then(function (response) {
           return response.text();
         }).then(function (data) {
@@ -133,7 +136,7 @@ echo <<<BODY
   <body onload="dress()">
     <details class="source" open="true">
       <summary class="source" style="display: flex; ; align-items: center;">
-        <span role="term" class="source" aria-details="pure-css">Source code</span>
+        <span role="term" class="source" aria-details="pure-css">Code</span>
         <span style="width: 20px;"></span>
         <!-- Filled with the content of the 'List.json' file in the 'brython' GitHub repo.-->
         <select id="Examples" onchange="getSourceCode(this.value)">
@@ -141,7 +144,7 @@ echo <<<BODY
         </select>
         <span style="width: 5px;"></span>
         <label>
-          <input type="checkbox" checked="true" onchange="editor.setReadOnly(this.checked);"/>
+          <input id="ReadOnly" type="checkbox" checked="true" onchange="editor.setReadOnly(this.checked);"/>
           <span>Read-only</span>
         </label>
         <span style="width: 5px;"></span>
