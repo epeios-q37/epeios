@@ -29,7 +29,7 @@ Si la table ci-dessous est modifiée, alors modifier également (pages du site a
 
 Click the animation to see a screencast of programming this ["Hello, World!" program](https://en.wikipedia.org/wiki/%22Hello,_World!%22_program) with *@LMCT@* in a matter of minutes:
 
-[![Building a GUI in with *@LMCT@* in less then 10 minutes](https://q37.info/s/qp4z37pg.gif)](@YTV@)
+[![Building a GUI in with *@LMCT@* in less then 10 minutes](https://s.q37.info/qp4z37pg.gif)](@YTV@)
 
 Same video on [*Peertube*](https://en.wikipedia.org/wiki/PeerTube): <@PTV@>.
 
@@ -45,12 +45,12 @@ Source code:
 
 ## Your turn
 
-If you want to take your code to the next level, from [CLI](https://q37.info/s/cnh9nrw9) to [GUI](https://q37.info/s/hw9n3pjs), then you found the right toolkit.
+If you want to take your code to the next level, from [CLI](https://s.q37.info/cnh9nrw9) to [GUI](https://s.q37.info/hw9n3pjs), then you found the right toolkit.
 
-With the [*Atlas* toolkit](http://atlastk.org/), you transform your programs in modern web applications ([*SPA*](https://q37.info/s/7sbmxd3j)) without the usual hassles:
+With the [*Atlas* toolkit](http://atlastk.org/), you transform your programs in modern web applications ([*SPA*](https://s.q37.info/7sbmxd3j)) without the usual hassles:
 - no @FJSL@ to write; only *HTML*(/*CSS*) and *@LMCT@*,
-- no [front and back end architecture](https://q37.info/s/px7hhztd) to bother with,
-- no [web server](https://q37.info/s/n3hpwsht) (*Apache*, *Nginx*…) to install,
+- no [front and back end architecture](https://s.q37.info/px7hhztd) to bother with,
+- no [web server](https://s.q37.info/n3hpwsht) (*Apache*, *Nginx*…) to install,
 - no need to deploy your application on a remote server,
 - no incoming port to open on your internet box or routeur.
 
