@@ -6,7 +6,12 @@ Ce projet concerne la version [*Brython*](httpd://brython.info) du *toolkit* *At
 
 *Brython* permet d'exécuter du code *Python* dans le navigateur.
 
-Le fichi
+## Fonction de copie ou de partage
+
+Actuellement, la copie et le partage de l'application via les boutons fonctionnent probablement parce que *Brython* et les applications sont dans le même domaine. Si ce ne devait plus être le cas, il faudra probablement ajouter l'attribut `allow` aux *iframes*, avec un contenu genre `web-share; clipboard-write` (pas testé).
+
+Lorsque *index.php" est chargé dans ue *iframe*, il faut lui ajouter `allow="web-share"`.
+
 
 ## Scripts dans le *head*
 
