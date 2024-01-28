@@ -23,8 +23,6 @@ echo <<<BODY
     <script type="text/javascript">
       function getSourceCode(demo) {
         document.getElementById("Brython").style["display"] = "none";
-        document.getElementById("ReadOnly").checked = true;
-        document.getElementById("ReadOnly").dispatchEvent(new Event('change'));
         fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/' + demo + '.py').then(function (response) {
           return response.text();
         }).then(function (data) {
@@ -39,7 +37,7 @@ echo <<<BODY
       var editor = undefined;
       function dress() {
         fillExamples();
-        editor = ace.edit("Source", { showLineNumbers: true, newLineMode: "auto", readOnly: true });
+        editor = ace.edit("Source", { showLineNumbers: true, newLineMode: "auto" });
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/python");
         editor.setFontSize(14);
@@ -133,7 +131,7 @@ echo <<<BODY
     </style>
   </head>
 
-  <body onload="dress()">
+  <body style="margin: 0 5px 0 5px;" onload="dress()">
     <details class="source" open="true">
       <summary class="source" style="display: flex; ; align-items: center;">
         <span role="term" class="source" aria-details="pure-css">Code</span>
@@ -143,19 +141,32 @@ echo <<<BODY
           <option disabled="true" selected="true" value="">Select an example</option>
         </select>
         <span style="width: 5px;"></span>
-        <label>
-          <input id="ReadOnly" type="checkbox" checked="true" onchange="editor.setReadOnly(this.checked);"/>
-          <span>Read-only</span>
-        </label>
         <span style="width: 5px;"></span>
         <button onclick="go();">Run</button>
       </summary>
     </details>
-    <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%;">
+    <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%; padding: 0;">
       <div id="Source"># Type your code here or select an example above,
 # and then click the 'Run' button. Enjoy!</div>
+      <div>
+        <details>
+          <summary style="list-style: none;">
+            <img style="width: 24px; height: 24px;" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgaGVpZ2h0PSIxMDI0IiB3aWR0aD0iMTAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNTE0IDE5MmMzNC0xIDYxLTI4IDYyLTYyIDEtMzctMjktNjctNjYtNjYtMzQgMS02MSAyOC02MiA2Mi0xIDM3IDI5IDY3IDY2IDY2eiBtNDY0IDM4NGgtMThsLTEyNy0yNDZjMTgtMiAzNi05IDUyLTE2IDI0LTExIDI5LTQzIDExLTYybC0xLTFjLTExLTExLTI4LTE1LTQzLTgtMTQgNi0zNCAxMy01MyAxMy01NiAwLTgxLTY0LTI4Ny02NHMtMjMxIDY0LTI4NyA2NGMtMjAgMC0zOS02LTUzLTEzLTE1LTYtMzItMy00MyA4bC0xIDFjLTE4IDE5LTEzIDUwIDExIDYyIDE2IDggMzQgMTQgNTIgMTZsLTEyNyAyNDZoLTE4Yy04IDAtMTQgNy0xMyAxNSAxMSA2NCA5MiAxMTMgMTkxIDExM3MxODAtNDkgMTkxLTExM2MxLTgtNS0xNS0xMy0xNWgtMThsLTEyNy0yNDVjODMtNyAxMjctNDkgMTkxLTQ5djQ4NmMtMzUgMC02NCAyOS02NCA2NGgtNzFjLTI4IDAtNTcgMjktNTcgNjRoNTEyYzAtMzUtMjktNjQtNzEtNjRoLTU3YzAtMzUtMjktNjQtNjQtNjR2LTQ4NmM2NCAwIDEwOCA0MiAxOTEgNDlsLTEyNyAyNDVoLTE4Yy04IDAtMTQgNy0xMyAxNSAxMSA2NCA5MiAxMTMgMTkxIDExM3MxODAtNDkgMTkxLTExM2MxLTgtNS0xNS0xMy0xNXogbS02NTggMGgtMTkybDk2LTE4MCA5NiAxODB6IG0zODQgMGw5Ni0xODAgOTYgMTgwaC0xOTJ6Ii8+PC9zdmc+"/>
+          </summary>
+          <span>Third-part software components:</span>
+            <ul style="margin: 0;">
+              <li><a target="_blank" href="https://ace.c9.io/"><em>Ace editor</em></a> (<a href="https://github.com/ajaxorg/ace/blob/master/LICENSE" target="_blank">licence</a>);</li>
+              <li><a target="_blank" href="https://atlastk.org"><em>Atlas toolkit</em></a> (<a href="https://github.com/epeios-q37/atlas-python/blob/master/LICENSE" target="_blank">licence</a>);</li>
+              <li><a target="_blank" href="https://github.com/feross/blob-to-buffer"><em>blob-to-buffer</em></a> (<a href="https://github.com/feross/blob-to-buffer/blob/master/LICENSE" target="_blank">licence</a>);</li>
+              <li><a target="_blank" href="http://brython.info"><em>Brython</em></a> (<a href="https://github.com/brython-dev/brython/blob/master/LICENCE.txt" target="_blank">licence</a>);</li>
+              <li><a target="_blank" href="https://github.com/feross/buffer/"><em>buffer</em></a> (<a href="https://github.com/feross/buffer/blob/master/LICENSE" target="_blank">licence</a>);</li>
+              <li><a target="_blank" href="https://github.com/liriliri/eruda"><em>eruda</em></a> (<a href="https://github.com/liriliri/eruda/blob/master/LICENSE" target="_blank">license</a>);</li>
+              <li><a target="_blank" href="https://github.com/epeios-q37/tortoise-python"><em>tortoise-python</em></a> (<a href="https://github.com/epeios-q37/tortoise-python/blob/master/LICENSE" target="_blank">licence</a>).</li>
+            </ul>
+        </details>
+      </div>
     </div>
-    <form action="/brython/brython.php" name="Brython" method="post" target="Brython">
+    <form style="display: none;" action="/brython/brython.php" name="Brython" method="post" target="Brython">
       <input type="hidden" name="code" id="Code" />
     </form>
     <iframe name="Brython" src="" id="Brython" width="100%"

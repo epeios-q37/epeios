@@ -52,7 +52,11 @@ The *GPIO* and *RGB* applications are designed to be used on a *Raspberry Pi* or
 
 Here is how the *WebGPIO* application looks like:
 
+<div align="center">
+
 ![*WebGPIO* interface](https://s.q37.info/htkhqb9x.png)
+
+</div>
 
 For the *Raspberry Pi*, the `RPi.GPIO` *Python* module have to be installed (this is probably already the case).
 
@@ -62,5 +66,9 @@ The *ErgoJr* application is experimental and to control a *Poppy* *Ergo Jr* robo
 
 The *RGB* application is dedicated to the control of a RGB led, and the *GPIO* (aka *WebGPIO*) application allows to control the basic pins. Click below picture to see a *YouTube* video on how they work (same video on [*PeerTube*](https://en.wikipedia.org/wiki/PeerTube): <https://s.q37.info/49pbmwv9>):
 
+<div align="center">
+
 [![RGB video](https://img.youtube.com/vi/C4p2iX6gc-Q/0.jpg)](https://www.youtube.com/watch?v=C4p2iX6gc-Q)
+
+</div>
 

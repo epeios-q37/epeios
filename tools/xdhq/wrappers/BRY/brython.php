@@ -8,14 +8,18 @@ echo <<< EOD
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython_stdlib.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script type="text/javascript">
-  function launchApp(url) {
-    app = document.getElementById("App");
-    app.src = url;
-    app.style["display"] = "";
-  }
-</script>
+    function launchApp(url) {
+      app = document.getElementById("App");
+      app.src = url;
+      app.style["display"] = "";
+    }
+  </script>
+  <script type="text/javascript">
+    var console = {};
+    console.error = function(text){alert(text)};
+  </script>
 </head>
-<body onload="eruda.init();brython()">
+<body onload="eruda.init();brython()" style="margin: 0;">
   <script type="text/python">
 $sourceCode
   </script>
