@@ -2,7 +2,7 @@ import javascript, sys, inspect
 from collections import OrderedDict
 from browser import aio
 
-javascript.import_js("atlastk_20240120.js", alias="atlastkjs")
+javascript.import_js("atlastk_.js", alias="atlastkjs")
 
 _VOID = 0
 _STRING = 1
@@ -65,7 +65,7 @@ class DOM:
   def __init__(self,userCallback):
     args=[]
 
-    if ( userCallback != None ):
+    if ( userCallback is not None ):
       if ( not(inspect.isclass(userCallback)) and len(inspect.getfullargspec(userCallback).args) == 1 ):
         args.append(self)
 
@@ -501,4 +501,10 @@ def createXML(root_tag):
 
 def createHTML(root_tag=""):	# If 'root_tag' is empty, there will be no root tag in the tree.
 	return XML(root_tag)
+
+async def sleep(time):
+  await atlastkjs.sleep(time, lambda : None)
+
+def getAppURL(id=""):
+	return atlastkjs.getAppURL() + ("&_id=" + str(id) if id else "") 
 

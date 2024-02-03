@@ -334,7 +334,7 @@ def computerTurn(game, dom):
       game.turn = 0
       game.current = 1
       display(dom, game, 1)
-      break;
+      break
 
     game.turn += game.dice
 
@@ -350,7 +350,7 @@ def computerTurn(game, dom):
       game.turn = 0
       game.current = 1
       display(dom, game, 1)
-      break;
+      break
 
   enableGameControls(dom)
 

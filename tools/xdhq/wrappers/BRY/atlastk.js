@@ -1,5 +1,5 @@
 const location = window.location;
-const URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/faas/";
+const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/faas/";
 
 
 function log(Message) {
@@ -21,6 +21,7 @@ const LIB_VERSION = "0.13.0"
 
 var ws = undefined;
 var instances = {};
+var app_url_ = undefined;
 
 const types = {
   VOID: 0,
@@ -549,6 +550,7 @@ const i = {
 };
 
 function handleURL(url) {
+  app_url_ = url;
   console.log(url + "\n");
   console.log(new Array(url.length + 1).join("^") + "\n");
   console.log(
@@ -702,16 +704,16 @@ function launch_(createCallback, head) {
 
   if (ws !== undefined) ws.close();
 
-  log("Connecting to '" + URL_ + "'…");
+  log("Connecting to '" + WS_URL_ + "'…");
 
-  ws = new WebSocket(URL_);
+  ws = new WebSocket(WS_URL_);
 
   ws.onerror = function (err) {
-    log("Unable to connect to '" + URL_ + "'!");
+    log("Unable to connect to '" + WS_URL_ + "'!");
   };
 
   ws.onopen = function () {
-    log("Connected to '" + URL_ + "'.");
+    log("Connected to '" + WS_URL_ + "'.");
     push(h.HANDSHAKES);
     push(h.ERROR_FAAS);
     push(d.STRING);
@@ -793,8 +795,23 @@ function broadcastAction(action, id) {
   );
 }
 
+function timeout_(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function sleep(time, fn, ...args) {
+    await timeout_(time);
+    return fn(...args);
+}
+
+function getAppURL() {
+  return app_url_;
+}
+
 module.exports.launch = launch_;
 module.exports.call = call_;
 module.exports.standBy = standBy;
 module.exports.getCallbackBundle = getCallbackBundle;
 module.exports.broadcastAction = broadcastAction;
+module.exports.sleep = sleep;
+module.exports.getAppURL = getAppURL;

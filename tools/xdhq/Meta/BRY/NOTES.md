@@ -6,6 +6,18 @@ Ce projet concerne la version [*Brython*](httpd://brython.info) du *toolkit* *At
 
 *Brython* permet d'exécuter du code *Python* dans le navigateur.
 
+## Détection de *await* sans *async* et vice-versa
+
+L'extension *Pylance* détecte par défaut les fonction utilisant *await* sans être *async*.
+
+Pour détecter les coroutines appelées sans *await*, ajouter cela dans le fichier de configuration de *Pylance* (*settings.json*)
+
+```json
+"python.analysis.diagnosticSeverityOverrides": {
+    "reportUnusedCoroutine": "error"
+}
+```
+
 ## Fonction de copie ou de partage
 
 Actuellement, la copie et le partage de l'application via les boutons fonctionnent probablement parce que *Brython* et les applications sont dans le même domaine. Si ce ne devait plus être le cas, il faudra probablement ajouter l'attribut `allow` aux *iframes*, avec un contenu genre `web-share; clipboard-write` (pas testé).
@@ -48,12 +60,12 @@ server {
 
 
   location /faas/ {
-      proxy_pass http://faas;
-      proxy_http_version 1.1;
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection $connection_upgrade;
-      proxy_set_header Host $host;
-  proxy_read_timeout 15m;
+    proxy_pass http://faas;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_set_header Host $host;
+    proxy_read_timeout 15m;
   }  
 }
 
@@ -85,7 +97,7 @@ Enregistrement du service : `systemctl enable faasws.service`
 
 ## Licenses
 
-- *Ace* (éditeur en ligne) : voir https://github.com/ajaxorg/ace/blob/master/LICENSE (xemble être une license BSD) ;
+- *Ace* (éditeur en ligne) : voir https://github.com/ajaxorg/ace/blob/master/LICENSE (semble être une license BSD) ;
 - *Brython* : *BSD 3-Clause "New" or "Revised" License* (https://github.com/brython-dev/brython/blob/master/LICENCE.txt) ;
 - https://github.com/feross/buffer (émulation du *Buffer* de *Node.js* dans un navigateur) : *MIT* (https://github.com/feross/buffer/blob/master/LICENSE) ;
 - *blob-to-buffer* : *MIT* (https://github.com/feross/blob-to-buffer/blob/master/LICENSE) ;
