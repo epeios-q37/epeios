@@ -1,8 +1,8 @@
-import javascript, sys, inspect
+import javascript, inspect
 from collections import OrderedDict
 from browser import aio
 
-javascript.import_js("atlastk_.js", alias="atlastkjs")
+javascript.import_js("atlastk_20240204.js", alias="atlastkjs")
 
 _VOID = 0
 _STRING = 1
@@ -91,7 +91,7 @@ class DOM:
       call_(self, command, type, lambda : voidCallback_(lock), *args )
       await lock.acquire()
     else:
-      sys.exit("Unknown return type !!!")  
+      raise Exception("Unknown return type !!!")  
 
     lock.release() 
     
