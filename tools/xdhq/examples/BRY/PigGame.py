@@ -1,4 +1,4 @@
-import atlastk, random, uuid
+import atlastk, random, string
 
 #DEBUG = True  # Uncomment for debug mode.
 
@@ -399,7 +399,7 @@ async def acHold(user, dom):
 async def newBetweenHumans(user, dom):
   global games
 
-  token = "debug" if debug() else str(uuid.uuid4())
+  token = "debug" if debug() else ''.join(random.sample(string.ascii_letters + string.digits, 20))
 
   createGame(token)
 
@@ -461,7 +461,8 @@ CALLBACKS = {
 
 HEAD = """
 <title>The 🐷 game</title>
-<style>.hidden {
+<style>
+.hidden {
   visibility: hidden;
 }
 
@@ -498,19 +499,6 @@ HEAD = """
 
 .dice-meter {
   background-color: violet;
-}
-
-.winner_ {
-  color: crimson;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: larger;
-  letter-spacing: 5px;
-  font-family: cursive;
-  width: 100%;
-  background-color: lightgreen;
 }
 
 .score-text {
@@ -580,9 +568,9 @@ HEAD = """
     background-position: 100% 0;
   }
 }
-
 </style>
-<style id="DisplayMarkerA">.marker-a {
+<style id="DisplayMarkerA">
+.marker-a {
   visibility: initial;
 }
 
@@ -590,11 +578,13 @@ HEAD = """
   visibility: hidden;
 }
 </style>
-<style id="HideHHLinkSection">#HHLinkSection {
+<style id="HideHHLinkSection">
+#HHLinkSection {
   display: none;
 }
-
-</style><style id="PlayerView">.viewer {
+</style>
+<style id="PlayerView">
+.viewer {
   display: none;
 }
 
