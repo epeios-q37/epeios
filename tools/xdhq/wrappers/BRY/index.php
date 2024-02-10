@@ -80,11 +80,8 @@ echo <<<BODY
 
       details.source {
         overflow: hidden;
+        width: fit-content;
         /* Keep this line to prevent an odd blue outline around the element in Safari. */
-      }
-
-      summary.source {
-        display: block;
       }
 
       summary.source::-webkit-details-marker {
@@ -135,7 +132,7 @@ echo <<<BODY
     <details class="source" open="true">
       <summary class="source" style="display: flex; ; align-items: center;">
         <span role="term" class="source" aria-details="pure-css">Code</span>
-        <span style="width: 20px;"></span>
+        <span style="width: 10px;"></span>
         <!-- Filled with the content of the 'List.json' file in the 'brython' GitHub repo.-->
         <select id="Examples" onchange="getSourceCode(this.value)">
           <option disabled="true" selected="true" value="">Select an example</option>

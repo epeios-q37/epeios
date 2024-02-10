@@ -86,7 +86,7 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=/usr/bin/websocketd --ssl --sslcert=/var/lib/dehydrated/certs/q37.info/fullchain.pem --sslkey=/var/lib/dehydrated/certs/q37.info/privkey.pem --binary=true  --port=8080  socat - TCP4:localhost:53700
+ExecStart=/usr/bin/websocketd --binary=true  --port=8080 socat - TCP4:localhost:53700
 Restart=always
 
 [Install]

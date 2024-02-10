@@ -17,8 +17,6 @@ const FAAS_PROTOCOL_LABEL = "4c837d30-2eb5-41af-9b3d-6c8bf01d8dbf";
 const FAAS_PROTOCOL_VERSION = "1";
 const SCRIPT_VERSION = "0";
 
-const LIB_VERSION = "0.13.0"
-
 var ws = undefined;
 var instances = {};
 var app_url_ = undefined;
@@ -697,7 +695,7 @@ function onRead(data, createCallback, actionCallbacks, head) {
   }
 }
 
-function launch_(createCallback, head) {
+function launch_(createCallback, head, libraryVersion) {
   stack = new Array();
   phase = p.HANDSHAKES;
   token = "";
@@ -720,7 +718,7 @@ function launch_(createCallback, head) {
     ws.send(
       addString(
         addString(handleString(FAAS_PROTOCOL_LABEL), FAAS_PROTOCOL_VERSION),
-        "BRY " + LIB_VERSION,
+        "BRY " + libraryVersion,
       ),
     );
   };
