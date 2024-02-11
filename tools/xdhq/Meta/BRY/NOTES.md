@@ -33,13 +33,16 @@ Pour pouvoir être pris en charge par *Brython*, le code python est placé tel q
 
 ### Prérequis
 
-Comme il n'y a pas de *socket* dans les APIs disponibles avec les navigateurs Web, on va utiliser les *websockets* pour se connecter au serveur *FaaS*. On ne peut pas se connecter  directement au serveur *FaaS* avec une *websocket*, car il y a un protocole particulier. On va donc passe par un l'utilitaire *websocketd* combiné à *socat*.
+Comme il n'y a pas de *socket* dans les APIs disponibles avec les navigateurs Web, on va utiliser les *websockets* pour se connecter au serveur *FaaS*. On ne peut pas se connecter  directement au serveur *FaaS* avec une *websocket*, car il y a un protocole particulier. On va donc passe par un l'utilitaire relayant une connection issu s'une *websocket* vers le serveur *Faas*. *websocketd* combiné à *socat*.
 
-*websocketd* est disponible dans les dépôts *Ubuntu*, mais pas *Debian*. Pour ce dernier, il faut donc récupérer l'utilitaire directement sur le site dédié. L'utilitaire est un simple exécutable fournit dans un *ZIP*.
 
-*socat* est installé par défaut sur *Ubuntu*, mais doit être installé à partir du dépôt avec *Debian*.
+#### *nginx*
 
-On se connecte à *websocktd* via *nginx*, qui prend en chargele protocole *SSL*/*TTL*, raison pour laquelle on n'utilse pas les options `--ssl` et consort de *websocketd*. Voici la partie de la configuraiton dédié à *nfingx*.
+On peut se connecter directement à l'utilitaire faisant la passerelle entre les *websockets* et le serveur *FaaS* (*websocat* ou *websocketd*), mais la connexion se fait sur un autre port que `443` (*https*), ce qui peut (va) poser problème avec certains *proxy*, et l'utilitaire doit prendre en charge la gestion de *TLS*.
+
+En utilisant *nginx*, on peut se connecter au serveur *FaaS* via l'utilitaire faisant passerelle avec le port standard *https* `443`, et c'est *ngins* qui va pendre en charge *TLS*.
+
+Voici la configuration *nginx* correspondante :
 
 ```init
 # This section is common for all websockets
@@ -68,16 +71,57 @@ server {
     proxy_read_timeout 15m;
   }  
 }
-
 ```
 
-L'ensemble est lancé de la manière suivante : `websocketd --binary=true  --port=8080  socat - TCP4:localhost:53700`
+#### Utilisation de *websocat*
 
+*websocat* se trouve à et doit être téléchargé à partir de <https://github.com/vi/websocat>.
+
+Utilisation : `websocat -b ws-l:127.0.0.1:8080 tcp:localhost:53700`
+
+Le message d'information suivant s'affiche :
+
+> websocat: Unfortunately, serving multiple clients without --exit-on-eof (-E) or with -U option is prone to socket leak in this websocat version
+
+Cependant, à la lecture de l'*issue* suivante, cela ne semble pas poser problème :
+
+https://github.com/vi/websocat/issues/183
+
+#### Utilisation de *websocketd* en combinaison avec *socat*
+
+**NOTA** : non utilisé au profit de la soution ci-dessus à cause d'n problème de fuite mémoire de *websocketd*. En outre, la solution ci-dessus est développé en *Rust* programma compile, alors que *websocketd* est développé en *Go*, et la solution ci-dessus n'a pas besoin de *socat*.
+
+*websocketd* est disponible dans les dépôts *Ubuntu*, mais pas *Debian*. Pour ce dernier, il faut donc récupérer l'utilitaire directement sur le site dédié. L'utilitaire est un simple exécutable fournit dans un *ZIP*.
+
+*socat* est installé par défaut sur *Ubuntu*, mais doit être installé à partir du dépôt avec *Debian*.
+
+On se connecte à *websocktd* via *nginx*, qui prend en charge le protocole *SSL*/*TTL*, raison pour laquelle on n'utilse pas les options `--ssl` et consort de *websocketd*. Voici la partie de la configuraiton dédié à *ngingx*.
+
+L'ensemble est lancé de la manière suivante : `websocketd --binary=true  --port=8080  socat - TCP4:localhost:53700`
 
 
 ### Mise en place
 
 Contenu du fichier `/etc/systemd/system/faasws.service` :
+
+Version *websocat* :
+
+```systemd
+[Unit]
+Description=WebSocket connection to Atlas FaaS daemon
+After=network.target
+
+[Service]
+User=root
+ExecStart=/usr/bin/websocat -b ws-l:127.0.0.1:8080 tcp:localhost:53700
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+
+Version *websocketd*/*socat* (non utilisée) :
 
 ```systemd
 [Unit]
