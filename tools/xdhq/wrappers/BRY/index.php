@@ -1,6 +1,8 @@
 <?php
 
 $demo = $_REQUEST["demo"];
+$version = $_REQUEST["version"];
+$code = $_REQUEST["code"];
 
 echo <<<BODY
 <html>
@@ -61,7 +63,11 @@ echo <<<BODY
             examples.appendChild(option);
           }
 
-          if ( "{$demo}" != "" ) {
+          let code=`$code`;
+          
+          if ( code !== "" ) {
+            editor.session.setValue(code);
+          } else if ( "{$demo}" !== "" ) {
             examples.value = "{$demo}";
             examples.dispatchEvent(new Event('change'));
           }
@@ -165,6 +171,7 @@ echo <<<BODY
     </div>
     <form style="display: none;" action="/brython/brython.php" name="Brython" method="post" target="Brython">
       <input type="hidden" name="code" id="Code" />
+      <input type="hidden" name="version" value="$version" />
     </form>
     <iframe name="Brython" src="" id="Brython" width="100%"
       style="display: none; height: calc(100% - 50px); border: 0px;">

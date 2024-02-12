@@ -1,11 +1,17 @@
 <?php
 $sourceCode = str_replace("</script>", "_BrythonWorkaroundForClosingScriptTag_", $_REQUEST['code']);
 
+$version = "3.11.3";
+
+if (!empty($_REQUEST['version'])) {
+  $version = $_REQUEST['version'];
+}
+
 echo <<< EOD
 <head>
   <meta charset="utf-8">
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.11.3/brython_stdlib.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$version/brython.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$version/brython_stdlib.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script type="text/javascript">
     function launchApp(url) {
@@ -19,7 +25,7 @@ echo <<< EOD
     console.error = function(text){alert(text)};
   </script>
 </head>
-<body onload="eruda.init();brython()" style="margin: 0;">
+<body onload="eruda.init();console.log('Brython version: $version');brython()" style="margin: 0;">
   <script type="text/python">
 $sourceCode
   </script>
