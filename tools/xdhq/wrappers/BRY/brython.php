@@ -1,6 +1,7 @@
 <?php
 $sourceCode = str_replace("</script>", "_BrythonWorkaroundForClosingScriptTag_", $_REQUEST['code']);
 
+// Si modifié, adapter '/themes/hugo-book/layouts/_default/baseof.html(.ori)' de atlastk.org et zelbinium.q37.info.
 $version = "3.11.3";
 
 if (!empty($_REQUEST['version'])) {
