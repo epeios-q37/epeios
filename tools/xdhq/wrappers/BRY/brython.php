@@ -8,11 +8,26 @@ if (!empty($_REQUEST['version'])) {
   $version = $_REQUEST['version'];
 }
 
+if ( $version == "dev") {
+ $brython = <<< EOS
+ <script src="https://raw.githack.com/brython-dev/brython/master/www/src/brython.js"
+ crossorigin="anonymous">
+</script>
+<script src="https://raw.githack.com/brython-dev/brython/master/www/src/brython_stdlib.js"
+   crossorigin="anonymous">
+</script>
+EOS;
+} else {
+  $brython = <<< EOS
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$version/brython.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$version/brython_stdlib.js"></script>
+EOS;
+}
+
 echo <<< EOD
 <head>
   <meta charset="utf-8">
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$version/brython.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$version/brython_stdlib.js"></script>
+  $brython
   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
   <script type="text/javascript">
     function launchApp(url) {
