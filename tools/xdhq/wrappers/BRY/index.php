@@ -149,8 +149,7 @@ echo <<<BODY
       </summary>
     </details>
     <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%; padding: 0;">
-      <div id="Source"># Type your code here or select an example above,
-# and then click the 'Run' button. Enjoy!</div>
+      <div id="Source"># Type your code here or select an example above,\n# and then click the 'Run' button. Enjoy!</div>
       <div>
         <details>
           <summary style="list-style: none;">
