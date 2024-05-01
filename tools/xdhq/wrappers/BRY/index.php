@@ -3,6 +3,7 @@
 $demo = $_REQUEST["demo"];
 $version = $_REQUEST["version"];
 $code = $_REQUEST["code"];
+$cursor = $_REQUEST["cursor"];
 
 echo <<<BODY
 <html>
@@ -63,11 +64,15 @@ echo <<<BODY
             examples.appendChild(option);
           }
 
-          let code=`$code`;
+          let code = `$code`;
           
           if ( code !== "" ) {
-            editor.session.setValue(code);
-          } else if ( "{$demo}" !== "" ) {
+            editor.session.setValue(code.replaceAll('_BrythonWorkaroundForBackQuote_', '`'));
+              if ( '$cursor' !== "" ) {
+                editor.moveCursorTo($cursor);
+                editor.focus();
+              }
+            } else if ( "{$demo}" !== "" ) {
             examples.value = "{$demo}";
             examples.dispatchEvent(new Event('change'));
           }

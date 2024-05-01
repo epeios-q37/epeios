@@ -6,6 +6,13 @@ Ce projet concerne la version [*Brython*](httpd://brython.info) du *toolkit* *At
 
 *Brython* permet d'exécuter du code *Python* dans le navigateur.
 
+## Paramètres
+
+Au script `index.php`, on peut passer les paramètres suivants :
+- `demo` : nom de la démo à précharger ;
+- `code` : code source *Python* à placer dans l'éditeur ; ne pas utiliser en même temps que le paramètre `demo` ;
+- `cursor` : si `code` présent et non vide, position du curseur dans l'éditeur, sous la forme `<ligne>,<colonne>`, avec `0,0` comme origine ; donne également le docus à l'éditeur.
+
 ## Détection de *await* sans *async* et vice-versa
 
 L'extension *Pylance* détecte par défaut les fonction utilisant *await* sans être *async*.
@@ -22,10 +29,17 @@ Pour détecter les coroutines appelées sans *await*, ajouter cela dans le fichi
 
 Actuellement, la copie et le partage de l'application via les boutons fonctionnent probablement parce que *Brython* et les applications sont dans le même domaine. Si ce ne devait plus être le cas, il faudra probablement ajouter l'attribut `allow` aux *iframes*, avec un contenu genre `web-share; clipboard-write` (pas testé).
 
-Lorsque *index.php" est chargé dans ue *iframe*, il faut lui ajouter `allow="web-share"`.
+Lorsque *index.php* est chargé dans une *iframe*, il faut lui ajouter `allow="web-share"`.
 
+## Échappement de caractères dans le code source *Python*
 
-## Scripts dans le *head*
+### Code source contenant un `` ` `` (*backquote*)
+
+Le script *PHP* `index.php` génère un script *JavaScript* dans lequel le code source *Python* est stocké dans une variable comme une chaîne multi-ligne, c'est-à-dire délimitée par des *backquotes* (`` ` ``). Tout *backquote* contenu dans le code source *Python* interromprait donc prématurément la chaîne multi-ligne.
+
+Pour éviter cela, il faut remplacer chaque *backquote* dans le code source *Python* par la chaîne `_BrythonWorkaroundForBackQuote_`. Le code *JavaScript* généré par le script *PHP* remplace cette chaîne par un *backquote* juste avant que le code source *Python* ne soit passé à l'éditeur *Ace*.
+
+### Scripts dans le *head*
 
 Pour pouvoir être pris en charge par *Brython*, le code python est placé tel quel dans un élément *script*. Si le code source *Python* contient la chaîne `</script>`, comme cela peut être le cas lorsque l'utilisateur définit un contenu pour la section *head*, le script censé contenir le code *Python* s'interrompt au niveau de cette chaîne et tout le code *python* qui suit est ignoré, entraînant une erreur de syntaxe. *CDATA* ne peut être utilisé dans ce contexte car ignoré sans un élément *script*. C'est pour cela que la chaîne `</script>` est remplacé par la chaîne `_BrythonWorkaroundForClosingScriptTag_` au niveau PHP, puis rétablie au niveau *Python*.
 
@@ -89,7 +103,7 @@ https://github.com/vi/websocat/issues/183
 
 #### Utilisation de *websocketd* en combinaison avec *socat*
 
-**NOTA** : non utilisé au profit de la soution ci-dessus à cause d'n problème de fuite mémoire de *websocketd*. En outre, la solution ci-dessus est développé en *Rust* programma compile, alors que *websocketd* est développé en *Go*, et la solution ci-dessus n'a pas besoin de *socat*.
+**NOTA** : non utilisé au profit de la solution ci-dessus à cause d'n problème de fuite mémoire de *websocketd*. En outre, la solution ci-dessus est développé en *Rust* programma compile, alors que *websocketd* est développé en *Go*, et la solution ci-dessus n'a pas besoin de *socat*.
 
 *websocketd* est disponible dans les dépôts *Ubuntu*, mais pas *Debian*. Pour ce dernier, il faut donc récupérer l'utilitaire directement sur le site dédié. L'utilitaire est un simple exécutable fournit dans un *ZIP*.
 
