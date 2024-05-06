@@ -68,11 +68,13 @@ echo <<<BODY
           
           if ( code !== "" ) {
             editor.session.setValue(code.replaceAll('_BrythonWorkaroundForBackQuote_', '`'));
-              if ( '$cursor' !== "" ) {
-                editor.moveCursorTo($cursor);
-                editor.focus();
-              }
-            } else if ( "{$demo}" !== "" ) {
+            editor.session.setValue(code.replaceAll('_BrythonWorkaroundForSingleQuote_', "'"));
+
+            if ( '$cursor' !== "" ) {
+              editor.moveCursorTo($cursor);
+              editor.focus();
+            }
+          } else if ( "{$demo}" !== "" ) {
             examples.value = "{$demo}";
             examples.dispatchEvent(new Event('change'));
           }
