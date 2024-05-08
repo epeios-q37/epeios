@@ -39,6 +39,12 @@ Le script *PHP* `index.php` génère un script *JavaScript* dans lequel le code 
 
 Pour éviter cela, il faut remplacer chaque *backquote* dans le code source *Python* par la chaîne `_BrythonWorkaroundForBackQuote_`. Le code *JavaScript* généré par le script *PHP* remplace cette chaîne par un *backquote* juste avant que le code source *Python* ne soit passé à l'éditeur *Ace*.
 
+### Code source contenant un `'` (apostrophe)
+
+Même remarque que précédemment. Les apostrophes ont apparemment un rôle dans les chaînes multi-lignes.
+
+La chaîne d'échappement est : `_BrythonWorkaroundForSingleQuote_`.
+
 ### Scripts dans le *head*
 
 Pour pouvoir être pris en charge par *Brython*, le code python est placé tel quel dans un élément *script*. Si le code source *Python* contient la chaîne `</script>`, comme cela peut être le cas lorsque l'utilisateur définit un contenu pour la section *head*, le script censé contenir le code *Python* s'interrompt au niveau de cette chaîne et tout le code *python* qui suit est ignoré, entraînant une erreur de syntaxe. *CDATA* ne peut être utilisé dans ce contexte car ignoré sans un élément *script*. C'est pour cela que la chaîne `</script>` est remplacé par la chaîne `_BrythonWorkaroundForClosingScriptTag_` au niveau PHP, puis rétablie au niveau *Python*.
