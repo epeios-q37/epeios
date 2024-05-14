@@ -34,7 +34,7 @@ echo <<<EOS
       iframe.height = '50px';
       let body = document.body;
       iframe.height = body.scrollHeight + 'px';
-      document.getElementById("$qrCodeId").scrollIntoView();
+      document.getElementById("$qrCodeId").scrollIntoView({block: "end"});
     }
   </script>
   <style>
