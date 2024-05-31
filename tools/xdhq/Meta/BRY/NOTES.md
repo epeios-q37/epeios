@@ -95,7 +95,7 @@ server {
 
 #### Utilisation de *websocat*
 
-*websocat* se trouve à et doit être téléchargé à partir de <https://github.com/vi/websocat>.
+*websocat* se trouve à et doit être téléchargé à partir de <https://github.com/vi/websocat> (c'est directement l'exécutable à renommer et à placer dans le path (`/usr/bin/`)).
 
 Utilisation : `websocat -b ws-l:127.0.0.1:8080 tcp:localhost:53700`
 
