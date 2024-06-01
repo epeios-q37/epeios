@@ -1,0 +1,34 @@
+<script>
+// you might want to write these into if statements to make sure that e.data[0] is varA if you have multiple messages coming across
+
+
+    async function test()
+    {
+        if (typeof window.addEventListener != 'undefined') {
+    window.addEventListener('message', function(e) {
+        document.getElementById("Code").value = e.data[1];
+
+        console.log(e.data[1]);
+    }, false);
+} else if (typeof window.attachEvent != 'undefined') { // this part is for IE8
+    window.attachEvent('onmessage', function(e) {
+        console.log(e.data); // you'll probably have to play around with this part as I can't remember exactly how it comes across in IE8 -- i think it will involve slice() iirc
+    });
+}        await window.frames['MyFrame'].contentWindow.postMessage(['varA', 13], '*');
+        document.forms['Brython'].submit();
+    }
+</script>
+<button onclick="test()">Test</button>
+<details open>
+<iframe id="MyFrame" src="http://localhost/brython/index.php" width="100%" height="50%" ></iframe>
+</details>
+<form style="display: none;" action="http://localhost/brython/index.php" name="Brython" method="post" target="_blank">
+    <input type="hidden" name="code" id="Code" />
+  </form>
+
+  <form action="http://localhost/brython/index.php" method="post" target="_top">
+    <input type="hidden" name="code" value="toto"/>
+    <input type="submit">
+  </form>
+
+

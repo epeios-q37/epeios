@@ -83,6 +83,21 @@ echo <<<BODY
       });
       }
     </script>
+    <script type="text/javascript">
+
+
+    // you might want to write these into if statements to make sure that e.data[0] is varA if you have multiple messages coming across
+    if (typeof window.addEventListener != 'undefined') {
+        window.addEventListener('message', function(e) {
+          window.parent.postMessage(['varA', editor.getValue()], '*');
+        }, false);
+    } else if (typeof window.attachEvent != 'undefined') { // this part is for IE8
+        window.attachEvent('onmessage', function(e) {
+            console.log(e.data); // you'll probably have to play around with this part as I can't remember exactly how it comes across in IE8 -- i think it will involve slice() iirc
+        });
+    }
+
+    </script>
     <!-- Will be filled on run. -->
     <script type="text/python" id="script"></script>
     <style type="text/css" media="screen">

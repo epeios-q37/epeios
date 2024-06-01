@@ -8,6 +8,8 @@ Ce projet concerne la version [*Brython*](httpd://brython.info) du *toolkit* *At
 
 ## Paramètres
 
+Le fichier `TestIframe.html` est un fichier contenant *Brython* dans une *iframe*. Sert à tester si l'ouverture dans un nouvel onglet récupère le contenu de l'éditeur.
+
 Au script `index.php`, on peut passer les paramètres suivants :
 - `demo` : nom de la démo à précharger ;
 - `code` : code source *Python* à placer dans l'éditeur ; ne pas utiliser en même temps que le paramètre `demo` ;
