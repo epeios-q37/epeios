@@ -41,11 +41,16 @@ echo <<<BODY
       var editor = undefined;
       function dress() {
         fillExamples();
-        editor = ace.edit("Source", { showLineNumbers: true, newLineMode: "auto" });
-        editor.setTheme("ace/theme/monokai");
-        editor.session.setMode("ace/mode/python");
-        editor.setFontSize(14);
-        editor.setShowPrintMargin(false);
+        editor = ace.edit("Source", {
+          showLineNumbers: true,
+          newLineMode: "auto",
+          tabSize: 2,
+          wrap: true,
+          theme: "ace/theme/monokai",
+          mode: "ace/mode/python",
+          fontSize: 14,
+          showPrintMargin: false,
+        });
         sendCode();
       }
     </script>
