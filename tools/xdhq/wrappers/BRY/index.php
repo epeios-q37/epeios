@@ -71,7 +71,7 @@ echo <<<BODY
             examples.appendChild(option);
           }
 
-          let code = `$code`;
+          let code = decodeURIComponent(`$code`);
           
           if ( code !== "" ) {
             editor.session.setValue(code.replaceAll('_BrythonWorkaroundForBackQuote_', '`'));
