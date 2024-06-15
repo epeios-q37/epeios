@@ -15,26 +15,26 @@
 			<xpp:expand select="CLI_Locale"/>
 			<!-- Commands -->
 			<Translations text="ProcessCommandDescription">
-				<Translation language="fr">Traite le flux XML.</Translation>
-				<Translation language="en">Process the XML flow.</Translation>
+				<Translation language="fr">Traite le flux XML</Translation>
+				<Translation language="en">Process the XML flow</Translation>
 			</Translations>
 			<Translations text="EncryptCommandDescription">
-				<Translation language="fr">Chiffre le flux XML.</Translation>
-				<Translation language="en">Encrypt the XML flow.</Translation>
+				<Translation language="fr">Chiffre le flux XML</Translation>
+				<Translation language="en">Encrypt the XML flow</Translation>
 			</Translations>
 			<!-- Flags -->
 			<Translations text="NoIndentationFlagDescription">
-				<Translation language="fr">Pas d'indentation.</Translation>
-				<Translation language="en">No indentation.</Translation>
+				<Translation language="fr">Pas d'indentation</Translation>
+				<Translation language="en">No indentation</Translation>
 			</Translations>
 			<Translations text="PreserveFlagDescription">
-				<Translation language="fr">Prise en compte de l'attribut 'preserve' de la balise 'bloc'.</Translation>
-				<Translation language="en">Take account of the 'preserve' attribute from 'bloc' tag.</Translation>
+				<Translation language="fr">Prise en compte de l'attribut 'preserve' de la balise 'bloc'</Translation>
+				<Translation language="en">Take account of the 'preserve' attribute from 'bloc' tag</Translation>
 			</Translations>
 			<!-- Options -->
 			<Translations text="NamespaceOptionDescription">
-				<Translation language="fr">Espace de nom à utiliser (à la place de 'xpp').</Translation>
-				<Translation language="en">Namespace to use (instead of 'xpp').</Translation>
+				<Translation language="fr">Espace de nom à utiliser (à la place de 'xpp')</Translation>
+				<Translation language="en">Namespace to use (instead of 'xpp')</Translation>
 			</Translations>
 			<Translations text="NamespaceOptionLabel">
 				<Translation language="fr">ns</Translation>
@@ -42,16 +42,16 @@
 			</Translations>
 			<!-- Arguments-->
 			<Translations text="InputArgumentDescription">
-				<Translation language="fr">Nom du fichier d'entrée (utilisation de l'entrée standard si absent).</Translation>
-				<Translation language="en">Input file name (use of standard input if missing).</Translation>
+				<Translation language="fr">Nom du fichier d'entrée (utilisation de l'entrée standard si absent)</Translation>
+				<Translation language="en">Input file name (use of standard input if missing)</Translation>
 			</Translations>
 			<Translations text="InputArgumentLabel">
 				<Translation language="fr">in</Translation>
 				<Translation language="en">in</Translation>
 			</Translations>
 			<Translations text="OutputArgumentDescription">
-				<Translation language="fr">Nom du fichier de sortie (utilisation de la sortie standard si absent).</Translation>
-				<Translation language="en">Output file name (use of standard output if missing).</Translation>
+				<Translation language="fr">Nom du fichier de sortie (utilisation de la sortie standard si absent)</Translation>
+				<Translation language="en">Output file name (use of standard output if missing)</Translation>
 			</Translations>
 			<Translations text="OutputArgumentLabel">
 				<Translation language="fr">out</Translation>

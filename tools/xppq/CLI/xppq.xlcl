@@ -5,7 +5,7 @@
 	<xpp:expand select="epeios.xlcl"/>
 	<Translations text="ProgramDescription">
 		<Translation language="fr">Preprocesseur XML.</Translation>
-		<Translation language="en">XML preprocessor.</Translation>
+		<Translation language="en">XML preprocessor</Translation>
 	</Translations>
 	<Translations text="ProcessingError">
 		<Translation language="fr">Erreur de traitement : %1</Translation>

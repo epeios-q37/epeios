@@ -15,16 +15,16 @@ cli interfaces of applications ('epeios/apps/…/frontend/CLI')
 	<xpp:define name="CLI_Locale">
 		<xpp:bloc>
 			<Translations message="VersionCommandDescription">
-			  <Translation language="fr">Affiche la version du programme.</Translation>
-			  <Translation language="en">Displays the version of the program.</Translation>
+			  <Translation language="fr">Affiche la version du programme</Translation>
+			  <Translation language="en">Displays the version of the program</Translation>
 			</Translations>
 			<Translations message="LicenseCommandDescription">
-			  <Translation language="fr">Affiche la licence du programme.</Translation>
-			  <Translation language="en">Displays the program license.</Translation>
+			  <Translation language="fr">Affiche la licence du programme</Translation>
+			  <Translation language="en">Displays the program license</Translation>
 			</Translations>
 			<Translations message="UsageCommandDescription">
-			  <Translation language="fr">Affiche cette page.</Translation>
-			  <Translation language="en">Displays this page.</Translation>
+			  <Translation language="fr">Affiche cette page</Translation>
+			  <Translation language="en">Displays this page</Translation>
 			</Translations>
 		</xpp:bloc>
 	</xpp:define>
