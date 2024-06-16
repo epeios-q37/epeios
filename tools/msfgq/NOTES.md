@@ -1,5 +1,9 @@
 # Notes concernant l'utilitaire *msfgq* (toutes variantes)
 
+## Compilation
+
+LA versuin *Ubuntu* nécessite le paquet *libasound2-dev*.
+
 ## Divers
 
 Commandes *Linux* utile :
