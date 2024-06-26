@@ -1,5 +1,6 @@
 const location = window.location;
 const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/faas/";
+// const WS_URL_ = "https://faas.q37.info/faas/";
 
 
 function log(Message) {
@@ -695,6 +696,19 @@ function onRead(data, createCallback, actionCallbacks, head) {
   }
 }
 
+function blob2Buffer (blob, cb) {
+  const reader = new FileReader()
+
+  function onLoadEnd (e) {
+    reader.removeEventListener('loadend', onLoadEnd, false)
+    if (e.error) cb(e.error)
+    else cb(null, Buffer.from(reader.result))
+  }
+
+  reader.addEventListener('loadend', onLoadEnd, false)
+  reader.readAsArrayBuffer(blob)
+}
+
 function launch_(createCallback, head, libraryVersion) {
   stack = new Array();
   phase = p.HANDSHAKES;
@@ -726,7 +740,7 @@ function launch_(createCallback, head, libraryVersion) {
     log("Disconnected!");
   };
   ws.onmessage = function (event) {
-    require("blob-to-buffer")(event.data, function (err, buffer) {
+    blob2Buffer(event.data, function (err, buffer) {
       onRead(buffer, createCallback, head);
     });
   };

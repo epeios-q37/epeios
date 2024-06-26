@@ -4,7 +4,7 @@ from browser import aio
 
 LIB_VERSION = "0.14.0"
 
-javascript.import_js("atlastk_20240209.js", "atlastkjs")
+javascript.import_js("atlastk.js", "atlastkjs")
 
 _VOID = 0
 _STRING = 1

@@ -185,9 +185,7 @@ echo <<<BODY
             <ul style="margin: 0;">
               <li><a target="_blank" href="https://ace.c9.io/"><em>Ace editor</em></a> (<a href="https://github.com/ajaxorg/ace/blob/master/LICENSE" target="_blank">licence</a>);</li>
               <li><a target="_blank" href="https://atlastk.org"><em>Atlas toolkit</em></a> (<a href="https://github.com/epeios-q37/atlas-python/blob/master/LICENSE" target="_blank">licence</a>);</li>
-              <li><a target="_blank" href="https://github.com/feross/blob-to-buffer"><em>blob-to-buffer</em></a> (<a href="https://github.com/feross/blob-to-buffer/blob/master/LICENSE" target="_blank">licence</a>);</li>
               <li><a target="_blank" href="http://brython.info"><em>Brython</em></a> (<a href="https://github.com/brython-dev/brython/blob/master/LICENCE.txt" target="_blank">licence</a>);</li>
-              <li><a target="_blank" href="https://github.com/feross/buffer/"><em>buffer</em></a> (<a href="https://github.com/feross/buffer/blob/master/LICENSE" target="_blank">licence</a>);</li>
               <li><a target="_blank" href="https://github.com/liriliri/eruda"><em>eruda</em></a> (<a href="https://github.com/liriliri/eruda/blob/master/LICENSE" target="_blank">license</a>);</li>
               <li><a target="_blank" href="https://github.com/epeios-q37/tortoise-python"><em>tortoise-python</em></a> (<a href="https://github.com/epeios-q37/tortoise-python/blob/master/LICENSE" target="_blank">licence</a>).</li>
             </ul>
