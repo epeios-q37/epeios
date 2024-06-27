@@ -1,10 +1,16 @@
-# Notes à propos de ce projet
+# Notes à propos de la version *Brython* du *toolkit* *Atlas*
 
 ## Introduction
 
 Ce projet concerne la version [*Brython*](httpd://brython.info) du *toolkit* *Atlas*.
 
-*Brython* permet d'exécuter du code *Python* dans le navigateur.
+*Brython* permet d'exécuter du code *Python* dans le navigateur. Set à exécuter une application basée sur le *toolkit* *Atlas* dans le navigateur (site *Zelbiiuù*, démonstration en ligne du *toolkit* *Atlas*).
+
+## Installation
+
+`ATKBRYBuild` browserifie le fichier *atlastk.js* et place tous les fichiers nécessaires dans `/home/csimon/ATK/BRY/web`. Il y a un lien symbolique de `/var/www/brython` vers ce répertoire.
+
+`ATKBRYPublish` met le contenu (avec ajout du *HOSTNAME*) sur le serveur adéquat. Il faut lancer `ATKBRYBuild` auparavant.
 
 ## Paramètres
 

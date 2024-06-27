@@ -112,7 +112,7 @@ echo <<<BODY
 
       details.source {
         overflow: hidden;
-        width: fit-content;
+        width: 100%;
         /* Keep this line to prevent an odd blue outline around the element in Safari. */
       }
 
@@ -170,8 +170,9 @@ echo <<<BODY
           <option disabled="true" selected="true" value="">Select an example</option>
         </select>
         <span style="width: 5px;"></span>
-        <span style="width: 5px;"></span>
         <button onclick="go();">Run</button>
+        <span style="width: 5px;"></span>
+        <span title="%HOST% %DATE%" style="font-size: x-small; width: 100%; cursor: default; text-align: right; font-style: oblique; color: lightgray;">(%HOST% %DATE%)</span>
       </summary>
     </details>
     <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%; padding: 0;">
