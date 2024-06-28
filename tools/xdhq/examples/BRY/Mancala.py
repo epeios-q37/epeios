@@ -191,6 +191,7 @@ HEAD = """
     position: absolute;
     writing-mode: vertical-rl;
     text-orientation: upright;  
+    letter-spacing: -.1ch;
   }
 
   .store_legend_1 {
@@ -274,7 +275,7 @@ More info at <a href="https://en.wikipedia.org/wiki/Mancala">https://en.wikipedi
 <fieldset>
   <fieldset style="display: flex; flex-direction: row">
     <fieldset class="store_fieldset">
-      <legend class="store_legend store_legend_2">2 Store</legend>
+      <legend class="store_legend store_legend_2">2&nbsp;Store</legend>
       <fieldset id="2" style="width: 2ch; text-align: center;"></fieldset>
     </fieldset>
   <span>
@@ -288,7 +289,7 @@ More info at <a href="https://en.wikipedia.org/wiki/Mancala">https://en.wikipedi
   </fieldset>
   </span>
     <fieldset class="store_fieldset">
-      <legend class="store_legend store_legend_1">1 Store</legend>
+      <legend class="store_legend store_legend_1">1&nbsp;Store</legend>
       <fieldset id="1" style="width: 2ch; text-align: center;"></fieldset>
     </fieldset>
   </fieldset>

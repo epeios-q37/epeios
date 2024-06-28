@@ -4,7 +4,9 @@
 
 Ce projet concerne la version [*Brython*](httpd://brython.info) du *toolkit* *Atlas*.
 
-*Brython* permet d'exécuter du code *Python* dans le navigateur. Set à exécuter une application basée sur le *toolkit* *Atlas* dans le navigateur (site *Zelbiiuù*, démonstration en ligne du *toolkit* *Atlas*).
+*Brython* permet d'exécuter du code *Python* dans le navigateur. Sert à exécuter une application basée sur le *toolkit* *Atlas* dans le navigateur (site *Zelbinium*, démonstration en ligne du *toolkit* *Atlas*).
+
+Si modification code, voir pour mise à jour *Zelbinium* (`ZLBRTW`). Les applications d'exemple, ainsi que le dépôt *brython*, sont utilisés pour la section *Inspiration* du site *Zelbinium*.
 
 ## Installation
 

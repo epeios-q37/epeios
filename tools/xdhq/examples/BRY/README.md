@@ -1,3 +1,3 @@
 # *Brython* repository
 
-[*Brython*](https://brython.info) with the *Atlas* toolkit.
+Examples made with the [*Brython*](https://brython.info) version of the [*Atlas* toolkit](https://atlastk.org/).
