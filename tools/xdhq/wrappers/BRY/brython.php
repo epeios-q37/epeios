@@ -45,7 +45,7 @@ echo <<< EOD
   <script type="text/python">
 $sourceCode
   </script>
-<iframe id="App" style="width: 100%; display: none; height: 100%;">
+<iframe id="App" style="width: 100%; display: none; height: 100%; border: none;">
 </iframe>
 EOD
 ?>
