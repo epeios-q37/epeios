@@ -10,9 +10,10 @@ Si modification code, voir pour mise à jour *Zelbinium* (`ZLBRTW`). Les applica
 
 ## Installation
 
-`ATKBRYBuild` browserifie le fichier *atlastk.js* et place tous les fichiers nécessaires dans `/home/csimon/ATK/BRY/web`. Il y a un lien symbolique de `/var/www/brython` vers ce répertoire.
+- `ATKBRYBuild` *browserifie* le fichier *atlastk.js* et place tous les fichiers nécessaires dans `/home/csimon/ATK/BRY/web`. Il y a un lien symbolique de `/var/www/brython` vers ce répertoire.
+- `ATKBRYPublish` met le contenu (avec ajout du *HOSTNAME*) sur le serveur adéquat. Il faut lancer `ATKBRYBuild` auparavant.
 
-`ATKBRYPublish` met le contenu (avec ajout du *HOSTNAME*) sur le serveur adéquat. Il faut lancer `ATKBRYBuild` auparavant.
+Pour un test en local, lancer `ATKBRYBuild` et `Q37FaaSWS`, qui lance la psserelle pour les *WebScockets*. L'diteur *Brython* est alors accessible à l'adresse <http://192.168.1.82/brython>.
 
 ## Paramètres
 
