@@ -182,8 +182,8 @@ HEAD = """
 <!-- CKEditor -->
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
   integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g=" crossorigin="anonymous"></script>
-<script src="https://cdn.ckeditor.com/4.8.0/standard/ckeditor.js"></script>
-<script src="https://cdn.ckeditor.com/4.8.0/standard/adapters/jquery.js"></script>
+<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/4.22.1/standard/adapters/jquery.js"></script>
 
 <style>
   output, .widget {
@@ -581,7 +581,7 @@ CALLBACKS = {
   <legend class="widget">CKEditor</legend>
   <fieldset>
     <textarea id="ckInput"
-      xdh:widget_="ckeditor|{entities: false, enterMode : CKEDITOR.ENTER_BR, linkShowTargetTab: false}|val\(\)|"></textarea>
+      xdh:widget_="ckeditor|{entities: false, enterMode : CKEDITOR.ENTER_BR, linkShowTargetTab: false, versionCheck: false}|val\(\)|"></textarea>
     <button xdh:onevent="ckSubmit">Submit</button>
     <fieldset>
       <output id="ckOutput" style="all: initial;">
