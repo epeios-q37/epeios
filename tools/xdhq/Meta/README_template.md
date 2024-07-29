@@ -20,8 +20,6 @@ To see the *Atlas* toolkit in action:
 
 </div>
 
-
-
 ## A GUI with *@LMCT@* in a couple of minutes
 
 Click the animation to see a screencast of programming this ["Hello, World!" program](https://en.wikipedia.org/wiki/%22Hello,_World!%22_program) with *@LMCT@* in a matter of minutes:

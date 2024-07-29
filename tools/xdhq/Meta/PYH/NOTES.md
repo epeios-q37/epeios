@@ -36,7 +36,7 @@ En créant, dans le répertoire de l'application, un fichier `__main__.py` conte
 - `python3 -m pipenv shell` : créer un environnement d'exécution python isolé.
 - `python3 -m pipenv clean` : désinstalle tout les *package* de l'environnement d'exécution.
 
-### *Pyodide*
+### *Pyodide* et *PyScript*
 
 *Pyodide* (https://pyodide.org/) est un interpréteur *Python* s'exécutant dans un navigateur, et donc d'exécuter des programmes *Python* sans rien avoir à installer au préalable. Il permettrait de se passer de *Replit.com*. il se présente sous la forme d'un script *JS*.
 
@@ -55,6 +55,8 @@ provoque l'erreur suivante :
 > Traceback (most recent call last):
 > File "&lt;console&gt;", line 1, in <module>
 > BlockingIOError: [Errno 26] Operation in progress
+
+*PyScript* s'appuie sur *Pyodide* et les *socket* sont disponibles, mais ne fonctionne pas. Voir <https://docs.python.org/3/library/socket.html#socket.socket.connect>. Tant que l'on aura *Availability: not WASI.*, les *sockets* ne pourront pas être utilisés dans un navigateur web (ou sont non-bloquant, )
 
 ## Publication sur *PyPI*
 

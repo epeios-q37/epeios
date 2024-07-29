@@ -1,6 +1,6 @@
 import atlastk
 
-from functools import reduce 
+import functools
 
 currentPlayer = ""
 winningCombos = []
@@ -58,7 +58,7 @@ async def checkWinner(dom):
   board = await getBoard(dom)
 
   for combo in winningCombos:
-    winner = await getWinner(combo, board)
+    winner = getWinner(combo, board)
     if winner:
       await dom.addClasses(dict(zip([f"cell{i}{j}" for i, j in combo], ["win"]*3)))
       return winner
@@ -186,19 +186,19 @@ h1, h2 {
 ROW = '<td><div id="cell{}{}" data-x="{}" data-y="{}" class="cell" xdh:onevent="Click"></div></td>'
 
 def expand(i):
-  return reduce(lambda a, b: a+b, [[i, j]*2 for j in range(3)])
+  return functools.reduce(lambda a, b: a+b, [[i, j]*2 for j in range(3)])
 
-BODY= """
+BODY = f"""
 <h1>Tic-Tac-Toe</h1>
 <table id="board">
   <tr>
-""" + (ROW*3).format(*expand(0)) + """
+    {(ROW*3).format(*expand(0))}
   </tr>
   <tr>
-""" + (ROW*3).format(*expand(1)) + """
+    {(ROW*3).format(*expand(1))}
   </tr>
   <tr>
-""" + (ROW*3).format(*expand(2)) + """
+    {(ROW*3).format(*expand(2))}
   </tr>
 </table>
 <h2 id="status"></h2>
