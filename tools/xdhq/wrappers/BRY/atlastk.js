@@ -4,7 +4,7 @@ const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + locatio
 
 
 function log(Message) {
-  console.log(Message);
+//  console.log(Message);
 }
 
 function exit_(message) {
@@ -550,12 +550,12 @@ const i = {
 
 function handleURL(url) {
   app_url_ = url;
-  console.log(url + "\n");
-  console.log(new Array(url.length + 1).join("^") + "\n");
-  console.log(
+//  console.log(url + "\n");
+//  console.log(new Array(url.length + 1).join("^") + "\n");
+/*  console.log(
     "Open above URL in a web browser (click, right click or copy/paste). Enjoy!\n",
   );
-
+*/
   launchApp(url);
   
 /*  
@@ -632,7 +632,7 @@ function handshakes(feeder) {
         push(d.STRING);
         break;
       case h.NOTIFICATION_FAAS:
-        if (string.length) console.log(string + "\n");
+//        if (string.length) console.log(string + "\n");
 
         ws.send(
           addString(
@@ -652,7 +652,7 @@ function handshakes(feeder) {
         push(d.STRING);
         break;
       case h.NOTIFICATION_MAIN:
-        if (string.length) console.log(string + "\n");
+//        if (string.length) console.log(string + "\n");
 
         pop();
         break;
@@ -673,7 +673,7 @@ const p = {
 
 var phase = p.HANDSHAKES;
 
-function onRead(data, createCallback, actionCallbacks, head) {
+function onRead(data, createCallback, head) {
   // console.log(">>>>> DATA:", data.length);
 
   let feeder = new Feeder(data);
@@ -687,7 +687,7 @@ function onRead(data, createCallback, actionCallbacks, head) {
         if (!ignition(feeder)) phase = p.SERVE;
         break;
       case p.SERVE:
-        serve(feeder, createCallback, actionCallbacks, head);
+        serve(feeder, createCallback, head);
         break;
       default:
         exit_("Unknown phase of value '" + step + "'!");

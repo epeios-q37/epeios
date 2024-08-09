@@ -39,9 +39,10 @@ echo <<< EOD
   <script type="text/javascript">
     var console = {};
     console.error = function(text){alert(text)};
+    console.info = function(text){alert(text)};
   </script>
 </head>
-<body onload="eruda.init();console.log('Brython version: $version');brython()" style="margin: 0;">
+<body onload="brython()" style="margin: 0;">
   <script type="text/python">
 $sourceCode
   </script>
