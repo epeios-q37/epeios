@@ -1,10 +1,8 @@
 const location = window.location;
 const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/faas/";
-// const WS_URL_ = "https://faas.q37.info/faas/";
-
 
 function log(Message) {
-//  console.log(Message);
+  console.log(Message);
 }
 
 function exit_(message) {
@@ -550,20 +548,13 @@ const i = {
 
 function handleURL(url) {
   app_url_ = url;
-//  console.log(url + "\n");
-//  console.log(new Array(url.length + 1).join("^") + "\n");
-/*  console.log(
+  console.log(url + "\n");
+  console.log(new Array(url.length + 1).join("^") + "\n");
+  console.log(
     "Open above URL in a web browser (click, right click or copy/paste). Enjoy!\n",
   );
-*/
+
   launchApp(url);
-  
-/*  
-  let ATK = getEnv("ATK").toUpperCase();	
-  if (ATK === "REPLIT") {
-  REPLit(url);
-  } else if (ATK !== "NONE") open(url);
-*/
 }
 
 function ignition(feeder) {
@@ -632,7 +623,7 @@ function handshakes(feeder) {
         push(d.STRING);
         break;
       case h.NOTIFICATION_FAAS:
-//        if (string.length) console.log(string + "\n");
+        if (string.length) console.log(string + "\n");
 
         ws.send(
           addString(
@@ -652,7 +643,7 @@ function handshakes(feeder) {
         push(d.STRING);
         break;
       case h.NOTIFICATION_MAIN:
-//        if (string.length) console.log(string + "\n");
+        if (string.length) console.log(string + "\n");
 
         pop();
         break;
