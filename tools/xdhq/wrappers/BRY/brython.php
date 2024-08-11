@@ -3,7 +3,7 @@ $sourceCode = str_replace("</script>", "_BrythonWorkaroundForClosingScriptTag_",
 
 // Si modifié, adapter '/themes/hugo-book/layouts/_default/baseof.html(.ori)' de atlastk.org et zelbinium.q37.info.
 $version = "3.12.4";
-$eruda_version="3.2.1" ;
+$eruda_version="3.2.3";
 
 if (!empty($_REQUEST['version'])) {
   $version = $_REQUEST['version'];
