@@ -188,6 +188,7 @@ qRB;
 		PrintHeader_();
 	else if ( Command == "License" )
 		epsmsc::PrintLicense( NAME_MC );
+#if 0
 	C( T1 );
 	C( T2 );
 	C( T3 );
@@ -195,6 +196,9 @@ qRB;
 	C( T5 );
 	else
 		qRGnr();
+#endif
+	cio::COut << "Yo!" << txf::nl;
+	cio::COut << sizeof(char) << txf::tab << sizeof(long) << txf::tab << sizeof(short) << txf::tab << sizeof(int) << txf::tab << sizeof(uint32_t) << txf::nl;
 
 	ExitValue = EXIT_SUCCESS;
 qRR;

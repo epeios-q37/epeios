@@ -162,7 +162,7 @@ async def acSubmit(dom, id):
   atlastk.broadcastAction("Display")
 
 
-def acNew():
+async def acNew():
   newGame()
   atlastk.broadcastAction("Display")
 

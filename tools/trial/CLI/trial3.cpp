@@ -98,6 +98,8 @@ namespace {
 
   qW( Bundle_ );
 
+  wBundle_ Bundle_;
+
 #ifdef OFFSET
   uys::rFOH<sizeof(dBundle_::s)> FH_;
 #else
