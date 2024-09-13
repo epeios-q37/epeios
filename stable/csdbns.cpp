@@ -32,6 +32,19 @@ using namespace csdbns;
 # include "lstbch.h"
 #endif
 
+namespace {
+	mtx::rMutex N2AMutex_ = mtx::Undefined;	// to protect 'Repository_.
+
+	inline void N2ALock_(void)
+	{
+		mtx::Lock(N2AMutex_);
+	}
+
+	inline void N2AUnlock_(void)
+	{
+		mtx::Unlock(N2AMutex_);
+	}
+}
 
 bso::bool__ csdbns::listener___::Init(
 	port__ Port,
@@ -96,6 +109,8 @@ qRH
 # error
 #endif
 	SockAddrSize = sizeof( SockAddr );
+	const char* Result = NULL;
+	bso::sBool N2ALocked = false;
 qRB
 		Boucler = false;
 		FD_ZERO( &fds );
@@ -127,8 +142,22 @@ qRB
 					qRSys();
 			}
 
-			if ( inet_ntop(AF_INET, &SockAddr.sin_addr, IP, sizeof(tIP) ) == NULL )
+			N2ALock_();
+			N2ALocked = true;
+
+			// If modified, review global destructor.
+			if ( ( Result = inet_ntoa(SockAddr.sin_addr ) ) == NULL )
         qRSys();
+
+#if 0	// Old version, until Windows couldn't no more find 'inet-ntop()'!!!
+			if ( inet_ntop(AF_INET, &SockAddr.sin_addr, IP, sizeof(tIP)) == NULL )
+				qRSys();
+#endif
+
+			strcpy(IP, Result);
+
+			N2AUnlock_();
+			N2ALocked = false;
 		}
 qRR
 	if ( ErrorHandling == err::hUserDefined )
@@ -137,7 +166,9 @@ qRR
 		Boucler = true;
 	} else if ( ErrorHandling != err::hUserDefined )
 		qRFwk();
-qRT
+	qRT
+		if ( N2ALocked )
+			N2AUnlock_();
 qRE
 	}
 
@@ -219,78 +250,84 @@ struct csdbns_repository_item__ {
 
 E_ROW( rrow__ );
 
-static lstbch::E_LBUNCHt( csdbns_repository_item__, rrow__ ) Repository_;
 
-mtx::handler___ Mutex_ = mtx::Undefined;
+namespace {
+	lstbch::E_LBUNCHt(csdbns_repository_item__, rrow__) Repository_;
 
-inline static void Lock_( void )
-{
-	mtx::Lock( Mutex_ );
+	mtx::rMutex RepoMutex_ = mtx::Undefined;	// to protect 'Repository_.
 }
 
-inline static void Unlock_( void )
-{
-	mtx::Unlock( Mutex_ );
-}
-
-
-inline static rrow__ New_( const csdbns_repository_item__ &Item )
-{
-	rrow__ Row = qNIL;
-
-	Lock_();
-
-	Row = Repository_.New();
-
-	Repository_.Store( Item, Row );
-
-	Unlock_();
-
-	return Row;
-}
-
-inline static bso::sBool UnsafeClean_( rrow__ Row )
-{
-	bso::sBool Returning = false;
-	csdbns_repository_item__ Item;
-
-	Repository_.Recall( Row, Item );
-
-	Returning = Item.Callback->PostProcess( Item.UP );
-
-	Repository_.Delete( Row );
-
-	return Returning;
-}
-
-inline static bso::sBool Clean_( rrow__ Row )
-{
-	bso::sBool Returning = false;
-
-	Lock_();
-
-	Returning = UnsafeClean_( Row );
-
-	Unlock_();
-
-	return Returning;
-}
-
-inline static void Clean_( void )
-{
-	Lock_();
-
-	rrow__ Row = Repository_.First();
-
-	while ( Row != qNIL ) {
-		UnsafeClean_( Row );
-
-		Row = Repository_.Next( Row );
+namespace {
+	inline void RepoLock_(void)
+	{
+		mtx::Lock(RepoMutex_);
 	}
 
-	Repository_.Init();
+	inline static void RepoUnlock_(void)
+	{
+		mtx::Unlock(RepoMutex_);
+	}
+}
 
-	Unlock_();
+namespace {
+	inline rrow__ New_(const csdbns_repository_item__& Item)
+	{
+		rrow__ Row = qNIL;
+
+		RepoLock_();
+
+		Row = Repository_.New();
+
+		Repository_.Store(Item, Row);
+
+		RepoUnlock_();
+
+		return Row;
+	}
+
+	inline bso::sBool UnsafeClean_(rrow__ Row)
+	{
+		bso::sBool Returning = false;
+		csdbns_repository_item__ Item;
+
+		Repository_.Recall(Row, Item);
+
+		Returning = Item.Callback->PostProcess(Item.UP);
+
+		Repository_.Delete(Row);
+
+		return Returning;
+	}
+
+	inline bso::sBool Clean_(rrow__ Row)
+	{
+		bso::sBool Returning = false;
+
+		RepoLock_();
+
+		Returning = UnsafeClean_(Row);
+
+		RepoUnlock_();
+
+		return Returning;
+	}
+
+	inline void Clean_(void)
+	{
+		RepoLock_();
+
+		rrow__ Row = Repository_.First();
+
+		while ( Row != qNIL ) {
+			UnsafeClean_(Row);
+
+			Row = Repository_.Next(Row);
+		}
+
+		Repository_.Init();
+
+		RepoUnlock_();
+	}
 }
 
 static void ErrFinal_( void )
@@ -414,10 +451,13 @@ Q37_GCTOR( csdbns )
 #ifdef CPE_F_MT
 	Repository_.reset( false );
 	Repository_.Init();
-	Mutex_ = mtx::Create();
+	RepoMutex_ = mtx::Create();
+	N2AMutex_ = mtx::Create();
 #endif
+#if 0 // Back in the days when we were using 'inet_ntop()' instead of 'inet_ntoa()'…
   if ( sizeof( tIP ) < INET6_ADDRSTRLEN )
     qRChk();
+#endif
 }
 
 Q37_GDTOR( csdbns )
@@ -425,7 +465,10 @@ Q37_GDTOR( csdbns )
 #ifdef CPE_F_MT
 	Clean_();
 
-	if ( Mutex_ != MTX_INVALID_HANDLER )
-		mtx::Delete( Mutex_ );
+	if ( RepoMutex_ != MTX_INVALID_HANDLER )
+		mtx::Delete(RepoMutex_);
+
+	if ( N2AMutex_ != MTX_INVALID_HANDLER )
+		mtx::Delete(N2AMutex_);
 #endif
 }

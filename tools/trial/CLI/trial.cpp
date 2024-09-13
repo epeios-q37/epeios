@@ -24,6 +24,7 @@
 #include "trial3.h"
 #include "trial4.h"
 #include "trial5.h"
+#include "trial6.h"
 
 #include "sclt.h"
 #include "scle.h"
