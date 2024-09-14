@@ -18,14 +18,21 @@
 */
 
 
-#include "registry.h"
+#ifndef SERVER_INC_
+# define SERVER_INC_
 
-using namespace registry;
+# include "sdr.h"
+# include "tol.h"
+# include "sck.h"
 
-namespace parameter_ {
-  rEntry Server_("Server", sclr::Parameters);
+namespace server {
+  qROW( Row );
+
+  void Initialize(void);
+
+  sRow Get(void);
+
+  sck::rRWDriver& Get(sRow Row);
 }
 
-rEntry registry::parameter::server::Service("Service", parameter_::Server_);
-
-rEntry registry::definition::Notification("Notification", sclr::Definitions);
+#endif

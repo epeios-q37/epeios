@@ -30,9 +30,12 @@
       </Modules>
       <Modules Group="CSD">
 		  <Module>csdbns</Module>
-      </Modules>
+		  <Module>csdcmn</Module>
+	  </Modules>
 	</Modules>
-    <Module>registry</Module>
+	  <Module>client</Module>
+	  <Module>registry</Module>
+	  <Module>server</Module>
   </Modules>
   <Files/>
   <RTW Folder="mcrq-cli">

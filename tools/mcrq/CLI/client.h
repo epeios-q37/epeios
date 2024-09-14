@@ -17,15 +17,10 @@
     along with 'McRq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef CLIENT_INC_
+# define CLIENT_INC_
 
-#include "registry.h"
-
-using namespace registry;
-
-namespace parameter_ {
-  rEntry Server_("Server", sclr::Parameters);
+namespace client {
 }
 
-rEntry registry::parameter::server::Service("Service", parameter_::Server_);
-
-rEntry registry::definition::Notification("Notification", sclr::Definitions);
+#endif

@@ -29,11 +29,15 @@ namespace registry {
 	namespace parameter {
 		using namespace sclr::parameter;
 
-		extern rEntry Service;
+    namespace server {
+      extern rEntry Service;
+    }
 	}
 
 	namespace definition {
 		using namespace sclr::definition;
+
+    extern rEntry Notification;
 	}
 }
 

@@ -18,14 +18,7 @@
 */
 
 
-#include "registry.h"
+#include "client.h"
 
-using namespace registry;
+using namespace client;
 
-namespace parameter_ {
-  rEntry Server_("Server", sclr::Parameters);
-}
-
-rEntry registry::parameter::server::Service("Service", parameter_::Server_);
-
-rEntry registry::definition::Notification("Notification", sclr::Definitions);

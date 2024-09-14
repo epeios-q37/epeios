@@ -20,12 +20,12 @@
 
 #include "mcrq.h"
 
+#include "server.h"
+#include "client.h"
 #include "registry.h"
 
 #include "sclm.h"
 #include "sclt.h"
-
-#include "csdbns.h"
 
 #include "err.h"
 #include "cio.h"
@@ -39,37 +39,6 @@ using cio::COut;
 using cio::CIn;
 
 SCLI_DEF( mcrq, NAME_LC, NAME_MC );
-
-namespace {
-	typedef csdbns::cProcessing cProcessing_;
-
-	class sProcessing
-	: public cProcessing_ {
-	protected:
-		virtual void* CSDSCBPreProcess(
-			fdr::rRWDriver* RWDriver,
-			const ntvstr::char__* Origin) override
-		{
-			return NULL;
-		}
-		virtual csdbns::eAction CSDSCBProcess(
-			fdr::rRWDriver* RWDriver,
-			void* UP) override
-		{
-			return csdbns::aContinue;
-		}
-		virtual bso::sBool CSDSCBPostProcess(void* UP) override
-		{
-			return false;
-		}
-	public:
-		void reset(bso::sBool = true)
-		{}
-		qCDTOR(sProcessing);
-		void Init(void)
-		{}
-	};
-}
 
 const scli::sInfo &sclt::SCLTInfo( void )
 {
@@ -86,16 +55,9 @@ namespace {
 
 	void Launch_( void )
 	{
-	qRH;
-		csdbns::rServer Server;
-		sProcessing Callback;
-	qRB;
-		Callback.Init();	
-		Server.Init(sclm::MGetU16(registry::parameter::Service), Callback);
-		Server.Process(NULL);
-	qRR;
-	qRT;
-	qRE;
+		server::Initialize();
+
+		while ( true );
 	}
 }
 
