@@ -454,7 +454,7 @@ Q37_GCTOR( csdbns )
 	RepoMutex_ = mtx::Create();
 	N2AMutex_ = mtx::Create();
 #endif
-#if 0 // Back in the days when we were using 'inet_ntop()' instead of 'inet_ntoa()'…
+#if 0 // Back in the days when we were using 'inet_ntop()' instead of 'inet_ntoa()'ï¿½
   if ( sizeof( tIP ) < INET6_ADDRSTRLEN )
     qRChk();
 #endif

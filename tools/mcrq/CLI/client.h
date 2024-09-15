@@ -20,7 +20,37 @@
 #ifndef CLIENT_INC_
 # define CLIENT_INC_
 
+# include "common.h"
+# include "server.h"
+
+# include "sck.h"
+# include "tol.h"
+# include "sdr.h"
+
 namespace client {
+  qROW(Row);
+
+  typedef common::rHandler rHandler_;
+
+  class rHandler
+  : private rHandler_
+  {
+  public:
+    void reset(bso::sBool P = true)
+    {
+      rHandler_::reset(P);
+    }
+    qCDTOR(rHandler);
+    void Init(void)
+    {
+      reset();
+
+      rHandler_::Init();
+    }
+    void Process(void);
+  };
+
+  void Set(server::rHandler &Server);
 }
 
 #endif

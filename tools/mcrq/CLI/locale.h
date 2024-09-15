@@ -17,22 +17,30 @@
     along with 'McRq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef LOCALE_INC_
+# define LOCALE_INC_
 
-#include "registry.h"
+# include "tol.h"
 
-using namespace registry;
+namespace locale {
+  qENUM(Message) {
+    mClient,
+    mServer,
+    mUnknownProtocol, // %1: protocol ('Client')
+    mUnknownProtocolVersion, // %1: protocol
+    m_amount,
+    m_Undefined
+  };
 
-namespace parameter_ {
-  rEntry Server_("Server", sclr::Parameters);
+  const char* GetLabel(eMessage Message);
+
+  template <typename ... tags> inline const str::string_& GetTranslation(
+    eMessage Message,
+    str::dString& Translation,
+    const tags &... Tags)
+  {
+    return sclm::GetBaseTranslation(GetLabel(Message), Translation, Tags...);
+  }
 }
 
-rEntry registry::parameter::server::Service("Service", parameter_::Server_);
-
-namespace parameter_ {
-  rEntry Client_("Client", sclr::Parameters);
-}
-
-rEntry registry::parameter::client::Service("Service", parameter_::Client_);
-
-
-rEntry registry::definition::Notification("Notification", sclr::Definitions);
+#endif

@@ -18,21 +18,26 @@
 */
 
 
-#include "registry.h"
+#include "locale.h"
 
-using namespace registry;
+using namespace locale;
 
-namespace parameter_ {
-  rEntry Server_("Server", sclr::Parameters);
+#define C( message )	case m##message : return #message; break
+
+const char* locale::GetLabel(eMessage Message)
+{
+	switch ( Message ) {
+    C(Client);
+    C(Server);
+		C(UnknownProtocol);
+		C(UnknownProtocolVersion);
+	default:
+		qRFwk();
+		break;
+	}
+
+	return NULL;	// To avoid a warning.
 }
 
-rEntry registry::parameter::server::Service("Service", parameter_::Server_);
+#undef C
 
-namespace parameter_ {
-  rEntry Client_("Client", sclr::Parameters);
-}
-
-rEntry registry::parameter::client::Service("Service", parameter_::Client_);
-
-
-rEntry registry::definition::Notification("Notification", sclr::Definitions);

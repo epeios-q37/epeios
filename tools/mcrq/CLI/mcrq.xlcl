@@ -7,6 +7,22 @@
 		<Translation language="fr">Commande à distance de microcotrôleurs</Translation>
 		<Translation language="en">Microcontroller remote</Translation>
 	</Translations>
+	<Translations text="Client">
+		<Translation language="fr">client</Translation>
+		<Translation language="en">client</Translation>
+	</Translations>
+	<Translations text="Server">
+		<Translation language="fr">serveur</Translation>
+		<Translation language="en">server</Translation>
+	</Translations>
+	<Translations text="UnknownProtocol">
+		<Translation language="fr">Protocole %1 inconnu.</Translation>
+		<Translation language="en">Unknown %1 protocol.</Translation>
+	</Translations>
+	<Translations text="UnknownProtocolVersion">
+		<Translation language="fr">Version de protocole %1 inconnu.</Translation>
+		<Translation language="en">Unknown %1 protocol version.</Translation>
+	</Translations>
 	<!--
 	<Translations text="">
 		<Translation language="fr"></Translation>

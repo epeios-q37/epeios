@@ -32,7 +32,11 @@ namespace registry {
     namespace server {
       extern rEntry Service;
     }
-	}
+
+    namespace client {
+      extern rEntry Service;
+    }
+  }
 
 	namespace definition {
 		using namespace sclr::definition;

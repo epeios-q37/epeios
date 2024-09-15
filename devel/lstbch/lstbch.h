@@ -47,6 +47,7 @@
 # define qLBUNCHd( type, row ) qXLBUNCHd( type, row, sdr::row_t__ )
 # define qLBUNCHw( type, row ) qXLBUNCHw( type, row, sdr::row_t__ )
 
+// Loose
 # define qLBUNCHdl( type ) qLBUNCHd( type, sdr::sRow )
 # define qLBUNCHwl( type ) qLBUNCHw( type, sdr::sRow )
 

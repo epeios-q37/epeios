@@ -1,12 +1,11 @@
 # MicroController Remove Server (runs on the µcontroller)
 
-import Q37
-import socket, sys, _thread, uos
+import socket, sys, threading
 
-PROTOCOL_LABEL_ = "2b45ad37-2dcd-437c-9185-6ffbfcedfbbf"
+PROTOCOL_LABEL_ = "2e9e85ea-342f-4e1e-b263-0fd9c7118e35"
 PROTOCOL_VERSION_ = "0"
 
-_writeLock = _thread.allocate_lock()
+_writeLock = threading.Lock()
 
 
 def recv_(size):
@@ -46,7 +45,7 @@ def writeUInt_(value):
 def writeString_(string):
   bString = bytes(string, "utf-8")
   writeUInt_(len(bString))
-  send_( bString)
+  send_(bString)
 
 
 def readByte_():
@@ -82,7 +81,7 @@ def init_():
   global socket_
 
   pAddr = "192.168.1.87"
-  pPort = 53800
+  pPort = 53810
 
   socket_ = socket.socket()
   
@@ -100,13 +99,9 @@ def handshake_():
   with _writeLock:
     writeString_(PROTOCOL_LABEL_)
     writeString_(PROTOCOL_VERSION_)
-    print("Avant")
-    writeString_(uos.uname().sysname)
-    print("Aprés")
+    writeString_("PYH")
 
   error = getString_()
-
-  print("Encore aprés")
 
   if error:
     sys.exit(error)
@@ -121,26 +116,32 @@ def ignition_():
   print("Token handling to come…")
 
 
-def serve_():
-  while True:
-    command = getString_()
+def execute_():
+  Command = """
+import neopixel, machine
 
-    print("Command: ", command)
+p = machine.Pin(16)
 
-    exec(command)
+n = neopixel.NeoPixel(p, 4)
+
+# Draw a red gradient.
+n[0] = (8,0,0)
+n[1] = (0,8,0)
+n[2] = (0,0,8)
+n[3] = (8,8,8)
+# Update the strip.
+n.write()
+"""
+  writeString_(Command)
 
 
 def main():
-  WLAN = Q37.HOME
-
-  Q37.connect(WLAN)
-
   init_()
 
   handshake_()
 
   ignition_()
 
-  serve_()
+  execute_()
 
 main()

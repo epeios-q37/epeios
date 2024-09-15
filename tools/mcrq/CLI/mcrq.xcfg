@@ -6,9 +6,12 @@
   <xpp:expand href="../../../CLI.xcfg"/>
   <Parameters>
     <Server>
-      <Service>12345</Service>
+      <Service>53800</Service>
     </Server>
-    <Language>en</Language>
+	<Client>
+	  <Service>53810</Service>
+	</Client>
+	<Language>en</Language>
     <Command>Launch</Command>
     <!-- Default command -->
   </Parameters>

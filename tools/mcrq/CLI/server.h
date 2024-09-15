@@ -21,18 +21,35 @@
 #ifndef SERVER_INC_
 # define SERVER_INC_
 
+# include "common.h"
+
 # include "sdr.h"
-# include "tol.h"
 # include "sck.h"
 
 namespace server {
   qROW( Row );
 
-  void Initialize(void);
+  typedef common::rHandler rHandler_;
 
-  sRow Get(void);
+  class rHandler
+  : private rHandler_
+  {
+  public:
+    void reset(bso::sBool P = true)
+    {
+      rHandler_::reset(P);
+    }
+    qCDTOR(rHandler);
+    void Init(void)
+    {
+      reset();
 
-  sck::rRWDriver& Get(sRow Row);
+      rHandler_::Init();
+    }
+    void Process(void);
+    sRow Get(void) const;
+    sck::rRWDriver& Get(sRow Row);
+  };
 }
 
 #endif

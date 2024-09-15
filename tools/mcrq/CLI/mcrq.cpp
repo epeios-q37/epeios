@@ -33,6 +33,7 @@
 #include "xpp.h"
 #include "fnm.h"
 #include "flf.h"
+#include "tht.h"
 
 using cio::CErr;
 using cio::COut;
@@ -46,6 +47,9 @@ const scli::sInfo &sclt::SCLTInfo( void )
 }
 
 namespace {
+	server::rHandler Server_;
+	client::rHandler Client_;
+
 	void PrintHeader_( void )
 	{
 		COut << NAME_MC " V" VERSION << " (" WEBSITE_URL ")" << txf::nl;
@@ -55,9 +59,16 @@ namespace {
 
 	void Launch_( void )
 	{
-		server::Initialize();
+		Server_.Init();
+		Server_.Process();
 
-		while ( true );
+		client::Set(Server_);
+
+		Client_.Init();
+		Client_.Process();
+
+		while ( true )
+			tht::Suspend(1000);
 	}
 }
 
