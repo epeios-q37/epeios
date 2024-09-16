@@ -1,13 +1,13 @@
 # MicroController Remove Server (runs on the µcontroller)
 
-import Q37
 import socket, sys, _thread, uos
+from machine import Pin
+import Q37
 
 PROTOCOL_LABEL_ = "2b45ad37-2dcd-437c-9185-6ffbfcedfbbf"
 PROTOCOL_VERSION_ = "0"
 
 _writeLock = _thread.allocate_lock()
-
 
 def recv_(size):
   global socket_
@@ -81,7 +81,7 @@ def exit_(message):
 def init_():
   global socket_
 
-  pAddr = "192.168.1.87"
+  pAddr = "192.168.1.82"
   pPort = 53800
 
   socket_ = socket.socket()
@@ -127,13 +127,33 @@ def serve_():
 
     print("Command: ", command)
 
-    exec(command)
+    try:
+      exec(command)
+    except:
+      pass
 
+def callback(tries):
+  if tries == 0:
+    print("Connecting to WLAN…", end="")
+  else:
+    print(".", end="")
+
+  Pin("LED", Pin.OUT).value((tries+1)%2)
+
+  if tries == 30:
+    return False
+
+  return True
 
 def main():
   WLAN = Q37.HOME
 
-  Q37.connect(WLAN)
+  if Q37.connect(WLAN, callback):
+    Pin("LED", Pin.OUT).value(0)
+  else:
+    Pin("LED", Pin.OUT).value(1)
+    exit_("\rUnable to connect to WLAN!                 ")
+
 
   init_()
 

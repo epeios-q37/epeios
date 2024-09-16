@@ -80,7 +80,7 @@ def exit_(message):
 def init_():
   global socket_
 
-  pAddr = "192.168.1.87"
+  pAddr = "192.168.1.82"
   pPort = 53810
 
   socket_ = socket.socket()
@@ -116,32 +116,11 @@ def ignition_():
   print("Token handling to come…")
 
 
-def execute_():
-  Command = """
-import neopixel, machine
-
-p = machine.Pin(16)
-
-n = neopixel.NeoPixel(p, 4)
-
-# Draw a red gradient.
-n[0] = (8,0,0)
-n[1] = (0,8,0)
-n[2] = (0,0,8)
-n[3] = (8,8,8)
-# Update the strip.
-n.write()
-"""
-  writeString_(Command)
-
-
-def main():
+def connect():
   init_()
-
   handshake_()
-
   ignition_()
 
-  execute_()
 
-main()
+def execute(Command):
+  writeString_(Command)

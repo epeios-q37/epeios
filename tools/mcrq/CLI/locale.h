@@ -21,6 +21,7 @@
 # define LOCALE_INC_
 
 # include "tol.h"
+# include "sclm.h"
 
 namespace locale {
   qENUM(Message) {

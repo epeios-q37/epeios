@@ -60,9 +60,6 @@ void common::rHandler::Delete(sdr::sRow Row)
 	if ( Item == NULL )
 		qRGnr();
 
-	sck::rRWDriver *Driver = Item->Driver;
-
-	qDELETE(Driver);
 	qDELETE(Item);
 
 	Items_.Delete(Row);
