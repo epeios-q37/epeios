@@ -136,11 +136,10 @@ COORDS_AND_IDS = [
 ]
 
 BODY = """
-<fieldset style="display: flex;">
-  <span>
-    <span style="display: flex;">
-      <fieldset style="display:flex; flex-direction: column; padding: 20px 90px; align-content: space-between">
-        <div style="display: flex;justify-content: space-between">
+<fieldset>
+    <div style="display: flex; width: 100%; justify-content: space-around; height: 100px;">
+      <fieldset style="display:flex; flex-direction: column; padding: 20px 20px; align-content: space-around">
+        <div style="display: flex; justify-content: space-between">
           <label>
             <span>4</span>
             <input id="3" checked="checked" type="checkbox">
@@ -150,7 +149,6 @@ BODY = """
             <span>3</span>
           </label>
         </div>
-          <div style="height: 20px;"></div>
         <div style="display: flex;justify-content: space-between">
           <label>
             <span>1</span>
@@ -168,49 +166,38 @@ BODY = """
         <div style="height: 10px"></div>
         <button xdh:onevent="Reset">Reset</button>
       </fieldset>
-    </span>
-    <div style="height: 10px"></div>
+    </div>
     <fieldset style="display: flex; flex-direction: column; align-content: space-between">
       <div>
         <label style="display: flex; align-items: center;">
           <span>R:&nbsp;</span>
           <input id="SR" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
+          <span>&nbsp;</span>
+          <input id="NR" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0"  size="3">
         </label>
         <label style="display: flex; align-items: center;">
           <span>V:&nbsp;</span>
           <input id="SG" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
+          <span>&nbsp;</span>
+          <input id="NG" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0"  size="3">
         </label>
         <label style="display: flex; align-items: center;">
           <span>B:&nbsp;</span>
           <input id="SB"  style="width: 100%"type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
-        </label>
-      </div>
-      <hr>
-      <div>
-        <label>
-          <span>R:</span>
-          <input id="NR" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0"  size="3">
-        </label>
-        <label>
-          <span>V:</span>
-          <input id="NG" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0"  size="3">
-        </label>
-        <label>
-          <span>B:</span>
+          <span>&nbsp;</span>
           <input id="NB" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0"  size="3">
         </label>
       </div>
     </fieldset>
   </span>
-  <fieldset style="align-content: center;">
+  <fieldset style="display: flex; justify-content: center;">
     <img
       src="data:image/png;base64,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"
       usemap="#colormap" alt="colormap">
     <map id="colormap" name="colormap">
     </map>
   </fieldset>
-</fieldset>
-"""
+</fieldset>"""
 
 C_INIT = """
 import neopixel, machine

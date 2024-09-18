@@ -522,6 +522,12 @@ namespace str {
 		STR_TSN( signed int , INT_MIN, INT_MAX )
 		STR_TSN( signed short, SHRT_MIN, SHRT_MAX )
 		STR_TSN( signed char, SCHAR_MIN, SCHAR_MAX )
+		template <typename t> string_ &operator<<(const t &Text)
+		{
+			this->Append(Text);
+
+			return *this;
+		}
 	};
 
 	template <typename type> inline void ToEnum(
