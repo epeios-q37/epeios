@@ -1,3 +1,8 @@
+import os, sys
+
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append("../atlastk")
+
 import mcrcq, atlastk
 
 COORDS_AND_IDS = [
@@ -248,7 +253,6 @@ def update_(dom, R, G, B):
     if ( leds[led] == "true" ):
       command += f'{led}: ({R},{G},{B}), '
 
-  print(command + "})")
   mcrcq.execute(command + "})")
 
 

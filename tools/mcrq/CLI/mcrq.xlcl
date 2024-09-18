@@ -23,6 +23,10 @@
 		<Translation language="fr">Version de protocole %1 inconnu.</Translation>
 		<Translation language="en">Unknown %1 protocol version.</Translation>
 	</Translations>
+	<Translations text="NoBackendWithGivenToken">
+		<Translation language="fr">Pas de 'backend' avec le jeton '%1'!</Translation>
+		<Translation language="en">No backend with '%1' token!</Translation>
+	</Translations>
 	<!--
 	<Translations text="">
 		<Translation language="fr"></Translation>

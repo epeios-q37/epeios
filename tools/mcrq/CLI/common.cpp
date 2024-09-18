@@ -20,7 +20,7 @@
 
 #include "common.h"
 
-#include "locale.h"
+#include "messages.h"
 #include "registry.h"
 
 #include "sclm.h"
@@ -83,21 +83,21 @@ namespace {
 		eTarget Target,
 		str::dString &Translation)
 	{
-		locale::eMessage Message = locale::m_Undefined;
+		messages::eId Id = messages::i_Undefined;
 
 		switch ( Target ) {
 		case tClient:
-			Message = locale::mClient;
+			Id = messages::iClient;
 			break;
 		case tServer:
-			Message = locale::mServer;
+			Id = messages::iServer;
 			break;
 		default:
 			qRGnr();
 			break;
 		}
 
-		return locale::GetTranslation(Message, Translation);
+		return messages::GetTranslation(Id, Translation);
 	}
 }
 
@@ -133,13 +133,13 @@ namespace {
 		switch ( Version = csdcmn::GetProtocolVersion(Protocol.Id, Protocol.LastVersion, Flow) ) {
 		case csdcmn::UnknownVersion:
 			tol::Init(MessageTranslation, TargetTranslation);
-			common::Put(locale::GetTranslation(locale::mUnknownProtocol, MessageTranslation, GetTranslation_(Protocol.Target, TargetTranslation)), Flow);
+			common::Put(messages::GetTranslation(messages::iUnknownProtocol, MessageTranslation, GetTranslation_(Protocol.Target, TargetTranslation)), Flow);
 			Flow.Commit();
 			qRGnr();
 			break;
 		case csdcmn::BadProtocol:
 			tol::Init(MessageTranslation, TargetTranslation);
-			common::Put(locale::GetTranslation(locale::mUnknownProtocolVersion, MessageTranslation, GetTranslation_(Protocol.Target, TargetTranslation)), Flow);
+			common::Put(messages::GetTranslation(messages::iUnknownProtocolVersion, MessageTranslation, GetTranslation_(Protocol.Target, TargetTranslation)), Flow);
 			Flow.Commit();
 			qRGnr();
 			break;

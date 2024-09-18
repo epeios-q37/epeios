@@ -17,27 +17,32 @@
     along with 'McRq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef MESSAGES_INC_
+# define MESSAGES_INC_
 
-#include "locale.h"
+# include "tol.h"
+# include "sclm.h"
 
-using namespace locale;
+namespace messages {
+  qENUM(Id) {
+    iClient,
+    iServer,
+    iUnknownProtocol, // %1: protocol ('Client'/'Server')
+    iUnknownProtocolVersion, // %1: protocol
+    iNoBackendWithGivenToken,  // %1: token
+    i_amount,
+    i_Undefined
+  };
 
-#define C( message )	case m##message : return #message; break
+  const char* GetLabel(eId Id);
 
-const char* locale::GetLabel(eMessage Message)
-{
-	switch ( Message ) {
-    C(Client);
-    C(Server);
-		C(UnknownProtocol);
-		C(UnknownProtocolVersion);
-	default:
-		qRFwk();
-		break;
-	}
-
-	return NULL;	// To avoid a warning.
+  template <typename ... tags> inline const str::string_& GetTranslation(
+    eId Id,
+    str::dString& Translation,
+    const tags &... Tags)
+  {
+    return sclm::GetBaseTranslation(GetLabel(Id), Translation, Tags...);
+  }
 }
 
-#undef C
-
+#endif

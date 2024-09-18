@@ -21,8 +21,11 @@
 #include "client.h"
 
 #include "registry.h"
+#include "messages.h"
 
 #include "sclm.h"
+
+#include "csdcmn.h"
 
 using namespace client;
 
@@ -46,15 +49,28 @@ namespace {
     qRH;
       server::sRow Row = qNIL;
       flw::rDressedRWFlow<> Server;
-      str::wString Command;
+      str::wString Token, Message, Command;
     qRB;
+      Token.Init();
+
+      common::Get(Client, Token);
+
       Row = S_().Get();
 
-      if ( Row != qNIL ) {
+      if ( Row == qNIL ) {
+        Message.Init();
+        messages::GetTranslation(messages::iNoBackendWithGivenToken, Message, Token);
+        common::Put(Message, Client);
+        Client.Commit();
+      } else {
+        common::Put("", Client);
+        Client.Commit();
+
         Server.Init(S_().Get(Row));
 
         while ( !Client.EndOfFlow() ) {
           Command.Init();
+          Client.Commit();
 
           common::Get(Client, Command);
           common::Put(Command, Server);
