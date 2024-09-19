@@ -4,6 +4,8 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append("../atlastk")
 
 import mcrcq, atlastk
+from io import StringIO
+
 
 BODY = """
 <fieldset>
@@ -59,6 +61,10 @@ BODY = """
   <div style="display: flex;width: 100%; justify-content: center">
     <button xdh:onevent="Reset">Reset</button>
   </div>
+  <fieldset>
+    <input id="Moves" xdh:onevent="Submit" type="text" style="width: 100%">
+    <button xdh:onevent="Submit" >Submit</button>
+  </fieldset>
 </fieldset>
 """
 
@@ -194,6 +200,78 @@ def acReset(dom):
   move_("rf",0)
   move_("x1",0)
   move_("x2",0)
+
+
+def next(stream):
+  char = stream.read(1)
+
+  while char and char == ' ':
+    char = stream.read(1)
+
+  return char
+
+
+def split(movesString):
+  movesStream = StringIO(movesString)
+
+  moves = []
+  angle = ""
+
+  char = next(movesStream)
+
+  while char:
+    target = char
+
+    char = next(movesStream)
+
+    if not char:
+      break
+
+    if char == '-':
+      angle += char
+      char = next(movesStream)
+
+    while char and char.isdigit():
+      angle += char
+      char = next(movesStream)
+
+    moves.append((target, int(angle)))
+
+    target = ""
+    angle = ""
+
+  return moves
+
+def buildMoves(movesString):
+  moveCommands = ""
+
+  for move in split(movesString):
+    match move[0]:
+      case "L":
+        member = "ll"
+      case "l":
+        member = "lf"
+      case "R":
+        member = "rl"
+      case "r":
+        member = "rf"
+
+    moveCommands += f"{member}.move({move[1]+90})\ntime.sleep(0.5)\n"
+
+  return moveCommands
+
+def acSubmit(dom):
+  move_("lf",0)
+  move_("ll",0)
+  move_("rl",0)
+  move_("rf",0)
+  move_("x1",0)
+  move_("x2",0)
+  moves = buildMoves(dom.getValue("Moves"))
+  print(moves)
+  mcrcq.execute(moves)
+  dom.focus("Moves")
+
   
 
 CALLBACKS = {
@@ -201,7 +279,8 @@ CALLBACKS = {
    "Test": acTest,
    "Slide": acSlide,
    "Adjust": acAdjust,
-   "Reset": acReset
+   "Reset": acReset,
+   "Submit": acSubmit
 }
 
 mcrcq.connect()

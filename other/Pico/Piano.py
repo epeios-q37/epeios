@@ -91,22 +91,23 @@ BODY = """
       </li>
     </ul>
   </fieldset>
-  <fieldset style="display: flex">
-    <fieldset xdh:radio="Device" xdh:onevent="Check">
-      <label>
-        <input type="radio" name="Device" value="Buzzer" checked="checked">
-        <span>Buzzer</span>
-      </label>
-      <label>
-        <input type="radio" name="Device" value="Loudspeaker">
-        <span>Loudspeaker</span>
-      </label>
-    </fieldset>
+  <fieldset style="display: flex; justify-content: space-around">
     <fieldset>
-      <label style="display: flex; align-items: center;">
-        <span>Ratio: </span>
-        <input xdh:onevent="Slide" type="range" min="0" max="100" value="50">
-      </label>
+      <legend>Pin</legend>
+      <select id="PredefinedPin" xdh:onevent="SetPin">
+        <option value="User">User defined</option>
+        <optgroup label="Freenove Bipedal Robot">
+          <option value="Buzzer">Buzzer</option>
+          <option value="Loudspeaker">Loudspeaker</option>
+        </optgroup>
+      </select>
+      <input xdh:onevent="SetPin" id="UserPin" type="number" size="2" min="1" max="99">
+    </fieldset>
+    <fieldset style="display: flex; align-items: center;">
+      <legend>Ratio</legend>
+      <input id="RatioSlide" xdh:onevent="SetRatio" type="range" min="0" max="1" step=".025" value=".5">
+      <span>&nbsp;</span>
+      <input id="RatioValue" xdh:onevent="SetRatio" type="number" min="0" max="1" step=".025" value="0.5">
     </fieldset>
   </fieldset>
 </fieldset>
@@ -119,8 +120,6 @@ INIT = """
 from machine import Pin, PWM
 from time import sleep
 
-BuzzerObj=PWM(Pin({}))
-
 def buzzer(buzzerPinObject,frequency,ratio):
     buzzerPinObject.duty_u16(int(65536*ratio))
     buzzerPinObject.freq(frequency)
@@ -128,31 +127,54 @@ def buzzer(buzzerPinObject,frequency,ratio):
     buzzerPinObject.duty_u16(int(65536*0))
 """
 
+pinNotSet = True
+
 baseFreq = 440.0*math.pow(math.pow(2,1.0/12), -16)
 ratio = 0.5
 
 def acConnect(dom):
   dom.inner("", BODY)
-  mcrcq.execute(INIT.format(BUZZER_PIN))
+  mcrcq.execute(INIT.format(0))
 
 def acPlay(dom,id):
-  freq = int(baseFreq*math.pow(math.pow(2,1.0/12), int(id)))
-  mcrcq.execute(f"buzzer(BuzzerObj,{freq},{ratio})")
+  if pinNotSet:
+    dom.alert("Please select a pin number!")
+  else:
+    freq = int(baseFreq*math.pow(math.pow(2,1.0/12), int(id)))
+    mcrcq.execute(f"buzzer(BuzzerObj,{freq},{ratio})")
 
-def acSlide(dom, id):
+def acSetRatio(dom, id):
   global ratio
   
-  ratio = int(dom.getValue(id))/100.0
+  ratio = float(dom.getValue(id))
 
-def acCheck(dom, id):
-  device = dom.getValue(id)
-  mcrcq.execute(f"BuzzerObj=PWM(Pin({BUZZER_PIN if device == "Buzzer" else LOUDSPEAKER_PIN}))")
+  dom.setValue("RatioSlide" if id == "RatioValue" else "RatioValue", ratio)
+
+def acSetPin(dom, id):
+  global pinNotSet
+
+  rawPin = dom.getValue(id)
+  pin = None
+
+  if rawPin in ("Buzzer", "Loudspeaker"):
+    pin = BUZZER_PIN if rawPin == "Buzzer" else LOUDSPEAKER_PIN
+
+    dom.disableElement("UserPin")
+    dom.setValue("UserPin", pin)
+  elif rawPin != "User":
+    pin = int(rawPin)
+  else:
+    dom.enableElement("UserPin")
+    
+  if pin:
+    pinNotSet = False
+    mcrcq.execute(f"BuzzerObj=PWM(Pin({pin}))")
 
 CALLBACKS = {
   "": acConnect,
   "Play": acPlay,
-  "Slide": acSlide,
-  "Check": acCheck
+  "SetRatio": acSetRatio,
+  "SetPin": acSetPin
 }
 
 mcrcq.connect()
