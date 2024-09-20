@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, time
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append("../atlastk")
@@ -62,8 +62,18 @@ BODY = """
     <button xdh:onevent="Reset">Reset</button>
   </div>
   <fieldset>
-    <input id="Moves" xdh:onevent="Submit" type="text" style="width: 100%">
-    <button xdh:onevent="Submit" >Submit</button>
+    <textarea rows="10" id="Moves" xdh:onevent="Submit" type="text" style="width: 100%">r20 r-20 l-20 l20</textarea>
+    <div style="display: flex">
+      <span style="align-content: center;">
+        <button xdh:onevent="Submit" >Submit</button>
+      </span>
+      <fieldset>
+        <button xdh:onevent="First">|&lt;</button>
+        <button xdh:onevent="Prev">&lt;</button>
+        <button xdh:onevent="Next">&gt;</button>
+        <output id="Move"></output>
+      </fieldset>
+    </div>
   </fieldset>
 </fieldset>
 """
@@ -105,15 +115,36 @@ class Servo:
     duty_u16 = self.__angle_to_u16_duty(angle)
     self.__motor.duty_u16(duty_u16)
 
+  def current(self):
+    return self.current_angle    
+
   def __angle_to_u16_duty(self, angle):
     return int((angle - self.min_angle) * self.__angle_conversion_factor) + self.__min_u16_duty
 
 
   def __initialise(self, pin):
-    self.current_angle = -0.001
+    self.current_angle = 90.001
     self.__angle_conversion_factor = (self.__max_u16_duty - self.__min_u16_duty) / (self.max_angle - self.min_angle)
     self.__motor = PWM(Pin(pin))
     self.__motor.freq(self.__servo_pwm_freq)
+
+
+def move(servo, angle, step = 15):
+  if not step or step == 0:
+    servo.move(angle)
+  else:
+    current = servo.current()
+
+    step = step + 1
+
+    direction = 1 if angle > current else -1 
+
+    while current < angle if direction == 1 else current > angle:
+      print(current)
+      servo.move(current)
+      for _ in range(step):
+        time.sleep(.0025)
+      current += direction    
 
 
 LL_PIN = 10
@@ -131,24 +162,45 @@ x1 = Servo(X1_PIN)
 x2 = Servo(X2_PIN)
 
 def test(servo):
-  servo.move(90)  # tourne le servo à 0°
-  servo.move(45)  # tourne le servo à 0°
+  move(servo, 90)  # tourne le servo à 0°
+  move(servo, 45)  # tourne le servo à 0°
   time.sleep(0.5)
-  servo.move(135)  # tourne le servo à 45°
+  move(servo, 135)  # tourne le servo à 45°
   time.sleep(0.5)
-  servo.move(90)  # tourne le servo à 0°
+  move(servo, 90)  # tourne le servo à 0°
 
-lf.move(90)
-ll.move(90)
-rl.move(90)
-rf.move(90)
-x1.move(90)
-x2.move(90)
+  
+print("Yo")
+move(lf, 90)
+move(ll, 90)
+move(rl, 90)
+move(rf, 90)
+move(x1, 90)
+move(x2, 90)
 """
 
+def resetStacks():
+  global stacks
 
-def move_(servo, angle):
-  mcrcq.execute(f"{servo.lower()}.move({int(angle)+90})")
+  stacks = {
+    "l": [],
+    "L": [],
+    "R": [],
+    "r": []
+  }
+
+stage = 0
+moves = []
+
+def move_(servo, angle, step = None):
+  command = f"move({servo.lower()}, {int(angle)+90}"
+
+  if step != None:
+    command += f",{step}"
+
+  command += ")"
+
+  mcrcq.execute(command)
    
 
 def acConnect(dom):
@@ -179,6 +231,16 @@ def acAdjust(dom, id):
   move_(mark, angle)
 
 
+def reset_():
+  step = 5
+  move_("lf",0, step)
+  move_("ll",0, step)
+  move_("rl",0, step)
+  move_("rf",0, step)
+  move_("x1",0, step)
+  move_("x2",0, step)
+
+
 def acReset(dom):
   dom.setValues({
     "LFN": 0,
@@ -194,13 +256,7 @@ def acReset(dom):
     "X2N": 0,
     "X2S": 0,
   })
-  move_("lf",0)
-  move_("ll",0)
-  move_("rl",0)
-  move_("rf",0)
-  move_("x1",0)
-  move_("x2",0)
-
+  reset_()
 
 def next(stream):
   char = stream.read(1)
@@ -242,36 +298,88 @@ def split(movesString):
 
   return moves
 
-def buildMoves(movesString):
+
+def buildCommand(move):
+  print(move)
+  match move[0]:
+    case "L":
+      member = "ll"
+    case "l":
+      member = "lf"
+    case "R":
+      member = "rl"
+    case "r":
+      member = "rf"
+    case _:
+      return ""  
+
+  return f"move({member},{move[1]+90})"
+
+
+def buildCommands(moves):
   moveCommands = ""
 
-  for move in split(movesString):
-    match move[0]:
-      case "L":
-        member = "ll"
-      case "l":
-        member = "lf"
-      case "R":
-        member = "rl"
-      case "r":
-        member = "rf"
-
-    moveCommands += f"{member}.move({move[1]+90})\ntime.sleep(0.5)\n"
+  for move in (moves):
+    moveCommands += buildCommand(move) + "\ntime.sleep(0.1)\n"
 
   return moveCommands
 
+
 def acSubmit(dom):
-  move_("lf",0)
-  move_("ll",0)
-  move_("rl",0)
-  move_("rf",0)
-  move_("x1",0)
-  move_("x2",0)
-  moves = buildMoves(dom.getValue("Moves"))
-  print(moves)
-  mcrcq.execute(moves)
+  global moves, stage
+
+  stage = 0
+
+  reset_()
+  moves = split(dom.getValue("Moves"))
+  mcrcq.execute(buildCommands(moves))
   dom.focus("Moves")
 
+
+def displayMove(dom):
+  if stage < len(moves):
+    dom.setValue("Move", f"{moves[stage][0]}{moves[stage][1]}")
+  else:
+    dom.setValue("Move", "")
+
+def acFirst(dom):
+  global stage, moves
+  stage = 0
+  resetStacks()
+  moves = split(dom.getValue("Moves"))
+  reset_()
+  displayMove(dom)
+
+
+def acPrev(dom):
+  global stage, moves, stacks
+
+  if stage >= 0 and len(moves) > 0:
+    if stage >= len(moves):
+      stage = len(moves) - 1
+
+    stacks[moves[stage][0]].pop()
+    print(stacks)
+    mcrcq.execute(buildCommand((moves[stage][0], 0 if len(stacks[moves[stage][0]]) == 0 else stacks[moves[stage][0]][-1])))
+    displayMove(dom)
+    stage -= 1
+
+
+def acNext(dom):
+  global stage, stacks, moves
+
+  if stage == 0:
+    reset_()
+    resetStacks()
+    moves = split(dom.getValue("Moves"))
+
+
+  if stage < len(moves):
+    stacks[moves[stage][0]].append(moves[stage][1])
+    print(stacks)
+    mcrcq.execute(buildCommand(moves[stage]))
+    stage += 1
+    displayMove(dom)
   
 
 CALLBACKS = {
@@ -280,7 +388,10 @@ CALLBACKS = {
    "Slide": acSlide,
    "Adjust": acAdjust,
    "Reset": acReset,
-   "Submit": acSubmit
+   "Submit": acSubmit,
+   "First": acFirst,
+   "Prev": acPrev,
+   "Next": acNext,
 }
 
 mcrcq.connect()
