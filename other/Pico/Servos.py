@@ -1,11 +1,37 @@
-import os, sys, time
+import os, sys, time, io
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append("../atlastk")
 
 import mcrcq, atlastk
-from io import StringIO
 
+MACRO_MARKER_ = '@'
+
+macros = {
+  "Test": {
+    "Description": "Macro de test",
+    "Content": "L5:R5"
+  },
+  "Forward": {
+    "Description": "Going forward",
+    "Content": "R35:L35 r3:l3 R0:L0 r0:l0 "
+  },
+  "Rewind": {
+    "Description": "Step back",
+    "Content": "R-35:L-35 r-3:l-3 R0:L0 r0:l0 "
+  },
+  "ForwardAndRewind": {
+    "Description": "",
+    "Content": "@Forward @Rewind"
+  }
+}
+
+servos = {
+  "l": "lf",
+  "L": "ll",
+  "r": "rf",
+  "R": "rl"
+}
 
 BODY = """
 <fieldset>
@@ -62,24 +88,45 @@ BODY = """
     <button xdh:onevent="Reset">Reset</button>
   </div>
   <fieldset>
-    <textarea rows="10" id="Moves" xdh:onevent="Submit" type="text" style="width: 100%">r20 r-20 l-20 l20</textarea>
-    <div style="display: flex">
-      <span style="align-content: center;">
-        <button xdh:onevent="Submit" >Submit</button>
-      </span>
-      <fieldset>
-        <button xdh:onevent="First">|&lt;</button>
-        <button xdh:onevent="Prev">&lt;</button>
-        <button xdh:onevent="Next">&gt;</button>
-        <output id="Move"></output>
-      </fieldset>
+    <div>
+      <label style="width: 30%">
+        <epan>Id:</epan>
+        <input type="text"style="width: 10%">
+      </label>
+      <button>Save</button>
+      <label>
+        <span>Desc.:</span>
+        <input type="text" style="width: 50%">
+      </label>
+      <button xdh:onevent="Submit">Execute</button>
     </div>
+    <textarea id="Moves" xdh:onevent="Submit" style="width: 100%" name="" id=""></textarea>
   </fieldset>
+  <fieldset id="Macros"/>
 </fieldset>
 """
 
+MACRO_HTML="""
+<div xdh:mark="Macro{}">
+  <div>
+    <label>
+      <span>Id.:</span>
+      <input disabled="disabled" style="width: 20%" value="{}">
+    </label>
+    <button xdh:onevent="DeleteMacro">Delete</button>
+    <label>
+      <span>Desc.:</span>
+      <input disabled="disabled" style="width: 50%" value="{}">
+    </label>
+  <button xdh:onevent="EditMacro">Edit</button>
+  <button xdh:onevent="ExecuteMacro">Execute</button>
+  </div>
+  <textarea disabled="disabled" style="width: 100%">{}</textarea>
+</div>
+"""
+
 C_INIT = """
-from machine import Pin,PWM
+from machine import Pin, PWM
 import time
 
 class Servo:
@@ -129,7 +176,7 @@ class Servo:
     self.__motor.freq(self.__servo_pwm_freq)
 
 
-def move(servo, angle, step = 15):
+def move(moves, step = 15):
   if not step or step == 0:
     servo.move(angle)
   else:
@@ -140,7 +187,6 @@ def move(servo, angle, step = 15):
     direction = 1 if angle > current else -1 
 
     while current < angle if direction == 1 else current > angle:
-      print(current)
       servo.move(current)
       for _ in range(step):
         time.sleep(.0025)
@@ -161,22 +207,44 @@ rf = Servo(RF_PIN)
 x1 = Servo(X1_PIN)
 x2 = Servo(X2_PIN)
 
-def test(servo):
-  move(servo, 90)  # tourne le servo à 0°
-  move(servo, 45)  # tourne le servo à 0°
-  time.sleep(0.5)
-  move(servo, 135)  # tourne le servo à 45°
-  time.sleep(0.5)
-  move(servo, 90)  # tourne le servo à 0°
+servos = {
+  "lf": lf,
+  "ll": ll,
+  "rf": rf,
+  "rl": rl,
+  "x1": x1,
+  "x2": x2
+}
 
-  
-print("Yo")
-move(lf, 90)
-move(ll, 90)
-move(rl, 90)
-move(rf, 90)
-move(x1, 90)
-move(x2, 90)
+def moves_(moves, step):
+  if not step:
+    for move in moves:
+      move[0].move(move[1])
+  else:
+    step += 1
+    cont = True
+
+    while cont:
+      cont = False
+      for move in moves:
+        servo = move[0]
+        current = int(servo.current())
+        final = move[1]
+        if current != final:
+          cont = True
+          current += 1 if current < final else -1
+
+        servo.move(current)
+      for _ in range(step):
+        time.sleep(.0025)
+
+def move(rawMoves, step=10):
+  moves = []
+
+  for move in rawMoves:
+    moves.append((servos[move[0]], move[1]+90))
+
+  moves_(moves, step)
 """
 
 def resetStacks():
@@ -193,7 +261,7 @@ stage = 0
 moves = []
 
 def move_(servo, angle, step = None):
-  command = f"move({servo.lower()}, {int(angle)+90}"
+  command = f"move([(\"{servo.lower()}\", {int(angle)})]"
 
   if step != None:
     command += f",{step}"
@@ -203,9 +271,49 @@ def move_(servo, angle, step = None):
   mcrcq.execute(command)
    
 
+def reset_(dom):
+  step = 5
+  mcrcq.execute(f"""
+move([
+  ("lf", 0),
+  ("ll", 0),
+  ("rl", 0),
+  ("rf", 0),
+  ("x1", 0),
+  ("x2", 0),
+], {step})
+""")
+  dom.setValues({
+    "LFN": 0,
+    "LFS": 0,
+    "LLN": 0,
+    "LLS": 0,
+    "RLN": 0,
+    "RLS": 0,
+    "RFN": 0,
+    "RFS": 0,
+    "X1N": 0,
+    "X1S": 0,
+    "X2N": 0,
+    "X2S": 0,
+  })
+
+
+def displayMacros(dom):
+  html = "<div>"
+
+  for macro in macros:
+    html += MACRO_HTML.format(macro, macro, macros[macro]["Description"], macros[macro]["Content"])
+
+  html += "</div>"
+
+  dom.inner("Macros", html)
+
 def acConnect(dom):
   dom.inner("", BODY)
+  displayMacros(dom)
   mcrcq.execute(C_INIT)
+  reset_(dom)
 
 
 def acTest(dom, id):
@@ -214,7 +322,9 @@ def acTest(dom, id):
     f"{mark}S": "0",
     f"{mark}N": "0",
   })
-  mcrcq.execute(f"test({mark.lower()})")
+  move_(mark, 30, 5)
+  move_(mark, -30, 5)
+  move_(mark, 0, 5)
 
 
 def acSlide(dom, id):
@@ -231,108 +341,167 @@ def acAdjust(dom, id):
   move_(mark, angle)
 
 
-def reset_():
-  step = 5
-  move_("lf",0, step)
-  move_("ll",0, step)
-  move_("rl",0, step)
-  move_("rf",0, step)
-  move_("x1",0, step)
-  move_("x2",0, step)
-
-
 def acReset(dom):
-  dom.setValues({
-    "LFN": 0,
-    "LFS": 0,
-    "LLN": 0,
-    "LLS": 0,
-    "RLN": 0,
-    "RLS": 0,
-    "RFN": 0,
-    "RFS": 0,
-    "X1N": 0,
-    "X1S": 0,
-    "X2N": 0,
-    "X2S": 0,
-  })
-  reset_()
+  reset_(dom)
 
-def next(stream):
+
+def getToken(stream):
+  token = ""
+
   char = stream.read(1)
 
   while char and char == ' ':
     char = stream.read(1)
 
-  return char
+  pos = stream.tell()
+
+  while char and char != ' ':
+    token += char
+    char = stream.read(1)
+
+  if token:
+    return (token, pos)
+  else:
+    return None
+  
+
+def getMacro(token):
+  name = ""
+  amount = 1
+
+  with io.StringIO(token[0]) as stream:
+    if not ( char := stream.read(1) ):
+      raise Exception(f"Unexpected error ({token[1]})!")
+    
+    if char.isdigit():
+      amount = int(char)
+
+      while ( char := stream.read(1) ) and char .isdigit():
+        amount = amount * 10 + int(char)
+
+    if char != MACRO_MARKER_:
+      raise Exception(f"Missing macro reference ({token[1]})!")
+    
+    if not (char := stream.read(1)):
+      raise Exception(f"Empty macro name ({token[1]})!")
+    
+    if not char.isalpha(): 
+      raise Exception(f"Macro name must beginning with a letter ({token[1]})!")
+    
+    while char and char.isalnum():
+      name += char
+      char = stream.read(1)
+
+    if char:
+      raise Exception(f"Unexpected character after macro call ({token[1]})!")
+
+  if not name in macros:
+    raise Exception(f"Unknown macro ({token[1]})!")
+
+  return {"name": name, "amount" :amount} 
 
 
-def split(movesString):
-  movesStream = StringIO(movesString)
-
+def getMoves(token):
   moves = []
-  angle = ""
+  step = 0
 
-  char = next(movesStream)
+  with io.StringIO(token[0]) as stream:
+    while char := stream.read(1):
+      if not char.isalpha():
+        raise Exception(f"Servo id expected ({token[1]})!")
+      
+      servo = char
+      angle = 0
+      sign = 1
 
-  while char:
-    target = char
-
-    char = next(movesStream)
-
-    if not char:
-      break
-
-    if char == '-':
-      angle += char
-      char = next(movesStream)
-
-    while char and char.isdigit():
-      angle += char
-      char = next(movesStream)
-
-    moves.append((target, int(angle)))
-
-    target = ""
-    angle = ""
-
-  return moves
+      if char := stream.read(1):
+        if char in "+-":
+          if char == '-':
+            sign = -1
+          char = stream.read(1)
 
 
-def buildCommand(move):
-  print(move)
-  match move[0]:
-    case "L":
-      member = "ll"
-    case "l":
-      member = "lf"
-    case "R":
-      member = "rl"
-    case "r":
-      member = "rf"
-    case _:
-      return ""  
+      while char and char.isdigit():
+        angle = angle * 10 + int(char)
+        char = stream.read(1)
 
-  return f"move({member},{move[1]+90})"
+      moves.append((servo, angle * sign))
+
+      if not char:
+        break
+
+      if char not in "%$":
+        if char != ':':
+          raise Exception(f"Servo move can only be followed by '$' of y '%' ({token[1]})!")
+      else:
+        while (char := stream.read(1)) and char.isdigit():
+          step = step * 10 + int(char)
+
+        if char:
+          raise Exception("Unexpected char at end of servo moves ({token[1]})!")
+        
+    return { "moves": moves, "step": None if not step else step }
 
 
-def buildCommands(moves):
-  moveCommands = ""
+def tokenize(string):
+  tokens = []
 
-  for move in (moves):
-    moveCommands += buildCommand(move) + "\ntime.sleep(0.1)\n"
+  with io.StringIO(string) as stream:
+    while token := getToken(stream):
+      tokens.append(token)
 
-  return moveCommands
+  return tokens
 
+
+def getAST(tokens):
+  ast = []
+  for token in tokens:
+    if token[0][0].isdigit() or token[0][0] == MACRO_MARKER_:
+      ast.append(("macro", getMacro(token)))
+    else:
+      ast.append(("action",getMoves(token)))
+
+  return ast
+
+
+def getCommand(moves, step):
+  command = "move([\n"
+
+  for move in moves:
+    command += f"(\"{servos[move[0]]}\",{move[1]}),"
+
+  command += "]" + (f",{step}" if step else "") + ")" 
+
+  return command
+
+
+
+def getCommands(dom, string):
+  commands = ""
+
+  try:
+    ast = getAST(tokenize(string))
+
+    for item in ast:
+      if item[0] == 'action':
+        commands += getCommand(item[1]["moves"], item[1]["step"]) + '\n'
+      elif item[0] == 'macro':
+        for _ in range(item[1]["amount"]):
+          commands += getCommands(dom, macros[item[1]["name"]]["Content"])
+  except Exception as err:
+    dom.alert(err)
+    commands = ""
+  
+  return commands
 
 def acSubmit(dom):
   global moves, stage
 
   stage = 0
 
-  reset_()
-  moves = split(dom.getValue("Moves"))
-  mcrcq.execute(buildCommands(moves))
+  reset_(dom)
+  command=getCommands(dom, dom.getValue("Moves"))
+  mcrcq.execute(command)
   dom.focus("Moves")
 
 
@@ -347,7 +516,7 @@ def acFirst(dom):
   stage = 0
   resetStacks()
   moves = split(dom.getValue("Moves"))
-  reset_()
+  reset_(dom)
   displayMove(dom)
 
 
@@ -369,7 +538,7 @@ def acNext(dom):
   global stage, stacks, moves
 
   if stage == 0:
-    reset_()
+    reset_(dom)
     resetStacks()
     moves = split(dom.getValue("Moves"))
 
@@ -380,7 +549,11 @@ def acNext(dom):
     mcrcq.execute(buildCommand(moves[stage]))
     stage += 1
     displayMove(dom)
-  
+
+
+def acExecuteMacro(dom, id):
+  mcrcq.execute(getCommands(dom, macros[dom.getMark(id)[5:]]["Content"],))
+
 
 CALLBACKS = {
    "": acConnect,
@@ -392,6 +565,7 @@ CALLBACKS = {
    "First": acFirst,
    "Prev": acPrev,
    "Next": acNext,
+   "ExecuteMacro": acExecuteMacro,
 }
 
 mcrcq.connect()
