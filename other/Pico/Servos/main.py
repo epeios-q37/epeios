@@ -7,6 +7,8 @@ import mcrcq, atlastk
 
 MACRO_MARKER_ = '$'
 
+DEFAULT_STEP = 10
+
 contentsHidden = True
 
 macros = {}
@@ -118,7 +120,7 @@ def displayMacros(dom):
 
 def updateFileList(dom):
   html = ""
-  for file in os.listdir("Files"):
+  for file in os.listdir("Macros"):
     html = f"<option value=\"{file}\">{file[:-5]}</option>\n" + html
 
   dom.inner("Files", html)
@@ -201,7 +203,7 @@ def getMacro(token):
 
 def getMoves(token):
   moves = []
-  step = 0
+  step = None
 
   with io.StringIO(token[0]) as stream:
     while char := stream.read(1):
@@ -232,13 +234,28 @@ def getMoves(token):
         if char != ':':
           raise Exception(f"Servo move can only be followed by '%' ({token[1]})!")
       else:
+        step = 0
+
         while (char := stream.read(1)) and char.isdigit():
           step = step * 10 + int(char)
 
         if char:
           raise Exception("Unexpected char at end of servo moves ({token[1]})!")
         
-    return { "moves": moves, "step": None if not step else step }
+    return { "moves": moves, "step": str(step) if step else None if step == None else ""}
+  
+
+def getStep(token):
+  step = 0
+
+  with io.StringIO(token[0]) as stream:
+    if stream.read(1) != '%':
+      raise Exception(f"Unexpected error ({token[1]})!")
+    
+    while (char := stream.read(1)) and char.isdigit():
+      step = step * 10 + int(char)
+
+  return { "value": step if step else DEFAULT_STEP }
 
 
 def tokenize(string):
@@ -256,24 +273,26 @@ def getAST(tokens):
   for token in tokens:
     if token[0][0].isdigit() or token[0][0] == MACRO_MARKER_:
       ast.append(("macro", getMacro(token)))
+    elif token[0][0] == '%':
+      ast.append(("step", getStep(token)))
     else:
       ast.append(("action",getMoves(token)))
 
   return ast
 
 
-def getCommand(moves, step):
+def getCommand(moves, step, currentStep):
   command = "move([\n"
 
   for move in moves:
     command += f"(\"{servos[move[0]]}\",{move[1]}),"
 
-  command += "]" + (f",{step}" if step else "") + ")" 
+  command += "]," + ( step if step else str(currentStep) if step == None else str(DEFAULT_STEP) ) + ")"
 
   return command
 
 
-def getCommands(dom, string):
+def getCommands(dom, string, step = DEFAULT_STEP):
   commands = ""
 
   try:
@@ -281,11 +300,13 @@ def getCommands(dom, string):
 
     for item in ast:
       match item[0]:
-        case 'action':
-          commands += getCommand(item[1]["moves"], item[1]["step"]) + '\n'
-        case 'macro':
+        case "action":
+          commands += getCommand(item[1]["moves"], item[1]["step"], step) + '\n'
+        case "macro":
           for _ in range(item[1]["amount"]):
-            commands += getCommands(dom, macros[item[1]["name"]]["Content"])
+            commands += getCommands(dom, macros[item[1]["name"]]["Content"], step)
+        case "step":
+          step = item[1]["value"]
   except Exception as err:
     dom.alert(err)
     commands = ""
@@ -299,7 +320,6 @@ def acExecute(dom, id):
   if mark == "Buffer":
     moves = dom.getValue("Content")
     dom.focus("Content")
-    macros["_"] = {"Description": "Internal use", "Content": moves }
   else:
     moves = macros[mark[5:]]["Content"]
 
@@ -314,12 +334,18 @@ def acSave(dom):
 
   if not ( content := dom.getValue("Content") ):
     dom.alert("There is no content to save!")
-  elif name == "":
-    dom.alert("Please give a name for the macro!")
-  elif not name.isidentifier() or name == '_':
-    dom.alert(f"'{name}' is not a valid macro name!")
-  elif not name in macros or dom.getValue("Ask") == "true" or dom.confirm(f"Overwrite existing macro of name '{name}'?"):
-    macros[name] = {"Description": dom.getValue("Description"), "Content": dom.getValue("Content")}
+  else:
+    macros["_"] = {"Description": "Internal use", "Content": content}
+
+    if name == "":
+        dom.alert("Please give a name for the macro!")
+    elif not name.isidentifier() or name == '_':
+      dom.alert(f"'{name}' is not a valid macro name!")
+    elif not name in macros or dom.getValue("Ask") == "true" or dom.confirm(f"Overwrite existing macro of name '{name}'?"):
+      macros[name] = {"Description": dom.getValue("Description"), "Content": content}
+
+      with open(f"Macros/Latest.json", "w") as file: 
+        file.write(json.dumps(macros, indent=2)) # type: ignore
 
     displayMacros(dom)
 
@@ -384,8 +410,8 @@ def acHideContents(dom):
 
   
 def acSaveToFile(dom):
-  with open(f"Files/{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.json", "w") as file: 
-    file.write(json.dumps(macros))
+  with open(f"Macros/{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.json", "w") as file: 
+    file.write(json.dumps(macros, indent=2)) # type: ignore
   
   updateFileList(dom)
 
@@ -393,7 +419,7 @@ def acSaveToFile(dom):
 def acLoadFromFile(dom):
   global macros
 
-  with open(f"Files/{dom.getValue("Files")}", "r") as file:
+  with open(f"Macros/{dom.getValue("Files")}", "r") as file:
     macros = json.load(file)
 
   if "_" in macros:
