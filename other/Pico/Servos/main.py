@@ -20,10 +20,10 @@ servos = {
   "R": "rl"
 }
 
-with open('BODY.html', 'r') as file:
+with open('Body.html', 'r') as file:
   BODY = file.read()
 
-with open('HEAD.html', 'r') as file:
+with open('Head.html', 'r') as file:
   HEAD = file.read()
 
 with open('mc_init.py', 'r') as file:
