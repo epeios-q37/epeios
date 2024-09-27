@@ -1,5 +1,8 @@
-<fieldset></fieldset>
-  <fieldset id="Matrix" style="display: grid; grid-template-columns: repeat(16, auto)">
+<fieldset>
+  <fieldset class="matrix" id="Matrix">
+  </fieldset>
+  <fieldset style="display: flex; justify-content: center;">
+    <input xdh:onevent="input|Hexa" style="font-family: monospace;" id="Hexa" type="text" maxlength="32" minlength="32" size="32" pattern="[0-9a-fA-F]+">
   </fieldset>
   <fieldset style="display: flex; justify-content: space-evenly">
     <label style="display: flex; align-items: center;">

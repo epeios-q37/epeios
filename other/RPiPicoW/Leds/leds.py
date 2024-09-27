@@ -16,7 +16,7 @@ C_INIT = """
 import neopixel, machine
 
 pI = machine.Pin(16)
-pE = machine.Pin(7)
+pE = machine.Pin(13)
 
 nI = neopixel.NeoPixel(pI, 4)
 nE = neopixel.NeoPixel(pE, 192)
