@@ -34,11 +34,12 @@
 		  <Module>csdscb</Module>
 	  </Modules>
 	</Modules>
-	  <Module>client</Module>
+	  <Module>frontend</Module>
 	  <Module>common</Module>
 	  <Module>messages</Module>
 	  <Module>registry</Module>
-	  <Module>server</Module>
+	  <Module>backend</Module>
+	  <Module>switcher</Module>
     </Modules>
 	<Files RTW=".">
 		<File>README.md</File>
