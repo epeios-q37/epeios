@@ -29,9 +29,59 @@
 namespace backend {
   qROW( Row );
 
-  sRow New(sck::rRWDriver *Driver);
-  sRow Get(void);
+  struct dSelector {
+  public:
+    struct s {
+      str::dString::s
+        Token,
+        Id;
+    };
+    str::dString
+      Token,
+      Id;
+    dSelector(s &S)
+    : Token(S.Token),
+      Id(S.Id)
+    {}
+    void reset(bso::sBool P = true)
+    {
+      tol::reset(P, Token, Id);
+    }
+    void plug(qASd *AS)
+    {
+      Token.plug(AS);
+      Id.plug(AS);
+    }
+    dSelector &operator =(const dSelector &S)
+    {
+      Token = S.Token;
+      Id = S.Id;
+
+      return *this;
+    }
+    void Init(void)
+    {
+      tol::Init(Token, Id);
+    }
+  };
+
+  qW(Selector);
+
+  qENUM(State) { // State of the connection.
+    sConnected,
+    sClosePending,
+    s_amount,
+    s_Undefined
+  };
+
+  sRow New(
+    const dSelector & Selector,
+    sck::rRWDriver *Driver);
+  sRow Get(
+    const dSelector & Selector,
+    bso::sBool *IsAliveFlag);
   fdr::rRWDriver &Get(sRow Row);
+  void Delete(sRow Row);
 }
 
 #endif

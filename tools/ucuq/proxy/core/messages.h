@@ -29,7 +29,7 @@ namespace messages {
     iBackend,
     iUnknownProtocol,
     iUnknownProtocolVersion,
-    iNoBackendWithGivenToken,  // %1: token
+    iNoBackendWithGivenTokenAndId,  // %1: token, %2: id
     iUnknownCaller,  // %1: caller
     i_amount,
     i_Undefined

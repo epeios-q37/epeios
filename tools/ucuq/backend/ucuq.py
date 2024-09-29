@@ -1,5 +1,9 @@
 # MicroController Remove Server (runs on the µcontroller)
 
+import socket, sys, _thread, uos, time, network, json, binascii
+from machine import Pin
+
+
 WLAN = "" # Search for one of the WLAN defined in 'wireless.py' and connect to it if available.
 # WLAN = "<name>" # Connects to the WLAN <name> as defined in 'wireless.py'.
 # WLAN = ("<ssid>","<key>") # Connects to WLAN <ssid> using <key>.
@@ -8,26 +12,38 @@ UCUQ_ADDRESS_ = "ucuq.q37.info"
 UCUQ_ADDRESS_ = "192.168.1.87" # dev
 UCUQ_PORT_ = 53800
 
-import socket, sys, _thread, uos, time, network, json
-from machine import Pin
-
 WLAN_FALLBACK_ = "q37"
 
 PROTOCOL_LABEL_ = "c37cc83e-079f-448a-9541-5c63ce00d960"
 PROTOCOL_VERSION_ = "0"
 
 # Connection status.
-S_FAILURE = 0
-S_SEARCHING = 1 # Search an available WLAN.
-S_WLAN = 2 # Connecting to WLAN. There is a delay of 0.5 second between tow calls.
-S_UCUQ = 3 # Connecting to UCUq server. 
-S_SUCCESS = 4
+S_FAILURE_ = 0
+S_SEARCHING_ = 1 # Search an available WLAN.
+S_WLAN_ = 2 # Connecting to WLAN. There is a delay of 0.5 second between tow calls.
+S_UCUQ_ = 3 # Connecting to UCUq server. 
+S_SUCCESS_ = 4
+S_DECONNECTION_ = 5
 
 
 with open("ucuq.json", "r") as config:
-  CONFIG = json.load(config)
+  CONFIG_ = json.load(config)
 
-WLANS = CONFIG["WLAN"]["Known"]
+SELECTOR_ = CONFIG_["Selector"]
+
+def getSelectorId_(selector):
+  if isinstance(selector[1], str):
+    return selector[1]
+  else:
+    mac = binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
+
+    if mac in selector[1]:
+      return selector[1][mac]
+    else:
+      raise Exception("Unable to get an id for this device.")
+
+    
+WLANS_ = CONFIG_["WLAN"]["Known"]
 
 def wlanIsShortcut_(wlan):
   if isinstance(wlan, str):
@@ -43,8 +59,8 @@ def wlanGetKnownStation_(wifi, callback):
   tries = 0
 
   while not known:
-    if not callback(S_SEARCHING, tries):
-      callback(S_FAILURE, 0)
+    if not callback(S_SEARCHING_, tries):
+      callback(S_FAILURE_, 0)
       exit_()
     
     wifi.active(True)
@@ -52,10 +68,10 @@ def wlanGetKnownStation_(wifi, callback):
     for station in wifi.scan():
       if known:
         break
-      for name in WLANS:
+      for name in WLANS_:
         if known:
           break
-        if station[0].decode("utf-8") == WLANS[name][0]:
+        if station[0].decode("utf-8") == WLANS_[name][0]:
           known = name
 
     tries += 1
@@ -78,12 +94,12 @@ def wlanConnect_(wlan, callback):
   if not wifi.isconnected():
     if wlanIsShortcut_(wlan):
       if wlan == "":
-        wlan = WLANS[wlanGetKnownStation_(wifi, callback)]
+        wlan = WLANS_[wlanGetKnownStation_(wifi, callback)]
       else:
         try:
-          wlan = WLANS[wlan]
+          wlan = WLANS_[wlan]
         except KeyError:
-          wlan = WLANS[WLAN_FALLBACK_]
+          wlan = WLANS_[WLAN_FALLBACK_]
 
     tries = 0
 
@@ -93,7 +109,7 @@ def wlanConnect_(wlan, callback):
 
     while not wifi.isconnected():
       time.sleep(0.5)
-      if not callback(S_WLAN, tries):
+      if not callback(S_WLAN_, tries):
         return False
       tries += 1
 
@@ -205,8 +221,13 @@ def handshake_():
 
 
 def ignition_():
-  print("Token handling to come...")
+  writeString_(SELECTOR_[0])
+  writeString_(getSelectorId_(SELECTOR_))
 
+  error = getString_()
+
+  if error:
+    sys.exit(error)
 
 def serve_():
   while True:
@@ -220,48 +241,53 @@ def serve_():
 
 def defaultCallback_(status, tries):
   if tries == 0:
-    if status != S_FAILURE:
+    if status != S_FAILURE_:
       print("\r                                        \r", end="")
-    if status == S_SEARCHING:
+    if status == S_SEARCHING_:
       print("Searching for available WLAN...", end="")
-    elif status == S_WLAN:
+    elif status == S_WLAN_:
       print("Connecting to WLAN...", end="")
-    elif status == S_UCUQ:
+    elif status == S_UCUQ_:
       print("Connecting to UCUq server...", end="")
-    elif status == S_SUCCESS:
-      print()
+    elif status == S_SUCCESS_:
+      print("SUCCESS!")
   else:
     print(".", end="")
 
-  if status == S_FAILURE:
+  if status == S_FAILURE_:
     print("FAILURE!!!")
+  elif status == S_DECONNECTION_:
+    print("Deconnection!")
 
   return True if tries <= 20 else False 
 
 
-def picoLed_(on):
-  Pin("LED", Pin.OUT).value(1 if on else 0)
+def handleLed_(pin, on):
+  Pin(pin, Pin.OUT).value(1 if on else 0)
 
 
-def picoCallback_(status, tries):
-  if status == S_SEARCHING:
-    picoLed_(True)
+def ledCallback_(status, tries, pin):
+  if status == S_SEARCHING_:
+    handleLed_(pin, True)
     time.sleep(0.1)
-    picoLed_(False)
-  elif status == S_WLAN:
-    picoLed_(tries % 2)
-  elif status == S_UCUQ:
-    picoLed_(False)
-  elif status == S_FAILURE:
-    picoLed_(True)
-  elif status == S_SUCCESS:
-    picoLed_(False)
+    handleLed_(pin, False)
+  elif status == S_WLAN_:
+    handleLed_(pin, tries % 2)
+  elif status == S_UCUQ_:
+    handleLed_(pin, False)
+  elif status == S_FAILURE_:
+    handleLed_(pin, True)
+  elif status == S_DECONNECTION_:
+    handleLed_(pin, True)
+  elif status == S_SUCCESS_:
+    handleLed_(pin, False)
 
   return defaultCallback_(status, tries)
 
 
 CALLBACKS_ = {
-  "rp2": picoCallback_
+  "rp2": lambda status, tries: ledCallback_(status, tries, "LED"),
+  "esp32": lambda status, tries: ledCallback_(status, tries, 2)
 }
 
 
@@ -274,36 +300,37 @@ def main():
   callback = getCallback_()
 
   if not wlanConnect_(WLAN, callback):
-    callback(S_FAILURE, 0)
+    callback(S_FAILURE_, 0)
     exit_()
 
-  callback(S_UCUQ, 0)
+  callback(S_UCUQ_, 0)
 
-  if init_(UCUQ_ADDRESS_, UCUQ_PORT_):
-    callback(S_SUCCESS, 0)
-  else:
+  if not init_(UCUQ_ADDRESS_, UCUQ_PORT_):
     if ( WLAN != "" ):
-      callback(S_FAILURE, 0)
+      callback(S_FAILURE_, 0)
       exit_()
 
     wlanDisconnect_()
 
     if not wlanConnect_(WLAN, callback):
-      callback(S_FAILURE, 0)
+      callback(S_FAILURE_, 0)
       exit_()
 
-    callback(S_UCUQ, 0)
+    callback(S_UCUQ_, 0)
 
     if not init_(UCUQ_ADDRESS_, UCUQ_PORT_):
-        callback(S_FAILURE, 0)
+        callback(S_FAILURE_, 0)
         exit_()
 
-  callback(S_SUCCESS, 0)
+  callback(S_SUCCESS_, 0)
 
   handshake_()
 
   ignition_()
 
-  serve_()
+  try:
+    serve_()
+  except:
+    getCallback_()(S_DECONNECTION_, 0)
 
 main()

@@ -23,9 +23,9 @@
 		<Translation language="fr">Version de protocole inconnue !</Translation>
 		<Translation language="en">Unknown protocol version!</Translation>
 	</Translations>
-	<Translations text="NoBackendWithGivenToken">
-		<Translation language="fr">Pas de 'backend' avec le jeton '%1' !</Translation>
-		<Translation language="en">No backend with '%1' token!</Translation>
+	<Translations text="NoBackendWithGivenTokenAndId">
+		<Translation language="fr">Pas de 'backend' avec le jeton '%1' et l'identifiant '%2' !</Translation>
+		<Translation language="en">No backend with '%1' token and '%2' id!</Translation>
 	</Translations>
 	<Translations text="UnknownCaller">
 		<Translation language="fr">Appelant '%1' inconnu !</Translation>

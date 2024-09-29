@@ -46,11 +46,14 @@ namespace common {
   public:
     tol::sTimeStamp TimeStamp;
     sck::rRWDriver* Driver;
+    bso::sBool *IsAliveFlag;
     void reset(bso::sBool P = true)
     {
       TimeStamp = 0;
 
       if ( P ) {
+        if ( IsAliveFlag != NULL )
+          *IsAliveFlag = false;
         qDELETE(Driver);
       }
 
@@ -63,6 +66,7 @@ namespace common {
 
       this->Driver = Driver;
       TimeStamp = tol::EpochTime(false);
+      this->IsAliveFlag = NULL;
     }
   };
 
@@ -71,6 +75,7 @@ namespace common {
   {
   private:
     lstbch::qLBUNCHw(rCaller *, sdr::sRow) List_;
+    rCaller *Get_(sdr::tRow Row) const;
   public:
     void reset(bso::sBool P = true)
     {
@@ -85,8 +90,14 @@ namespace common {
     }
     sdr::tRow New(sck::rRWDriver *Driver);
     void Delete(sdr::sRow Row);
-    sck::rRWDriver& Get(sdr::tRow Row);
-    sdr::tRow Get(void) const;
+    const rCaller &Get(sdr::tRow Row) const;
+    void RegisterIsActiveFlag(
+      sdr::tRow Row,
+      bso::sBool *IsActiveFlag);
+    sdr::sSize Extent(void) const
+    {
+      return List_.Extent();
+    }
   };
 
   inline const str::dString &Get(

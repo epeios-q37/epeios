@@ -91,7 +91,7 @@ void common::rCallers::Delete(sdr::sRow Row)
 	List_.Delete(Row);
 }
 
-sck::rRWDriver& common::rCallers::Get(sdr::tRow Row)
+rCaller *common::rCallers::Get_(sdr::tRow Row) const
 {
 	rCaller *Caller = List_.Get(Row);
 
@@ -101,7 +101,21 @@ sck::rRWDriver& common::rCallers::Get(sdr::tRow Row)
 	if ( Caller->Driver == NULL )
 		qRGnr();
 
-	return *Caller->Driver;
+	return Caller;
+}
+
+const rCaller &common::rCallers::Get(sdr::tRow Row) const
+{
+	return *Get_(Row);
+}
+
+void common::rCallers::RegisterIsActiveFlag(
+	sdr::tRow Row,
+	bso::sBool *IsAliveFlag)
+{
+	*IsAliveFlag = true;
+
+	Get_(Row)->IsAliveFlag = IsAliveFlag;
 }
 
 namespace {
@@ -125,30 +139,6 @@ namespace {
 
 		return messages::GetTranslation(Id, Translation);
 	}
-}
-
-sdr::tRow common::rCallers::Get(void) const
-{
-	sdr::sRow Row = List_.First();
-	sdr::sRow RowLast = qNIL;
-	tol::sTimeStamp TimeStamp = 0;
-	rCaller *Caller = NULL;
-
-	while ( Row != qNIL ) {
-		Caller = List_.Get(Row);
-
-		if ( Caller == NULL )
-			qRGnr();
-
-		if ( Caller->TimeStamp > TimeStamp ) {
-			TimeStamp = Caller->TimeStamp;
-			RowLast = Row;
-		}
-
-		Row = List_.Next(Row);
-	}
-
-	return *RowLast;
 }
 
 qGCTOR(common)

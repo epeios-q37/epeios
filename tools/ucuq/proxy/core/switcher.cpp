@@ -126,6 +126,28 @@ namespace {
 		}
 	};
 
+	namespace {
+		const backend::dSelector &GetSelector_(
+			fdr::rRWDriver &Driver,
+			backend::dSelector &Selector)
+		{
+		qRH;
+			flw::rDressedRWFlow<> Flow;
+		qRB;
+			Flow.Init(Driver);
+
+			common::Get(Flow, Selector.Token);
+			common::Get(Flow, Selector.Id);
+
+			common::Put("", Flow);
+			Flow.Commit();
+		qRR;
+		qRT;
+		qRE;
+			return Selector;
+		}
+	}
+
 	void HandleRoutine_(
 		gData_ &Data,
 		mtk::gBlocker &Blocker)
@@ -136,6 +158,7 @@ namespace {
 		sdr::tRow Row = qNIL;
 		rFeatures_ Features;
 		common::eCaller Caller = common::c_Undefined;
+		backend::wSelector Selector;
 	qRB;
 		Socket = Data.Socket;
 
@@ -152,8 +175,11 @@ namespace {
 
 		switch ( Caller = Handshake_(*Driver, Features) ) {
 		case common::cBackend:
-			if ( backend::New(Driver) == qNIL )
+			Selector.Init();
+
+			if ( backend::New(GetSelector_(*Driver, Selector), Driver) == qNIL )
 				qRUnx();
+				
 			Driver = NULL;	// To avoid deleting when exiting this method.
 			break;
 		case common::cFrontend:

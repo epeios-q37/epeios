@@ -36,20 +36,23 @@ qRH;
   backend::sRow Row = qNIL;
   flw::rDressedRWFlow<> Backend;
   flw::rDressedRWFlow<> Frontend;
-  str::wString Token, Message, Command;
+  str::wString Message, Command;
+  backend::wSelector Selector;
+  bso::sBool BackendIsAlive = false;
 qRB;
-  Token.Init();
-
   Frontend.Init(Driver);
-  common::Get(Frontend, Token);
 
-  Row = backend::Get();
+  Selector.Init();
+  common::Get(Frontend, Selector.Token);
+  common::Get(Frontend, Selector.Id);
+
+  Row = backend::Get(Selector, &BackendIsAlive);
 
   Frontend.Init(Driver);
 
   if ( Row == qNIL ) {
     Message.Init();
-    messages::GetTranslation(messages::iNoBackendWithGivenToken, Message, Token);
+    messages::GetTranslation(messages::iNoBackendWithGivenTokenAndId, Message, Selector.Token, Selector.Id);
     common::Put(Message, Frontend);
     Frontend.Commit();
   } else {
@@ -63,10 +66,16 @@ qRB;
       Frontend.Commit();
 
       common::Get(Frontend, Command);
+
+      if ( !BackendIsAlive )
+        break;
+
       common::Put(Command, Backend);
 
       Backend.Commit();
     }
+
+    Backend.reset(false); // The corresponding driver is already destroyed!
   }
 qRR;
 qRT;

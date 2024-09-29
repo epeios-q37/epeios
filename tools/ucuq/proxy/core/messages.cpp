@@ -31,7 +31,7 @@ const char* messages::GetLabel(eId Id)
     C(Backend);
 		C(UnknownProtocol);
 		C(UnknownProtocolVersion);
-    C(NoBackendWithGivenToken);
+    C(NoBackendWithGivenTokenAndId);
 	default:
 		qRFwk();
 		break;

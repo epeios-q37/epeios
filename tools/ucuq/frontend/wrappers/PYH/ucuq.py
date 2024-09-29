@@ -1,10 +1,13 @@
-# MicroController Remove Server (runs on the µcontroller)
+import os, json, socket, sys, threading
+
+with open(("/home/csimon/q37/epeios/tools/ucuq/frontend/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "") + "ucuq.json", "r") as config:
+  CONFIG = json.load(config)
+
+SELECTOR = CONFIG["Selector"]
 
 UCUQ_ADDRESS_ = "ucuq.q37.info"
 UCUQ_ADDRESS_ = "192.168.1.87" # dev
 UCUQ_PORT_ = 53800
-
-import socket, sys, threading
 
 PROTOCOL_LABEL_ = "c37cc83e-079f-448a-9541-5c63ce00d960"
 PROTOCOL_VERSION_ = "0"
@@ -12,30 +15,26 @@ PROTOCOL_VERSION_ = "0"
 _writeLock = threading.Lock()
 
 
-def recv_(size):
-  global socket_
-
+def recv_(socket, size):
   buffer = bytes()
   l = 0
 
   while l != size:
-    buffer += socket_.recv(size-l)
+    buffer += socket.recv(size-l)
     l = len(buffer)
 
   return buffer
 
 
-def send_(value):
-  global socket_
-
+def send_(socket, value):
   totalAmount = len(value)
   amountSent = 0
 
   while amountSent < totalAmount:
-    amountSent += socket_.send(value[amountSent:])	
+    amountSent += socket.send(value[amountSent:])	
 
 
-def writeUInt_(value):
+def writeUInt_(socket, value):
   result = bytes([value & 0x7f])
   value >>= 7
 
@@ -43,35 +42,35 @@ def writeUInt_(value):
     result = bytes([(value & 0x7f) | 0x80]) + result
     value >>= 7
 
-  send_(result)
+  send_(socket, result)
 
 
-def writeString_(string):
+def writeString_(socket, string):
   bString = bytes(string, "utf-8")
-  writeUInt_(len(bString))
-  send_(bString)
+  writeUInt_(socket, len(bString))
+  send_(socket, bString)
 
 
-def readByte_():
-  return ord(recv_(1))
+def readByte_(socket):
+  return ord(recv_(socket, 1))
 
 
-def readUInt_():
-  byte = readByte_()
+def readUInt_(socket):
+  byte = readByte_(socket)
   value = byte & 0x7f
 
   while byte & 0x80:
-    byte = readByte_()
+    byte = readByte_(socket)
     value = (value << 7) + (byte & 0x7f)
 
   return value
 
 
-def getString_():
-  size = readUInt_()
+def getString_(socket):
+  size = readUInt_(socket)
 
   if size:
-    return recv_(size).decode("utf-8")
+    return recv_(socket, size).decode("utf-8")
   else:
     return ""
   
@@ -83,52 +82,65 @@ def exit_(message=None):
 
 
 def init_():
-  global socket_
-
-  socket_ = socket.socket()
+  s = socket.socket()
   
   print("Connection to UCUq server…", end="", flush=True)
 
   try:
-    socket_.connect(socket.getaddrinfo(UCUQ_ADDRESS_, UCUQ_PORT_)[0][-1])
+    s.connect(socket.getaddrinfo(UCUQ_ADDRESS_, UCUQ_PORT_)[0][-1])
   except:
     exit_("FAILURE!!!")
   else:
     print("\r                                         \r",end="")
+
+  return s
   
 
-def handshake_():
+def handshake_(socket):
   with _writeLock:
-    writeString_(PROTOCOL_LABEL_)
-    writeString_(PROTOCOL_VERSION_)
-    writeString_("Frontend")
-    writeString_("PYH")
+    writeString_(socket, PROTOCOL_LABEL_)
+    writeString_(socket, PROTOCOL_VERSION_)
+    writeString_(socket, "Frontend")
+    writeString_(socket, "PYH")
 
-  error = getString_()
+  error = getString_(socket)
 
   if error:
     sys.exit(error)
 
-  notification = getString_()
+  notification = getString_(socket)
 
   if notification:
     print(notification)
 
 
-def ignition_():
-  writeString_("DummtToken")
+def getTokenAndId_(alias):
+  return SELECTOR[0], SELECTOR[1][alias]
 
-  error = getString_()
+
+def ignition_(socket, alias):
+  token, id = getTokenAndId_(alias)
+
+  writeString_(socket, token)
+  writeString_(socket, id)
+
+  error = getString_(socket)
 
   if error:
     exit_(error)
 
 
-def connect():
-  init_()
-  handshake_()
-  ignition_()
+def connect(alias):
+  socket = init_()
+  handshake_(socket)
+  ignition_(socket, alias)
+
+  return socket
 
 
-def execute(Command):
-  writeString_(Command)
+class UCUq:
+  def __init__(self, alias):
+    self.socket_ = connect(alias)
+
+  def execute(self, command):
+    writeString_(self.socket_, command)
