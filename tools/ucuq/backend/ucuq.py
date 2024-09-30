@@ -1,6 +1,6 @@
 # MicroController Remove Server (runs on the µcontroller)
 
-import socket, sys, _thread, uos, time, network, json, binascii
+import socket, sys, _thread, uos, time, network, json, binascii,io
 from machine import Pin
 
 
@@ -24,6 +24,16 @@ S_WLAN_ = 2 # Connecting to WLAN. There is a delay of 0.5 second between tow cal
 S_UCUQ_ = 3 # Connecting to UCUq server. 
 S_SUCCESS_ = 4
 S_DECONNECTION_ = 5
+
+# Request
+R_PING_ = 0
+R_EXECUTE_ = 1
+
+# Answer
+A_OK_ = 0
+A_ERROR_ = 1
+A_PUZZLED_ = 2
+A_DISCONNECTED = 3  # Never returned bu backend, only here as placeholder
 
 
 with open("ucuq.json", "r") as config:
@@ -173,7 +183,7 @@ def readUInt_():
   return value
 
 
-def getString_():
+def readString_():
   size = readUInt_()
 
   if size:
@@ -209,12 +219,12 @@ def handshake_():
     writeString_("Backend")
     writeString_(uos.uname().sysname)
 
-  error = getString_()
+  error = readString_()
 
   if error:
     sys.exit(error)
 
-  notification = getString_()
+  notification = readString_()
 
   if notification:
     print(notification)
@@ -224,19 +234,38 @@ def ignition_():
   writeString_(SELECTOR_[0])
   writeString_(getSelectorId_(SELECTOR_))
 
-  error = getString_()
+  error = readString_()
 
   if error:
     sys.exit(error)
 
 def serve_():
   while True:
-    command = getString_()
+    request = readUInt_()
 
-    try:
-      exec(command)
-    except:
-      pass
+    if request == R_PING_:
+      writeUInt_(A_OK_)
+      writeString_("")  # For future use.
+    elif request == R_EXECUTE_:
+      script = readString_()
+      expression = readString_()
+      returned = ""
+
+      try:
+        exec(script)
+        if expression:
+          returned = json.dumps(eval(expression))
+      except Exception as exception:
+        with io.StringIO() as stream:
+          sys.print_exception(exception, stream)
+          writeUInt_(A_ERROR_)
+          writeString_(stream.getvalue())
+      else:
+        writeUInt_(A_OK_)
+        writeString_(returned)
+    else:
+      writeUInt_(A_PUZZLED_)
+      writeString_("")  # For future use
 
 
 def defaultCallback_(status, tries):
@@ -330,7 +359,8 @@ def main():
 
   try:
     serve_()
-  except:
+  except Exception as exception:
     getCallback_()(S_DECONNECTION_, 0)
+    raise exception
 
 main()

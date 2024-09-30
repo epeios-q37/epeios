@@ -100,19 +100,70 @@ namespace common {
     }
   };
 
+  inline void Test_(bso::sBool *IsAlive)
+  {
+    if ( (IsAlive != NULL) && !*IsAlive )
+      qRFree();
+  }
+
+  template <typename integer> integer Get(
+    flw::rRFlow &Flow,
+    integer &Integer,
+    bso::sBool *IsAlive = NULL)
+  {
+    Test_(IsAlive);
+
+    return csdcmn::Get(Flow, Integer);
+  }
+
   inline const str::dString &Get(
     flw::rRFlow &Flow,
-    str::dString &String)
+    str::dString &String,
+    bso::sBool *IsAlive = NULL)
   {
+    Test_(IsAlive);
+
     return csdcmn::Get(Flow, String);
   }
 
   inline void Put(
     const str::dString &String,
-    flw::rWFlow &Flow)
+    flw::rWFlow &Flow,
+    bso::sBool *IsAlive = NULL)
   {
+    Test_(IsAlive);
+
     return csdcmn::Put(String, Flow);
   }
+
+  template <typename integer> void Put(
+    integer Integer,
+    flw::rWFlow &Flow,
+    bso::sBool *IsAlive = NULL)
+  {
+    Test_(IsAlive);
+
+    return csdcmn::Put(Integer, Flow);
+  }
+
+  inline void Commit(
+    flw::rWFlow &Flow,
+    bso::sBool *IsAlive = NULL)
+  {
+    Test_(IsAlive);
+
+    Flow.Commit();
+  }
+
+  inline void Dismiss(
+    flw::rRFlow &Flow,
+    bso::sBool *IsAlive = NULL)
+  {
+    Test_(IsAlive);
+
+    Flow.Dismiss();
+  }
 }
+
 
 #endif

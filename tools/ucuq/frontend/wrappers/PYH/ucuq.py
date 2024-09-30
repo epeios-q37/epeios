@@ -1,4 +1,5 @@
-import os, json, socket, sys, threading
+import os, json, socket, sys, threading, io, datetime
+from inspect import getframeinfo, stack
 
 with open(("/home/csimon/q37/epeios/tools/ucuq/frontend/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "") + "ucuq.json", "r") as config:
   CONFIG = json.load(config)
@@ -14,6 +15,15 @@ PROTOCOL_VERSION_ = "0"
 
 _writeLock = threading.Lock()
 
+# Request
+R_PING_ = 0
+R_EXECUTE_ = 1
+
+# Answer
+A_OK_ = 0
+A_ERROR_ = 1
+A_PUZZLED_ = 2
+A_DISCONNECTED = 3
 
 def recv_(socket, size):
   buffer = bytes()
@@ -66,7 +76,7 @@ def readUInt_(socket):
   return value
 
 
-def getString_(socket):
+def readString_(socket):
   size = readUInt_(socket)
 
   if size:
@@ -103,12 +113,12 @@ def handshake_(socket):
     writeString_(socket, "Frontend")
     writeString_(socket, "PYH")
 
-  error = getString_(socket)
+  error = readString_(socket)
 
   if error:
     sys.exit(error)
 
-  notification = getString_(socket)
+  notification = readString_(socket)
 
   if notification:
     print(notification)
@@ -124,7 +134,7 @@ def ignition_(socket, alias):
   writeString_(socket, token)
   writeString_(socket, id)
 
-  error = getString_(socket)
+  error = readString_(socket)
 
   if error:
     exit_(error)
@@ -142,5 +152,31 @@ class UCUq:
   def __init__(self, alias):
     self.socket_ = connect(alias)
 
-  def execute(self, command):
+  def execute(self, command, expression = ""):
+    writeUInt_(self.socket_, R_EXECUTE_)
     writeString_(self.socket_, command)
+    writeString_(self.socket_, expression)
+
+    if ( answer := readUInt_(self.socket_) ) == A_OK_:
+      if result := readString_(self.socket_):
+        with io.StringIO(result) as stream:
+          returned = json.load(stream)
+        return returned
+      else:
+        return None
+    elif answer == A_ERROR_:
+      result = readString_(self.socket_)
+      print(f"\n>>>>>>>>>> ERROR FROM BACKEND BEGIN <<<<<<<<<<")
+      print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
+      caller = getframeinfo(stack()[1][0])
+      print(f"Caller: {caller.filename}:{caller.lineno}")
+      print(f">>>>>>>>>> ERROR FROM BACKEND CONTENT <<<<<<<<<<")
+      print(result)
+      print(f">>>>>>>>>> END ERROR FROM BACKEND END <<<<<<<<<<")
+    elif answer == A_PUZZLED_:
+      readString_(self.socket_) # For future use
+      raise Exception("Puzzled!")
+    else:
+      raise Exception("Unknown answer from backend!")
+
+    
