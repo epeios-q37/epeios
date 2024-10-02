@@ -137,7 +137,7 @@ def ignition_(socket, alias):
   error = readString_(socket)
 
   if error:
-    exit_(error)
+    raise Error(error)
 
 
 def connect(alias):
@@ -146,6 +146,10 @@ def connect(alias):
   ignition_(socket, alias)
 
   return socket
+
+
+class Error(Exception):
+  pass
 
 
 class UCUq:
@@ -175,8 +179,26 @@ class UCUq:
       print(f">>>>>>>>>> END ERROR FROM BACKEND END <<<<<<<<<<")
     elif answer == A_PUZZLED_:
       readString_(self.socket_) # For future use
-      raise Exception("Puzzled!")
+      raise Error("Puzzled!")
+    elif answer == A_DISCONNECTED:
+        raise Error("Disconnected from backend!")
     else:
-      raise Exception("Unknown answer from backend!")
+      raise Error("Unknown answer from backend!")
+    
+  def ping(self):
+    writeUInt_(self.socket_, R_PING_)
+
+    if ( answer := readUInt_(self.socket_) ) == A_OK_:
+      readString_(self.socket_) # For future use
+      pass
+    elif answer == A_ERROR_:
+      raise Error("Unexpected response from backend!")
+    elif answer == A_PUZZLED_:
+      readString_(self.socket_) # For future use
+      raise Error("Puzzled!")
+    elif answer == A_DISCONNECTED:
+        raise Error("Disconnected from backend!")
+    else:
+      raise Error("Unknown answer from backend!")
 
     

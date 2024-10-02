@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2024 Claude SIMON (http://q37.info/contact/).
 
-  This file is part of the 'UCUq' tool.
+  This file is part of the 'UCUq' toolkit.
 
   'UCUq' is free software: you can redistribute it and/or modify it
   under the terms of the GNU Affero General Public License as published
@@ -29,11 +29,9 @@
 using namespace backend;
 
 namespace {
-  crt::qCRATEw(dSelector, sRow) Selectors_;
-}
-
-namespace {
-  common::rCallers Backends_;
+  mtx::rMutex Mutex_ = mtx::Undefined; // To protect the too below members;
+  crt::qCRATEw(dSelector, sRow) _Selectors_;
+  common::rCallers _Backends_;
 }
 
 namespace {
@@ -41,11 +39,11 @@ namespace {
     const dSelector &Selector,
     sck::rRWDriver *Driver)
   {
-    sRow Row = Backends_.New(Driver);
+    sRow Row = _Backends_.New(Driver);
 
-    Selectors_.Allocate(Backends_.Extent());
+    _Selectors_.Allocate(_Backends_.Extent());
 
-    Selectors_.Store(Selector, Row);
+    _Selectors_.Store(Selector, Row);
 
     return Row;
   }
@@ -62,21 +60,22 @@ namespace {
   sRow Get_(const dSelector &Selector)
   {
     sRow
-      Row = Selectors_.First(),
+      Row = _Selectors_.First(),
       LastRow = qNIL;
 
-    tol::sTimeStamp TimeStamp = 0;
+    tol::sTimeStamp
+      Timestamp = 0,
+      LastTimestamp = 0;
 
     while ( Row != qNIL ) {
-      if (
-        Matches(Selector, Selectors_.Get(Row))
-        && (TimeStamp < Backends_.Get(*Row).TimeStamp) )
+      if ( Matches(Selector, _Selectors_.Get(Row))
+           && ( LastTimestamp < ( Timestamp = _Backends_.GetTimestamp(*Row)) ) )
       {
         LastRow = Row;
-        TimeStamp = Backends_.Get(*Row).TimeStamp;
+        LastTimestamp = Timestamp;
       }
 
-      Row = Selectors_.Next(Row);
+      Row = _Selectors_.Next(Row);
     }
 
     return LastRow;
@@ -84,51 +83,66 @@ namespace {
 
 }
 
-
 sRow backend::New(
   const dSelector &Selector,
   sck::rRWDriver *Driver)
 {
-  sRow Row = Get_(Selector);
+  sRow Row = qNIL;
+qRH;
+  mtx::rHandle Locker;
+qRB;
+  Locker.InitAndLock(Mutex_);
+
+  Row = Get_(Selector);
 
   if ( Row != qNIL )
-    Delete(Row);
+    Withdraw(Row);
 
   Row = New_(Selector, Driver);
 
-  Selectors_.Allocate(Backends_.Extent());
+  _Selectors_.Allocate(_Backends_.Extent());
 
-  Selectors_.Store(Selector, Row);
-
+  _Selectors_.Store(Selector, Row);
+qRR;
+qRT;
+qRE;
   return Row;
 }
 
-
-sRow backend::Get(
+common::rCaller *backend::Hire(
   const dSelector &Selector,
-  bso::sBool *IsAliveFlag)
+  const void *UserDiscriminator)
 {
-  sRow Row = Get_(Selector);
+  common::rCaller *Caller = NULL;
+qRH;
+  mtx::rHandle Locker;
+  sRow Row = qNIL;
+qRB;
+  Locker.InitAndLock(Mutex_);
+  Row = Get_(Selector);
 
   if ( Row != qNIL )
-    Backends_.RegisterIsActiveFlag(*Row, IsAliveFlag);
-
-  return Row;
+    Caller = _Backends_.Hire(*Row, UserDiscriminator);
+qRR;
+qRT;
+qRE;
+  return Caller;
 }
 
-fdr::rRWDriver &backend::Get(sRow Row)
+void backend::Withdraw(sRow Row)
 {
-  return *Backends_.Get(*Row).Driver;
-}
-
-void backend::Delete(sRow Row)
-{
-  Backends_.Delete(*Row);
-  Selectors_(Row).reset();
+  _Backends_.Withdraw(*Row);
+  _Selectors_(Row).reset();
 }
 
 qGCTOR(backend)
 {
-  Backends_.Init();
-  Selectors_.Init();
+  Mutex_ = mtx::Create();
+  _Backends_.Init();
+  _Selectors_.Init();
+}
+
+qGDTOR(backend) {
+  if ( Mutex_ != mtx::Undefined )
+    mtx::Delete(Mutex_, true);
 }

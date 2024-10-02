@@ -17,17 +17,4 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FRONTEND_INC_
-# define FRONTEND_INC_
-
-# include "common.h"
-
-# include "sck.h"
-# include "tol.h"
-# include "sdr.h"
-
-namespace frontend {
-  void Process(fdr::rRWDriver &Driver);
-}
-
-#endif
+#include "ucuinf.h"

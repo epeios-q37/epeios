@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2024 Claude SIMON (http://q37.info/contact/).
 
-  This file is part of the 'UCUq' tool.
+  This file is part of the 'UCUq' toolkit.
 
   'UCUq' is free software: you can redistribute it and/or modify it
   under the terms of the GNU Affero General Public License as published
@@ -49,13 +49,13 @@ namespace {
 
   eAnswer_ GetAnswer_(
     flw::rRFlow &Flow,
-    bso::sBool *IsAlive)
+    const common::gTracker *Tracker)
   {
     bso::sU8 Answer = a_Undefined;
 
-    common::Get(Flow, Answer, IsAlive);
+   common::Get(Flow, Answer, Tracker);
 
-    if ( (Answer > a_amount) || (Answer == aDisconnected) )
+    if ( Answer > a_amount )
       qRGnr();
 
     return (eAnswer_)Answer;
@@ -77,37 +77,38 @@ namespace {
   bso::sBool HandlePing_(
     flw::rRWFlow &Frontend,
     flw::rRWFlow &Backend,
-    bso::sBool *BackendIsAlive)
+    common::gTracker *Tracker)
   {
     bso::sBool Cont = true;
    qRH;
     str::wString Returned;
   qRB;
-    common::Put(rPing, Backend, BackendIsAlive);
-    common::Commit(Backend, BackendIsAlive);
+    common::Put(rPing, Backend, Tracker);
+    common::Commit(Backend, Tracker);
 
-    switch ( GetAnswer_(Backend, BackendIsAlive) ) {
+    switch ( GetAnswer_(Backend, Tracker) ) {
     case aOK:
       Returned.Init();
-      common::Get(Backend, Returned, BackendIsAlive);
+      common::Get(Backend, Returned, Tracker);
       common::Put(aOK, Frontend);
       common::Put(Returned, Frontend);
+      common::Commit(Frontend);
       break;
     case aPuzzled:
       Returned.Init();
-      common::Get(Backend, Returned, BackendIsAlive);
+      common::Get(Backend, Returned, Tracker);
       common::Put(aPuzzled, Frontend);
       common::Put(Returned, Frontend);
+      common::Commit(Frontend);
+      break;
+    case aDisconnected:
+      Cont = false;
+      break;
     default:
       qRGnr();
       break;
     }
   qRR;
-    if ( (BackendIsAlive != NULL) && !BackendIsAlive ) {
-      common::Put(aDisconnected, Frontend);
-      Cont = false;
-      qRRst();
-    }
   qRT;
   qRE;
     return Cont;
@@ -116,7 +117,7 @@ namespace {
   bso::sBool HandleExecute_(
     flw::rRWFlow &Frontend,
     flw::rRWFlow &Backend,
-    bso::sBool *BackendIsAlive)
+    const common::gTracker *Tracker)
   {
     bso::sBool Cont = true;
    qRH;
@@ -130,42 +131,40 @@ namespace {
     common::Get(Frontend, Script);
     common::Get(Frontend, Expression);
 
-    common::Put(rExecute, Backend, BackendIsAlive);
-    common::Put(Script, Backend, BackendIsAlive);
-    common::Put(Expression, Backend, BackendIsAlive);
-    common::Commit(Backend, BackendIsAlive);
+    common::Put(rExecute, Backend, Tracker);
+    common::Put(Script, Backend, Tracker);
+    common::Put(Expression, Backend, Tracker);
+    common::Commit(Backend, Tracker);
 
-    switch ( GetAnswer_(Backend, BackendIsAlive) ) {
+    switch ( GetAnswer_(Backend, Tracker) ) {
     case aOK:
       Returned.Init();
-      common::Get(Backend, Returned, BackendIsAlive);
+      common::Get(Backend, Returned, Tracker);
       common::Put(aOK, Frontend);
       common::Put(Returned, Frontend);
       common::Commit(Frontend);
       break;
     case aError:
       Returned.Init();
-      common::Get(Backend, Returned, BackendIsAlive);
+      common::Get(Backend, Returned, Tracker);
       common::Put(aError, Frontend);
       common::Put(Returned, Frontend);
       common::Commit(Frontend);
       break;
     case aPuzzled:
       Returned.Init();
-      common::Get(Backend, Returned, BackendIsAlive);
+      common::Get(Backend, Returned, Tracker);
       common::Put(aPuzzled, Frontend);
       common::Put(Returned, Frontend);
+      break;
+    case aDisconnected:
+      Cont = false;
       break;
     default:
       qRGnr();
       break;
     }
   qRR;
-    if ( (BackendIsAlive != NULL) && !BackendIsAlive ) {
-      common::Put(aDisconnected, Frontend);
-      Cont = false;
-      qRRst();
-    }
   qRT;
   qRE;
     return Cont;
@@ -175,12 +174,13 @@ namespace {
 void frontend::Process(fdr::rRWDriver &Driver)
 {
 qRH;
-  backend::sRow Row = qNIL;
   flw::rDressedRWFlow<> Backend;
   flw::rDressedRWFlow<> Frontend;
   str::wString Message, Command;
   backend::wSelector Selector;
-  bso::sBool BackendIsAlive = false;
+  common::rCaller *Caller = NULL;
+  bso::sBool Cont = true;
+  common::gTracker Tracker;
 qRB;
   Frontend.Init(Driver);
 
@@ -188,11 +188,11 @@ qRB;
   common::Get(Frontend, Selector.Token);
   common::Get(Frontend, Selector.Id);
 
-  Row = backend::Get(Selector, &BackendIsAlive);
+  Caller = backend::Hire(Selector, &Driver);
 
   Frontend.Init(Driver);
 
-  if ( Row == qNIL ) {
+  if ( Caller == NULL ) {
     Message.Init();
     messages::GetTranslation(messages::iNoBackendWithGivenTokenAndId, Message, Selector.Token, Selector.Id);
     common::Put(Message, Frontend);
@@ -201,28 +201,33 @@ qRB;
     common::Put("", Frontend);
     common::Commit(Frontend);
 
-    Backend.Init(backend::Get(Row));
+    Tracker.Candidate = &Driver;
+    Tracker.Caller = Caller;
 
-    while ( !Frontend.EndOfFlow() ) {
+    Backend.Init(*Caller->GetDriver());
+
+    while ( !Frontend.EndOfFlow() && Cont ) {
       switch ( GetRequest_(Frontend) ) {
       case rExecute:
-        if ( !HandleExecute_(Frontend, Backend, &BackendIsAlive) )
+        if ( !HandleExecute_(Frontend, Backend, &Tracker) )
           break;
         break;
       case rPing:
-        if ( !HandlePing_(Frontend, Backend, &BackendIsAlive) )
+        if ( !HandlePing_(Frontend, Backend, &Tracker) )
           break;
         break;
       default:
         qRGnr();
         break;
       }
-      common::Dismiss(Backend, &BackendIsAlive);
+      common::Dismiss(Backend, &Tracker);
     }
-
-    Backend.reset(false); // The corresponding driver is already destroyed!
    }
   qRR;
   qRT;
+    if ( (Caller != NULL) && Caller->ShouldIDestroy(&Driver) ) {
+      Backend.reset(false); // To avoid action on underlying driver which will be destroyed.
+      qDELETE(Caller);
+    }
   qRE;
 }

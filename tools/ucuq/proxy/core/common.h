@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2024 Claude SIMON (http://q37.info/contact/).
 
-  This file is part of the 'UCUq' tool.
+  This file is part of the 'UCUq' toolkit.
 
   'UCUq' is free software: you can redistribute it and/or modify it
   under the terms of the GNU Affero General Public License as published
@@ -21,6 +21,8 @@
 #ifndef COMMON_INC_
 # define COMMON_INC_
 
+# include "ucucmn.h"
+
 # include "csdcmn.h"
 # include "csdbns.h"
 
@@ -31,87 +33,126 @@
 
 
 namespace common {
-  qENUM(Caller) {
-    cFrontend,
-    cBackend,
-    c_amount,
-    c_Undefined
-  };
+  using namespace ucucmn;
 
-  const char *GetLabel(eCaller Caller);
-
-  eCaller GetCaller(const str::dString &Pattern);
-
-  struct rCaller {
+  class rCaller {
+  private:
+    mtx::rMutex Mutex_; // To protect access to below two members.
+    const void *UserDiscriminator_;   // 'NULL' if no it in use, otherwise a pointer which value is specific to the user which uses it.
+    bso::sBool IsAlive_;  // The backend behind is available.
+    sck::rRWDriver *Driver_;
   public:
     tol::sTimeStamp TimeStamp;
-    sck::rRWDriver* Driver;
-    bso::sBool *IsAliveFlag;
     void reset(bso::sBool P = true)
     {
-      TimeStamp = 0;
-
       if ( P ) {
-        if ( IsAliveFlag != NULL )
-          *IsAliveFlag = false;
-        qDELETE(Driver);
+        qDELETE(Driver_);
+
+        if ( Mutex_ != mtx::Undefined )
+          mtx::Delete(Mutex_);
       }
 
-      Driver = NULL;
+      TimeStamp = 0;
+      Driver_ = NULL;
+      Mutex_ = mtx::Undefined;
+      UserDiscriminator_ = NULL;
+      IsAlive_ = false;
     }
     qCDTOR( rCaller );
     void Init(sck::rRWDriver* Driver)
     {
-      qDELETE(this->Driver);
+      reset();
 
-      this->Driver = Driver;
+      Mutex_ = mtx::Create();
+      Driver_ = Driver;
       TimeStamp = tol::EpochTime(false);
-      this->IsAliveFlag = NULL;
+      UserDiscriminator_ = NULL;
+      IsAlive_ = true;
     }
+    fdr::rRWDriver *GetDriver(void) const
+    {
+      return Driver_;
+    }
+    void Vanished(void)
+    {
+      if ( !IsAlive_ )
+        qRGnr();
+
+      IsAlive_ = false;
+    }
+    bso::sBool ShouldIDestroy(const void *UserDiscriminator);
+    friend class rCallers;
+    friend void Test_(const struct gTracker *Tracker);
   };
 
   // TODO: Mutex to protect access of 'Callers_'.
   class rCallers
   {
   private:
+    mtx::rMutex Mutex_; // To protect acces to following member.
     lstbch::qLBUNCHw(rCaller *, sdr::sRow) List_;
-    rCaller *Get_(sdr::tRow Row) const;
   public:
     void reset(bso::sBool P = true)
     {
-      List_.reset(P);
+      if ( P ) {
+        if ( Mutex_ != mtx::Undefined )
+          mtx::Delete(Mutex_);
+      }
+
+      Mutex_ = mtx::Undefined;
+
+      tol::reset(P, List_);
     }
     qCDTOR(rCallers);
     void Init(void)
     {
       reset();
 
-      List_.Init();
+      Mutex_ = mtx::Create();
+      tol::Init(List_);
     }
     sdr::tRow New(sck::rRWDriver *Driver);
-    void Delete(sdr::sRow Row);
-    const rCaller &Get(sdr::tRow Row) const;
-    void RegisterIsActiveFlag(
+    tol::sTimeStamp GetTimestamp(sdr::sRow Row) const;
+    void Withdraw(sdr::sRow Row); // The corresponding caller is made inaccessible and deleted if applied.
+    rCaller *Hire(
       sdr::tRow Row,
-      bso::sBool *IsActiveFlag);
+      const void *UserDiscriminator) const;
     sdr::sSize Extent(void) const
     {
       return List_.Extent();
     }
   };
 
-  inline void Test_(bso::sBool *IsAlive)
+  struct gTracker {
+  public:
+    const rCaller *Caller;
+    const void *Candidate;  // Pointer which identifies the frontend which originated the call.
+    void reset(bso::sBool P = true)
+    {
+      Caller = NULL;
+      Candidate = NULL;
+    }
+  };
+
+  inline void Test_(const gTracker *Tracker)
   {
-    if ( (IsAlive != NULL) && !*IsAlive )
-      qRFree();
+    if ( Tracker != NULL )
+      if ( Tracker->Candidate == NULL )
+        qRGnr();
+      else if ( Tracker->Caller == NULL )
+        qRGnr();
+      else if ( Tracker->Caller->UserDiscriminator_ == NULL )
+        qRGnr();
+      else if ( Tracker->Caller->UserDiscriminator_ != Tracker->Candidate )
+        qRFree();
   }
 
   template <typename integer> integer Get(
     flw::rRFlow &Flow,
     integer &Integer,
-    bso::sBool *IsAlive = NULL)
+    const gTracker *Tracker = NULL)
   {
-    Test_(IsAlive);
+    Test_(Tracker);
 
     return csdcmn::Get(Flow, Integer);
   }
@@ -119,9 +160,9 @@ namespace common {
   inline const str::dString &Get(
     flw::rRFlow &Flow,
     str::dString &String,
-    bso::sBool *IsAlive = NULL)
+    const gTracker *Tracker = NULL)
   {
-    Test_(IsAlive);
+    Test_(Tracker);
 
     return csdcmn::Get(Flow, String);
   }
@@ -129,9 +170,9 @@ namespace common {
   inline void Put(
     const str::dString &String,
     flw::rWFlow &Flow,
-    bso::sBool *IsAlive = NULL)
+    const gTracker *Tracker = NULL)
   {
-    Test_(IsAlive);
+    Test_(Tracker);
 
     return csdcmn::Put(String, Flow);
   }
@@ -139,27 +180,27 @@ namespace common {
   template <typename integer> void Put(
     integer Integer,
     flw::rWFlow &Flow,
-    bso::sBool *IsAlive = NULL)
+    const gTracker *Tracker = NULL)
   {
-    Test_(IsAlive);
+    Test_(Tracker);
 
     return csdcmn::Put(Integer, Flow);
   }
 
   inline void Commit(
     flw::rWFlow &Flow,
-    bso::sBool *IsAlive = NULL)
+    const gTracker *Tracker = NULL)
   {
-    Test_(IsAlive);
+    Test_(Tracker);
 
     Flow.Commit();
   }
 
   inline void Dismiss(
     flw::rRFlow &Flow,
-    bso::sBool *IsAlive = NULL)
+    const gTracker *Tracker = NULL)
   {
-    Test_(IsAlive);
+    Test_(Tracker);
 
     Flow.Dismiss();
   }

@@ -17,17 +17,24 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FRONTEND_INC_
-# define FRONTEND_INC_
+#ifndef UCUCMN_INC_
+# define UCUCMN_INC_
 
-# include "common.h"
-
-# include "sck.h"
 # include "tol.h"
-# include "sdr.h"
 
-namespace frontend {
-  void Process(fdr::rRWDriver &Driver);
+namespace ucucmn {
+  qENUM(Caller) {
+    cAdmin,
+    cManager,
+    cFrontend,
+    cBackend,
+    c_amount,
+    c_Undefined
+  };
+
+  const char *GetLabel(eCaller Caller);
+
+  eCaller GetCaller(const str::dString &Pattern);
 }
 
 #endif

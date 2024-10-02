@@ -23,35 +23,42 @@
     <Modules Group="Epeios" Path="$EpeiosPath$/">
       <Modules Group="Core">
         <xpp:expand select="Core"/>
-		  <Module>sck</Module>
+        <Module>sck</Module>
       </Modules>
       <Modules Group="SCL">
         <xpp:expand select="SCL"/>
       </Modules>
       <Modules Group="CSD">
-		  <Module>csdbns</Module>
-		  <Module>csdcmn</Module>
-		  <Module>csdscb</Module>
-	  </Modules>
-	</Modules>
-	  <Module>frontend</Module>
-	  <Module>common</Module>
-	  <Module>messages</Module>
-	  <Module>registry</Module>
-	  <Module>backend</Module>
-	  <Module>switcher</Module>
+        <Module>csdbns</Module>
+        <Module>csdcmn</Module>
+        <Module>csdscb</Module>
+      </Modules>
     </Modules>
-	<Files RTW=".">
-		<File>README.md</File>
-		<File>Makefile</File>
-		<Files Path="../">
-			<File>CHANGELOG.md</File>
-		</Files>
-	</Files>
-	<RTW Folder="ucuq">
+    <Modules Group="UCU" Path="../../">
+      <Module>ucuinf</Module>
+      <Module>ucucmn</Module>
+    </Modules>
+    <Module>frontend</Module>
+    <Module>common</Module>
+    <Module>messages</Module>
+    <Module>registry</Module>
+    <Module>backend</Module>
+    <Module>switcher</Module>
+  </Modules>
+  <SourceDirs>
+    <SourceDir>../../</SourceDir>
+  </SourceDirs>
+  <Files RTW=".">
+    <File>README.md</File>
+    <File>Makefile</File>
+    <Files Path="../">
+      <File>CHANGELOG.md</File>
+    </Files>
+  </Files>
+  <RTW Folder="ucuq">
     <!--
-      If '@Parameters'' empty, launching 'help' and 'version' GitHub actions job, but not 'test'.
-      If '@Parameters' absent no ''help', 'version' nor 'test' GitHub action jobs launched.
+        If '@Parameters'' empty, launching 'help' and 'version' GitHub actions job, but not 'test'.
+        If '@Parameters' absent no ''help', 'version' nor 'test' GitHub action jobs launched.
     -->
     <CI Parameters=""/>
   </RTW>

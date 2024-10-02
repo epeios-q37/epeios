@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2024 Claude SIMON (http://q37.info/contact/).
 
-  This file is part of the 'UCUq' tool.
+  This file is part of the 'UCUq' toolkit.
 
   'UCUq' is free software: you can redistribute it and/or modify it
   under the terms of the GNU Affero General Public License as published
@@ -21,17 +21,19 @@
 #ifndef UCUQ_INC_
 # define UCUQ_INC_
 
+# include "ucuinf.h"
+
 # include "scli.h"
 
-# define NAME_MC			"UCUq"
-# define NAME_UC			"UCUQ"
-# define NAME_LC			"ucuq"
-# define WEBSITE_URL		"http://q37.info/tools/ucuq/"
-# define AUTHOR_NAME		"Claude SIMON"
-# define AUTHOR_CONTACT		"http://q37.info/contact/"
-# define OWNER_NAME			"Claude SIMON"
-# define OWNER_CONTACT		"http://q37.info/contact/"
-# define COPYRIGHT			COPYRIGHT_YEARS " " OWNER_NAME " (" OWNER_CONTACT ")"
+# define NAME_MC			  UCUINF_MC_AFFIX
+# define NAME_UC			  UCUINF_UC_AFFIX
+# define NAME_LC			  UCUINF_LC_AFFIX
+# define WEBSITE_URL		UCUINF_WEBSITE_URL	
+# define AUTHOR_NAME		UCUINF_AUTHOR_NAME	
+# define AUTHOR_CONTACT	UCUINF_AUTHOR_CONTACT
+# define OWNER_NAME			UCUINF_OWNER_NAME		
+# define OWNER_CONTACT	UCUINF_OWNER_CONTACT
+# define COPYRIGHT			UCUINF_COPYRIGHT		
 
 SCLI_DEC( ucuq )
 

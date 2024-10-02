@@ -1,6 +1,6 @@
 # MicroController Remove Server (runs on the µcontroller)
 
-import socket, sys, _thread, uos, time, network, json, binascii,io
+import socket, sys, _thread, uos, time, network, json, binascii, io, select
 from machine import Pin
 
 
@@ -20,8 +20,8 @@ PROTOCOL_VERSION_ = "0"
 # Connection status.
 S_FAILURE_ = 0
 S_SEARCHING_ = 1 # Search an available WLAN.
-S_WLAN_ = 2 # Connecting to WLAN. There is a delay of 0.5 second between tow calls.
-S_UCUQ_ = 3 # Connecting to UCUq server. 
+S_WLAN_ = 2 # Connecting to WLAN. There is a delay of 0.5 second between two calls.
+S_UCUQ_ = 3 # Connecting to UCUq server.
 S_SUCCESS_ = 4
 S_DECONNECTION_ = 5
 
@@ -33,7 +33,7 @@ R_EXECUTE_ = 1
 A_OK_ = 0
 A_ERROR_ = 1
 A_PUZZLED_ = 2
-A_DISCONNECTED = 3  # Never returned bu backend, only here as placeholder
+A_DISCONNECTED_ = 3  # Never returned bu backend, only here as placeholder
 
 
 with open("ucuq.json", "r") as config:
@@ -68,13 +68,13 @@ def wlanGetKnownStation_(wifi, callback):
   known = ""
   tries = 0
 
+  wifi.active(True)
+  
   while not known:
     if not callback(S_SEARCHING_, tries):
       callback(S_FAILURE_, 0)
       exit_()
     
-    wifi.active(True)
-
     for station in wifi.scan():
       if known:
         break
@@ -85,6 +85,7 @@ def wlanGetKnownStation_(wifi, callback):
           known = name
 
     tries += 1
+    time.sleep(0.5)
 
   return known
 
@@ -199,18 +200,22 @@ def exit_(message=None):
   sys.exit(-1)
 
 
-def init_(address, port):
+def init_(address, port, callback):
   global socket_
+  cont = True
+  tries = 0
 
   socket_ = socket.socket()
+
+  callback(S_UCUQ_, 0)
 
   try:
     socket_.connect(socket.getaddrinfo(address, port)[0][-1])
   except:
     return False
+  else:
+    return True
 
-  return True
-  
 
 def handshake_():
   with _writeLock:
@@ -271,7 +276,7 @@ def serve_():
 def defaultCallback_(status, tries):
   if tries == 0:
     if status != S_FAILURE_:
-      print("\r                                        \r", end="")
+      print("\r                                                                                \r", end="")
     if status == S_SEARCHING_:
       print("Searching for available WLAN...", end="")
     elif status == S_WLAN_:
@@ -279,7 +284,7 @@ def defaultCallback_(status, tries):
     elif status == S_UCUQ_:
       print("Connecting to UCUq server...", end="")
     elif status == S_SUCCESS_:
-      print("SUCCESS!")
+      print("", end="") # Erase line and go to the beginning of the line. 
   else:
     print(".", end="")
 
@@ -288,20 +293,26 @@ def defaultCallback_(status, tries):
   elif status == S_DECONNECTION_:
     print("Deconnection!")
 
-  return True if tries <= 20 else False 
+  return True if tries <= 200 else False 
 
 
 def handleLed_(pin, on):
   Pin(pin, Pin.OUT).value(1 if on else 0)
 
 
-def ledCallback_(status, tries, pin):
-  if status == S_SEARCHING_:
+def ledBlink_(pin, count):
+  for _ in range(count):
     handleLed_(pin, True)
     time.sleep(0.1)
     handleLed_(pin, False)
+    time.sleep(0.1)
+
+
+def ledCallback_(status, tries, pin):
+  if status == S_SEARCHING_:
+    ledBlink_(pin, 1)
   elif status == S_WLAN_:
-    handleLed_(pin, tries % 2)
+    handleLed_(pin, not( tries % 2) )
   elif status == S_UCUQ_:
     handleLed_(pin, False)
   elif status == S_FAILURE_:
@@ -309,9 +320,8 @@ def ledCallback_(status, tries, pin):
   elif status == S_DECONNECTION_:
     handleLed_(pin, True)
   elif status == S_SUCCESS_:
-    handleLed_(pin, False)
-
-  return defaultCallback_(status, tries)
+    ledBlink_(pin, 3)
+  return defaultCallback_(status, tries) and not ( ( status == S_UCUQ_) and ( tries > 5 ) )
 
 
 CALLBACKS_ = {
@@ -328,13 +338,12 @@ def getCallback_():
 def main():
   callback = getCallback_()
 
+
   if not wlanConnect_(WLAN, callback):
     callback(S_FAILURE_, 0)
     exit_()
 
-  callback(S_UCUQ_, 0)
-
-  if not init_(UCUQ_ADDRESS_, UCUQ_PORT_):
+  if not init_(UCUQ_ADDRESS_, UCUQ_PORT_, callback):
     if ( WLAN != "" ):
       callback(S_FAILURE_, 0)
       exit_()
@@ -345,11 +354,9 @@ def main():
       callback(S_FAILURE_, 0)
       exit_()
 
-    callback(S_UCUQ_, 0)
-
-    if not init_(UCUQ_ADDRESS_, UCUQ_PORT_):
-        callback(S_FAILURE_, 0)
-        exit_()
+    if not init_(UCUQ_ADDRESS_, UCUQ_PORT_, callback):
+      callback(S_FAILURE_, 0)
+      exit_()
 
   callback(S_SUCCESS_, 0)
 
@@ -360,6 +367,10 @@ def main():
   try:
     serve_()
   except Exception as exception:
+    try:
+      writeUInt_(A_DISCONNECTED_)
+    except:
+      pass
     getCallback_()(S_DECONNECTION_, 0)
     raise exception
 

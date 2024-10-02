@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2024 Claude SIMON (http://q37.info/contact/).
 
-  This file is part of the 'UCUq' tool.
+  This file is part of the 'UCUq' toolkit.
 
   'UCUq' is free software: you can redistribute it and/or modify it
   under the terms of the GNU Affero General Public License as published
@@ -29,47 +29,18 @@
 
 using namespace common;
 
-#define C( name )	case c##name : return #name; break
-
-const char *common::GetLabel(eCaller Caller)
-{
-	switch ( Caller ) {
-		C(Frontend);
-		C(Backend);
-	default:
-		qRFwk();
-		break;
-	}
-
-	return NULL;	// To avoid a warning.
-}
-
-#undef C
-
-namespace {
-	stsfsm::wAutomat CallerAutomat_;
-
-	void FillCallerAutomat_(void)
-	{
-		CallerAutomat_.Init();
-		stsfsm::Fill<eCaller>(CallerAutomat_, c_amount, GetLabel);
-	}
-}
-
-eCaller common::GetCaller(const str::dString &Pattern)
-{
-	return stsfsm::GetId(Pattern, CallerAutomat_, c_Undefined, c_amount);
-}
-
 sdr::tRow common::rCallers::New(sck::rRWDriver *Driver)
 {
 	sdr::sRow Row = qNIL;
 qRH;
 	rCaller *Caller = NULL;
+	mtx::rHandle Locker;
 qRB;
 	Caller = qNEW(rCaller);
 
 	Caller->Init(Driver);
+
+	Locker.InitAndLock(Mutex_);
 
 	Row = List_.Add(Caller);
 qRR;
@@ -79,57 +50,94 @@ qRE;
 	return *Row;
 }
 
-void common::rCallers::Delete(sdr::sRow Row)
+tol::sTimeStamp common::rCallers::GetTimestamp(sdr::sRow Row) const
 {
-	rCaller *Caller = List_.Get(Row);
+	tol::sTimeStamp Timestamp = 0;
+qRH;
+	mtx::rHandle Locker;
+	rCaller *Caller = NULL;
+qRB;
+	Locker.InitAndLock(Mutex_);
+
+	Caller = List_.Get(Row);
 
 	if ( Caller == NULL )
 		qRGnr();
 
-	qDELETE(Caller);
+	Timestamp = Caller->TimeStamp;
+qRR;
+qRT;
+qRE;
+	return Timestamp;
+}
+
+void common::rCallers::Withdraw(sdr::sRow Row)
+{
+qRH;
+	rCaller *Caller = NULL;
+	mtx::rHandle ListLocker, CallerLocker;
+qRB;
+	ListLocker.InitAndLock(Mutex_);
+
+	Caller = List_.Get(Row);
 
 	List_.Delete(Row);
-}
 
-rCaller *common::rCallers::Get_(sdr::tRow Row) const
-{
-	rCaller *Caller = List_.Get(Row);
+	ListLocker.Unlock();
 
 	if ( Caller == NULL )
 		qRGnr();
 
-	if ( Caller->Driver == NULL )
+	CallerLocker.InitAndLock(Caller->Mutex_);
+
+	if ( Caller->UserDiscriminator_ == NULL ) {
+		CallerLocker.Unlock();	// To avoid an error on destroying the underlying mutex because it is still locked.
+		CallerLocker.reset(false);	// The corresponding mutes will be destroyed.
+		qDELETE(Caller);
+	} else
+			Caller->IsAlive_ = false;
+qRR;
+qRT;
+qRE;
+}
+
+rCaller *common::rCallers::Hire(
+	sdr::tRow Row,
+	const void *UserDiscriminator) const
+{
+	rCaller *Caller = NULL;
+qRH;
+	mtx::rHandle Locker;
+qRB;
+	Locker.InitAndLock(Mutex_);
+
+	Caller = List_.Get(Row);
+
+	if ( Caller == NULL )
 		qRGnr();
 
-	return Caller;
-}
-
-const rCaller &common::rCallers::Get(sdr::tRow Row) const
-{
-	return *Get_(Row);
-}
-
-void common::rCallers::RegisterIsActiveFlag(
-	sdr::tRow Row,
-	bso::sBool *IsAliveFlag)
-{
-	*IsAliveFlag = true;
-
-	Get_(Row)->IsAliveFlag = IsAliveFlag;
+	if ( !Caller->IsAlive_ )
+		Caller = NULL;
+	else
+		Caller->UserDiscriminator_ = UserDiscriminator;
+	qRR;
+	qRT;
+	qRE;
+		return Caller;
 }
 
 namespace {
 	const str::dString &GetTranslation_(
-		eCaller Caller,
+		ucucmn::eCaller Caller,
 		str::dString &Translation)
 	{
 		messages::eId Id = messages::i_Undefined;
 
 		switch ( Caller ) {
-		case cFrontend:
+		case ucucmn::cFrontend:
 			Id = messages::iFrontend;
 			break;
-		case cBackend:
+		case ucucmn::cBackend:
 			Id = messages::iBackend;
 			break;
 		default:
@@ -141,8 +149,18 @@ namespace {
 	}
 }
 
-qGCTOR(common)
+bso::sBool common::rCaller::ShouldIDestroy(const void *UserDiscriminator)
 {
-	FillCallerAutomat_();
-}
+	bso::sBool Answer = false;
+qRH;
+	mtx::rHandle Locker;
+qRB;
+	Locker.InitAndLock(Mutex_);
 
+	if ( !IsAlive_ && (UserDiscriminator == UserDiscriminator_) )
+		Answer = true;
+qRR;
+qRT;
+qRE;
+	return Answer;
+}

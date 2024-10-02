@@ -1,7 +1,7 @@
 /*
   Copyright (C) 2024 Claude SIMON (http://q37.info/contact/).
 
-  This file is part of the 'UCUq' tool.
+  This file is part of the 'UCUq' toolkit.
 
   'UCUq' is free software: you can redistribute it and/or modify it
   under the terms of the GNU Affero General Public License as published
@@ -77,11 +77,10 @@ namespace backend {
   sRow New(
     const dSelector & Selector,
     sck::rRWDriver *Driver);
-  sRow Get(
-    const dSelector & Selector,
-    bso::sBool *IsAliveFlag);
-  fdr::rRWDriver &Get(sRow Row);
-  void Delete(sRow Row);
+  common::rCaller *Hire(
+    const dSelector &Selector,
+    const void *User);
+  void Withdraw(sRow Row);  // Make unavailable and delete if applied.
 }
 
 #endif

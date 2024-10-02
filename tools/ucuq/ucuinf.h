@@ -17,17 +17,18 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FRONTEND_INC_
-# define FRONTEND_INC_
+#ifndef UCUINF_INC_
+# define UCUINF_INC_
 
-# include "common.h"
+# define UCUINF_MC_AFFIX	  		"UCUq"
+# define UCUINF_UC_AFFIX		  	"UCUQ"
+# define UCUINF_LC_AFFIX			  "ucuq"
+# define UCUINF_WEBSITE_URL		  "http://q37.info/tools/ucuq/"
+# define UCUINF_AUTHOR_NAME		  "Claude SIMON"
+# define UCUINF_AUTHOR_CONTACT	"http://q37.info/contact/"
+# define UCUINF_OWNER_NAME			"Claude SIMON"
+# define UCUINF_OWNER_CONTACT		"http://q37.info/contact/"
+# define UCUINF_COPYRIGHT			  COPYRIGHT_YEARS " " OWNER_NAME " (" OWNER_CONTACT ")"
 
-# include "sck.h"
-# include "tol.h"
-# include "sdr.h"
-
-namespace frontend {
-  void Process(fdr::rRWDriver &Driver);
-}
 
 #endif

@@ -17,17 +17,47 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FRONTEND_INC_
-# define FRONTEND_INC_
+#include "ucucmn.h"
 
-# include "common.h"
+#include "stsfsm.h"
 
-# include "sck.h"
-# include "tol.h"
-# include "sdr.h"
+using namespace ucucmn;
 
-namespace frontend {
-  void Process(fdr::rRWDriver &Driver);
+#define C( name )	case c##name : return #name; break
+
+const char *ucucmn::GetLabel(eCaller Caller)
+{
+	switch ( Caller ) {
+		C(Admin);
+		C(Manager);
+		C(Frontend);
+		C(Backend);
+	default:
+		qRFwk();
+		break;
+	}
+
+	return NULL;	// To avoid a warning.
 }
 
-#endif
+#undef C
+
+namespace {
+	stsfsm::wAutomat CallerAutomat_;
+
+	void FillCallerAutomat_(void)
+	{
+		CallerAutomat_.Init();
+		stsfsm::Fill<eCaller>(CallerAutomat_, c_amount, GetLabel);
+	}
+}
+
+eCaller ucucmn::GetCaller(const str::dString &Pattern)
+{
+	return stsfsm::GetId(Pattern, CallerAutomat_, c_Undefined, c_amount);
+}
+
+qGCTOR(ucucmn)
+{
+	FillCallerAutomat_();
+}
