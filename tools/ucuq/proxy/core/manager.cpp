@@ -17,6 +17,55 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// UCUq INFormations
 
-#include "ucuinf.h"
+#include "manager.h"
+
+#include "backend.h"
+
+#include "ucumng.h"
+
+#include "flw.h"
+#include "str.h"
+
+using namespace manager;
+
+namespace {
+  void CloseDevices_(flw::rRWFlow &Flow)
+  {
+  qRH;
+    str::string Token;
+  qRB;
+    Token.Init();
+    ucucmn::Get(Flow, Token);
+    ucucmn::Dismiss(Flow);
+
+    backend::Withdraw(Token);
+  qRR;
+  qRT;
+  qRE;
+  }
+}
+
+void manager::Process(fdr::rRWDriver &Driver)
+{
+qRH;
+  flw::rDressedRWFlow<> Flow;
+  str::wString RawRequest;
+qRB;
+Flow.Init(Driver);
+
+  RawRequest.Init();
+  ucucmn::Get(Flow, RawRequest);
+
+  switch ( ucumng::GetRequest(RawRequest) ) {
+  case ucumng::rCloseDevices:
+    CloseDevices_(Flow);
+    break;
+  default:
+    qRGnr();
+    break;
+  }
+qRR;
+qRT;
+qRE;
+}

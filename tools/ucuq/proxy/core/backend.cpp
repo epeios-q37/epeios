@@ -30,8 +30,8 @@ using namespace backend;
 
 namespace {
   mtx::rMutex Mutex_ = mtx::Undefined; // To protect the too below members;
-  crt::qCRATEw(dSelector, sRow) _Selectors_;
-  common::rCallers _Backends_;
+  crt::qCRATEw(dSelector, sRow) Selectors_;
+  common::rCallers Backends_;
 }
 
 namespace {
@@ -39,11 +39,11 @@ namespace {
     const dSelector &Selector,
     sck::rRWDriver *Driver)
   {
-    sRow Row = _Backends_.New(Driver);
+    sRow Row = Backends_.New(Driver);
 
-    _Selectors_.Allocate(_Backends_.Extent());
+    Selectors_.Allocate(Backends_.Extent());
 
-    _Selectors_.Store(Selector, Row);
+    Selectors_.Store(Selector, Row);
 
     return Row;
   }
@@ -60,7 +60,7 @@ namespace {
   sRow Get_(const dSelector &Selector)
   {
     sRow
-      Row = _Selectors_.First(),
+      Row = Selectors_.First(),
       LastRow = qNIL;
 
     tol::sTimeStamp
@@ -68,14 +68,14 @@ namespace {
       LastTimestamp = 0;
 
     while ( Row != qNIL ) {
-      if ( Matches(Selector, _Selectors_.Get(Row))
-           && ( LastTimestamp < ( Timestamp = _Backends_.GetTimestamp(*Row)) ) )
+      if ( Matches(Selector, Selectors_.Get(Row))
+           && ( LastTimestamp < ( Timestamp = Backends_.GetTimestamp(*Row)) ) )
       {
         LastRow = Row;
         LastTimestamp = Timestamp;
       }
 
-      Row = _Selectors_.Next(Row);
+      Row = Selectors_.Next(Row);
     }
 
     return LastRow;
@@ -100,9 +100,9 @@ qRB;
 
   Row = New_(Selector, Driver);
 
-  _Selectors_.Allocate(_Backends_.Extent());
+  Selectors_.Allocate(Backends_.Extent());
 
-  _Selectors_.Store(Selector, Row);
+  Selectors_.Store(Selector, Row);
 qRR;
 qRT;
 qRE;
@@ -120,9 +120,10 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
   Row = Get_(Selector);
+  Locker.Unlock();
 
   if ( Row != qNIL )
-    Caller = _Backends_.Hire(*Row, UserDiscriminator);
+    Caller = Backends_.Hire(*Row, UserDiscriminator);
 qRR;
 qRT;
 qRE;
@@ -131,15 +132,69 @@ qRE;
 
 void backend::Withdraw(sRow Row)
 {
-  _Backends_.Withdraw(*Row);
-  _Selectors_(Row).reset();
+qRH;
+  mtx::rHandle Locker;
+qRB;
+  Locker.InitAndLock(Mutex_);
+  
+  Selectors_(Row).reset();
+
+  Locker.Unlock();
+
+  Backends_.Withdraw(*Row);
+qRR;
+qRT;
+qRE;
+}
+
+void backend::Withdraw(const dSelector &Selector)
+{
+qRH;
+  mtx::rHandle Locker;
+  sRow Row = qNIL;
+qRB;
+  Locker.InitAndLock(Mutex_);
+
+  Row = Get_(Selector);
+
+  if ( Row != qNIL ) {
+    Selectors_(Row).reset();
+    Locker.Unlock();
+    Backends_.Withdraw(*Row);
+  }
+qRR;
+qRT;
+qRE;
+}
+
+void backend::Withdraw(const str::dString &Token)
+{
+qRH;
+  mtx::rHandle Locker;
+  sRow Row = qNIL;
+qRB;
+  Locker.InitAndLock(Mutex_);
+
+  Row = Selectors_.First();
+
+  while ( Row != qNIL ) {
+    if ( Selectors_(Row).Token == Token ) {
+      Selectors_(Row).reset();
+      Backends_.Withdraw(*Row);
+    }
+
+    Row = Selectors_.Next(Row);
+  }
+  qRR;
+  qRT;
+  qRE;
 }
 
 qGCTOR(backend)
 {
   Mutex_ = mtx::Create();
-  _Backends_.Init();
-  _Selectors_.Init();
+  Backends_.Init();
+  Selectors_.Init();
 }
 
 qGDTOR(backend) {

@@ -17,6 +17,42 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// UCUq INFormations
+#include "ucumng.h"
 
-#include "ucuinf.h"
+#include "stsfsm.h"
+
+using namespace ucumng;
+
+#define C( name )	case r##name : return #name; break
+
+const char *ucumng::GetLabel(eRequest Request)
+{
+  switch ( Request ) {
+    C(CloseDevices);
+  default:
+    qRFwk();
+    break;
+  }
+
+  return NULL;	// To avoid a warning.
+}
+
+namespace {
+  stsfsm::wAutomat RequestAutomat_;
+
+  void FillRequestAutomat_(void)
+  {
+    RequestAutomat_.Init();
+    stsfsm::Fill<eRequest>(RequestAutomat_, r_amount, GetLabel);
+  }
+}
+
+eRequest ucumng::GetRequest(const str::dString &Pattern)
+{
+  return stsfsm::GetId(Pattern, RequestAutomat_, r_Undefined, r_amount);
+}
+
+qGCTOR(ucumng)
+{
+  FillRequestAutomat_();
+}

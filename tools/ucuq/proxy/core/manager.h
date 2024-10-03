@@ -17,6 +17,14 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// UCUq INFormations
 
-#include "ucuinf.h"
+#ifndef MANAGER_INC_
+# define MANAGERY_INC_
+
+# include "fdr.h"
+
+namespace manager {
+  void Process(fdr::rRWDriver &);
+}
+
+#endif

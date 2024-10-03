@@ -81,6 +81,8 @@ namespace backend {
     const dSelector &Selector,
     const void *User);
   void Withdraw(sRow Row);  // Make unavailable and delete if applied.
+  void Withdraw(const dSelector &Selector);
+  void Withdraw(const str::dString &Token);
 }
 
 #endif

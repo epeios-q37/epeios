@@ -25,20 +25,15 @@
 #include "registry.h"
 #include "backend.h"
 #include "frontend.h"
+#include "manager.h"
 
 #include "csdbns.h"
-#include "csdcmn.h"
 
 #include "mtk.h"
 
 using namespace switcher;
 
 namespace {
-	namespace protocol_ {
-		qCDEF(char *, Id, "c37cc83e-079f-448a-9541-5c63ce00d960");
-		qCDEF(csdcmn::sVersion, LastVersion, 0);
-	}
-
 	struct rFeatures_ {
 	public:
 		str::wString SystemLabel;
@@ -67,7 +62,7 @@ namespace {
 	qRB;
 		Flow.Init(Driver);
 
-		switch ( Features.ProtocolVersion = csdcmn::GetProtocolVersion(protocol_::Id, protocol_::LastVersion, Flow) ) {
+		switch ( Features.ProtocolVersion = csdcmn::GetProtocolVersion(ucucmn::protocol::Id, ucucmn::protocol::LastVersion, Flow) ) {
 		case csdcmn::UnknownVersion:
 			Translation.Init();
 			common::Put(messages::GetTranslation(messages::iUnknownProtocol, Translation), Flow);
@@ -81,7 +76,7 @@ namespace {
 			qRGnr();
 			break;
 		default:
-			if ( Features.ProtocolVersion > protocol_::LastVersion )
+			if ( Features.ProtocolVersion > ucucmn::protocol::LastVersion )
 				qRUnx();
 			break;
 		}
@@ -184,6 +179,9 @@ namespace {
 			break;
 		case common::cFrontend:
 			frontend::Process(*Driver);
+			break;
+		case common::cManager:
+			manager::Process(*Driver);
 			break;
 		default:
 			qRUnx();

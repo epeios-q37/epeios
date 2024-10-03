@@ -17,6 +17,24 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// UCUq INFormations
+// UCUq MaNaGer
 
-#include "ucuinf.h"
+#ifndef UCUMNG_INC_
+# define UCUMNG_INC_
+
+# include "tol.h"
+
+namespace ucumng {
+
+  qENUM(Request) {
+    rCloseDevices,
+    r_amount,
+    r_Undefined
+  };
+
+  const char *GetLabel(eRequest Request);
+
+  eRequest GetRequest(const str::dString &Pattern);
+}
+
+#endif

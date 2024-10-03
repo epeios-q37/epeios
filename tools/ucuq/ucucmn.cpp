@@ -23,6 +23,8 @@
 
 using namespace ucucmn;
 
+qCDEF(char *, ucucmn::protocol::Id, "c37cc83e-079f-448a-9541-5c63ce00d960");
+
 #define C( name )	case c##name : return #name; break
 
 const char *ucucmn::GetLabel(eCaller Caller)

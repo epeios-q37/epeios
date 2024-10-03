@@ -17,10 +17,14 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+// UCUq CoMmoN
+
 #ifndef UCUCMN_INC_
 # define UCUCMN_INC_
 
 # include "tol.h"
+# include "csdcmn.h"
 
 namespace ucucmn {
   qENUM(Caller) {
@@ -35,6 +39,49 @@ namespace ucucmn {
   const char *GetLabel(eCaller Caller);
 
   eCaller GetCaller(const str::dString &Pattern);
+
+  namespace protocol {
+    extern const char *Id;
+    qCDEF(csdcmn::sVersion, LastVersion, 0);
+  }
+
+  template <typename integer> integer Get(
+    flw::rRFlow &Flow,
+    integer &Integer)
+  {
+    return csdcmn::Get(Flow, Integer);
+  }
+
+  inline const str::dString &Get(
+    flw::rRFlow &Flow,
+    str::dString &String)
+  {
+    return csdcmn::Get(Flow, String);
+  }
+
+  inline void Put(
+    const str::dString &String,
+    flw::rWFlow &Flow)
+  {
+    return csdcmn::Put(String, Flow);
+  }
+
+  template <typename integer> void Put(
+    integer Integer,
+    flw::rWFlow &Flow)
+  {
+    return csdcmn::Put(Integer, Flow);
+  }
+
+  inline void Commit(flw::rWFlow &Flow)
+  {
+    Flow.Commit();
+  }
+
+  inline void Dismiss(flw::rRFlow &Flow)
+  {
+    Flow.Dismiss();
+  }
 }
 
 #endif

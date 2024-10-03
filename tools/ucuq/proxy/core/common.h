@@ -141,6 +141,8 @@ namespace common {
         qRGnr();
       else if ( Tracker->Caller == NULL )
         qRGnr();
+      else if ( !Tracker->Caller->IsAlive_ )
+        qRFree();
       else if ( Tracker->Caller->UserDiscriminator_ == NULL )
         qRGnr();
       else if ( Tracker->Caller->UserDiscriminator_ != Tracker->Candidate )
@@ -154,7 +156,7 @@ namespace common {
   {
     Test_(Tracker);
 
-    return csdcmn::Get(Flow, Integer);
+    return ucucmn::Get(Flow, Integer);
   }
 
   inline const str::dString &Get(
@@ -164,7 +166,7 @@ namespace common {
   {
     Test_(Tracker);
 
-    return csdcmn::Get(Flow, String);
+    return ucucmn::Get(Flow, String);
   }
 
   inline void Put(
@@ -174,7 +176,7 @@ namespace common {
   {
     Test_(Tracker);
 
-    return csdcmn::Put(String, Flow);
+    return ucucmn::Put(String, Flow);
   }
 
   template <typename integer> void Put(
@@ -184,7 +186,7 @@ namespace common {
   {
     Test_(Tracker);
 
-    return csdcmn::Put(Integer, Flow);
+    return ucucmn::Put(Integer, Flow);
   }
 
   inline void Commit(
@@ -193,7 +195,7 @@ namespace common {
   {
     Test_(Tracker);
 
-    Flow.Commit();
+    ucucmn::Commit(Flow);
   }
 
   inline void Dismiss(
@@ -202,7 +204,7 @@ namespace common {
   {
     Test_(Tracker);
 
-    Flow.Dismiss();
+    ucucmn::Dismiss(Flow);
   }
 }
 
