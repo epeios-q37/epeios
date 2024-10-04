@@ -8,9 +8,22 @@ WLAN = "" # Search for one of the WLAN defined in 'wireless.py' and connect to i
 # WLAN = "<name>" # Connects to the WLAN <name> as defined in 'wireless.py'.
 # WLAN = ("<ssid>","<key>") # Connects to WLAN <ssid> using <key>.
 
-UCUQ_ADDRESS_ = "ucuq.q37.info"
-UCUQ_ADDRESS_ = "192.168.1.87" # dev
-UCUQ_PORT_ = 53800
+with open("ucuq.json", "r") as config:
+  CONFIG_ = json.load(config)
+
+SELECTOR_ = CONFIG_["Selector"]
+
+UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
+UCUQ_DEFAULT_PORT_ = "53800"
+
+UCUQ_HOST_ = CONFIG_["Proxy"]["Host"] if "Proxy" in CONFIG_ and "Host" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["Host"] else UCUQ_DEFAULT_HOST_
+
+# only way to test if the entry contains a valid int.
+try:
+  UCUQ_PORT_ = int(CONFIG_["Proxy"]["Port"])
+except:
+  UCUQ_PORT_ = UCUQ_DEFAULT_PORT_
+
 
 WLAN_FALLBACK_ = "q37"
 
@@ -35,11 +48,6 @@ A_ERROR_ = 1
 A_PUZZLED_ = 2
 A_DISCONNECTED_ = 3  # Never returned bu backend, only here as placeholder
 
-
-with open("ucuq.json", "r") as config:
-  CONFIG_ = json.load(config)
-
-SELECTOR_ = CONFIG_["Selector"]
 
 def getSelectorId_(selector):
   if isinstance(selector[1], str):
@@ -200,7 +208,7 @@ def exit_(message=None):
   sys.exit(-1)
 
 
-def init_(address, port, callback):
+def init_(host, port, callback):
   global socket_
   cont = True
   tries = 0
@@ -210,7 +218,7 @@ def init_(address, port, callback):
   callback(S_UCUQ_, 0)
 
   try:
-    socket_.connect(socket.getaddrinfo(address, port)[0][-1])
+    socket_.connect(socket.getaddrinfo(host, port)[0][-1])
   except:
     return False
   else:
@@ -256,6 +264,8 @@ def serve_():
       expression = readString_()
       returned = ""
 
+      print("Yo:", script, expression)
+
       try:
         exec(script)
         if expression:
@@ -268,6 +278,7 @@ def serve_():
       else:
         writeUInt_(A_OK_)
         writeString_(returned)
+        print(returned)
     else:
       writeUInt_(A_PUZZLED_)
       writeString_("")  # For future use
@@ -343,7 +354,7 @@ def main():
     callback(S_FAILURE_, 0)
     exit_()
 
-  if not init_(UCUQ_ADDRESS_, UCUQ_PORT_, callback):
+  if not init_(UCUQ_HOST_, UCUQ_PORT_, callback):
     if ( WLAN != "" ):
       callback(S_FAILURE_, 0)
       exit_()
@@ -354,7 +365,7 @@ def main():
       callback(S_FAILURE_, 0)
       exit_()
 
-    if not init_(UCUQ_ADDRESS_, UCUQ_PORT_, callback):
+    if not init_(UCUQ_HOST_, UCUQ_PORT_, callback):
       callback(S_FAILURE_, 0)
       exit_()
 

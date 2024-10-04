@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Configurations xmlns:xpp="http://q37.info/ns/xpp/">
+  <Configuration target="ucuqm">
+    <xpp:set name="q37.xpp" env-var="Q37_XPP"/>
+    <xpp:expand value-of="q37.xpp"/>
+    <xpp:expand href="../../../../CLI.xcfg"/>
+    <Parameters>
+      <Language>en</Language>
+      <!-- Default command -->
+      <HostServiceDev>192.168.1.87:53800</HostServiceDev>
+      <HostService>ucuq.q37.info:53800</HostService>
+      <Command>FetchConfig</Command>
+      <DeviceId>Black</DeviceId>
+    </Parameters>
+    <xpp:expand href="../../../../../q37/epeios/tools/ucuq/manager/token.xcfg"/>
+    <Definitions>
+      <Scripts>
+        <Script Label="FetchConfig" Expression="config">
+          <![CDATA[
+import json
+
+with open("ucuq.json") as configFile:
+  config = json.load(configFile)
+  
+for name in config["WLAN"]["Known"]:
+  config["WLAN"]["Known"][name] = {}
+]]>
+        </Script>
+      </Scripts>
+    </Definitions>
+    <Locale>
+      <xpp:expand select="CLI_Locale"/>
+      <!-- Commands -->
+      <Translations text="CloseCommandDescription">
+        <Translation language="fr">Fermeture du 'backend'</Translation>
+        <Translation language="en">Closing backends</Translation>
+      </Translations>
+      <Translations text="FetchCommandDescription">
+        <Translation language="fr">Récupère la configuration de 'backend'</Translation>
+        <Translation language="en">Get backend config</Translation>
+      </Translations>
+      <!-- Flags -->
+      <Translations text="TokenArgLabel">
+        <Translation language="fr">jeton</Translation>
+        <Translation language="en">token</Translation>
+      </Translations>
+      <Translations text="TokenArgDescription">
+        <Translation language="fr">jeton correspondat à un groupe de dispositifs</Translation>
+        <Translation language="en">token of a group of devices</Translation>
+      </Translations>
+      <!-- Option descriptions -->
+      <Translations text="DeviceIdArgLabel">
+        <Translation language="fr">id</Translation>
+        <Translation language="en">id</Translation>
+      </Translations>
+      <!-- Option labels -->
+      <Translations text="DeviceIdArgDescription">
+        <Translation language="fr">identifiant de dispositif ; si absent, tous les dispositifs correspondants au jeton donné sont concernés</Translation>
+        <Translation language="en">device identifier; if absent, all devices corresponding to given token are involved</Translation>
+      </Translations>
+      <!-- Argument descriptions -->
+      <Translations text="TestArgumentDescription">
+        <Translation language="fr">argument de test.</Translation>
+        <Translation language="en">test argument.</Translation>
+      </Translations>
+      <!-- Argument labels -->
+      <Translations text="TestArgumentLabel">
+        <Translation language="fr">argument (fr)</Translation>
+        <Translation language="en">argument (en)</Translation>
+      </Translations>
+    </Locale>
+    <Arguments>
+      <xpp:expand select="CLI_Arguments"/>
+      <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage="%TokenArg% [%DeviceIdArg%]"/>
+      <Argument id="FetchConfig" Description="FetchConfigCommandDescription" long="fetch-config" Value="FetchConfig" Usage="%TokenArg% %DeviceIdArg%"/>
+      <Argument id="TokenArg" Label="TokenArgLabel" Description="TokenArgDescription" Path="Token"/>
+      <Argument id="DeviceIdArg" Label="DeviceIdArgLabel" Description="DeviceIdArgDescription" Path="Id"/>
+      <Argument id="TestOption" Description="TestOptionDescription" long="option" short="o" Path="Option" Label="TestOptionLabel"/>
+      <Argument id="TestArgument" Description="TestArgumentDescription" Path="Test" Label="TestArgumentLabel"/>
+      <Layouts>
+        <Layout command="Close">
+          <Link index="0" Target="TokenArg"/>
+        </Layout>
+        <Layout command="FetchConfig">
+          <Link index="0" Target="TokenArg"/>
+          <Link index="1" Target="DeviceIdArg"/>
+        </Layout>
+      </Layouts>
+    </Arguments>
+  </Configuration>
+</Configurations>

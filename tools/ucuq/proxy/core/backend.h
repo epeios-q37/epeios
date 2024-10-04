@@ -27,6 +27,26 @@
 # include "sck.h"
 
 namespace backend {
+  qENUM(Request) { // Request sent to backend (as integer)
+    rPing,
+    rExecute,
+    r_amount,
+    r_Undefined
+  };
+
+  qENUM(Answer) {
+    aOK,
+    aError,
+    aPuzzled,
+    aDisconnected,
+    a_amount,
+    a_Undefined
+  };
+
+  eAnswer GetAnswer(
+    flw::rRFlow &Flow,
+    const common::gTracker *Tracker);
+
   qROW( Row );
 
   struct dSelector {

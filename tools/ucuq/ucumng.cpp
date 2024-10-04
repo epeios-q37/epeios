@@ -28,7 +28,8 @@ using namespace ucumng;
 const char *ucumng::GetLabel(eRequest Request)
 {
   switch ( Request ) {
-    C(CloseDevices);
+    C(Close_1);
+    C(Execute_1);
   default:
     qRFwk();
     break;

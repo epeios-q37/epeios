@@ -81,6 +81,27 @@ namespace {
     return LastRow;
   }
 
+  void Withdraw_(sRow Row)
+  {
+    Selectors_(Row).reset();
+
+    Backends_.Withdraw(*Row);
+  }
+
+}
+
+eAnswer backend::GetAnswer(
+  flw::rRFlow &Flow,
+  const common::gTracker *Tracker)
+{
+  bso::sU8 Answer = a_Undefined;
+
+  common::Get(Flow, Answer, Tracker);
+
+  if ( Answer > a_amount )
+    qRGnr();
+
+  return (eAnswer)Answer;
 }
 
 sRow backend::New(
@@ -96,7 +117,7 @@ qRB;
   Row = Get_(Selector);
 
   if ( Row != qNIL )
-    Withdraw(Row);
+    Withdraw_(Row);
 
   Row = New_(Selector, Driver);
 
@@ -137,11 +158,7 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
   
-  Selectors_(Row).reset();
-
-  Locker.Unlock();
-
-  Backends_.Withdraw(*Row);
+  Withdraw_(Row);
 qRR;
 qRT;
 qRE;
@@ -157,11 +174,8 @@ qRB;
 
   Row = Get_(Selector);
 
-  if ( Row != qNIL ) {
-    Selectors_(Row).reset();
-    Locker.Unlock();
-    Backends_.Withdraw(*Row);
-  }
+  if ( Row != qNIL )
+    Withdraw_(Row);
 qRR;
 qRT;
 qRE;
@@ -178,10 +192,8 @@ qRB;
   Row = Selectors_.First();
 
   while ( Row != qNIL ) {
-    if ( Selectors_(Row).Token == Token ) {
-      Selectors_(Row).reset();
-      Backends_.Withdraw(*Row);
-    }
+    if ( Selectors_(Row).Token == Token )
+      Withdraw_(Row);
 
     Row = Selectors_.Next(Row);
   }

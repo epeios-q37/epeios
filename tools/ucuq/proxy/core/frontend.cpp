@@ -31,48 +31,59 @@
 using namespace frontend;
 
 namespace {
-  qENUM(Request_) {
-    rPing,
-    rExecute,
+  qENUM(Request_) { // Request issued by frontend (received as string)
+    rPing_1,
+    rExecute_1,
     r_amount,
     r_Undefined
   };
 
-  qENUM(Answer_) {
-    aOK,
-    aError,
-    aPuzzled,
-    aDisconnected,  // For frontend only, not returned by backend
-    a_amount,
-    a_Undefined
-  };
+#define C( name )	case r##name : return #name; break
 
-  eAnswer_ GetAnswer_(
-    flw::rRFlow &Flow,
-    const common::gTracker *Tracker)
+  const char *GetLabel_(eRequest_ Request)
   {
-    bso::sU8 Answer = a_Undefined;
+    switch ( Request ) {
+      C(Ping_1);
+      C(Execute_1);
+    default:
+      qRFwk();
+      break;
+    }
 
-   common::Get(Flow, Answer, Tracker);
+    return NULL;	// To avoid a warning.
+  }
 
-    if ( Answer > a_amount )
-      qRGnr();
+#undef C
 
-    return (eAnswer_)Answer;
+    stsfsm::wAutomat FrontendRequestAutomat_;
+
+    void FillFrontendRequestAutomat_(void)
+    {
+      FrontendRequestAutomat_.Init();
+      stsfsm::Fill<eRequest_>(FrontendRequestAutomat_, r_amount, GetLabel_);
+    }
+
+  eRequest_ GetRequest_(const str::dString &Pattern)
+  {
+    return stsfsm::GetId(Pattern, FrontendRequestAutomat_, r_Undefined, r_amount);
   }
 
   eRequest_ GetRequest_(flw::rRFlow &Flow)
   {
-    bso::sU8 Request = r_Undefined;
+    eRequest_ Request = r_Undefined;
+  qRH;
+    str::wString RawRequest;
+  qRB;
+    RawRequest.Init();
 
-    common::Get(Flow, Request);
+    common::Get(Flow, RawRequest);
 
-    if ( Request > a_amount )
-      qRGnr();
-
-    return (eRequest_)Request;
+    Request = GetRequest_(RawRequest);
+  qRR;
+  qRT;
+  qRE;
+    return Request;
   }
-
 
   bso::sBool HandlePing_(
     flw::rRWFlow &Frontend,
@@ -83,25 +94,25 @@ namespace {
    qRH;
     str::wString Returned;
   qRB;
-    common::Put(rPing, Backend, Tracker);
+    common::Put(backend::rPing, Backend, Tracker);
     common::Commit(Backend, Tracker);
 
-    switch ( GetAnswer_(Backend, Tracker) ) {
-    case aOK:
+    switch ( backend::GetAnswer(Backend, Tracker) ) {
+    case backend::aOK:
       Returned.Init();
       common::Get(Backend, Returned, Tracker);
-      common::Put(aOK, Frontend);
+      common::Put(backend::aOK, Frontend);
       common::Put(Returned, Frontend);
       common::Commit(Frontend);
       break;
-    case aPuzzled:
+    case backend::aPuzzled:
       Returned.Init();
       common::Get(Backend, Returned, Tracker);
-      common::Put(aPuzzled, Frontend);
+      common::Put(backend::aPuzzled, Frontend);
       common::Put(Returned, Frontend);
       common::Commit(Frontend);
       break;
-    case aDisconnected:
+    case backend::aDisconnected:
       Cont = false;
       break;
     default:
@@ -120,7 +131,7 @@ namespace {
     const common::gTracker *Tracker)
   {
     bso::sBool Cont = true;
-   qRH;
+  qRH;
     str::wString
       Script,     // Script to execute.
       Expression, // Expression to evaluate which result if JSONified and returned.
@@ -131,33 +142,33 @@ namespace {
     common::Get(Frontend, Script);
     common::Get(Frontend, Expression);
 
-    common::Put(rExecute, Backend, Tracker);
+    common::Put(backend::rExecute, Backend, Tracker);
     common::Put(Script, Backend, Tracker);
     common::Put(Expression, Backend, Tracker);
     common::Commit(Backend, Tracker);
 
-    switch ( GetAnswer_(Backend, Tracker) ) {
-    case aOK:
+    switch ( backend::GetAnswer(Backend, Tracker) ) {
+    case backend::aOK:
       Returned.Init();
       common::Get(Backend, Returned, Tracker);
-      common::Put(aOK, Frontend);
+      common::Put(backend::aOK, Frontend);
       common::Put(Returned, Frontend);
       common::Commit(Frontend);
       break;
-    case aError:
+    case backend::aError:
       Returned.Init();
       common::Get(Backend, Returned, Tracker);
-      common::Put(aError, Frontend);
+      common::Put(backend::aError, Frontend);
       common::Put(Returned, Frontend);
       common::Commit(Frontend);
       break;
-    case aPuzzled:
+    case backend::aPuzzled:
       Returned.Init();
       common::Get(Backend, Returned, Tracker);
-      common::Put(aPuzzled, Frontend);
+      common::Put(backend::aPuzzled, Frontend);
       common::Put(Returned, Frontend);
       break;
-    case aDisconnected:
+    case backend::aDisconnected:
       Cont = false;
       break;
     default:
@@ -208,11 +219,11 @@ qRB;
 
     while ( !Frontend.EndOfFlow() && Cont ) {
       switch ( GetRequest_(Frontend) ) {
-      case rExecute:
+      case rExecute_1:
         if ( !HandleExecute_(Frontend, Backend, &Tracker) )
           break;
         break;
-      case rPing:
+      case rPing_1:
         if ( !HandlePing_(Frontend, Backend, &Tracker) )
           break;
         break;
@@ -230,4 +241,9 @@ qRB;
       qDELETE(Caller);
     }
   qRE;
+}
+
+qGCTOR(frontend)
+{
+  FillFrontendRequestAutomat_();
 }

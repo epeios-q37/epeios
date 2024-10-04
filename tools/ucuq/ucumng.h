@@ -25,9 +25,9 @@
 # include "tol.h"
 
 namespace ucumng {
-
   qENUM(Request) {
-    rCloseDevices,
+    rClose_1,
+    rExecute_1,
     r_amount,
     r_Undefined
   };
@@ -35,6 +35,13 @@ namespace ucumng {
   const char *GetLabel(eRequest Request);
 
   eRequest GetRequest(const str::dString &Pattern);
+
+  qENUM(Answer) {
+    aOK,
+    aError,
+    a_amount,
+    a_Undefined
+  };
 }
 
 #endif

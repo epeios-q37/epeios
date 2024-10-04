@@ -1,14 +1,16 @@
 import os, json, socket, sys, threading, io, datetime
 from inspect import getframeinfo, stack
 
-with open(("/home/csimon/q37/epeios/tools/ucuq/frontend/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "") + "ucuq.json", "r") as config:
+with open(("/home/csimon/q37/epeios/tools/ucuq/frontend/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../") + "ucuq.json", "r") as config:
   CONFIG = json.load(config)
 
 SELECTOR = CONFIG["Selector"]
 
-UCUQ_ADDRESS_ = "ucuq.q37.info"
-UCUQ_ADDRESS_ = "192.168.1.87" # dev
-UCUQ_PORT_ = 53800
+UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
+UCUQ_DEFAULT_PORT_ = "53800"
+
+UCUQ_HOST_ = CONFIG["Proxy"]["Host"] if "Proxy" in CONFIG and "Host" in CONFIG["Proxy"] and CONFIG["Proxy"]["Host"] else UCUQ_DEFAULT_HOST_
+UCUQ_PORT_ = CONFIG["Proxy"]["Port"] if "Proxy" in CONFIG and "Port" in CONFIG["Proxy"] and CONFIG["Proxy"]["Port"] else UCUQ_DEFAULT_PORT_
 
 PROTOCOL_LABEL_ = "c37cc83e-079f-448a-9541-5c63ce00d960"
 PROTOCOL_VERSION_ = "0"
@@ -16,8 +18,8 @@ PROTOCOL_VERSION_ = "0"
 _writeLock = threading.Lock()
 
 # Request
-R_PING_ = 0
-R_EXECUTE_ = 1
+R_PING_ = "Ping_1"
+R_EXECUTE_ = "Execute_1"
 
 # Answer
 A_OK_ = 0
@@ -97,7 +99,7 @@ def init_():
   print("Connection to UCUq server…", end="", flush=True)
 
   try:
-    s.connect(socket.getaddrinfo(UCUQ_ADDRESS_, UCUQ_PORT_)[0][-1])
+    s.connect(socket.getaddrinfo(UCUQ_HOST_, UCUQ_PORT_)[0][-1])
   except:
     exit_("FAILURE!!!")
   else:
@@ -121,7 +123,8 @@ def handshake_(socket):
   notification = readString_(socket)
 
   if notification:
-    print(notification)
+    pass
+    # print(notification)
 
 
 def getTokenAndId_(alias):
@@ -153,52 +156,67 @@ class Error(Exception):
 
 
 class UCUq:
-  def __init__(self, alias):
+  def connect_(self, alias):
     self.socket_ = connect(alias)
 
-  def execute(self, command, expression = ""):
-    writeUInt_(self.socket_, R_EXECUTE_)
-    writeString_(self.socket_, command)
-    writeString_(self.socket_, expression)
 
-    if ( answer := readUInt_(self.socket_) ) == A_OK_:
-      if result := readString_(self.socket_):
-        with io.StringIO(result) as stream:
-          returned = json.load(stream)
-        return returned
+  def __init__(self, alias=None):
+    self.socket_ = connect(alias) if alias else None
+
+
+  def connect(self, alias):
+    try:
+      self.connect_(alias)
+    except:
+      return False
+    else:
+      return True
+
+
+  def execute(self, script, expression = ""):
+    if self.socket_:
+      writeString_(self.socket_, R_EXECUTE_)
+      writeString_(self.socket_, script)
+      writeString_(self.socket_, expression)
+
+      if ( answer := readUInt_(self.socket_) ) == A_OK_:
+        if result := readString_(self.socket_):
+          with io.StringIO(result) as stream:
+            returned = json.load(stream)
+          return returned
+        else:
+          return None
+      elif answer == A_ERROR_:
+        result = readString_(self.socket_)
+        print(f"\n>>>>>>>>>> ERROR FROM BACKEND BEGIN <<<<<<<<<<")
+        print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
+        caller = getframeinfo(stack()[1][0])
+        print(f"Caller: {caller.filename}:{caller.lineno}")
+        print(f">>>>>>>>>> ERROR FROM BACKEND CONTENT <<<<<<<<<<")
+        print(result)
+        print(f">>>>>>>>>> END ERROR FROM BACKEND END <<<<<<<<<<")
+      elif answer == A_PUZZLED_:
+        readString_(self.socket_) # For future use
+        raise Error("Puzzled!")
+      elif answer == A_DISCONNECTED:
+          raise Error("Disconnected from backend!")
       else:
-        return None
-    elif answer == A_ERROR_:
-      result = readString_(self.socket_)
-      print(f"\n>>>>>>>>>> ERROR FROM BACKEND BEGIN <<<<<<<<<<")
-      print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
-      caller = getframeinfo(stack()[1][0])
-      print(f"Caller: {caller.filename}:{caller.lineno}")
-      print(f">>>>>>>>>> ERROR FROM BACKEND CONTENT <<<<<<<<<<")
-      print(result)
-      print(f">>>>>>>>>> END ERROR FROM BACKEND END <<<<<<<<<<")
-    elif answer == A_PUZZLED_:
-      readString_(self.socket_) # For future use
-      raise Error("Puzzled!")
-    elif answer == A_DISCONNECTED:
-        raise Error("Disconnected from backend!")
-    else:
-      raise Error("Unknown answer from backend!")
-    
-  def ping(self):
-    writeUInt_(self.socket_, R_PING_)
+        raise Error("Unknown answer from backend!")
+      
+    def ping(self):
+      writeString_(self.socket_, R_PING_)
 
-    if ( answer := readUInt_(self.socket_) ) == A_OK_:
-      readString_(self.socket_) # For future use
-      pass
-    elif answer == A_ERROR_:
-      raise Error("Unexpected response from backend!")
-    elif answer == A_PUZZLED_:
-      readString_(self.socket_) # For future use
-      raise Error("Puzzled!")
-    elif answer == A_DISCONNECTED:
-        raise Error("Disconnected from backend!")
-    else:
-      raise Error("Unknown answer from backend!")
+      if ( answer := readUInt_(self.socket_) ) == A_OK_:
+        readString_(self.socket_) # For future use
+        pass
+      elif answer == A_ERROR_:
+        raise Error("Unexpected response from backend!")
+      elif answer == A_PUZZLED_:
+        readString_(self.socket_) # For future use
+        raise Error("Puzzled!")
+      elif answer == A_DISCONNECTED:
+          raise Error("Disconnected from backend!")
+      else:
+        raise Error("Unknown answer from backend!")
 
     
