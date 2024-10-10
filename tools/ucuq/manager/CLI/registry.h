@@ -31,7 +31,13 @@ namespace registry {
 
     extern rEntry HostService;
     extern rEntry Token;
-    extern rEntry DeviceId;
+    extern rEntry Id;
+    extern rEntry TrueToken;
+    extern rEntry BackendProxy;
+    extern rEntry BackendToken;
+    extern rEntry VirtualToken;
+    extern rEntry BackendId;
+    extern rEntry NewToken;
   }
 
 	namespace definition {

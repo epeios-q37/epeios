@@ -32,7 +32,7 @@
 using namespace manager;
 
 namespace {
-  void HandleClose_(flw::rRWFlow &Manager)
+  void Close_(flw::rRWFlow &Manager)
   {
   qRH;
     str::string Token;
@@ -48,7 +48,7 @@ namespace {
   }
 
 
- void HandleExecute_(
+ void Execute_(
     flw::rRWFlow &Manager,
     const fdr::rRWDriver &Driver)
   {
@@ -128,6 +128,53 @@ namespace {
     }
   qRE;
   }
+
+ void CreateVToken_(flw::rRWFlow &Manager)
+ {
+ qRH;
+   str::wString
+     Token,
+     TrueToken,
+     Id;
+ qRB;
+   tol::Init(Token, TrueToken);
+
+   ucucmn::Get(Manager, Token);
+   ucucmn::Get(Manager, TrueToken);
+   ucucmn::Get(Manager, Id);
+
+   ucucmn::Dismiss(Manager);
+
+   backend::CreateVToken(Token, TrueToken, Id);
+
+   ucucmn::Put(ucumng::aOK, Manager);
+
+   ucucmn::Commit(Manager);
+ qRR;
+ qRT;
+ qRE;
+ }
+
+ void DeleteVToken_(flw::rRWFlow &Manager)
+ {
+ qRH;
+   str::wString Token;
+ qRB;
+   tol::Init(Token);
+
+   ucucmn::Get(Manager, Token);
+
+   ucucmn::Dismiss(Manager);
+
+   backend::DeleteVToken(Token);
+
+   ucucmn::Put(ucumng::aOK, Manager);
+
+   ucucmn::Commit(Manager);
+ qRR;
+ qRT;
+ qRE;
+ }
 }
 
 void manager::Process(fdr::rRWDriver &Driver)
@@ -143,10 +190,16 @@ qRB;
 
   switch ( ucumng::GetRequest(RawRequest) ) {
   case ucumng::rClose_1:
-    HandleClose_(Flow);
+    Close_(Flow);
     break;
   case ucumng::rExecute_1:
-    HandleExecute_(Flow, Driver);
+    Execute_(Flow, Driver);
+    break;
+  case ucumng::rCreateVToken_1:
+    CreateVToken_(Flow);
+    break;
+  case ucumng::rDeleteVToken_1:
+    DeleteVToken_(Flow);
     break;
   default:
     qRGnr();

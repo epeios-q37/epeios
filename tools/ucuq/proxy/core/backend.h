@@ -95,7 +95,7 @@ namespace backend {
   };
 
   sRow New(
-    const dSelector & Selector,
+    const dSelector &Selector,
     sck::rRWDriver *Driver);
   common::rCaller *Hire(
     const dSelector &Selector,
@@ -103,6 +103,10 @@ namespace backend {
   void Withdraw(sRow Row);  // Make unavailable and delete if applied.
   void Withdraw(const dSelector &Selector);
   void Withdraw(const str::dString &Token);
+  bso::sBool CreateVToken(
+    const str::dString &Token,
+    const str::dString &VToken, const str::dString & TrueId);
+  bso::sBool DeleteVToken(const str::dString &Token);
 }
 
 #endif

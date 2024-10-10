@@ -35,6 +35,7 @@
 #include "fnm.h"
 #include "flf.h"
 #include "csdbnc.h"
+#include "tagsbs.h"
 
 using cio::CErr;
 using cio::COut;
@@ -77,13 +78,13 @@ namespace {
 		Response.Init();
 		ucucmn::Get(Flow, Response);
 
-		cio::COut << Response << txf::nl << txf::commit;
+		// cio::COut << Response << txf::nl << txf::commit;
 	qRR;
 	qRT;
 	qRE;
 	}
 
-	void InitAndConnect(csdbnc::rRWFlow &Flow)
+	void InitAndConnect_(csdbnc::rRWFlow &Flow)
 	{
 	qRH;
 		str::wString HostService;
@@ -93,6 +94,8 @@ namespace {
 		sclm::MGetValue(registry::parameter::HostService, HostService);
 
 		Flow.Init(HostService.Convert(Buffer), sck::NoTimeout, qRPDefault);
+
+		HandShake_(Flow);
 	qRR;
 	qRT;
 	qRE;
@@ -110,14 +113,150 @@ namespace {
 		return (ucumng::eAnswer)Answer;
 	}
 
+	bso::sBool HandleAnswer_(
+		flw::rRFlow &Flow,
+		str::dString *Result = NULL)
+	{
+		ucumng::eAnswer Answer = ucumng::a_Undefined;
+	qRH;
+		str::wString Response;
+	qRB;
+		Response.Init();
+
+		Answer = GetAnswer_(Flow);
+		ucucmn::Get(Flow, Response);
+
+		ucucmn::Dismiss(Flow);
+
+		if ( Answer ) {
+			cio::CErr << "Error: " << Response << txf::nl << txf::commit;
+		} else if ( Response.Amount() ) {
+			if ( Result == NULL )
+				cio::COut << Response << txf::nl << txf::commit;
+			else
+				*Result = Response;
+		}
+	qRR;
+	qRT;
+	qRE;
+		return Answer;
+	}
+
+	bso::sBool HandleAnswer_(
+		flw::rRFlow &Flow,
+		str::dString &Result)
+	{
+		return HandleAnswer_(Flow, &Result);
+	}
+
+
+	bso::sBool BaseExecuteScript_(
+		const char *ScriptName,
+		tagsbs::dTaggedValues &Values,
+		str::dString *Result)
+	{
+		bso::sBool OK = false;
+	qRH;
+		csdbnc::rRWFlow Flow;
+		str::wString Token, Id, TaggedScript, Script, Expression;
+	qRB;
+		tol::Init(Token, Id, TaggedScript, Expression);
+
+		sclm::MGetValue(registry::parameter::Token, Token);
+
+		sclm::MGetValue(registry::parameter::Id, Id);
+		registry::GetScript(ScriptName, TaggedScript);
+		registry::GetScriptExpression(ScriptName, Expression);
+
+		Script.Init();
+
+		tagsbs::SubstituteLongTags(TaggedScript, Values, Script);
+
+		InitAndConnect_(Flow);
+
+		ucucmn::Put(ucumng::GetLabel(ucumng::rExecute_1), Flow);
+		ucucmn::Put(Token, Flow);
+		ucucmn::Put(Id, Flow);
+		ucucmn::Put(Script, Flow);
+		ucucmn::Put(Expression, Flow);
+		ucucmn::Commit(Flow);
+
+		OK = HandleAnswer_(Flow, Result);
+	qRR;
+	qRT;
+	qRE;
+		return OK;
+	}
+
+	bso::sBool ExecuteScript_(
+		const char *ScriptName,
+		str::dString *Result = NULL)
+	{
+		bso::sBool OK = false;
+	qRH;
+		tagsbs::wTaggedValues Values;
+	qRB;
+		Values.Init();
+
+		BaseExecuteScript_(ScriptName, Values, Result);
+	qRR;
+	qRT;
+	qRE;
+		return OK;
+	}
+
+	bso::sBool ExecuteScript_(
+		const char *ScriptName,
+		str::dString &Result)
+	{
+		return ExecuteScript_(ScriptName, &Result);
+	}
+
+	template <typename... others> bso::sBool ExecuteScript_(
+		const char *ScriptName,
+		str::dString *Result,
+		const char *Tag1,
+		const others &...Others)
+	{
+		bso::sBool OK = false;
+	qRH;
+		tagsbs::wTaggedValues Values;
+	qRB;
+		Values.Init();
+
+		Values.Append(Tag1, Others...);
+
+		BaseExecuteScript_(ScriptName, Values, Result);
+	qRR;
+	qRT;
+	qRE;
+		return OK;
+	}
+
+	template <typename... others> bso::sBool ExecuteScript_(
+		const char *ScriptName,
+		str::dString &Result,
+		const char *Tag1,
+		const others &...Others)
+	{
+		ExecuteScript_(ScriptName, &Result, Tag1, Others...);
+	}
+
+	template <typename... others> bso::sBool ExecuteScript_(
+		const char *ScriptName,
+		const char *Tag1,
+		const others &...Others)
+	{
+		return ExecuteScript_(ScriptName, (str::dString *)NULL, Tag1, Others...);
+	}
+
 	void Close_( void )
 	{
 	qRH;
 		csdbnc::rRWFlow Flow;
 		str::wString Token;
 	qRB;
-		InitAndConnect(Flow);
-		HandShake_(Flow);
+		InitAndConnect_(Flow);
 
 		ucucmn::Put(ucumng::GetLabel(ucumng::rClose_1), Flow);
 
@@ -131,46 +270,64 @@ namespace {
 	}
 
 
-	void FetchConfig_( void )
+	void FetchConfig_(void)
+	{
+		ExecuteScript_("FetchConfig");
+	}
+
+	void SetProxy_(void)
 	{
 	qRH;
+		str::wString Proxy;
+	qRB;
+		Proxy.Init();
+
+		sclm::MGetValue(registry::parameter::BackendProxy, Proxy);
+
+		ExecuteScript_("SetProxy", "Proxy", Proxy);
+	qRR;
+	qRT;
+	qRE;
+	}
+
+	void SetToken_(void)
+	{
+	qRH;
+		str::wString NewToken;
+	qRB;
+		NewToken.Init();
+
+		sclm::MGetValue(registry::parameter::NewToken, NewToken);
+
+		ExecuteScript_("SetToken", "NewToken", NewToken);
+	qRR;
+	qRT;
+	qRE;
+	}
+
+	void SetVirtualToken_(void)
+	{
+	qRH;
+		str::wString VToken, BToken, BId;
 		csdbnc::rRWFlow Flow;
-		str::wString Token, DeviceId, Script, Expression, Response;
 		ucumng::eAnswer Answer = ucumng::a_Undefined;
 	qRB;
-		InitAndConnect(Flow);
-		HandShake_(Flow);
+		tol::Init(VToken, BToken, BId);
 
-		ucucmn::Put(ucumng::GetLabel(ucumng::rExecute_1), Flow);
+		sclm::MGetValue(registry::parameter::VirtualToken, VToken);
+		sclm::MGetValue(registry::parameter::BackendToken, BToken);
+		sclm::OGetValue(registry::parameter::BackendId, BId);
 
-		tol::Init(Token, DeviceId, Script, Expression);
+		InitAndConnect_(Flow);
 
-		sclm::MGetValue(registry::parameter::Token, Token);
-		sclm::MGetValue(registry::parameter::DeviceId, DeviceId);
-		registry::GetScript("FetchConfig", Script);
-		registry::GetScriptExpression("FetchConfig", Expression);
-
-		ucucmn::Put(Token, Flow);
-		ucucmn::Put(DeviceId, Flow);
-		ucucmn::Put(Script, Flow);
-		ucucmn::Put(Expression, Flow);
-		ucucmn::Commit(Flow);
+		ucucmn::Put(ucumng::GetLabel(ucumng::rClose_1), Flow);
+		ucucmn::Put(VToken, Flow);
+		ucucmn::Put(BToken, Flow);
+		ucucmn::Put(BId, Flow);
 
 		ucucmn::Commit(Flow);
 
-		Response.Init();
-
-		Answer = GetAnswer_(Flow);
-		ucucmn::Get(Flow, Response);
-			
-		ucucmn::Dismiss(Flow);
-
-		if ( Answer ) {
-			cio::CErr << "Error:" << Response << txf::nl << txf::commit;
-		}
-		else {
-			cio::COut << Response << txf::nl << txf::commit;
-		}
+		HandleAnswer_(Flow);
 	qRR;
 	qRT;
 	qRE;
@@ -193,7 +350,9 @@ qRB;
 	else if ( Command == "License" )
 		epsmsc::PrintLicense( NAME_MC );
 	C( Close );
-	C( FetchConfig);
+	C(FetchConfig);
+	C(SetProxy);
+	C(SetToken);
 	else
 		qRGnr();
 

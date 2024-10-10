@@ -35,6 +35,8 @@
 namespace common {
   using namespace ucucmn;
 
+  qROW(Row);
+
   class rCaller {
   private:
     mtx::rMutex Mutex_; // To protect access to below two members.
@@ -90,7 +92,7 @@ namespace common {
   {
   private:
     mtx::rMutex Mutex_; // To protect acces to following member.
-    lstbch::qLBUNCHw(rCaller *, sdr::sRow) List_;
+    lstbch::qLBUNCHw(rCaller *, sRow) List_;
   public:
     void reset(bso::sBool P = true)
     {
@@ -111,13 +113,13 @@ namespace common {
       Mutex_ = mtx::Create();
       tol::Init(List_);
     }
-    sdr::tRow New(sck::rRWDriver *Driver);
-    tol::sTimeStamp GetTimestamp(sdr::sRow Row) const;
-    void Withdraw(sdr::sRow Row); // The corresponding caller is made inaccessible and deleted if applied.
+    tRow New(sck::rRWDriver *Driver);
+    tol::sTimeStamp GetTimestamp(sRow Row) const;
+    void Withdraw(sRow Row); // The corresponding caller is made inaccessible and deleted if applied.
     rCaller *Hire(
-      sdr::tRow Row,
+      tRow Row,
       const void *UserDiscriminator) const;
-    sdr::sSize Extent(void) const
+    sSize Extent(void) const
     {
       return List_.Extent();
     }

@@ -7,10 +7,15 @@
     <Parameters>
       <Language>en</Language>
       <!-- Default command -->
-      <HostServiceDev>192.168.1.87:53800</HostServiceDev>
-      <HostService>ucuq.q37.info:53800</HostService>
+      <xpp:define name="Prod">
+        <HostService>ucuq.q37.info:53800</HostService>
+      </xpp:define>
+      <xpp:define name="Dev">
+        <HostService>192.168.1.87:53800</HostService>
+      </xpp:define>
+      <xpp:expand select="Dev"/>
       <Command>FetchConfig</Command>
-      <DeviceId>Black</DeviceId>
+      <Id>Black</Id>
     </Parameters>
     <xpp:expand href="../../../../../q37/epeios/tools/ucuq/manager/token.xcfg"/>
     <Definitions>
@@ -19,11 +24,37 @@
           <![CDATA[
 import json
 
-with open("ucuq.json") as configFile:
-  config = json.load(configFile)
+with open("ucuq.json", "r") as inFile:
+  config = json.load(inFile)
   
 for name in config["WLAN"]["Known"]:
   config["WLAN"]["Known"][name] = {}
+]]>
+        </Script>
+        <Script Label="SetProxy">
+          <![CDATA[
+import json
+
+with open("ucuq.json", "r") as inFile:
+  config = json.load(inFile)
+  
+config["Proxy"]["Host"] = "%Proxy%"
+
+with open("ucuq.json", "w") as outFile:
+  json.dump(config, outFile)
+]]>
+        </Script>
+        <Script Label="SetToken">
+          <![CDATA[
+import json
+
+with open("ucuq.json", "r") as inFile:
+  config = json.load(inFile)
+  
+config["Selector"][0] = "%NewToken%"
+
+with open("ucuq.json", "w") as outFile:
+  json.dump(config, outFile)
 ]]>
         </Script>
       </Scripts>
@@ -32,58 +63,134 @@ for name in config["WLAN"]["Known"]:
       <xpp:expand select="CLI_Locale"/>
       <!-- Commands -->
       <Translations text="CloseCommandDescription">
-        <Translation language="fr">Fermeture du 'backend'</Translation>
-        <Translation language="en">Closing backends</Translation>
+        <Translation language="fr">Ferme le(s) 'backend'</Translation>
+        <Translation language="en">Closes backend(s)</Translation>
       </Translations>
-      <Translations text="FetchCommandDescription">
+      <Translations text="FetchConfigCommandDescription">
         <Translation language="fr">Récupère la configuration de 'backend'</Translation>
-        <Translation language="en">Get backend config</Translation>
+        <Translation language="en">Gets backend config</Translation>
       </Translations>
-      <!-- Flags -->
-      <Translations text="TokenArgLabel">
+      <Translations text="SetProxyCommandDescription">
+        <Translation language="fr">Configure le proxy du 'backend'</Translation>
+        <Translation language="en">Sets backend's proxy</Translation>
+      </Translations>
+      <Translations text="SetTokenCommandDescription">
+        <Translation language="fr">Affecte un nouveau 'token' au 'backend'</Translation>
+        <Translation language="en">Sets backend's proxy</Translation>
+      </Translations>
+      <Translations text="CreateVirtualTokenCommandDescription">
+        <Translation language="fr">Crée un token virtuel</Translation>
+        <Translation language="en">Creates a virtual token</Translation>
+      </Translations>
+      <Translations text="DeleteVirtualTokenCommandDescription">
+        <Translation language="fr">Suppression d'un 'token' virtuel</Translation>
+        <Translation language="en">Deletes a virtual token</Translation>
+      </Translations>
+      <!-- Options -->
+      <Translations text="TokenOptionLabel">
         <Translation language="fr">jeton</Translation>
         <Translation language="en">token</Translation>
       </Translations>
-      <Translations text="TokenArgDescription">
-        <Translation language="fr">jeton correspondat à un groupe de dispositifs</Translation>
+      <Translations text="TokenOptionDescription">
+        <Translation language="fr">jeton correspondant à un groupe de dispositifs</Translation>
         <Translation language="en">token of a group of devices</Translation>
       </Translations>
-      <!-- Option descriptions -->
-      <Translations text="DeviceIdArgLabel">
+      <Translations text="DeviceIdOptionLabel">
         <Translation language="fr">id</Translation>
         <Translation language="en">id</Translation>
       </Translations>
-      <!-- Option labels -->
-      <Translations text="DeviceIdArgDescription">
+      <Translations text="DeviceIdOptionDescription">
         <Translation language="fr">identifiant de dispositif ; si absent, tous les dispositifs correspondants au jeton donné sont concernés</Translation>
         <Translation language="en">device identifier; if absent, all devices corresponding to given token are involved</Translation>
       </Translations>
-      <!-- Argument descriptions -->
-      <Translations text="TestArgumentDescription">
-        <Translation language="fr">argument de test.</Translation>
-        <Translation language="en">test argument.</Translation>
+      <!-- Args -->
+      <Translations text="BackendProxyArgLabel">
+        <Translation language="fr">proxy</Translation>
+        <Translation language="en">proxy</Translation>
       </Translations>
-      <!-- Argument labels -->
-      <Translations text="TestArgumentLabel">
-        <Translation language="fr">argument (fr)</Translation>
-        <Translation language="en">argument (en)</Translation>
+      <Translations text="BackendProxyArgDescription">
+        <Translation language="fr">Adresse du nouveau proxy à utiliser par le 'backend'</Translation>
+        <Translation language="en">Address of the new proxy to be used by the backend</Translation>
       </Translations>
+      <Translations text="BackendTokenArgLabel">
+        <Translation language="fr">btoken</Translation>
+        <Translation language="en">btoken</Translation>
+      </Translations>
+      <Translations text="BackendTokenArgDescription">
+        <Translation language="fr">Nouveau 'token' affecté au 'backend'</Translation>
+        <Translation language="en">New token assigned to the backend</Translation>
+      </Translations>
+      <Translations text="VirtualTokenArgLabel">
+        <Translation language="fr">vtoken</Translation>
+        <Translation language="en">vtoken</Translation>
+      </Translations>
+      <Translations text="VirtualTokenArgDescription">
+        <Translation language="fr">'Token' virtuel</Translation>
+        <Translation language="en">Virtual token</Translation>
+      </Translations>
+      <Translations text="BackendIdArgLabel">
+        <Translation language="fr">bid</Translation>
+        <Translation language="en">bid</Translation>
+      </Translations>
+      <Translations text="BackendIdArgDescription">
+        <Translation language="fr">Identifiant du 'backend'</Translation>
+        <Translation language="en">Id of the backend</Translation>
+      </Translations>
+      <Translations text="NewTokenArgLabel">
+        <Translation language="fr">new_token</Translation>
+        <Translation language="en">new_token</Translation>
+      </Translations>
+      <Translations text="NewTokenArgDescription">
+        <Translation language="fr">Nouveau 'token'</Translation>
+        <Translation language="en">New 'token'</Translation>
+      </Translations>
+      <!--
+      <Translations text="ArgLabel">
+        <Translation language="fr"></Translation>
+        <Translation language="en"></Translation>
+      </Translations>
+      <Translations text="ArgDescription">
+        <Translation language="fr"></Translation>
+        <Translation language="en"></Translation>
+      </Translations>
+      -->
     </Locale>
     <Arguments>
       <xpp:expand select="CLI_Arguments"/>
-      <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage="%TokenArg% [%DeviceIdArg%]"/>
-      <Argument id="FetchConfig" Description="FetchConfigCommandDescription" long="fetch-config" Value="FetchConfig" Usage="%TokenArg% %DeviceIdArg%"/>
-      <Argument id="TokenArg" Label="TokenArgLabel" Description="TokenArgDescription" Path="Token"/>
-      <Argument id="DeviceIdArg" Label="DeviceIdArgLabel" Description="DeviceIdArgDescription" Path="Id"/>
-      <Argument id="TestOption" Description="TestOptionDescription" long="option" short="o" Path="Option" Label="TestOptionLabel"/>
-      <Argument id="TestArgument" Description="TestArgumentDescription" Path="Test" Label="TestArgumentLabel"/>
+      <!-- Commands -->
+      <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage=""/>
+      <Argument id="FetchConfig" Description="FetchConfigCommandDescription" long="fetch-config" Value="FetchConfig" Usage=""/>
+      <Argument id="SetProxy" Description="SetProxyCommandDescription" long="set-proxy" Value="SetProxy" Usage="%BackendProxyArg%"/>
+      <Argument id="SetToken" Description="SetTokenCommandDescription" long="set-token" Value="SetToken" Usage="%NewTokenArg% "/>
+      <Argument id="CreateVirtualToken" Description="CreateVirtualTokenCommandDescription" long="create-vtoken" Value="CreateVToken" Usage="%VirtualTokenArg% %BackendTokenArg% [%BackendIdArg%]"/>
+      <Argument id="DeleteVirtualToken" Description="DeleteVirtualTokenCommandDescription" long="delete-vtoken" Value="DeleteVToken" Usage="%VirtualTokenArg%"/>
+      <!-- Options -->
+      <Argument id="TokenOption" Label="TokenOptionLabel" Short="t" Long="Token" Description="TokenOptionDescription" Path="Token"/>
+      <Argument id="DeviceIdOption" Label="DeviceIdOptionLabel" Short="i" Long="id" Description="DeviceIdOptionDescription" Path="Id"/>
+      <!-- Args -->
+      <Argument id="BackendProxyArg" Label="BackendProxyArgLabel" Description="BackendProxyArgDescription" Path="BackendProxy"/>
+      <Argument id="BackendTokenArg" Label="BackendTokenArgLabel" Description="BackendTokenArgDescription" Path="BackendToken"/>
+      <Argument id="VirtualTokenArg" Label="VirtualTokenArgLabel" Description="VirtualTokenArgDescription" Path="VirtualToken"/>
+      <Argument id="BackendIdArg" Label="BackendIdArgLabel" Description="BackendIdArgDescription" Path="BackendId"/>
+      <Argument id="NewTokenArg" Label="NewTokenArgLabel" Description="NewTokenArgDescription" Path="NewToken"/>
       <Layouts>
         <Layout command="Close">
-          <Link index="0" Target="TokenArg"/>
         </Layout>
         <Layout command="FetchConfig">
-          <Link index="0" Target="TokenArg"/>
-          <Link index="1" Target="DeviceIdArg"/>
+        </Layout>
+        <Layout command="SetProxy">
+          <Link index="0" Target="BackendProxyArg"/>
+        </Layout>
+        <Layout command="SetToken">
+          <Link index="0" Target="NewTokenArg"/>
+        </Layout>
+        <Layout command="CreateVirtualToken">
+          <Link index="0" Target="VirtualTokenArg"/>
+          <Link index="1" Target="BackendTokenArg"/>
+          <Link index="2" Target="BackendIdArg"/>
+        </Layout>
+        <Layout command="DeleteVirtualToken">
+          <Link index="0" Target="VirtualTokenArg"/>
         </Layout>
       </Layouts>
     </Arguments>

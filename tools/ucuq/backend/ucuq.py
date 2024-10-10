@@ -22,8 +22,7 @@ UCUQ_HOST_ = CONFIG_["Proxy"]["Host"] if "Proxy" in CONFIG_ and "Host" in CONFIG
 try:
   UCUQ_PORT_ = int(CONFIG_["Proxy"]["Port"])
 except:
-  UCUQ_PORT_ = UCUQ_DEFAULT_PORT_
-
+  UCUQ_PORT_ = int(UCUQ_DEFAULT_PORT_)
 
 WLAN_FALLBACK_ = "q37"
 
@@ -48,12 +47,15 @@ A_ERROR_ = 1
 A_PUZZLED_ = 2
 A_DISCONNECTED_ = 3  # Never returned bu backend, only here as placeholder
 
+def getMacAddress_():
+  return binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
+
 
 def getSelectorId_(selector):
   if isinstance(selector[1], str):
     return selector[1]
   else:
-    mac = binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
+    mac = getMacAddress_()
 
     if mac in selector[1]:
       return selector[1][mac]
@@ -264,8 +266,6 @@ def serve_():
       expression = readString_()
       returned = ""
 
-      print("Yo:", script, expression)
-
       try:
         exec(script)
         if expression:
@@ -307,37 +307,37 @@ def defaultCallback_(status, tries):
   return True if tries <= 200 else False 
 
 
-def handleLed_(pin, on):
-  Pin(pin, Pin.OUT).value(1 if on else 0)
+def handleLed_(pin, state, onValue):
+  Pin(pin, Pin.OUT).value(1 if state == onValue else 0)
 
 
-def ledBlink_(pin, count):
+def ledBlink_(pin, count, onValue):
   for _ in range(count):
-    handleLed_(pin, True)
+    handleLed_(pin, True, onValue)
     time.sleep(0.1)
-    handleLed_(pin, False)
+    handleLed_(pin, False, onValue)
     time.sleep(0.1)
 
 
-def ledCallback_(status, tries, pin):
+def ledCallback_(status, tries, pin, onValue):
   if status == S_SEARCHING_:
-    ledBlink_(pin, 1)
+    ledBlink_(pin, 1, onValue)
   elif status == S_WLAN_:
-    handleLed_(pin, not( tries % 2) )
+    handleLed_(pin, not( tries % 2), onValue )
   elif status == S_UCUQ_:
-    handleLed_(pin, False)
+    handleLed_(pin, False, onValue)
   elif status == S_FAILURE_:
-    handleLed_(pin, True)
+    handleLed_(pin, True, onValue)
   elif status == S_DECONNECTION_:
-    handleLed_(pin, True)
+    handleLed_(pin, True), onValue
   elif status == S_SUCCESS_:
-    ledBlink_(pin, 3)
+    ledBlink_(pin, 3, onValue)
   return defaultCallback_(status, tries) and not ( ( status == S_UCUQ_) and ( tries > 5 ) )
 
 
 CALLBACKS_ = {
-  "rp2": lambda status, tries: ledCallback_(status, tries, "LED"),
-  "esp32": lambda status, tries: ledCallback_(status, tries, 2)
+  "rp2": lambda status, tries: ledCallback_(status, tries, "LED", True),
+  "esp32": lambda status, tries: ledCallback_(status, tries, CONFIG_["OnBoardLed"][getSelectorId_(SELECTOR_)][0], CONFIG_["OnBoardLed"][getSelectorId_(SELECTOR_)][1])
 }
 
 
@@ -348,7 +348,6 @@ def getCallback_():
 
 def main():
   callback = getCallback_()
-
 
   if not wlanConnect_(WLAN, callback):
     callback(S_FAILURE_, 0)

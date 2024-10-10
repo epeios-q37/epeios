@@ -28,6 +28,9 @@
       <Modules Group="SCL">
         <xpp:expand select="SCL"/>
       </Modules>
+      <Modules Group="IDX">
+        <xpp:expand select="IDX"/>
+      </Modules>
       <Modules Group="CSD">
         <Module>csdbns</Module>
         <Module>csdcmn</Module>

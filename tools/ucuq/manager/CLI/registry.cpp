@@ -24,9 +24,15 @@
 
 using namespace registry;
 
-rEntry registry::parameter::HostService("HostService", sclr::Parameters );
-rEntry registry::parameter::Token("Token", sclr::Parameters);
-rEntry registry::parameter::DeviceId("DeviceId", sclr::Parameters);
+#define D(name)  rEntry registry::parameter::name(#name, sclr::Parameters)
+
+D(HostService);
+D(Token);
+D(Id);
+D(BackendProxy);
+D(NewToken);
+
+#undef D
 
 namespace definition_ {
   rgstry::rEntry Scripts_("Scripts", sclr::Definitions);
@@ -49,5 +55,7 @@ const str::dString &registry::GetScriptExpression(
   const str::dString &Label,
   str::dString &Expression)
 {
-  return sclm::MGetValue(rgstry::rTEntry(definition::scripts::TaggedScriptExpression, Label), Expression);
+  sclm::OGetValue(rgstry::rTEntry(definition::scripts::TaggedScriptExpression, Label), Expression);
+
+  return Expression;
 }
