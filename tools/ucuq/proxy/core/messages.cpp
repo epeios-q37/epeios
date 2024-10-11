@@ -27,11 +27,11 @@ using namespace messages;
 const char* messages::GetLabel(eId Id)
 {
 	switch ( Id ) {
-    C(Frontend);
-    C(Backend);
+    C(Remote);
+    C(Device);
 		C(UnknownProtocol);
 		C(UnknownProtocolVersion);
-    C(NoBackendWithGivenTokenAndId);
+    C(NoDeviceWithGivenTokenAndId);
 	default:
 		qRFwk();
 		break;

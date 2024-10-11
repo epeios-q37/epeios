@@ -117,7 +117,7 @@ def handshake_(socket):
   with _writeLock:
     writeString_(socket, PROTOCOL_LABEL_)
     writeString_(socket, PROTOCOL_VERSION_)
-    writeString_(socket, "Frontend")
+    writeString_(socket, "Remote")
     writeString_(socket, "PYH")
 
   error = readString_(socket)
@@ -193,20 +193,20 @@ class UCUq:
           return None
       elif answer == A_ERROR_:
         result = readString_(self.socket_)
-        print(f"\n>>>>>>>>>> ERROR FROM BACKEND BEGIN <<<<<<<<<<")
+        print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
         print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
         caller = getframeinfo(stack()[1][0])
         print(f"Caller: {caller.filename}:{caller.lineno}")
-        print(f">>>>>>>>>> ERROR FROM BACKEND CONTENT <<<<<<<<<<")
+        print(f">>>>>>>>>> ERROR FROM DEVICE CONTENT <<<<<<<<<<")
         print(result)
-        print(f">>>>>>>>>> END ERROR FROM BACKEND END <<<<<<<<<<")
+        print(f">>>>>>>>>> END ERROR FROM DEVICE END <<<<<<<<<<")
       elif answer == A_PUZZLED_:
         readString_(self.socket_) # For future use
         raise Error("Puzzled!")
       elif answer == A_DISCONNECTED:
-          raise Error("Disconnected from backend!")
+          raise Error("Disconnected from DEVICE!")
       else:
-        raise Error("Unknown answer from backend!")
+        raise Error("Unknown answer from device!")
       
     def ping(self):
       writeString_(self.socket_, R_PING_)
@@ -215,13 +215,13 @@ class UCUq:
         readString_(self.socket_) # For future use
         pass
       elif answer == A_ERROR_:
-        raise Error("Unexpected response from backend!")
+        raise Error("Unexpected response from device!")
       elif answer == A_PUZZLED_:
         readString_(self.socket_) # For future use
         raise Error("Puzzled!")
       elif answer == A_DISCONNECTED:
-          raise Error("Disconnected from backend!")
+          raise Error("Disconnected from device!")
       else:
-        raise Error("Unknown answer from backend!")
+        raise Error("Unknown answer from device!")
 
     

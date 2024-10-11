@@ -29,8 +29,12 @@ using namespace registry;
 D(HostService);
 D(Token);
 D(Id);
-D(BackendProxy);
+D(In);
+D(Expression);
+D(NewProxy);
 D(NewToken);
+D(VirtualToken);
+D(VirtualTokenId);
 
 #undef D
 

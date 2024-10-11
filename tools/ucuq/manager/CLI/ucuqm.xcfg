@@ -13,9 +13,9 @@
       <xpp:define name="Dev">
         <HostService>192.168.1.87:53800</HostService>
       </xpp:define>
-      <xpp:expand select="Dev"/>
+      <xpp:expand select="Prod"/>
       <Command>FetchConfig</Command>
-      <Id>Black</Id>
+      <Id>Blue</Id>
     </Parameters>
     <xpp:expand href="../../../../../q37/epeios/tools/ucuq/manager/token.xcfg"/>
     <Definitions>
@@ -63,27 +63,31 @@ with open("ucuq.json", "w") as outFile:
       <xpp:expand select="CLI_Locale"/>
       <!-- Commands -->
       <Translations text="CloseCommandDescription">
-        <Translation language="fr">Ferme le(s) 'backend'</Translation>
-        <Translation language="en">Closes backend(s)</Translation>
+        <Translation language="fr">Déconnecte le(s) dispositifs</Translation>
+        <Translation language="en">Closes device(s)</Translation>
+      </Translations>
+      <Translations text="ExecuteCommandDescription">
+        <Translation language="fr">Exécute un script sur un dispositif</Translation>
+        <Translation language="en">Executes a script on device</Translation>
       </Translations>
       <Translations text="FetchConfigCommandDescription">
-        <Translation language="fr">Récupère la configuration de 'backend'</Translation>
-        <Translation language="en">Gets backend config</Translation>
+        <Translation language="fr">Récupère la configuration de dispositif</Translation>
+        <Translation language="en">Gets device config</Translation>
       </Translations>
       <Translations text="SetProxyCommandDescription">
-        <Translation language="fr">Configure le proxy du 'backend'</Translation>
-        <Translation language="en">Sets backend's proxy</Translation>
+        <Translation language="fr">Configure le proxy du dispositif</Translation>
+        <Translation language="en">Sets device's proxy</Translation>
       </Translations>
       <Translations text="SetTokenCommandDescription">
-        <Translation language="fr">Affecte un nouveau 'token' au 'backend'</Translation>
-        <Translation language="en">Sets backend's proxy</Translation>
+        <Translation language="fr">Affecte un nouveau jeton au dispositif</Translation>
+        <Translation language="en">Sets device's proxy</Translation>
       </Translations>
       <Translations text="CreateVirtualTokenCommandDescription">
-        <Translation language="fr">Crée un token virtuel</Translation>
+        <Translation language="fr">Crée un jeton virtuel</Translation>
         <Translation language="en">Creates a virtual token</Translation>
       </Translations>
       <Translations text="DeleteVirtualTokenCommandDescription">
-        <Translation language="fr">Suppression d'un 'token' virtuel</Translation>
+        <Translation language="fr">Suppression d'un jeton virtuel</Translation>
         <Translation language="en">Deletes a virtual token</Translation>
       </Translations>
       <!-- Options -->
@@ -103,45 +107,45 @@ with open("ucuq.json", "w") as outFile:
         <Translation language="fr">identifiant de dispositif ; si absent, tous les dispositifs correspondants au jeton donné sont concernés</Translation>
         <Translation language="en">device identifier; if absent, all devices corresponding to given token are involved</Translation>
       </Translations>
+      <Translations text="ExpressionOptionLabel">
+        <Translation language="fr">expr</Translation>
+        <Translation language="en">expr</Translation>
+      </Translations>
+      <Translations text="ExpressionOptionDescription">
+        <Translation language="fr">Expression dont l'évaluation est retournée aprés exécution du script</Translation>
+        <Translation language="en">Expression whose evaluation is returned after script execution</Translation>
+      </Translations>
       <!-- Args -->
-      <Translations text="BackendProxyArgLabel">
-        <Translation language="fr">proxy</Translation>
-        <Translation language="en">proxy</Translation>
+      <Translations text="InArgLabel">
+        <Translation language="fr">in</Translation>
+        <Translation language="en">in</Translation>
       </Translations>
-      <Translations text="BackendProxyArgDescription">
-        <Translation language="fr">Adresse du nouveau proxy à utiliser par le 'backend'</Translation>
-        <Translation language="en">Address of the new proxy to be used by the backend</Translation>
-      </Translations>
-      <Translations text="BackendTokenArgLabel">
-        <Translation language="fr">btoken</Translation>
-        <Translation language="en">btoken</Translation>
-      </Translations>
-      <Translations text="BackendTokenArgDescription">
-        <Translation language="fr">Nouveau 'token' affecté au 'backend'</Translation>
-        <Translation language="en">New token assigned to the backend</Translation>
+      <Translations text="InArgDescription">
+        <Translation language="fr">Nom du fichier d'entrée (utilisation de l'entrée standard si absent)</Translation>
+        <Translation language="en">Input file name (use of standard input if missing)</Translation>
       </Translations>
       <Translations text="VirtualTokenArgLabel">
         <Translation language="fr">vtoken</Translation>
         <Translation language="en">vtoken</Translation>
       </Translations>
       <Translations text="VirtualTokenArgDescription">
-        <Translation language="fr">'Token' virtuel</Translation>
+        <Translation language="fr">Jeton virtuel</Translation>
         <Translation language="en">Virtual token</Translation>
       </Translations>
-      <Translations text="BackendIdArgLabel">
-        <Translation language="fr">bid</Translation>
-        <Translation language="en">bid</Translation>
+      <Translations text="VirtualTokenIdArgLabel">
+        <Translation language="fr">vtoken-id</Translation>
+        <Translation language="en">vtoken-id</Translation>
       </Translations>
-      <Translations text="BackendIdArgDescription">
-        <Translation language="fr">Identifiant du 'backend'</Translation>
-        <Translation language="en">Id of the backend</Translation>
+      <Translations text="VirtualTokenIdArgDescription">
+        <Translation language="fr">Éventuel identifiant de dispositk pour le jeton virtuel</Translation>
+        <Translation language="en">Possible device identifier for virtual token</Translation>
       </Translations>
       <Translations text="NewTokenArgLabel">
-        <Translation language="fr">new_token</Translation>
-        <Translation language="en">new_token</Translation>
+        <Translation language="fr">new-token</Translation>
+        <Translation language="en">new-token</Translation>
       </Translations>
       <Translations text="NewTokenArgDescription">
-        <Translation language="fr">Nouveau 'token'</Translation>
+        <Translation language="fr">Nouveau jeton</Translation>
         <Translation language="en">New 'token'</Translation>
       </Translations>
       <!--
@@ -159,37 +163,41 @@ with open("ucuq.json", "w") as outFile:
       <xpp:expand select="CLI_Arguments"/>
       <!-- Commands -->
       <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage=""/>
+      <Argument id="Execute" Description="ExecuteCommandDescription" long="execute" Value="Execute" Usage="[%ExpressionOption%] [%InArg%]"/>
       <Argument id="FetchConfig" Description="FetchConfigCommandDescription" long="fetch-config" Value="FetchConfig" Usage=""/>
-      <Argument id="SetProxy" Description="SetProxyCommandDescription" long="set-proxy" Value="SetProxy" Usage="%BackendProxyArg%"/>
+      <Argument id="SetProxy" Description="SetProxyCommandDescription" long="set-proxy" Value="SetProxy" Usage="%NewProxyArg%"/>
       <Argument id="SetToken" Description="SetTokenCommandDescription" long="set-token" Value="SetToken" Usage="%NewTokenArg% "/>
-      <Argument id="CreateVirtualToken" Description="CreateVirtualTokenCommandDescription" long="create-vtoken" Value="CreateVToken" Usage="%VirtualTokenArg% %BackendTokenArg% [%BackendIdArg%]"/>
+      <Argument id="CreateVirtualToken" Description="CreateVirtualTokenCommandDescription" long="create-vtoken" Value="CreateVToken" Usage="%VirtualTokenArg% [%VirtualTokenIdArg%]"/>
       <Argument id="DeleteVirtualToken" Description="DeleteVirtualTokenCommandDescription" long="delete-vtoken" Value="DeleteVToken" Usage="%VirtualTokenArg%"/>
       <!-- Options -->
-      <Argument id="TokenOption" Label="TokenOptionLabel" Short="t" Long="Token" Description="TokenOptionDescription" Path="Token"/>
-      <Argument id="DeviceIdOption" Label="DeviceIdOptionLabel" Short="i" Long="id" Description="DeviceIdOptionDescription" Path="Id"/>
+      <Argument id="TokenOption" Label="TokenOptionLabel" short="t" long="Token" Description="TokenOptionDescription" Path="Token"/>
+      <Argument id="DeviceIdOption" Label="DeviceIdOptionLabel" short="i" long="id" Description="DeviceIdOptionDescription" Path="Id"/>
+      <Argument id="ExpressionOption" Label="ExpressionOptionLabel" short="e" long="expr" Description="ExpressionOptionDescription" Path="Expression"/>
       <!-- Args -->
-      <Argument id="BackendProxyArg" Label="BackendProxyArgLabel" Description="BackendProxyArgDescription" Path="BackendProxy"/>
-      <Argument id="BackendTokenArg" Label="BackendTokenArgLabel" Description="BackendTokenArgDescription" Path="BackendToken"/>
+      <Argument id="InArg" Label="InArgLabel" Description="InArgDescription" Path="In"/>
+      <Argument id="NewProxyArg" Label="NewProxyArgLabel" Description="NewProxyArgDescription" Path="NewProxy"/>
       <Argument id="VirtualTokenArg" Label="VirtualTokenArgLabel" Description="VirtualTokenArgDescription" Path="VirtualToken"/>
-      <Argument id="BackendIdArg" Label="BackendIdArgLabel" Description="BackendIdArgDescription" Path="BackendId"/>
+      <Argument id="VirtualTokenIdArg" Label="VirtualTokenIdArgLabel" Description="VirtualTokenIdArgDescription" Path="VirtualTokenId"/>
       <Argument id="NewTokenArg" Label="NewTokenArgLabel" Description="NewTokenArgDescription" Path="NewToken"/>
       <Layouts>
         <Layout command="Close">
         </Layout>
         <Layout command="FetchConfig">
         </Layout>
+        <Layout command="Execute">
+          <Link index="0" Target="InArg"/>
+        </Layout>
         <Layout command="SetProxy">
-          <Link index="0" Target="BackendProxyArg"/>
+          <Link index="0" Target="NewProxyArg"/>
         </Layout>
         <Layout command="SetToken">
           <Link index="0" Target="NewTokenArg"/>
         </Layout>
-        <Layout command="CreateVirtualToken">
+        <Layout command="CreateVToken">
           <Link index="0" Target="VirtualTokenArg"/>
-          <Link index="1" Target="BackendTokenArg"/>
-          <Link index="2" Target="BackendIdArg"/>
+          <Link index="1" Target="VirtualTokenIdArg"/>
         </Layout>
-        <Layout command="DeleteVirtualToken">
+        <Layout command="DeleteVToken">
           <Link index="0" Target="VirtualTokenArg"/>
         </Layout>
       </Layouts>

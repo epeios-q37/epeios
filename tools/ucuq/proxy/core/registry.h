@@ -29,12 +29,6 @@ namespace registry {
 	namespace parameter {
 		using namespace sclr::parameter;
 
-    namespace backend {
-    }
-
-    namespace frontend {
-    }
-
     extern rEntry Service;
   }
 

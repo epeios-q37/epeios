@@ -41,7 +41,7 @@ namespace common {
   private:
     mtx::rMutex Mutex_; // To protect access to below two members.
     const void *UserDiscriminator_;   // 'NULL' if no it in use, otherwise a pointer which value is specific to the user which uses it.
-    bso::sBool IsAlive_;  // The backend behind is available.
+    bso::sBool IsAlive_;  // The device behind is available.
     sck::rRWDriver *Driver_;
   public:
     tol::sTimeStamp TimeStamp;
@@ -113,13 +113,13 @@ namespace common {
       Mutex_ = mtx::Create();
       tol::Init(List_);
     }
-    tRow New(sck::rRWDriver *Driver);
+    sRow New(sck::rRWDriver *Driver);
     tol::sTimeStamp GetTimestamp(sRow Row) const;
     void Withdraw(sRow Row); // The corresponding caller is made inaccessible and deleted if applied.
     rCaller *Hire(
-      tRow Row,
+      sRow Row,
       const void *UserDiscriminator) const;
-    sSize Extent(void) const
+    sdr::sSize Extent(void) const
     {
       return List_.Extent();
     }
@@ -128,7 +128,7 @@ namespace common {
   struct gTracker {
   public:
     const rCaller *Caller;
-    const void *Candidate;  // Pointer which identifies the frontend which originated the call.
+    const void *Candidate;  // Pointer which identifies the remote which originated the call.
     void reset(bso::sBool P = true)
     {
       Caller = NULL;

@@ -18,7 +18,7 @@
 */
 
 
-#include "backend.h"
+#include "device.h"
 
 #include "registry.h"
 
@@ -28,7 +28,7 @@
 #include "str.h"
 #include "idxbtq.h"
 
-using namespace backend;
+using namespace device;
 
 namespace {
   mtx::rMutex Mutex_ = mtx::Undefined; // To protect the too below members;
@@ -65,7 +65,45 @@ namespace {
       }
     };
 
+    void Display(const sTie &Tie)
+    {
+      cio::COut << "T: ";
+
+      if ( Tie.Token != qNIL )
+        cio::COut << Strings(Tie.Token);
+
+      cio::COut << "\tI: ";
+
+      if ( Tie.Id != qNIL )
+        cio::COut << Strings(Tie.Id);
+
+      cio::COut << "\tTT: ";
+
+      if ( Tie.TrueToken != qNIL )
+        cio::COut << Strings(Tie.TrueToken);
+
+      cio::COut << "\tCC: ";
+
+      if ( Tie.Caller != qNIL )
+        cio::COut << *Tie.Caller;
+    }
+
     lstbch::qLBUNCHw(sTie, sRow) Ties;
+
+    void DisplayTies(void)
+    {
+      sRow Row = Ties.First();
+
+      while ( Row != qNIL ) {
+        cio::COut << *Row << '\t';
+
+        Display(Ties(Row));
+
+        cio::COut << txf::nl << txf::commit;
+
+        Row = Ties.Next(Row);
+      }
+    }
 
     namespace {
       idxbtq::qINDEXw(sRow) Index_;
@@ -104,6 +142,19 @@ namespace {
         return Strings(Tie.Id);
     }
 
+    sCRow_ GetCaller(sRow Row)
+    {
+      if ( Row == qNIL )
+        qRGnr();
+
+      sTie Tie = Ties(Row);
+
+      if ( Tie.Caller == qNIL )
+        qRGnr();
+
+      return Tie.Caller;
+    }
+
     namespace {
       bso::sSign Compare_(
         const str::dString &Token,
@@ -132,7 +183,7 @@ namespace {
     void UpdateIndex(
       const str::dString &Token,
       const str::dString &Id,
-      sTRow Row)
+      sRow Row)
     {
       Index_.Allocate(Ties.Extent());
 
@@ -140,7 +191,7 @@ namespace {
         IndexRoot_ = Row;
       else {
         bso::sBool Cont = true;
-        idxbtq::qISEEKERs(sTRow) Seeker;
+        idxbtq::qISEEKERs(sRow) Seeker;
 
         Seeker.Init(Index_, IndexRoot_);
 
@@ -169,13 +220,13 @@ namespace {
       }
     }
 
-    sTRow SearchInIndex(
+    sRow SearchInIndex(
       const str::dString &Token,
       const str::dString &Id)
     {
-      sTRow Row = IndexRoot_;
+      sRow Row = IndexRoot_;
       bso::sBool Cont = Row != qNIL;
-      idxbtq::qISEEKERs(sTRow) Seeker;
+      idxbtq::qISEEKERs(sRow) Seeker;
 
       Seeker.Init(Index_, IndexRoot_);
 
@@ -201,13 +252,13 @@ namespace {
       return Row;
     }
         
-    void RemoveFromIndex(sTRow Row)
+    void RemoveFromIndex(sRow Row)
     {
       IndexRoot_ = Index_.Delete(Row, IndexRoot_);
     }
   }
 
-  common::rCallers Backends_;
+  common::rCallers Callers_;
 }
 
 namespace {
@@ -217,16 +268,13 @@ namespace {
   {
     seeker_::sTie Tie;
 
-    sRow Row = Backends_.New(Driver);
-
     Tie.Init();
 
     Tie.Token = seeker_::Strings.New(Selector.Token);
     Tie.Id = seeker_::Strings.New(Selector.Id);
+    Tie.Caller = Callers_.New(Driver);
 
-    seeker_::Ties.Add(Tie);
-
-    return Row;
+    return seeker_::Ties.Add(Tie);
   }
 
   namespace {
@@ -235,7 +283,7 @@ namespace {
       str::dString &TrueToken,
       str::dString &Id)
     {
-      seeker_::sTRow Row = seeker_::SearchInIndex(Token, str::Empty);
+      sRow Row = seeker_::SearchInIndex(Token, str::Empty);
 
       if ( Row != qNIL ) {
         seeker_::sTie Tie = seeker_::Ties(Row);
@@ -253,9 +301,9 @@ namespace {
     }
   }
 
-  seeker_::sTRow Get_(const dSelector &Selector)
+  sRow Get_(const dSelector &Selector)
   {
-    seeker_::sTRow Row = qNIL;
+    sRow Row = qNIL;
   qRH;
     str::wString
       TrueToken,
@@ -274,21 +322,31 @@ namespace {
     return Row;
   }
 
-  void Withdraw_(seeker_::sTRow Row)
+  void Withdraw_(sRow Row)
   {
     seeker_::sTie Tie = seeker_::Ties(Row);
+
+    if ( Tie.Token == qNIL )
+      qRFwk();
+
+    if ( Tie.Id == qNIL )
+      qRFwk();
+
+    if ( Tie.Caller == qNIL )
+      qRFwk();
 
     seeker_::Strings.Remove(Tie.Token);
     seeker_::Strings.Remove(Tie.Id);
 
+    Callers_.Withdraw(Tie.Caller);
+
+    seeker_::RemoveFromIndex(Row);
+
     seeker_::Ties.Remove(Row);
-
-    Backends_.Withdraw(*Row);
   }
-
 }
 
-eAnswer backend::GetAnswer(
+eAnswer device::GetAnswer(
   flw::rRFlow &Flow,
   const common::gTracker *Tracker)
 {
@@ -302,32 +360,35 @@ eAnswer backend::GetAnswer(
   return (eAnswer)Answer;
 }
 
-sRow backend::New(
+sRow device::New(
   const dSelector &Selector,
   sck::rRWDriver *Driver)
 {
   sRow Row = qNIL;
 qRH;
   mtx::rHandle Locker;
-  seeker_::sTRow TRow = qNIL;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  TRow = Get_(Selector);
+  Row = Get_(Selector);
 
   if ( Row != qNIL )
-    Withdraw_(TRow);
+    Withdraw_(Row);
 
   Row = New_(Selector, Driver);
 
-  seeker_::UpdateIndex(Selector.Token, Selector.Id, TRow);
+  seeker_::UpdateIndex(Selector.Token, Selector.Id, Row);
+
+  cio::COut << "New" << txf::nl;
+
+  seeker_::DisplayTies();
 qRR;
 qRT;
 qRE;
   return Row;
 }
 
-common::rCaller *backend::Hire(
+common::rCaller *device::Hire(
   const dSelector &Selector,
   const void *UserDiscriminator)
 {
@@ -343,14 +404,14 @@ qRB;
   Locker.Unlock();
 
   if ( Row != qNIL )
-    Caller = Backends_.Hire(*Row, UserDiscriminator);
+    Caller = Callers_.Hire(seeker_::GetCaller(Row), UserDiscriminator);
 qRR;
 qRT;
 qRE;
   return Caller;
 }
 
-void backend::Withdraw(sRow Row)
+void device::Withdraw(sRow Row)
 {
 qRH;
   mtx::rHandle Locker;
@@ -358,12 +419,16 @@ qRB;
   Locker.InitAndLock(Mutex_);
   
   Withdraw_(Row);
+
+  cio::COut << "Withdraw:" << txf::nl;
+
+  seeker_::DisplayTies();
 qRR;
 qRT;
 qRE;
 }
 
-void backend::Withdraw(const dSelector &Selector)
+void device::Withdraw(const dSelector &Selector)
 {
 qRH;
   mtx::rHandle Locker;
@@ -380,7 +445,7 @@ qRT;
 qRE;
 }
 
-void backend::Withdraw(const str::dString &Token)
+void device::Withdraw(const str::dString &Token)
 {
 qRH;
   mtx::rHandle Locker;
@@ -401,7 +466,7 @@ qRB;
   qRE;
 }
 
-bso::sBool backend::CreateVToken(
+bso::sBool device::CreateVToken(
   const str::dString &Token,
   const str::dString &TrueToken,
   const str::dString &Id)
@@ -429,16 +494,19 @@ qRB;
     Row = seeker_::Ties.Add(Tie);
 
     seeker_::UpdateIndex(Token, str::Empty, Row);
-  }
-  else
+  } else
     Row == qNIL;
+
+  cio::COut << "Create vtoken" << txf::nl;
+
+  seeker_::DisplayTies();
 qRR;
 qRT;
 qRE;
   return Row != qNIL;
 }
 
-bso::sBool backend::DeleteVToken(const str::dString &Token)
+bso::sBool device::DeleteVToken(const str::dString &Token)
 {
   sRow Row = qNIL;
 qRH;
@@ -463,20 +531,24 @@ qRB;
       seeker_::Ties.Remove(Row);
     }
   }
-qRR;
+  
+  cio::COut << "Delete vtoken" << txf::nl;
+
+  seeker_::DisplayTies();
+  qRR;
 qRT;
 qRE;
   return Row != qNIL;
 }
 
-qGCTOR(backend)
+qGCTOR(device)
 {
   Mutex_ = mtx::Create();
-  Backends_.Init();
+  Callers_.Init();
   seeker_::Init();
 }
 
-qGDTOR(backend) {
+qGDTOR(device) {
   if ( Mutex_ != mtx::Undefined )
     mtx::Delete(Mutex_, true);
 }

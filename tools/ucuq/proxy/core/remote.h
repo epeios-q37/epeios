@@ -17,8 +17,8 @@
   along with 'UCUq'.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FRONTEND_INC_
-# define FRONTEND_INC_
+#ifndef REMOTE_INC_
+# define REMOTE_INC_
 
 # include "common.h"
 
@@ -26,7 +26,7 @@
 # include "tol.h"
 # include "sdr.h"
 
-namespace frontend {
+namespace remote {
   void Process(fdr::rRWDriver &Driver);
 }
 

@@ -30,8 +30,8 @@ namespace ucucmn {
   qENUM(Caller) {
     cAdmin,
     cManager,
-    cFrontend,
-    cBackend,
+    cRemote,
+    cDevice,
     c_amount,
     c_Undefined
   };

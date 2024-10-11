@@ -32,8 +32,8 @@ const char *ucucmn::GetLabel(eCaller Caller)
 	switch ( Caller ) {
 		C(Admin);
 		C(Manager);
-		C(Frontend);
-		C(Backend);
+		C(Remote);
+		C(Device);
 	default:
 		qRFwk();
 		break;

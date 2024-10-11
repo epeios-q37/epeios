@@ -45,7 +45,7 @@ R_EXECUTE_ = 1
 A_OK_ = 0
 A_ERROR_ = 1
 A_PUZZLED_ = 2
-A_DISCONNECTED_ = 3  # Never returned bu backend, only here as placeholder
+A_DISCONNECTED_ = 3
 
 def getMacAddress_():
   return binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
@@ -231,7 +231,7 @@ def handshake_():
   with _writeLock:
     writeString_(PROTOCOL_LABEL_)
     writeString_(PROTOCOL_VERSION_)
-    writeString_("Backend")
+    writeString_("Device")
     writeString_(uos.uname().sysname)
 
   error = readString_()

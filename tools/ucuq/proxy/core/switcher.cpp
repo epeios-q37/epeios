@@ -23,8 +23,8 @@
 #include "common.h"
 #include "messages.h"
 #include "registry.h"
-#include "backend.h"
-#include "frontend.h"
+#include "device.h"
+#include "remote.h"
 #include "manager.h"
 
 #include "csdbns.h"
@@ -122,9 +122,9 @@ namespace {
 	};
 
 	namespace {
-		const backend::dSelector &GetSelector_(
+		const device::dSelector &GetSelector_(
 			fdr::rRWDriver &Driver,
-			backend::dSelector &Selector)
+			device::dSelector &Selector)
 		{
 		qRH;
 			flw::rDressedRWFlow<> Flow;
@@ -153,7 +153,7 @@ namespace {
 		sdr::tRow Row = qNIL;
 		rFeatures_ Features;
 		common::eCaller Caller = common::c_Undefined;
-		backend::wSelector Selector;
+		device::wSelector Selector;
 	qRB;
 		Socket = Data.Socket;
 
@@ -169,16 +169,16 @@ namespace {
 		Features.Init();
 
 		switch ( Caller = Handshake_(*Driver, Features) ) {
-		case common::cBackend:
+		case common::cDevice:
 			Selector.Init();
 
-			if ( backend::New(GetSelector_(*Driver, Selector), Driver) == qNIL )
+			if ( device::New(GetSelector_(*Driver, Selector), Driver) == qNIL )
 				qRUnx();
 				
 			Driver = NULL;	// To avoid deleting when exiting this method.
 			break;
-		case common::cFrontend:
-			frontend::Process(*Driver);
+		case common::cRemote:
+			remote::Process(*Driver);
 			break;
 		case common::cManager:
 			manager::Process(*Driver);

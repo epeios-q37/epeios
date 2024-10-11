@@ -18,16 +18,16 @@
 */
 
 
-#ifndef BACKEND_INC_
-# define BACKEND_INC_
+#ifndef DEVICE_INC_
+# define DEVICE_INC_
 
 # include "common.h"
 
 # include "sdr.h"
 # include "sck.h"
 
-namespace backend {
-  qENUM(Request) { // Request sent to backend (as integer)
+namespace device {
+  qENUM(Request) { // Request sent to device (as integer)
     rPing,
     rExecute,
     r_amount,

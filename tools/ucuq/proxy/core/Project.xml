@@ -42,12 +42,12 @@
       <Module>ucucmn</Module>
       <Module>ucumng</Module>
     </Modules>
-    <Module>frontend</Module>
     <Module>common</Module>
+    <Module>device</Module>
     <Module>manager</Module>
     <Module>messages</Module>
     <Module>registry</Module>
-    <Module>backend</Module>
+    <Module>remote</Module>
     <Module>switcher</Module>
   </Modules>
   <SourceDirs>

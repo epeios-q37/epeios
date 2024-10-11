@@ -7,13 +7,13 @@
 		<Translation language="fr">Proxy pour microcontrôleurs</Translation>
 		<Translation language="en">Microcontroller proxy</Translation>
 	</Translations>
-	<Translations text="Frontend">
-		<Translation language="fr">frontend</Translation>
-		<Translation language="en">frontedn</Translation>
+	<Translations text="Remote">
+		<Translation language="fr">commande</Translation>
+		<Translation language="en">remote</Translation>
 	</Translations>
-	<Translations text="Backend">
-		<Translation language="fr">backend</Translation>
-		<Translation language="en">backend</Translation>
+	<Translations text="Device">
+		<Translation language="fr">dispositif</Translation>
+		<Translation language="en">device</Translation>
 	</Translations>
 	<Translations text="UnknownProtocol">
 		<Translation language="fr">Protocole inconnu !</Translation>
@@ -23,9 +23,9 @@
 		<Translation language="fr">Version de protocole inconnue !</Translation>
 		<Translation language="en">Unknown protocol version!</Translation>
 	</Translations>
-	<Translations text="NoBackendWithGivenTokenAndId">
-		<Translation language="fr">Pas de 'backend' avec le jeton '%1' et l'identifiant '%2' !</Translation>
-		<Translation language="en">No backend with '%1' token and '%2' id!</Translation>
+	<Translations text="NoDeviceWithGivenTokenAndId">
+		<Translation language="fr">Pas de dispositif avec le jeton '%1' et l'identifiant '%2' !</Translation>
+		<Translation language="en">No device with '%1' token and '%2' id!</Translation>
 	</Translations>
 	<Translations text="UnknownCaller">
 		<Translation language="fr">Appelant '%1' inconnu !</Translation>

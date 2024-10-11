@@ -20,9 +20,9 @@
 
 #include "manager.h"
 
-#include "backend.h"
+#include "device.h"
 #include "messages.h"
-#include "frontend.h"
+#include "remote.h"
 
 #include "ucumng.h"
 
@@ -41,7 +41,7 @@ namespace {
     ucucmn::Get(Manager, Token);
     ucucmn::Dismiss(Manager);
 
-    backend::Withdraw(Token);
+    device::Withdraw(Token);
   qRR;
   qRT;
   qRE;
@@ -53,8 +53,8 @@ namespace {
     const fdr::rRWDriver &Driver)
   {
   qRH;
-    flw::rDressedRWFlow<> Backend;
-    backend::wSelector Selector;
+    flw::rDressedRWFlow<> Device;
+    device::wSelector Selector;
     str::wString Script, Expression, Message, Response;
     common::rCaller *Caller = NULL;
     bso::sBool Cont = true;
@@ -67,12 +67,12 @@ namespace {
     common::Get(Manager, Script);
     common::Get(Manager, Expression);
 
-    Caller = backend::Hire(Selector, &Driver);
+    Caller = device::Hire(Selector, &Driver);
 
     if ( Caller == NULL ) {
       Message.Init();
 
-      messages::GetTranslation(messages::iNoBackendWithGivenTokenAndId, Message, Selector.Token, Selector.Id);
+      messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, Selector.Token, Selector.Id);
 
       common::Put(ucumng::aError, Manager);
       common::Put(Message, Manager);
@@ -81,39 +81,39 @@ namespace {
       Tracker.Caller = Caller;
       Tracker.Candidate = &Driver;
 
-      Backend.Init(*Caller->GetDriver());
+      Device.Init(*Caller->GetDriver());
 
-      common::Put(backend::rExecute, Backend, &Tracker);
-      common::Put(Script, Backend, &Tracker);
-      common::Put(Expression, Backend, &Tracker);
-      common::Commit(Backend, &Tracker);
+      common::Put(device::rExecute, Device, &Tracker);
+      common::Put(Script, Device, &Tracker);
+      common::Put(Expression, Device, &Tracker);
+      common::Commit(Device, &Tracker);
 
-      switch ( backend::GetAnswer(Backend, &Tracker) ) {
-      case backend::aOK:
+      switch ( device::GetAnswer(Device, &Tracker) ) {
+      case device::aOK:
         Response.Init();
 
-        common::Get(Backend, Response, &Tracker);
-        common::Dismiss(Backend, &Tracker);
+        common::Get(Device, Response, &Tracker);
+        common::Dismiss(Device, &Tracker);
 
         common::Put(ucumng::aOK, Manager);
         common::Put(Response, Manager);
 
         common::Commit(Manager);
         break;
-      case backend::aError:
-      case backend::aPuzzled:
+      case device::aError:
+      case device::aPuzzled:
         Response.Init();
 
-        common::Get(Backend, Response, &Tracker);
-        common::Dismiss(Backend, &Tracker);
+        common::Get(Device, Response, &Tracker);
+        common::Dismiss(Device, &Tracker);
 
         common::Put(ucumng::aError, Manager);
         common::Put(Response, Manager);
 
         common::Commit(Manager);
         break;
-      case backend::aDisconnected:
-        common::Dismiss(Backend, &Tracker);
+      case device::aDisconnected:
+        common::Dismiss(Device, &Tracker);
         break;
       default:
         qRGnr();
@@ -123,7 +123,7 @@ namespace {
   qRR;
   qRT;
     if ( (Caller != NULL) && Caller->ShouldIDestroy(&Driver) ) {
-      Backend.reset(false); // To avoid action on underlying driver which will be destroyed.
+      Device.reset(false); // To avoid action on underlying driver which will be destroyed.
       qDELETE(Caller);
     }
   qRE;
@@ -133,21 +133,22 @@ namespace {
  {
  qRH;
    str::wString
+     VToken,
      Token,
-     TrueToken,
      Id;
  qRB;
-   tol::Init(Token, TrueToken);
+   tol::Init(VToken, Token, Id);
 
+   ucucmn::Get(Manager, VToken);
    ucucmn::Get(Manager, Token);
-   ucucmn::Get(Manager, TrueToken);
    ucucmn::Get(Manager, Id);
 
    ucucmn::Dismiss(Manager);
 
-   backend::CreateVToken(Token, TrueToken, Id);
+   device::CreateVToken(VToken, Token, Id);
 
    ucucmn::Put(ucumng::aOK, Manager);
+   ucucmn::Put(str::Empty, Manager);
 
    ucucmn::Commit(Manager);
  qRR;
@@ -166,9 +167,10 @@ namespace {
 
    ucucmn::Dismiss(Manager);
 
-   backend::DeleteVToken(Token);
+   device::DeleteVToken(Token);
 
    ucucmn::Put(ucumng::aOK, Manager);
+   ucucmn::Put(str::Empty, Manager);
 
    ucucmn::Commit(Manager);
  qRR;

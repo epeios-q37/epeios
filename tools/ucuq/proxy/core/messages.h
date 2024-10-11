@@ -25,11 +25,11 @@
 
 namespace messages {
   qENUM(Id) {
-    iFrontend,
-    iBackend,
+    iRemote,
+    iDevice,
     iUnknownProtocol,
     iUnknownProtocolVersion,
-    iNoBackendWithGivenTokenAndId,  // %1: token, %2: id
+    iNoDeviceWithGivenTokenAndId,  // %1: token, %2: id
     iUnknownCaller,  // %1: caller
     i_amount,
     i_Undefined

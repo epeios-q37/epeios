@@ -29,9 +29,9 @@
 
 using namespace common;
 
-sdr::tRow common::rCallers::New(sck::rRWDriver *Driver)
+sRow common::rCallers::New(sck::rRWDriver *Driver)
 {
-	sdr::sRow Row = qNIL;
+	sRow Row = qNIL;
 qRH;
 	rCaller *Caller = NULL;
 	mtx::rHandle Locker;
@@ -47,10 +47,10 @@ qRR;
 	qDELETE(Caller);
 qRT;
 qRE;
-	return *Row;
+	return Row;
 }
 
-tol::sTimeStamp common::rCallers::GetTimestamp(sdr::sRow Row) const
+tol::sTimeStamp common::rCallers::GetTimestamp(sRow Row) const
 {
 	tol::sTimeStamp Timestamp = 0;
 qRH;
@@ -71,7 +71,7 @@ qRE;
 	return Timestamp;
 }
 
-void common::rCallers::Withdraw(sdr::sRow Row)
+void common::rCallers::Withdraw(sRow Row)
 {
 qRH;
 	rCaller *Caller = NULL;
@@ -102,7 +102,7 @@ qRE;
 }
 
 rCaller *common::rCallers::Hire(
-	sdr::tRow Row,
+	sRow Row,
 	const void *UserDiscriminator) const
 {
 	rCaller *Caller = NULL;
@@ -134,11 +134,11 @@ namespace {
 		messages::eId Id = messages::i_Undefined;
 
 		switch ( Caller ) {
-		case ucucmn::cFrontend:
-			Id = messages::iFrontend;
+		case ucucmn::cRemote:
+			Id = messages::iRemote;
 			break;
-		case ucucmn::cBackend:
-			Id = messages::iBackend;
+		case ucucmn::cDevice:
+			Id = messages::iDevice;
 			break;
 		default:
 			qRGnr();

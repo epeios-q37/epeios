@@ -22,14 +22,6 @@
 
 using namespace registry;
 
-namespace parameter_ {
-  rEntry Backend_("Backend", sclr::Parameters);
-}
-
-namespace parameter_ {
-  rEntry Frontend_("Frontend", sclr::Parameters);
-}
-
 rEntry registry::parameter::Service("Service", sclr::Parameters);
 
 rEntry registry::definition::Notification("Notification", sclr::Definitions);

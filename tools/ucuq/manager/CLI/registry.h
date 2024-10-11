@@ -32,11 +32,11 @@ namespace registry {
     extern rEntry HostService;
     extern rEntry Token;
     extern rEntry Id;
-    extern rEntry TrueToken;
-    extern rEntry BackendProxy;
-    extern rEntry BackendToken;
+    extern rEntry In;
+    extern rEntry Expression;
+    extern rEntry NewProxy;
     extern rEntry VirtualToken;
-    extern rEntry BackendId;
+    extern rEntry VirtualTokenId;
     extern rEntry NewToken;
   }
 

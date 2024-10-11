@@ -151,26 +151,20 @@ namespace {
 
 
 	bso::sBool BaseExecuteScript_(
-		const char *ScriptName,
+		const str::dString &Script,
+		const str::dString &Expression,
 		tagsbs::dTaggedValues &Values,
 		str::dString *Result)
 	{
 		bso::sBool OK = false;
 	qRH;
 		csdbnc::rRWFlow Flow;
-		str::wString Token, Id, TaggedScript, Script, Expression;
+		str::wString Token, Id;
 	qRB;
-		tol::Init(Token, Id, TaggedScript, Expression);
+		tol::Init(Token, Id);
 
 		sclm::MGetValue(registry::parameter::Token, Token);
-
 		sclm::MGetValue(registry::parameter::Id, Id);
-		registry::GetScript(ScriptName, TaggedScript);
-		registry::GetScriptExpression(ScriptName, Expression);
-
-		Script.Init();
-
-		tagsbs::SubstituteLongTags(TaggedScript, Values, Script);
 
 		InitAndConnect_(Flow);
 
@@ -182,6 +176,32 @@ namespace {
 		ucucmn::Commit(Flow);
 
 		OK = HandleAnswer_(Flow, Result);
+	qRR;
+	qRT;
+	qRE;
+		return OK;
+	}
+
+	bso::sBool BaseExecuteScript_(
+		const char *ScriptName,
+		tagsbs::dTaggedValues &Values,
+		str::dString *Result)
+	{
+		bso::sBool OK = false;
+	qRH;
+		csdbnc::rRWFlow Flow;
+		str::wString TaggedScript, Script, Expression;
+	qRB;
+		tol::Init(TaggedScript, Expression);
+
+		registry::GetScript(ScriptName, TaggedScript);
+		registry::GetScriptExpression(ScriptName, Expression);
+
+		Script.Init();
+
+		tagsbs::SubstituteLongTags(TaggedScript, Values, Script);
+
+		OK = BaseExecuteScript_(Script, Expression, Values, Result);
 	qRR;
 	qRT;
 	qRE;
@@ -239,7 +259,7 @@ namespace {
 		const char *Tag1,
 		const others &...Others)
 	{
-		ExecuteScript_(ScriptName, &Result, Tag1, Others...);
+		return ExecuteScript_(ScriptName, &Result, Tag1, Others...);
 	}
 
 	template <typename... others> bso::sBool ExecuteScript_(
@@ -269,6 +289,25 @@ namespace {
 	qRE;
 	}
 
+	void Execute_(void)
+	{
+	qRH;
+		str::wString FileName, Script, Expression;
+		tagsbs::wTaggedValues Values;
+		sclm::rRDriverRack Rack;
+	qRB;
+		tol::Init(FileName, Script, Expression, Values);
+
+		sclm::OGetValue(registry::parameter::In, FileName);
+		sclm::OGetValue(registry::parameter::Expression, Expression);
+
+		flx::GetString(Rack.Init(FileName), Script);
+
+		BaseExecuteScript_(Script, Expression, Values, NULL);
+	qRR;
+	qRT;
+	qRE;
+	}
 
 	void FetchConfig_(void)
 	{
@@ -282,7 +321,7 @@ namespace {
 	qRB;
 		Proxy.Init();
 
-		sclm::MGetValue(registry::parameter::BackendProxy, Proxy);
+		sclm::MGetValue(registry::parameter::NewProxy, Proxy);
 
 		ExecuteScript_("SetProxy", "Proxy", Proxy);
 	qRR;
@@ -305,25 +344,49 @@ namespace {
 	qRE;
 	}
 
-	void SetVirtualToken_(void)
+	void CreateVToken_(void)
 	{
 	qRH;
-		str::wString VToken, BToken, BId;
+		str::wString VToken, Token, VTokenId;
 		csdbnc::rRWFlow Flow;
 		ucumng::eAnswer Answer = ucumng::a_Undefined;
 	qRB;
-		tol::Init(VToken, BToken, BId);
+		tol::Init(VToken, Token, VTokenId);
 
 		sclm::MGetValue(registry::parameter::VirtualToken, VToken);
-		sclm::MGetValue(registry::parameter::BackendToken, BToken);
-		sclm::OGetValue(registry::parameter::BackendId, BId);
+		sclm::MGetValue(registry::parameter::Token, Token);
+		sclm::OGetValue(registry::parameter::VirtualTokenId, VTokenId);
 
 		InitAndConnect_(Flow);
 
-		ucucmn::Put(ucumng::GetLabel(ucumng::rClose_1), Flow);
+		ucucmn::Put(ucumng::GetLabel(ucumng::rCreateVToken_1), Flow);
 		ucucmn::Put(VToken, Flow);
-		ucucmn::Put(BToken, Flow);
-		ucucmn::Put(BId, Flow);
+		ucucmn::Put(Token, Flow);
+		ucucmn::Put(VTokenId, Flow);
+
+		ucucmn::Commit(Flow);
+
+		HandleAnswer_(Flow);
+	qRR;
+	qRT;
+	qRE;
+	}
+
+	void DeleteVToken_(void)
+	{
+	qRH;
+		str::wString VToken;
+		csdbnc::rRWFlow Flow;
+		ucumng::eAnswer Answer = ucumng::a_Undefined;
+	qRB;
+	VToken.Init();
+
+		sclm::MGetValue(registry::parameter::VirtualToken, VToken);
+
+		InitAndConnect_(Flow);
+
+		ucucmn::Put(ucumng::GetLabel(ucumng::rDeleteVToken_1), Flow);
+		ucucmn::Put(VToken, Flow);
 
 		ucucmn::Commit(Flow);
 
@@ -333,6 +396,7 @@ namespace {
 	qRE;
 	}
 }
+
 
 #define C( name )\
 	else if ( Command == #name )\
@@ -349,10 +413,13 @@ qRB;
 		PrintHeader_();
 	else if ( Command == "License" )
 		epsmsc::PrintLicense( NAME_MC );
-	C( Close );
+	C(Close);
+	C(Execute);
 	C(FetchConfig);
 	C(SetProxy);
 	C(SetToken);
+	C(CreateVToken);
+	C(DeleteVToken);
 	else
 		qRGnr();
 

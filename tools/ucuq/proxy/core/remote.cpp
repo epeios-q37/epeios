@@ -18,20 +18,20 @@
 */
 
 
-#include "frontend.h"
+#include "remote.h"
 
 #include "registry.h"
 #include "messages.h"
-#include "backend.h"
+#include "device.h"
 
 #include "sclm.h"
 
 #include "csdcmn.h"
 
-using namespace frontend;
+using namespace remote;
 
 namespace {
-  qENUM(Request_) { // Request issued by frontend (received as string)
+  qENUM(Request_) { // Request issued by remote (received as string)
     rPing_1,
     rExecute_1,
     r_amount,
@@ -55,17 +55,17 @@ namespace {
 
 #undef C
 
-    stsfsm::wAutomat FrontendRequestAutomat_;
+    stsfsm::wAutomat RemoteRequestAutomat_;
 
-    void FillFrontendRequestAutomat_(void)
+    void FillRemoteRequestAutomat_(void)
     {
-      FrontendRequestAutomat_.Init();
-      stsfsm::Fill<eRequest_>(FrontendRequestAutomat_, r_amount, GetLabel_);
+      RemoteRequestAutomat_.Init();
+      stsfsm::Fill<eRequest_>(RemoteRequestAutomat_, r_amount, GetLabel_);
     }
 
   eRequest_ GetRequest_(const str::dString &Pattern)
   {
-    return stsfsm::GetId(Pattern, FrontendRequestAutomat_, r_Undefined, r_amount);
+    return stsfsm::GetId(Pattern, RemoteRequestAutomat_, r_Undefined, r_amount);
   }
 
   eRequest_ GetRequest_(flw::rRFlow &Flow)
@@ -86,33 +86,33 @@ namespace {
   }
 
   bso::sBool HandlePing_(
-    flw::rRWFlow &Frontend,
-    flw::rRWFlow &Backend,
+    flw::rRWFlow &Remote,
+    flw::rRWFlow &Device,
     common::gTracker *Tracker)
   {
     bso::sBool Cont = true;
    qRH;
     str::wString Returned;
   qRB;
-    common::Put(backend::rPing, Backend, Tracker);
-    common::Commit(Backend, Tracker);
+    common::Put(device::rPing, Device, Tracker);
+    common::Commit(Device, Tracker);
 
-    switch ( backend::GetAnswer(Backend, Tracker) ) {
-    case backend::aOK:
+    switch ( device::GetAnswer(Device, Tracker) ) {
+    case device::aOK:
       Returned.Init();
-      common::Get(Backend, Returned, Tracker);
-      common::Put(backend::aOK, Frontend);
-      common::Put(Returned, Frontend);
-      common::Commit(Frontend);
+      common::Get(Device, Returned, Tracker);
+      common::Put(device::aOK, Remote);
+      common::Put(Returned, Remote);
+      common::Commit(Remote);
       break;
-    case backend::aPuzzled:
+    case device::aPuzzled:
       Returned.Init();
-      common::Get(Backend, Returned, Tracker);
-      common::Put(backend::aPuzzled, Frontend);
-      common::Put(Returned, Frontend);
-      common::Commit(Frontend);
+      common::Get(Device, Returned, Tracker);
+      common::Put(device::aPuzzled, Remote);
+      common::Put(Returned, Remote);
+      common::Commit(Remote);
       break;
-    case backend::aDisconnected:
+    case device::aDisconnected:
       Cont = false;
       break;
     default:
@@ -126,8 +126,8 @@ namespace {
   }
 
   bso::sBool HandleExecute_(
-    flw::rRWFlow &Frontend,
-    flw::rRWFlow &Backend,
+    flw::rRWFlow &Remote,
+    flw::rRWFlow &Device,
     const common::gTracker *Tracker)
   {
     bso::sBool Cont = true;
@@ -139,36 +139,36 @@ namespace {
   qRB;
     tol::Init(Script, Expression);
 
-    common::Get(Frontend, Script);
-    common::Get(Frontend, Expression);
+    common::Get(Remote, Script);
+    common::Get(Remote, Expression);
 
-    common::Put(backend::rExecute, Backend, Tracker);
-    common::Put(Script, Backend, Tracker);
-    common::Put(Expression, Backend, Tracker);
-    common::Commit(Backend, Tracker);
+    common::Put(device::rExecute, Device, Tracker);
+    common::Put(Script, Device, Tracker);
+    common::Put(Expression, Device, Tracker);
+    common::Commit(Device, Tracker);
 
-    switch ( backend::GetAnswer(Backend, Tracker) ) {
-    case backend::aOK:
+    switch ( device::GetAnswer(Device, Tracker) ) {
+    case device::aOK:
       Returned.Init();
-      common::Get(Backend, Returned, Tracker);
-      common::Put(backend::aOK, Frontend);
-      common::Put(Returned, Frontend);
-      common::Commit(Frontend);
+      common::Get(Device, Returned, Tracker);
+      common::Put(device::aOK, Remote);
+      common::Put(Returned, Remote);
+      common::Commit(Remote);
       break;
-    case backend::aError:
+    case device::aError:
       Returned.Init();
-      common::Get(Backend, Returned, Tracker);
-      common::Put(backend::aError, Frontend);
-      common::Put(Returned, Frontend);
-      common::Commit(Frontend);
+      common::Get(Device, Returned, Tracker);
+      common::Put(device::aError, Remote);
+      common::Put(Returned, Remote);
+      common::Commit(Remote);
       break;
-    case backend::aPuzzled:
+    case device::aPuzzled:
       Returned.Init();
-      common::Get(Backend, Returned, Tracker);
-      common::Put(backend::aPuzzled, Frontend);
-      common::Put(Returned, Frontend);
+      common::Get(Device, Returned, Tracker);
+      common::Put(device::aPuzzled, Remote);
+      common::Put(Returned, Remote);
       break;
-    case backend::aDisconnected:
+    case device::aDisconnected:
       Cont = false;
       break;
     default:
@@ -182,68 +182,68 @@ namespace {
   }
 }
 
-void frontend::Process(fdr::rRWDriver &Driver)
+void remote::Process(fdr::rRWDriver &Driver)
 {
 qRH;
-  flw::rDressedRWFlow<> Backend;
-  flw::rDressedRWFlow<> Frontend;
+  flw::rDressedRWFlow<> Device;
+  flw::rDressedRWFlow<> Remote;
   str::wString Message, Command;
-  backend::wSelector Selector;
+  device::wSelector Selector;
   common::rCaller *Caller = NULL;
   bso::sBool Cont = true;
   common::gTracker Tracker;
 qRB;
-  Frontend.Init(Driver);
+  Remote.Init(Driver);
 
   Selector.Init();
-  common::Get(Frontend, Selector.Token);
-  common::Get(Frontend, Selector.Id);
+  common::Get(Remote, Selector.Token);
+  common::Get(Remote, Selector.Id);
 
-  Caller = backend::Hire(Selector, &Driver);
+  Caller = device::Hire(Selector, &Driver);
 
-  Frontend.Init(Driver);
+  Remote.Init(Driver);
 
   if ( Caller == NULL ) {
     Message.Init();
-    messages::GetTranslation(messages::iNoBackendWithGivenTokenAndId, Message, Selector.Token, Selector.Id);
-    common::Put(Message, Frontend);
-    common::Commit(Frontend);
+    messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, Selector.Token, Selector.Id);
+    common::Put(Message, Remote);
+    common::Commit(Remote);
   } else {
-    common::Put("", Frontend);
-    common::Commit(Frontend);
+    common::Put("", Remote);
+    common::Commit(Remote);
 
     Tracker.Candidate = &Driver;
     Tracker.Caller = Caller;
 
-    Backend.Init(*Caller->GetDriver());
+    Device.Init(*Caller->GetDriver());
 
-    while ( !Frontend.EndOfFlow() && Cont ) {
-      switch ( GetRequest_(Frontend) ) {
+    while ( !Remote.EndOfFlow() && Cont ) {
+      switch ( GetRequest_(Remote) ) {
       case rExecute_1:
-        if ( !HandleExecute_(Frontend, Backend, &Tracker) )
+        if ( !HandleExecute_(Remote, Device, &Tracker) )
           break;
         break;
       case rPing_1:
-        if ( !HandlePing_(Frontend, Backend, &Tracker) )
+        if ( !HandlePing_(Remote, Device, &Tracker) )
           break;
         break;
       default:
         qRGnr();
         break;
       }
-      common::Dismiss(Backend, &Tracker);
+      common::Dismiss(Device, &Tracker);
     }
    }
   qRR;
   qRT;
     if ( (Caller != NULL) && Caller->ShouldIDestroy(&Driver) ) {
-      Backend.reset(false); // To avoid action on underlying driver which will be destroyed.
+      Device.reset(false); // To avoid action on underlying driver which will be destroyed.
       qDELETE(Caller);
     }
   qRE;
 }
 
-qGCTOR(frontend)
+qGCTOR(remote)
 {
-  FillFrontendRequestAutomat_();
+  FillRemoteRequestAutomat_();
 }
