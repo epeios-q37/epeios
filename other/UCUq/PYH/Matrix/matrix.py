@@ -199,7 +199,7 @@ CALLBACKS = {
   "Draw": lambda dom, id: draw(dom,MATRIXES[int(dom.getMark(id))])
 }
 
-felix = ucuq.UCUq("Black")
+felix = ucuq.UCUq("")
 
 left = connect_("Yellow")
 right = connect_("Red")

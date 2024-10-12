@@ -15,7 +15,6 @@
       </xpp:define>
       <xpp:expand select="Prod"/>
       <Command>FetchConfig</Command>
-      <Id>Blue</Id>
     </Parameters>
     <xpp:expand href="../../../../../q37/epeios/tools/ucuq/manager/token.xcfg"/>
     <Definitions>
@@ -170,7 +169,7 @@ with open("ucuq.json", "w") as outFile:
       <Argument id="CreateVirtualToken" Description="CreateVirtualTokenCommandDescription" long="create-vtoken" Value="CreateVToken" Usage="%VirtualTokenArg% [%VirtualTokenIdArg%]"/>
       <Argument id="DeleteVirtualToken" Description="DeleteVirtualTokenCommandDescription" long="delete-vtoken" Value="DeleteVToken" Usage="%VirtualTokenArg%"/>
       <!-- Options -->
-      <Argument id="TokenOption" Label="TokenOptionLabel" short="t" long="Token" Description="TokenOptionDescription" Path="Token"/>
+      <Argument id="TokenOption" Label="TokenOptionLabel" short="t" long="token" Description="TokenOptionDescription" Path="Token"/>
       <Argument id="DeviceIdOption" Label="DeviceIdOptionLabel" short="i" long="id" Description="DeviceIdOptionDescription" Path="Id"/>
       <Argument id="ExpressionOption" Label="ExpressionOptionLabel" short="e" long="expr" Description="ExpressionOptionDescription" Path="Expression"/>
       <!-- Args -->

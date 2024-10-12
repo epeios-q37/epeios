@@ -1,7 +1,7 @@
 import os, json, socket, sys, threading, io, datetime
 from inspect import getframeinfo, stack
 
-with open(("/home/csimon/q37/epeios/tools/ucuq/frontend/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../") + "ucuq.json", "r") as config:
+with open(("/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../") + "ucuq.json", "r") as config:
   CONFIG_ = json.load(config)
 
 SELECTOR_ = CONFIG_["Selector"]
@@ -133,7 +133,7 @@ def handshake_(socket):
 
 
 def getTokenAndId_(alias):
-  return SELECTOR_[0], SELECTOR_[1][alias]
+  return SELECTOR_[0], SELECTOR_[1][alias] if alias else ""
 
 
 def ignition_(socket, alias):
@@ -166,7 +166,7 @@ class UCUq:
 
 
   def __init__(self, alias=None):
-    self.socket_ = connect(alias) if alias else None
+    self.socket_ = connect(alias) if alias != None else None
 
 
   def connect(self, alias):
