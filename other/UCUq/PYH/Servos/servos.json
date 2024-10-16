@@ -1,0 +1,56 @@
+{
+  "Black": {
+    "l": {
+      "pin": 11,
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1639,
+        "u16_max": 8192,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": -115
+      }
+    },
+    "L": {
+      "pin": 10,
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1639,
+        "u16_max": 8192,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "R": {
+      "pin": 12,
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1639,
+        "u16_max": 8192,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": -55
+      }
+    },
+    "r": {
+      "pin": 13,
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1639,
+        "u16_max": 8192,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    }
+  }
+}

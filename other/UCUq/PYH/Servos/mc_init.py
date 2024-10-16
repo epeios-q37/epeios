@@ -1,77 +1,68 @@
-# MicroPython code for the µcontroller
-
-from machine import Pin, PWM
-import time
+import machine, time
 
 class Servo:
-  __servo_pwm_freq = 50
-  __min_u16_duty = 1640 - 2 # offset for correction
-  __max_u16_duty = 7864 - 0  # offset for correction
-  min_angle = 0
-  max_angle = 180
-  current_angle = 0.001
+  class Specs:
+    def __init__(self, freq, u16_min, u16_max, range):
+      self.freq = freq
+      self.min = u16_min
+      self.max = u16_max
+      self.range = range
+  
+  class Home:
+    def __init__(self, angle, u16_offset):
+      self.angle = angle
+      self.offset = u16_offset
+  
+  class Domain:
+    def __init__(self, u16_min, u16_max):
+      self.min = u16_min
+      self.max = u16_max
+  
+  def __init__(self, pin, specs, home, domain = None):
+    if domain == None:
+      domain = Servo.Domain(specs.min, specs.max)
+
+    self.pin = pin
+    self.specs = specs
+    self.home = home
+    self.domain = domain
+
+    self.init()
+
+  def angleToDuty_(self, angle):
+    u16 = self.specs.min + angle * ( self.specs.max - self.specs.min ) / self.specs.range + self.home.offset
+
+    if u16 > self.domain.max:
+      u16 = self.domain.max
+    elif u16 < self.domain.min:
+      u16 = self.domain.min
+
+    return int(u16)
 
 
-  def __init__(self, pin):
-    self.__initialise(pin)
-
-
-  def update_settings(self, servo_pwm_freq, min_u16_duty, max_u16_duty, min_angle, max_angle, pin):
-    self.__servo_pwm_freq = servo_pwm_freq
-    self.__min_u16_duty = min_u16_duty
-    self.__max_u16_duty = max_u16_duty
-    self.min_angle = min_angle
-    self.max_angle = max_angle
-    self.__initialise(pin)
-
+  def init(self):
+    self.angle = self.home.angle
+    self.pwm = machine.PWM(machine.Pin(self.pin, machine.Pin.OUT), freq = self.specs.freq, duty_u16 = self.angleToDuty_(self.angle)) 
 
   def move(self, angle):
-    # round to 2 decimal places, so we have a chance of reducing unwanted servo adjustments
-    angle = round(angle, 2)
-    # do we need to move?
-    if angle == self.current_angle:
-        return
-    self.current_angle = angle
-    # calculate the new duty cycle and move the motor
-    duty_u16 = self.__angle_to_u16_duty(angle)
-    self.__motor.duty_u16(duty_u16)
+    self.angle = angle
+    self.pwm.duty_u16(self.angleToDuty_(angle))
 
   def current(self):
-    return self.current_angle    
-
-  def __angle_to_u16_duty(self, angle):
-    return int((angle - self.min_angle) * self.__angle_conversion_factor) + self.__min_u16_duty
+    return self.angle
 
 
-  def __initialise(self, pin):
-    self.current_angle = 90.001
-    self.__angle_conversion_factor = (self.__max_u16_duty - self.__min_u16_duty) / (self.max_angle - self.min_angle)
-    self.__motor = PWM(Pin(pin))
-    self.__motor.freq(self.__servo_pwm_freq)
+def setServos():
+  global servos
 
-
-LL_PIN = 10
-LF_PIN = 11
-RL_PIN = 12
-RF_PIN = 13
-X1_PIN = 14
-X2_PIN = 15
-
-lf = Servo(LF_PIN)
-ll = Servo(LL_PIN)
-rl = Servo(RL_PIN)
-rf = Servo(RF_PIN)
-x1 = Servo(X1_PIN)
-x2 = Servo(X2_PIN)
-
-servos = {
-  "lf": lf,
-  "ll": ll,
-  "rf": rf,
-  "rl": rl,
-  "x1": x1,
-  "x2": x2
-}
+  servos = {
+    "lf": lf,
+    "ll": ll,
+    "rf": rf,
+    "rl": rl,
+  #  "x1": x1,
+  #  "x2": x2
+  }
 
 def moves_(moves, step):
   if not step:
@@ -95,6 +86,7 @@ def moves_(moves, step):
       for _ in range(step):
         time.sleep(.0025)
 
+
 def move(rawMoves, step=10):
   moves = []
 
@@ -102,3 +94,4 @@ def move(rawMoves, step=10):
     moves.append((servos[move[0]], move[1]+90))
 
   moves_(moves, step)
+

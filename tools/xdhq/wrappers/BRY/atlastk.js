@@ -1,3 +1,17 @@
+const {
+  Feeder,
+  byteLength,
+  convertUInt,
+  sizeEmbeddedString,
+  convertSInt,
+  addString,
+  addStrings,
+  handleString,
+  d,
+} = require("./protocol.js");
+
+protocol = require("./protocol.js")
+
 const location = window.location;
 const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/faas/";
 
@@ -39,86 +53,6 @@ function isTokenEmpty() {
   return token === "" || token.charAt(0) === "&";
 }
 
-function byteLength(str) {
-  // returns the byte length of an utf8 string
-  let s = str.length;
-  for (let i = str.length - 1; i >= 0; i--) {
-    let code = str.charCodeAt(i);
-    if (code > 0x7f && code <= 0x7ff) s++;
-    else if (code > 0x7ff && code <= 0xffff) s += 2;
-    if (code >= 0xdc00 && code <= 0xdfff) i--; //trail surrogate
-  }
-  return s;
-}
-
-function convertUInt(value) {
-  let result = Buffer.alloc(1, value & 0x7f);
-  value >>= 7;
-
-  while (value !== 0) {
-    result = Buffer.concat([Buffer.alloc(1, (value & 0x7f) | 0x80), result]);
-    value >>= 7;
-  }
-
-  return result;
-}
-
-function convertSInt(value) {
-  return convertUInt(value < 0 ? ((-value - 1) << 1) | 1 : value << 1);
-}
-
-function sizeEmbeddedString(string) {
-  return Buffer.concat([
-    convertUInt(byteLength(string)),
-    Buffer.from(string, "utf8"),
-  ]);
-}
-
-function addString(data, string) {
-  return Buffer.concat([data, sizeEmbeddedString(string)]);
-}
-
-function addStrings(data, strings) {
-  let i = 0;
-  data = Buffer.concat([data, convertUInt(strings.length)]);
-
-  while (i < strings.length) data = addString(data, strings[i++]);
-
-  return data;
-}
-
-function handleString(string) {
-  let data = Buffer.alloc(0);
-
-  data = addString(data, string);
-
-  return data;
-}
-
-class Feeder {
-  constructor(data) {
-    this.data_ = data;
-  }
-  isEmpty() {
-    return this.data_.length === 0;
-  }
-  get(size) {
-    if (this.data_.length === 0) exit_("No data available!");
-
-    if (size > this.data_.length) size = this.data_.length;
-
-    if (size === 0) exit_("'size' can not be 0!");
-
-    let data = this.data_.subarray(0, size);
-
-    this.data_ = this.data_.subarray(size);
-
-    return data;
-  }
-}
-
-var stack = new Array();
-
 var uInt = 0;
 var sInt = 0;
 var length = 0;
@@ -129,58 +63,14 @@ var strings = [];
 var id_ = ""; // Buffers the action related id.
 var cont = true;
 
-/********/
-/* DATA */
-/********/
-
-const d = {
-  UINT: -1,
-  SINT: -2,
-  LENGTH: -3,
-  CONTENT: -4,
-  STRING: -5,
-  AMOUNT: -6,
-  SUBSTRING: -7,
-  STRINGS: -8,
-};
-
-function push(op) {
-  stack.push(op);
-
-  switch (op) {
-    case d.STRINGS:
-      strings = [];
-      push(d.AMOUNT);
-      break;
-    case d.AMOUNT:
-      amount_ = 0;
-      push(d.UINT);
-      break;
-    case d.STRING:
-      buffer = Buffer.alloc(0);
-      push(d.LENGTH);
-      break;
-    case d.LENGTH:
-      length = 0;
-      push(d.UINT);
-      break;
-    case d.SINT:
-      sInt = 0;
-      push(d.UINT);
-    case d.UINT:
-      uInt = 0;
-      break;
-  }
+function getString() {
+  return string;
 }
 
-function pop() {
-  cont = true;
-  return stack.pop();
+function getStrings() {
+  return strings;
 }
 
-function top() {
-  return stack[stack.length - 1];
-}
 
 function handleUInt(feeder) {
   if (feeder.isEmpty()) return true;
@@ -200,7 +90,7 @@ function handleContent(feeder) {
 }
 
 function handleData(feeder) {
-  switch (top()) {
+  switch (top_()) {
     case d.UINT: // a, loop.
       if (!handleUInt(feeder)) {
         pop();
@@ -238,13 +128,54 @@ function handleData(feeder) {
       else pop();
       break;
     default:
-      if (top() < 0) exit_("Unknown data operation");
+      if (top_() < 0) exit_("Unknown data operation");
       return false;
       break;
   }
 
   return true;
 }
+
+var stack = new Array();
+
+function push(op) {
+  stack.push(op);
+
+  switch (op) {
+    case d.STRINGS:
+      strings = [];
+      push(d.AMOUNT);
+      break;
+    case d.AMOUNT:
+      amount_ = 0;
+      push(d.UINT);
+      break;
+    case d.STRING:
+      buffer = Buffer.alloc(0);
+      push(d.LENGTH);
+      break;
+    case d.LENGTH:
+      length = 0;
+      push(d.UINT);
+      break;
+    case d.SINT:
+      sInt = 0;
+      push(d.UINT);
+    case d.UINT:
+      uInt = 0;
+      break;
+  }
+}
+
+function pop() {
+  cont = true;
+  return stack.pop();
+}
+
+function top_() {
+  return stack[stack.length - 1];
+}
+
 
 /*********/
 /* SERVE */
@@ -433,7 +364,7 @@ function serve(feeder, createCallback, head) {
 
     // console.log(stack)
 
-    switch (top()) {
+    switch (top_()) {
       case s.SERVE:
         push(s.COMMAND);
         push(d.SINT);
@@ -472,24 +403,24 @@ function serve(feeder, createCallback, head) {
         handleClosing(sInt);
         break;
       case s.ERROR:
-        if (string !== "") exit_(string);
+        if (getString() !== "") exit_(getString());
 
         pop();
         push(s.LANGUAGE);
         push(d.STRING);
         break;
       case s.LANGUAGE:
-        instance_._xdh.language = string;
+        instance_._xdh.language = getString();
         pop();
         break;
       case s.LAUNCH:
         pop();
-        // console.log(">>>>> Action:", string, id);
-        handleLaunch(instance_, id_, string);
+        // console.log(">>>>> Action:", getString, id);
+        handleLaunch(instance_, id_, getString());
         break;
       case s.ID:
         pop();
-        id_ = string;
+        id_ = getString();
         push(s.ACTION);
         push(d.STRING);
         break;
@@ -513,10 +444,10 @@ function serve(feeder, createCallback, head) {
               callback();
               break;
             case types.STRING:
-              callback(string);
+              callback(getString());
               break;
             case types.STRINGS:
-              callback(strings);
+              callback(getStrings());
               break;
             default:
               exit_("Unknown type of value '" + type + "'!");
@@ -560,14 +491,14 @@ function handleURL(url) {
 function ignition(feeder) {
   while (!feeder.isEmpty() || cont) {
     cont = false;
-    switch (top()) {
+    switch (top_()) {
       case i.IGNITION:
         pop();
         push(s.SERVE);
         return false;
         break;
       case i.TOKEN:
-        token = string;
+        token = getString();
         pop();
 
         if (isTokenEmpty()) push(i.ERROR);
@@ -576,11 +507,11 @@ function ignition(feeder) {
         push(d.STRING);
         break;
       case i.ERROR:
-        exit_(string);
+        exit_(getString());
         break;
       case i.URL:
         pop();
-        handleURL(string);
+        handleURL(getString());
         break;
       default:
         if (!handleData(feeder)) exit_("Unknown ignition operation!");
@@ -606,7 +537,7 @@ const h = {
 function handshakes(feeder) {
   while (!feeder.isEmpty() || cont) {
     cont = false;
-    switch (top()) {
+    switch (top_()) {
       case h.HANDSHAKES:
         pop();
         ws.send(addString(addString(handleString(token), "faas.q37.info"), ""));
@@ -616,14 +547,14 @@ function handshakes(feeder) {
         return false;
         break;
       case h.ERROR_FAAS:
-        if (string.length) exit_(string);
+        if (getString().length) exit_(getString());
 
         pop();
         push(h.NOTIFICATION_FAAS);
         push(d.STRING);
         break;
       case h.NOTIFICATION_FAAS:
-        if (string.length) console.log(string + "\n");
+        if (getString().length) console.log(getString() + "\n");
 
         ws.send(
           addString(
@@ -636,14 +567,14 @@ function handshakes(feeder) {
         push(d.STRING);
         break;
       case h.ERROR_MAIN:
-        if (string.length) exit_(string);
+        if (getString().length) exit_(getString());
 
         pop();
         push(h.NOTIFICATION_MAIN);
         push(d.STRING);
         break;
       case h.NOTIFICATION_MAIN:
-        if (string.length) console.log(string + "\n");
+        if (getString().length) console.log(getString() + "\n");
 
         pop();
         break;
@@ -701,7 +632,7 @@ function blob2Buffer (blob, cb) {
 }
 
 function launch_(createCallback, head, libraryVersion) {
-  stack = new Array();
+  stack = new Array();;
   phase = p.HANDSHAKES;
   token = "";
 

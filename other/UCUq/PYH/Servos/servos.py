@@ -5,6 +5,8 @@ sys.path.extend(("..","../../atlastk"))
 
 import ucuq, atlastk
 
+TARGET = "Black"
+
 MACRO_MARKER_ = '$'
 
 DEFAULT_STEP = 10
@@ -28,6 +30,9 @@ with open('Head.html', 'r') as file:
 
 with open('mc_init.py', 'r') as file:
   MC_INIT = file.read()
+
+with open("servos.json", "r") as file:
+  SERVOS = json.load(file)[TARGET]
 
 MACRO_HTML="""
 <div class="macro" xdh:mark="Macro{}" style="margin-bottom: 3px;">
@@ -72,19 +77,19 @@ def move_(servo, angle, step = None):
 
   command += ")"
 
-  black.execute(command)
+  device.execute(command)
    
 
 def reset_(dom):
   step = 5
-  black.execute(f"""
+  device.execute(f"""
 move([
   ("lf", 0),
   ("ll", 0),
   ("rl", 0),
   ("rf", 0),
-  ("x1", 0),
-  ("x2", 0),
+#  ("x1", 0),
+#  ("x2", 0),
 ], {step})
 """)
   dom.setValues({
@@ -129,7 +134,6 @@ def updateFileList(dom):
 def acConnect(dom):
   dom.inner("", BODY)
   displayMacros(dom)
-  black.execute(MC_INIT)
   reset_(dom)
   updateFileList(dom)
 
@@ -326,7 +330,7 @@ def acExecute(dom, id):
   if dom.getValue("Reset") == "true":
     reset_(dom)
 
-  black.execute(getCommands(dom, moves))
+  device.execute(getCommands(dom, moves))
 
 
 def acSave(dom):
@@ -442,6 +446,22 @@ CALLBACKS = {
    "LoadFromFile": acLoadFromFile,
 }
 
-black = ucuq.UCUq("Black")
+device = ucuq.UCUq(TARGET)
+
+device.execute(MC_INIT)
+
+command = ""
+
+for key in SERVOS:
+  servo = SERVOS[key]
+  specs = servo["Specs"]
+  home = servo["Home"]
+  command += f"{servos[key]} = Servo({servo["pin"]}, Servo.Specs({specs["freq"]},{specs["u16_min"]},{specs["u16_max"]},{specs["range"]}),Servo.Home({home["angle"]},{home["offset"]}))\n"
+
+command += "\nsetServos()"
+
+print(command)
+
+device.execute(command)
 
 atlastk.launch(CALLBACKS, headContent = HEAD)
