@@ -5,7 +5,7 @@ sys.path.extend(("..","../../atlastk"))
 
 import ucuq, atlastk
 
-TARGET = "Black"
+TARGET = "Blue"
 
 MACRO_MARKER_ = '$'
 
@@ -15,12 +15,6 @@ contentsHidden = True
 
 macros = {}
 
-servos = {
-  "l": "lf",
-  "L": "ll",
-  "r": "rf",
-  "R": "rl"
-}
 
 with open('Body.html', 'r') as file:
   BODY = file.read()
@@ -33,6 +27,9 @@ with open('mc_init.py', 'r') as file:
 
 with open("servos.json", "r") as file:
   SERVOS = json.load(file)[TARGET]
+
+if "_comment" in SERVOS:
+  del SERVOS["_comment"]
 
 MACRO_HTML="""
 <div class="macro" xdh:mark="Macro{}" style="margin-bottom: 3px;">
@@ -55,22 +52,11 @@ MACRO_HTML="""
 </div>
 """
 
-
-def resetStacks():
-  global stacks
-
-  stacks = {
-    "l": [],
-    "L": [],
-    "R": [],
-    "r": []
-  }
-
 stage = 0
 moves = []
 
 def move_(servo, angle, step = None):
-  command = f"move([(\"{servo.lower()}\", {int(angle)})]"
+  command = f"move([(\"{servo}\", {int(angle)})]"
 
   if step != None:
     command += f",{step}"
@@ -82,30 +68,14 @@ def move_(servo, angle, step = None):
 
 def reset_(dom):
   step = 5
-  device.execute(f"""
-move([
-  ("lf", 0),
-  ("ll", 0),
-  ("rl", 0),
-  ("rf", 0),
-#  ("x1", 0),
-#  ("x2", 0),
-], {step})
-""")
-  dom.setValues({
-    "LFN": 0,
-    "LFS": 0,
-    "LLN": 0,
-    "LLS": 0,
-    "RLN": 0,
-    "RLS": 0,
-    "RFN": 0,
-    "RFS": 0,
-    "X1N": 0,
-    "X1S": 0,
-    "X2N": 0,
-    "X2S": 0,
-  })
+  command = "move(["
+  
+  for servo in SERVOS:
+    command += f"('{servo}', 0),"
+  
+  command += f"], {step})"
+
+  device.execute(command)
 
 
 def displayMacros(dom):
@@ -139,10 +109,10 @@ def acConnect(dom):
 
 
 def acTest(dom):
-  for servo in ["lf", "ll", "rl", "rf"]:
-    move_(servo, 30, 5)
-    move_(servo, -30, 5)
-    move_(servo, 0, 5)
+  for servo in SERVOS:
+    move_(servo, 30, 3)
+    move_(servo, -30, 3)
+    move_(servo, 0, 3)
 
 
 def acReset(dom):
@@ -211,14 +181,24 @@ def getMoves(token):
 
   with io.StringIO(token[0]) as stream:
     while char := stream.read(1):
-      if not char.isalpha():
+      if not char.isalnum():
         raise Exception(f"Servo id expected ({token[1]})!")
       
       servo = char
+
+      char = stream.read(1)
+
+      while char and ( char.isalnum() or char == '_' ):
+        servo += char
+        char = stream.read(1)
+
+      if not servo in SERVOS:
+        raise Exception(f"No servo of id '{servo}'  ({token[1]})")
+        
       angle = 0
       sign = 1
 
-      if char := stream.read(1):
+      if char:
         if char in "+-":
           if char == '-':
             sign = -1
@@ -286,10 +266,10 @@ def getAST(tokens):
 
 
 def getCommand(moves, step, currentStep):
-  command = "move([\n"
+  command = "move(["
 
   for move in moves:
-    command += f"(\"{servos[move[0]]}\",{move[1]}),"
+    command += f"('{move[0]}',{move[1]}),"
 
   command += "]," + ( step if step else str(currentStep) if step == None else str(DEFAULT_STEP) ) + ")"
 
@@ -314,7 +294,7 @@ def getCommands(dom, string, step = DEFAULT_STEP):
   except Exception as err:
     dom.alert(err)
     commands = ""
-  
+
   return commands
 
 
@@ -454,13 +434,16 @@ command = ""
 
 for key in SERVOS:
   servo = SERVOS[key]
+  hardware = servo["Hardware"]
   specs = servo["Specs"]
   home = servo["Home"]
-  command += f"{servos[key]} = Servo({servo["pin"]}, Servo.Specs({specs["freq"]},{specs["u16_min"]},{specs["u16_max"]},{specs["range"]}),Servo.Home({home["angle"]},{home["offset"]}))\n"
-
-command += "\nsetServos()"
-
-print(command)
+  if hardware["mode"] == "Straight":
+    pwm = f"Straight({hardware["pin"]}, {specs["freq"]})"
+  elif hardware["mode"] == "PCA":
+    pwm = f"PCA({hardware["sda"]}, {hardware["scl"]}, {hardware["driver"]}, {specs["freq"]})"
+  else:
+    raise Exception("Unknown hardware mode!")
+  command += f"servos['{key}'] = Servo({pwm}, Servo.Specs({specs["freq"]},{specs["u16_min"]},{specs["u16_max"]},{specs["range"]}),Servo.Home({home["angle"]},{home["offset"]}))\n"
 
 device.execute(command)
 

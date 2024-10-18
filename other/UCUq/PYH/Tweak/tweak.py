@@ -12,34 +12,38 @@ D_RATIO = "Ratio"
 D_WIDTH = "Width"
 
 # Inputs
-I_DUTY = "Duty"
-I_PIN="Pin"
+I_MODE_BOX = "ModeBox"
+I_MODE = "Mode"
+I_PIN = "Pin"
+I_SDA = "SDA"
+I_SCL = "SCL"
+I_DRIVER = "Driver"
 I_FREQ = "Freq"
+I_DUTY = "Duty"
 I_RATIO = "Ratio"
 I_RATIO_STEP = "RatioStep"
 I_WIDTH = "Width"
+
+# Modes
+M_STRAIGHT = "Straight"
+M_PCA9685 = "PCA9685"
 
 # Outputs
 O_FREQ = "TrueFreq"
 O_RATIO = "TrueRatio"
 O_WIDTH = "TrueWidth"
 
-#Outputs
 
-# Micorcontroller scripts
-MC_INIT = """
-from machine import Pin, PWM
+# Microcontroller scripts
+with open('mc_init.py', 'r') as file:
+  MC_INIT = file.read()
 
-def getParams():
-  return [pwm.freq(), pwm.duty_u16(), pwm.duty_ns()]
-
+MC_INIT_STRAIGHT = """
+pwm = Straight({pin}, {freq}, {duty}={value})
 """
 
-MC_INIT_PWM = """
-pin = Pin({})
-pwm = PWM(pin, freq={}, {}=({}))
-
-params = getParams()
+MC_INIT_PCA9685 = """
+pwm = PCA({sda}, {scl}, {driver}, {freq}, {duty}={value})
 """
 
 MC_RESET_PWM = """
@@ -48,24 +52,17 @@ pwm.deinit()
 
 MC_SET_FREQ = """
 pwm.freq({})
-
-params = getParams()
 """
 
 MC_SET_RATIO = """
 pwm.duty_u16({})
-
-params = getParams()
 """
 
 MC_SET_WIDTH = """
 pwm.duty_ns({})
-
-params = getParams()
 """
 
 MC_PARAMS = """
-params = getParams()
 """
 
 with open('Body.html', 'r') as file:
@@ -76,7 +73,7 @@ with open('Head.html', 'r') as file:
 
 
 def getParams():
-  return device.execute(MC_PARAMS, "params") if onDuty else None
+  return device.execute(MC_PARAMS, "getParams(pwm)") if onDuty else None
 
 
 def getDuty(dom):
@@ -96,10 +93,14 @@ def convert(value, converter):
 
 
 def getInputs(dom):
-  values = dom.getValues([I_DUTY, I_PIN, I_FREQ, I_RATIO, I_WIDTH])
+  values = dom.getValues([I_MODE, I_PIN, I_SDA, I_SCL, I_DRIVER, I_FREQ, I_DUTY, I_RATIO, I_WIDTH])
 
   return {
+    I_MODE: values[I_MODE],
     I_PIN: convert(values[I_PIN], int),
+    I_SDA: convert(values[I_SDA], int),
+    I_SCL: convert(values[I_SCL], int),
+    I_DRIVER: convert(values[I_DRIVER], int),
     I_FREQ: convert(values[I_FREQ], int),
     I_DUTY: {
       "Type": values[I_DUTY],
@@ -109,24 +110,49 @@ def getInputs(dom):
 
 
 def test(dom, inputs):
-  if inputs[I_PIN] == None:
-    dom.alert("Bad or no pin value!")
-  elif inputs[I_FREQ] ==  None:
+  error = True
+
+  if inputs[I_MODE] == "":
+    dom.alert("Please select a mode!")
+  elif inputs[I_MODE] == M_STRAIGHT:
+    if inputs[I_PIN] == None:
+      dom.alert("Bad or no pin value!")
+    else:
+      error = False
+  elif inputs[I_MODE] == M_PCA9685:
+    if inputs[I_SCL] == None:
+      dom.alert("No or bad SCL value!")
+    elif inputs[I_SDA]== None:
+      dom.alert("No or bad SDA value!")
+    elif inputs[I_DRIVER] == None:
+      dom.alert("No or bad Driver value!")
+    else:
+      error = False
+  else:
+    raise Exception("Unknown mode!!!")
+  
+  
+  if error:
+    return False
+  
+  error = True
+
+  if inputs[I_FREQ] ==  None:
     dom.alert("Bad or no freq. value!")
   elif inputs[I_DUTY]["Type"] == D_RATIO:
     if inputs[I_DUTY]["Value"] == None:
       dom.alert("Bad or no ratio value!")
     else:
-      return True
+      error = False
   elif inputs[I_DUTY]["Type"] == D_WIDTH:
     if inputs[I_DUTY]["Value"] == None:
       dom.alert("Bad or no width value!")
     else:
-      return True
+      error = False
   else:
     raise Exception("Unknown duty type!!!")
   
-  return False
+  return not error
 
 
 def updateDutyBox(dom, params = None):
@@ -173,29 +199,51 @@ def updateDuties(dom, params = None):
 
 
 def initPWM(inputs):
-  return device.execute(MC_INIT_PWM.format(
-    inputs[I_PIN],
-    inputs[I_FREQ],
-    "duty_u16" if inputs[I_DUTY]["Type"] == D_RATIO else "duty_ns",
-    int(inputs[I_DUTY]["Value"] * (1 if inputs[I_DUTY]["Type"] == D_RATIO else 1000000))),
-    "params")
+  if inputs["Mode"] == M_STRAIGHT:
+    script = MC_INIT_STRAIGHT
+  elif inputs["Mode"] == M_PCA9685:
+    script = MC_INIT_PCA9685
+  else:
+    raise Exception("Unknwon mode!!!")
+
+  return device.execute(script.format(
+    pin = inputs[I_PIN],
+    sda = inputs[I_SDA],
+    scl = inputs[I_SCL],
+    driver = inputs[I_DRIVER],
+    freq = inputs[I_FREQ],
+    duty = "duty_u16" if inputs[I_DUTY]["Type"] == D_RATIO else "duty_ns",
+    value = int(inputs[I_DUTY]["Value"] * (1 if inputs[I_DUTY]["Type"] == D_RATIO else 1000000))),
+    "getParams(pwm)")
   
 
 def setFreq(freq):
-  return device.execute(MC_SET_FREQ.format(freq), "params")
+  return device.execute(MC_SET_FREQ.format(freq), "getParams(pwm)")
   
 
 def setRatio(ratio):
-  return device.execute(MC_SET_RATIO.format(ratio), "params")
+  return device.execute(MC_SET_RATIO.format(ratio), "getParams(pwm)")
   
 
 def setWidth(width):
-  return device.execute(MC_SET_WIDTH.format(width), "params")
+  return device.execute(MC_SET_WIDTH.format(width), "getParams(pwm)")
   
 
 def acConnect(dom):
   dom.inner("", BODY)
   updateDutyBox(dom)
+
+
+def acMode(dom, id):
+  match dom.getValue(id):
+    case "Straight":
+      dom.disableElement("HideStraight")
+      dom.enableElement("HidePCA9685")
+    case "PCA9685":
+      dom.enableElement("HideStraight")
+      dom.disableElement("HidePCA9685")
+    case _:
+      raise Exception("Unknown mode!")
   
   
 def acSwitch(dom, id):
@@ -207,7 +255,7 @@ def acSwitch(dom, id):
     if not test(dom, inputs):
       dom.setValue(id, False)
     else:
-      dom.disableElement(I_PIN)
+      dom.disableElement(I_MODE_BOX)
       updateDuties(dom, initPWM(inputs))
       onDuty = True
   else:
@@ -215,7 +263,7 @@ def acSwitch(dom, id):
       device.execute(MC_RESET_PWM)
       onDuty = False
     updateDuties(dom)
-    dom.enableElement(I_PIN)
+    dom.enableElement(I_MODE_BOX)
 
 
 def acSelect(dom):
@@ -260,6 +308,7 @@ def acWidth(dom, id):
 
 CALLBACKS = {
   "": acConnect,
+  "Mode": acMode,
   "Switch": acSwitch,
   "Freq": acFreq,
   "Select": acSelect,
@@ -269,7 +318,7 @@ CALLBACKS = {
   "WidthStep": lambda dom, id: dom.setAttribute(I_WIDTH, "step", dom.getValue(id)),
 }
 
-device = ucuq.UCUq("Black")
+device = ucuq.UCUq("Blue")
 device.execute(MC_INIT)
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

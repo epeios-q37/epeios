@@ -1,6 +1,6 @@
 # MicroController Remove Server (runs on the µcontroller)
 
-import socket, sys, _thread, uos, time, network, json, binascii, io, select
+import socket, sys, uos, time, network, json, binascii, io
 from machine import Pin
 
 
@@ -137,8 +137,6 @@ def wlanConnect_(wlan, callback):
   return True
 
 
-_writeLock = _thread.allocate_lock()
-
 def recv_(size):
   global socket_
 
@@ -228,11 +226,10 @@ def init_(host, port, callback):
 
 
 def handshake_():
-  with _writeLock:
-    writeString_(PROTOCOL_LABEL_)
-    writeString_(PROTOCOL_VERSION_)
-    writeString_("Device")
-    writeString_(uos.uname().sysname)
+  writeString_(PROTOCOL_LABEL_)
+  writeString_(PROTOCOL_VERSION_)
+  writeString_("Device")
+  writeString_(uos.uname().sysname)
 
   error = readString_()
 
@@ -335,16 +332,17 @@ def ledCallback_(status, tries, pin, onValue):
   return defaultCallback_(status, tries) and not ( ( status == S_UCUQ_) and ( tries > 5 ) )
 
 
-CALLBACKS_ = {
-  "rp2": lambda status, tries: ledCallback_(status, tries, "LED", True),
-  "esp32": lambda status, tries: ledCallback_(status, tries, CONFIG_["OnBoardLed"][getSelectorId_(SELECTOR_)][0], CONFIG_["OnBoardLed"][getSelectorId_(SELECTOR_)][1])
-}
-
-
 def getCallback_():
-  deviceName = uos.uname().sysname
+  if "OnBoardLed" in CONFIG_:
+    onBoardLed = CONFIG_["OnBoardLed"]
 
-  return CALLBACKS_[deviceName] if deviceName in CALLBACKS_ else defaultCallback_ 
+    selector = getSelectorId_(SELECTOR_)
+
+    if selector in onBoardLed:
+      return lambda status, tries: ledCallback_(status, tries, onBoardLed[selector][0], onBoardLed[selector][1])
+    
+  return defaultCallback_
+
 
 def main():
   callback = getCallback_()

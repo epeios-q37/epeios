@@ -1,7 +1,10 @@
 {
   "Black": {
     "l": {
-      "pin": 11,
+      "Hardware": {
+        "mode": "Straight",
+        "pin": 11
+      },
       "Specs": {
         "freq": 50,
         "u16_min": 1639,
@@ -14,7 +17,10 @@
       }
     },
     "L": {
-      "pin": 10,
+      "Hardware": {
+        "mode": "Straight",
+        "pin": 10
+      },
       "Specs": {
         "freq": 50,
         "u16_min": 1639,
@@ -27,7 +33,10 @@
       }
     },
     "R": {
-      "pin": 12,
+      "Hardware": {
+        "mode": "Straight",
+        "pin": 12
+      },
       "Specs": {
         "freq": 50,
         "u16_min": 1639,
@@ -40,11 +49,233 @@
       }
     },
     "r": {
-      "pin": 13,
+      "Hardware": {
+        "mode": "Straight",
+        "pin": 13
+      },
       "Specs": {
         "freq": 50,
         "u16_min": 1639,
         "u16_max": 8192,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    }
+  },
+  "Blue": {
+    "_comment": "F: Front; B: Back; L: Left; R: Right; a, b, c the motors from the body to the extremity.",
+    "FRa": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 0
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "FRb": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 1
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "FRc": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 2
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "BRc": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 5
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "BRb": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 6
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "BRa": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 7
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "BLa": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 8
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "BLb": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 9
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "BLc": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 10
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "FLc": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 13
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "FLb": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 14
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Home": {
+        "angle": 90,
+        "offset": 0
+      }
+    },
+    "FLa": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 13,
+        "scl": 14,
+        "driver": 15
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
         "range": 180
       },
       "Home": {
