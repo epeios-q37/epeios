@@ -1,4 +1,13 @@
-var Feeder = class Feeder {
+var protoUInt = 0;
+var protoSInt = 0;
+var protoLength = 0;
+var protoBuffer = Buffer.alloc(0);
+var protoString = "";
+var protoAmount = 0;
+var protoStrings = [];
+var stack = new Array();
+
+class Feeder {
   constructor(data) {
     this.data_ = data;
   }
@@ -18,6 +27,14 @@ var Feeder = class Feeder {
 
     return data;
   }
+}
+
+function exit_(message) {
+  throw new Error(message);
+}
+
+function getFeeder(data) {
+  return new Feeder(data);
 }
 
 function byteLength(str) {
@@ -76,8 +93,6 @@ function handleString(string) {
   return data;
 }
 
-var stack = new Array();
-
 function init() {
   stack = new Array();
 }
@@ -93,57 +108,166 @@ const d = {
   STRINGS: -8,
 };
 
+function handleUInt(feeder) {
+  if (feeder.isEmpty()) return false;
+
+  let byte = feeder.get(1)[0];
+  protoUInt = (protoUInt << 7) + (byte & 0x7f);
+
+  return !(byte & 0x80);
+}
+
+function handleContent(feeder) {
+  if (protoLength === 0) return true;
+  else if (feeder.isEmpty()) return false;
+  else protoBuffer = Buffer.concat([protoBuffer, feeder.get(protoLength - protoBuffer.length)]);
+
+  return protoLength === protoBuffer.length;
+}
+
+function handleData(feeder) {
+  switch (top_()) {
+    case d.UINT: // a, loop.
+      if (handleUInt(feeder))
+        pop();
+      else
+        return false;
+      break
+    case d.SINT:
+      protoSInt = protoUInt & 1 ? -((protoUInt >> 1) + 1) : protoUInt >> 1;
+      pop();
+      // console.log("sInt: ", sInt);
+      break;
+    case d.LENGTH: // c.
+      protoLength = protoUInt;
+      pop();
+      push(d.CONTENT);
+      // console.log("length: ", length);
+      break;
+    case d.CONTENT: // d, loop.
+      if (handleContent(feeder))
+        pop();
+      else
+        return false;
+      break;
+    case d.STRING: // e.
+      protoString = protoBuffer.toString("utf-8");
+      pop();
+      break;
+    case d.AMOUNT:
+      pop();
+      protoAmount = protoUInt;
+      push(d.STRING);
+      break;
+    case d.STRINGS:
+      protoStrings.push(protoString);
+      // console.log("S:", amount, strings);
+
+      if (protoStrings.length < protoAmount)
+        push(d.STRING);
+      else
+        pop();
+      break;
+    default:
+      if (top_() < 0)
+        exit_("Unknown data operation!");
+      else
+        exit_("Bad data operation!")
+      break;
+  }
+
+  return true;
+}
+
 function push(op) {
   stack.push(op);
 
   switch (op) {
     case d.STRINGS:
-      strings = [];
+      protoStrings = [];
       push(d.AMOUNT);
       break;
     case d.AMOUNT:
-      amount_ = 0;
+      protoAmount = 0;
       push(d.UINT);
       break;
     case d.STRING:
-      buffer = Buffer.alloc(0);
+      protoBuffer = Buffer.alloc(0);
       push(d.LENGTH);
       break;
     case d.LENGTH:
-      length = 0;
+      protoLength = 0;
       push(d.UINT);
       break;
     case d.SINT:
-      sInt = 0;
+      protoSInt = 0;
       push(d.UINT);
     case d.UINT:
-      uInt = 0;
+      protoUInt = 0;
       break;
   }
 }
 
-
 function pop() {
-  cont = true;
   return stack.pop();
 }
 
-function top() {
+function top_() {
+//  console.log(stack);
   return stack[stack.length - 1];
 }
 
+function getUInt() {
+  return protoUInt;
+}
+
+function getSInt() {
+  return protoSInt;
+}
+
+function getString() {
+  return protoString;
+}
+
+function getStrings() {
+  return protoStrings;
+}
+
+function pushUInt() {
+  push(d.DINT);
+}
+
+function pushSInt() {
+  push(d.SINT);
+}
+
+function pushString() {
+  push(d.STRING);
+}
+
+function pushStrings() {
+  push(d.STRINGS);
+}
+
+
 module.exports = {
-  Feeder,
-  byteLength,
+  getFeeder,
+  handleData,
+  push,
+  pop,
+  top_,
+  pushUInt,
+  getUInt,
+  pushSInt,
+  getSInt,
+  pushString,
+  getString,
+  pushStrings,
+  getStrings,
   convertUInt,
-  sizeEmbeddedString,
   convertSInt,
   addString,
   addStrings,
   handleString,
-  d,
-  push,
   init,
-  top_: top,
-  pop,
 }

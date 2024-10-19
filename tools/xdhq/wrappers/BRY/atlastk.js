@@ -1,16 +1,4 @@
-const {
-  Feeder,
-  byteLength,
-  convertUInt,
-  sizeEmbeddedString,
-  convertSInt,
-  addString,
-  addStrings,
-  handleString,
-  d,
-} = require("./protocol.js");
-
-protocol = require("./protocol.js")
+proto = require("./protocol.js")
 
 const location = window.location;
 const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/faas/";
@@ -53,127 +41,89 @@ function isTokenEmpty() {
   return token === "" || token.charAt(0) === "&";
 }
 
-var uInt = 0;
-var sInt = 0;
-var length = 0;
-var buffer = Buffer.alloc(0);
-var string = "";
-var amount_ = 0;
-var strings = [];
+// var protoStack = {}
 var id_ = ""; // Buffers the action related id.
 var cont = true;
 
-function getString() {
-  return string;
+function convertUInt(value)
+{
+  return proto.convertUInt(value);
 }
 
-function getStrings() {
-  return strings;
+function convertSInt(value)
+{
+  return proto.convertSInt(value);
 }
 
-
-function handleUInt(feeder) {
-  if (feeder.isEmpty()) return true;
-
-  let byte = feeder.get(1)[0];
-  uInt = (uInt << 7) + (byte & 0x7f);
-
-  return byte & 0x80;
+function handleString(string)
+{
+  return proto.handleString(string);
 }
 
-function handleContent(feeder) {
-  if (length === 0) return false;
-  else if (feeder.isEmpty()) return true;
-  else buffer = Buffer.concat([buffer, feeder.get(length - buffer.length)]);
-
-  return length !== buffer.length;
+function addString(data, string) {
+  return proto.addString(data, string);
 }
 
-function handleData(feeder) {
-  switch (top_()) {
-    case d.UINT: // a, loop.
-      if (!handleUInt(feeder)) {
-        pop();
-        // console.log("uInt: ", uInt);
-      }
-      break;
-    case d.SINT:
-      sInt = uInt & 1 ? -((uInt >> 1) + 1) : uInt >> 1;
-      pop();
-      // console.log("sInt: ", sInt);
-      break;
-    case d.LENGTH: // c.
-      length = uInt;
-      pop();
-      push(d.CONTENT);
-      // console.log("length: ", length);
-      break;
-    case d.CONTENT: // d, loop.
-      if (!handleContent(feeder)) pop();
-      break;
-    case d.STRING: // e.
-      string = buffer.toString("utf-8");
-      pop();
-      break;
-    case d.AMOUNT:
-      pop();
-      amount_ = uInt;
-      push(d.STRING);
-      break;
-    case d.STRINGS:
-      strings.push(string);
-      // console.log("S:", amount, strings);
-
-      if (strings.length < amount_) push(d.STRING);
-      else pop();
-      break;
-    default:
-      if (top_() < 0) exit_("Unknown data operation");
-      return false;
-      break;
-  }
-
-  return true;
+function addStrings(data, strings) {
+  return proto.addStrings(data, strings);
 }
 
-var stack = new Array();
-
-function push(op) {
-  stack.push(op);
-
-  switch (op) {
-    case d.STRINGS:
-      strings = [];
-      push(d.AMOUNT);
-      break;
-    case d.AMOUNT:
-      amount_ = 0;
-      push(d.UINT);
-      break;
-    case d.STRING:
-      buffer = Buffer.alloc(0);
-      push(d.LENGTH);
-      break;
-    case d.LENGTH:
-      length = 0;
-      push(d.UINT);
-      break;
-    case d.SINT:
-      sInt = 0;
-      push(d.UINT);
-    case d.UINT:
-      uInt = 0;
-      break;
-  }
+function protoGetUInt() {
+  return proto.getUInt();
 }
 
-function pop() {
+function protoGetSInt() {
+  return proto.getSInt();
+}
+
+function protoGetString() {
+  return proto.getString();
+}
+
+function protoGetStrings() {
+  return proto.getStrings();
+}
+
+function protoInit() {
+  proto.init();
+}
+
+function protoGetFeeder(data) {
+  return proto.getFeeder(data);
+}
+
+function protoHandleData(feeder) {
+  if ( proto.handleData(feeder) )
+    cont = true;
+}
+
+function protoPush(op) {
+  return proto.push(op);
+}
+
+function protoPushUInt() {
+  return proto.pushUInt();  
+}
+
+function protoPushSInt() {
+  return proto.pushSInt();  
+}
+
+function protoPushString() {
+  return proto.pushString();  
+}
+
+function protoPushStrings() {
+  return proto.pushStrings();  
+}
+
+function protoPop() {
   cont = true;
-  return stack.pop();
+  return proto.pop();
 }
 
-function top_() {
-  return stack[stack.length - 1];
+function protoTop() {
+  return proto.top_();
 }
 
 
@@ -219,12 +169,12 @@ function handleCommand(command, head) {
       exit_("Received unexpected undefined command id!");
       break;
     case commandIds.CREATION:
-      push(s.CREATION);
-      push(d.SINT);
+      protoPush(s.CREATION);
+      protoPushSInt();
       break;
     case commandIds.CLOSING:
-      push(s.CLOSING);
-      push(d.SINT);
+      protoPush(s.CLOSING);
+      protoPushSInt();
       break;
     case commandIds.HEAD:
       ws.send(addString(convertSInt(responseIds.HEAD), head));
@@ -272,19 +222,6 @@ function handleClosing(id) {
     report_("Instance of id '" + id + "' not available for destruction!");
 
   delete instances[id];
-}
-
-function callCallback(callback, instance, id, action) {
-  switch (callback.length) {
-    case 0:
-      return callback();
-    case 1:
-      return callback(instance);
-    case 2:
-      return callback(instance, id);
-    default:
-      return callback(instance, id, action);
-  }
 }
 
 function standBy(instance) {
@@ -343,14 +280,14 @@ function getCallbackBundle() {
 }
 
 function setResponse(type) {
-  push(s.RESPONSE);
+  protoPush(s.RESPONSE);
 
   switch (type) {
     case types.STRING:
-      push(d.STRING);
+      protoPushString();
       break;
     case types.STRINGS:
-      push(d.STRINGS);
+      protoPushStrings();
       break;
     default:
       exit_("Bad response type!");
@@ -364,16 +301,16 @@ function serve(feeder, createCallback, head) {
 
     // console.log(stack)
 
-    switch (top_()) {
+    switch (protoTop()) {
       case s.SERVE:
-        push(s.COMMAND);
-        push(d.SINT);
+        protoPush(s.COMMAND);
+        protoPushSInt();
         break;
       case s.COMMAND:
-        pop();
-        if (!handleCommand(sInt, head)) {
+        protoPop();
+        if (!handleCommand(protoGetSInt(), head)) {
           // Makes the required 'push(…)'.
-          let id = sInt;
+          let id = protoGetSInt();
 
           if (!(id in instances)) {
             report_("Unknown instance of id '" + id + "'!");
@@ -382,12 +319,12 @@ function serve(feeder, createCallback, head) {
             instance_ = instances[id];
 
             if (instance_._xdh.language === undefined) {
-              push(s.LANGUAGE);
-              push(d.STRING);
+              protoPush(s.LANGUAGE);
+              protoPushString();
             } else if (instance_._xdh.queued.length === 0) {
-              push(s.LAUNCH);
-              push(s.ID);
-              push(d.STRING);
+              protoPush(s.LAUNCH);
+              protoPush(s.ID);
+              protoPushString();
             } else {
               setResponse(instance_._xdh.queued[0].type);
             }
@@ -395,41 +332,41 @@ function serve(feeder, createCallback, head) {
         }
         break;
       case s.CREATION:
-        pop();
-        handleCreation(sInt, createCallback);
+        protoPop();
+        handleCreation(protoGetSInt(), createCallback);
         break;
       case s.CLOSING:
-        pop();
-        handleClosing(sInt);
+        protoPop();
+        handleClosing(protoGetSInt());
         break;
       case s.ERROR:
-        if (getString() !== "") exit_(getString());
+        if (protoGetString() !== "") exit_(protoGetString());
 
-        pop();
-        push(s.LANGUAGE);
-        push(d.STRING);
+        protoPop();
+        protoPush(s.LANGUAGE);
+        protoPushString();
         break;
       case s.LANGUAGE:
-        instance_._xdh.language = getString();
-        pop();
+        instance_._xdh.language = protoGetString();
+        protoPop();
         break;
       case s.LAUNCH:
-        pop();
+        protoPop();
         // console.log(">>>>> Action:", getString, id);
-        handleLaunch(instance_, id_, getString());
+        handleLaunch(instance_, id_, protoGetString());
         break;
       case s.ID:
-        pop();
-        id_ = getString();
-        push(s.ACTION);
-        push(d.STRING);
+        protoPop();
+        id_ = protoGetString();
+        protoPush(s.ACTION);
+        protoPushString();
         break;
       case s.ACTION:
-        pop();
+        protoPop();
         cont = true;
         break;
       case s.RESPONSE:
-        pop();
+        protoPop();
 
         let pending = instance_._xdh.queued.shift();
         let type = pending.type;
@@ -444,10 +381,10 @@ function serve(feeder, createCallback, head) {
               callback();
               break;
             case types.STRING:
-              callback(getString());
+              callback(protoGetString());
               break;
             case types.STRINGS:
-              callback(getStrings());
+              callback(protoGetStrings());
               break;
             default:
               exit_("Unknown type of value '" + type + "'!");
@@ -459,7 +396,10 @@ function serve(feeder, createCallback, head) {
         }
         break;
       default:
-        if (!handleData(feeder)) exit_("Unknown serve operation!");
+        if ( protoTop() >= 0 )
+          exit_("Unknown serve operation!");
+        else
+          protoHandleData(feeder);
         break;
     }
   }
@@ -491,30 +431,33 @@ function handleURL(url) {
 function ignition(feeder) {
   while (!feeder.isEmpty() || cont) {
     cont = false;
-    switch (top_()) {
+    switch (protoTop()) {
       case i.IGNITION:
-        pop();
-        push(s.SERVE);
+        protoPop();
+        protoPush(s.SERVE);
         return false;
         break;
       case i.TOKEN:
-        token = getString();
-        pop();
+        token = protoGetString();
+        protoPop();
 
-        if (isTokenEmpty()) push(i.ERROR);
-        else push(i.URL);
+        if (isTokenEmpty()) protoPush(i.ERROR);
+        else protoPush(i.URL);
 
-        push(d.STRING);
+        protoPushString();
         break;
       case i.ERROR:
-        exit_(getString());
+        exit_(protoGetString());
         break;
       case i.URL:
-        pop();
-        handleURL(getString());
+        protoPop();
+        handleURL(protoGetString());
         break;
       default:
-        if (!handleData(feeder)) exit_("Unknown ignition operation!");
+        if ( protoTop >= 0 )
+          exit_("Unknown ignition operation!");
+        else
+          protoHandleData(feeder);
         break;
     }
   }
@@ -537,24 +480,24 @@ const h = {
 function handshakes(feeder) {
   while (!feeder.isEmpty() || cont) {
     cont = false;
-    switch (top_()) {
+    switch (protoTop()) {
       case h.HANDSHAKES:
-        pop();
+        protoPop();
         ws.send(addString(addString(handleString(token), "faas.q37.info"), ""));
-        push(i.IGNITION);
-        push(i.TOKEN);
-        push(d.STRING);
+        protoPush(i.IGNITION);
+        protoPush(i.TOKEN);
+        protoPushString();
         return false;
         break;
       case h.ERROR_FAAS:
-        if (getString().length) exit_(getString());
+        if (protoGetString().length) exit_(protoGetString());
 
-        pop();
-        push(h.NOTIFICATION_FAAS);
-        push(d.STRING);
+        protoPop();
+        protoPush(h.NOTIFICATION_FAAS);
+        protoPushString();
         break;
       case h.NOTIFICATION_FAAS:
-        if (getString().length) console.log(getString() + "\n");
+        if (protoGetString().length) console.log(protoGetString() + "\n");
 
         ws.send(
           addString(
@@ -562,24 +505,27 @@ function handshakes(feeder) {
             SCRIPT_VERSION,
           ),
         );
-        pop();
-        push(h.ERROR_MAIN);
-        push(d.STRING);
+        protoPop();
+        protoPush(h.ERROR_MAIN);
+        protoPushString();
         break;
       case h.ERROR_MAIN:
-        if (getString().length) exit_(getString());
+        if (protoGetString().length) exit_(protoGetString());
 
-        pop();
-        push(h.NOTIFICATION_MAIN);
-        push(d.STRING);
+        protoPop();
+        protoPush(h.NOTIFICATION_MAIN);
+        protoPushString();
         break;
       case h.NOTIFICATION_MAIN:
-        if (getString().length) console.log(getString() + "\n");
+        if (protoGetString().length) console.log(protoGetString() + "\n");
 
-        pop();
+        protoPop();
         break;
       default:
-        if (!handleData(feeder)) exit_("Unknown handshake operation!");
+        if ( protoTop() >= 0 )
+          exit_("Unknown handshake operation!");
+        else
+          protoHandleData(feeder);
         break;
     }
   }
@@ -598,7 +544,7 @@ var phase = p.HANDSHAKES;
 function onRead(data, createCallback, head) {
   // console.log(">>>>> DATA:", data.length);
 
-  let feeder = new Feeder(data);
+  let feeder = protoGetFeeder(data);
 
   while (!feeder.isEmpty()) {
     switch (phase) {
@@ -618,10 +564,10 @@ function onRead(data, createCallback, head) {
   }
 }
 
-function blob2Buffer (blob, cb) {
+function blob2Buffer(blob, cb) {
   const reader = new FileReader()
 
-  function onLoadEnd (e) {
+  function onLoadEnd(e) {
     reader.removeEventListener('loadend', onLoadEnd, false)
     if (e.error) cb(e.error)
     else cb(null, Buffer.from(reader.result))
@@ -632,7 +578,7 @@ function blob2Buffer (blob, cb) {
 }
 
 function launch_(createCallback, head, libraryVersion) {
-  stack = new Array();;
+  protoInit();
   phase = p.HANDSHAKES;
   token = "";
 
@@ -648,9 +594,9 @@ function launch_(createCallback, head, libraryVersion) {
 
   ws.onopen = function () {
     log("Connected to '" + WS_URL_ + "'.");
-    push(h.HANDSHAKES);
-    push(h.ERROR_FAAS);
-    push(d.STRING);
+    protoPush(h.HANDSHAKES);
+    protoPush(h.ERROR_FAAS);
+    protoPushString();
     ws.send(
       addString(
         addString(handleString(FAAS_PROTOCOL_LABEL), FAAS_PROTOCOL_VERSION),
@@ -734,8 +680,8 @@ function timeout_(ms) {
 }
 
 async function sleep(time, fn, ...args) {
-    await timeout_(time);
-    return fn(...args);
+  await timeout_(time);
+  return fn(...args);
 }
 
 function getAppURL() {
