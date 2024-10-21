@@ -15,6 +15,24 @@ contentsHidden = True
 
 macros = {}
 
+# Hardware modes
+M_STRAIGHT = "Straight"
+M_PCA ="PCA"
+
+# Config keys
+HARDWARE_KEY = "Hardware"
+HARDWARE_MODE_SUBKEY = "mode"
+SPECS_KEY = "Specs"
+TWEAK_KEY = "Tweak"
+
+CONFIG_KEYS = {
+  HARDWARE_KEY: {
+    M_STRAIGHT: ["pin"],
+    M_PCA: ["sda", "scl", "channel"]
+  },
+  SPECS_KEY: ["freq", "u16_min", "u16_max", "range"],
+  TWEAK_KEY: ["angle", "offset", "invert"]
+}
 
 with open('Body.html', 'r') as file:
   BODY = file.read()
@@ -24,12 +42,6 @@ with open('Head.html', 'r') as file:
 
 with open('mc_init.py', 'r') as file:
   MC_INIT = file.read()
-
-with open("servos.json", "r") as file:
-  SERVOS = json.load(file)[TARGET]
-
-if "_comment" in SERVOS:
-  del SERVOS["_comment"]
 
 MACRO_HTML="""
 <div class="macro" xdh:mark="Macro{}" style="margin-bottom: 3px;">
@@ -70,7 +82,7 @@ def reset_(dom):
   step = 5
   command = "move(["
   
-  for servo in SERVOS:
+  for servo in servos:
     command += f"('{servo}', 0),"
   
   command += f"], {step})"
@@ -104,14 +116,14 @@ def updateFileList(dom):
 def acConnect(dom):
   dom.inner("", BODY)
   displayMacros(dom)
-  reset_(dom)
+#  reset_(dom)
   updateFileList(dom)
 
 
-def acTest(dom):
-  for servo in SERVOS:
-    move_(servo, 30, 3)
-    move_(servo, -30, 3)
+def acTest():
+  for servo in servos:
+    move_(servo, 25, 3)
+    move_(servo, -25, 3)
     move_(servo, 0, 3)
 
 
@@ -192,7 +204,7 @@ def getMoves(token):
         servo += char
         char = stream.read(1)
 
-      if not servo in SERVOS:
+      if not servo in servos:
         raise Exception(f"No servo of id '{servo}'  ({token[1]})")
         
       angle = 0
@@ -426,24 +438,65 @@ CALLBACKS = {
    "LoadFromFile": acLoadFromFile,
 }
 
-device = ucuq.UCUq(TARGET)
+device = ucuq.UCUq(TARGET, dry_run=False)
 
 device.execute(MC_INIT)
 
 command = ""
 
-for key in SERVOS:
-  servo = SERVOS[key]
-  hardware = servo["Hardware"]
-  specs = servo["Specs"]
-  home = servo["Home"]
-  if hardware["mode"] == "Straight":
-    pwm = f"Straight({hardware["pin"]}, {specs["freq"]})"
+def getServoConfig(key, subkey, preset, motor):
+  if ( key in motor ) and ( subkey in motor[key] ):
+    return motor [key][subkey]
+  else:
+    return preset[key][subkey]
+
+
+def getServosConfig():
+  servos = {}
+
+  with open("servos.json", "r") as file:
+    config = json.load(file)[TARGET]
+
+  preset = config["Preset"]
+  motors = config["Motors"]
+
+  for label in motors:
+    servos[label] = {}
+
+    motor = motors[label]
+
+    for key in CONFIG_KEYS:
+      servos[label][key] = {}
+
+      if key == HARDWARE_KEY:
+        mode = getServoConfig(key, HARDWARE_MODE_SUBKEY, motor, preset)
+
+        servos[label][key][HARDWARE_MODE_SUBKEY] = mode
+
+        for subkey in CONFIG_KEYS[key][mode]:
+          servos[label][key][subkey] = getServoConfig(key, subkey, preset, motor)
+      else:
+        for subkey in CONFIG_KEYS[key]:
+          servos[label][key][subkey] = getServoConfig(key, subkey, preset, motor)
+      
+
+  return servos
+
+
+servos = getServosConfig()
+
+for key in servos:
+  servo = servos[key]
+  hardware = servo[HARDWARE_KEY]
+  specs = servo[SPECS_KEY]
+  tweak = servo[TWEAK_KEY]
+  if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
+    pwm = f"{M_STRAIGHT}({hardware["pin"]}, {specs["freq"]})"
   elif hardware["mode"] == "PCA":
-    pwm = f"PCA({hardware["sda"]}, {hardware["scl"]}, {hardware["driver"]}, {specs["freq"]})"
+    pwm = f"{M_PCA}({hardware["sda"]}, {hardware["scl"]}, {hardware["channel"]}, {specs["freq"]})"
   else:
     raise Exception("Unknown hardware mode!")
-  command += f"servos['{key}'] = Servo({pwm}, Servo.Specs({specs["freq"]},{specs["u16_min"]},{specs["u16_max"]},{specs["range"]}),Servo.Home({home["angle"]},{home["offset"]}))\n"
+  command += f"servos['{key}'] = Servo({pwm}, Servo.{SPECS_KEY}({specs["freq"]},{specs["u16_min"]},{specs["u16_max"]},{specs["range"]}),Servo.{TWEAK_KEY}({tweak["angle"]},{tweak["offset"]},{tweak["invert"]}))\n"
 
 device.execute(command)
 

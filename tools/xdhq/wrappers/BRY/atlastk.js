@@ -123,7 +123,7 @@ function protoPop() {
 }
 
 function protoTop() {
-  return proto.top_();
+  return proto.top();
 }
 
 
@@ -532,6 +532,10 @@ function handshakes(feeder) {
 
   return true;
 }
+
+/**********/
+/* PHASES */
+/**********/
 
 const p = {
   HANDSHAKES: 1,

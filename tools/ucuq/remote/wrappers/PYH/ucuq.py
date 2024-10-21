@@ -1,10 +1,16 @@
 import os, json, socket, sys, threading, io, datetime
 from inspect import getframeinfo, stack
 
-with open(("/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../") + "ucuq.json", "r") as config:
+CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ ) else "../" + "ucuq.json"
+
+if not os.path.isfile(CONFIG_FILE):
+  print("Please launch the 'Config' app first to set the device to use!")
+  sys.exit(0)
+
+with open(CONFIG_FILE, "r") as config:
   CONFIG_ = json.load(config)
 
-SELECTOR_ = CONFIG_["Selector"]
+DEVICE_ = CONFIG_["Selector"]
 
 UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
 UCUQ_DEFAULT_PORT_ = "53800"
@@ -132,15 +138,15 @@ def handshake_(socket):
     # print(notification)
 
 
-def getTokenAndId_(alias):
-  return SELECTOR_[0], SELECTOR_[1][alias] if alias else ""
+def getTokenAndId_(deviceId):
+  return DEVICE_["Token"], DEVICE_["Id"] if deviceId == "" else deviceId
 
 
-def ignition_(socket, alias):
-  token, id = getTokenAndId_(alias)
+def ignition_(socket, deviceId):
+  token, deviceId = getTokenAndId_(deviceId)
 
   writeString_(socket, token)
-  writeString_(socket, id)
+  writeString_(socket, deviceId)
 
   error = readString_(socket)
 
@@ -148,10 +154,10 @@ def ignition_(socket, alias):
     raise Error(error)
 
 
-def connect(alias):
+def connect_(deviceId):
   socket = init_()
   handshake_(socket)
-  ignition_(socket, alias)
+  ignition_(socket, deviceId)
 
   return socket
 
@@ -161,24 +167,28 @@ class Error(Exception):
 
 
 class UCUq:
-  def connect_(self, alias):
-    self.socket_ = connect(alias)
+  def connect_(self, deviceId):
+    self.socket_ = connect_(deviceId)
 
 
-  def __init__(self, alias=None):
-    self.socket_ = connect(alias) if alias != None else None
+  def __init__(self, deviceId = None, dry_run=False):
+    self.socket_ = connect_(deviceId) if ( deviceId != None ) and not dry_run else None
+    self.dry_run = dry_run
 
 
-  def connect(self, alias):
-    try:
-      self.connect_(alias)
-    except:
-      return False
-    else:
-      return True
+  def connect(self, deviceId = None):
+    if not self.dry_run:
+      try:
+        self.connect_(deviceId if deviceId != None else "")
+      except:
+        return False
+      else:
+        return True
 
 
   def execute(self, script, expression = ""):
+    if self.dry_run:
+      print(script)
     if self.socket_:
       writeString_(self.socket_, R_EXECUTE_)
       writeString_(self.socket_, script)
@@ -208,20 +218,20 @@ class UCUq:
       else:
         raise Error("Unknown answer from device!")
       
-    def ping(self):
-      writeString_(self.socket_, R_PING_)
+  def ping(self):
+    writeString_(self.socket_, R_PING_)
 
-      if ( answer := readUInt_(self.socket_) ) == A_OK_:
-        readString_(self.socket_) # For future use
-        pass
-      elif answer == A_ERROR_:
-        raise Error("Unexpected response from device!")
-      elif answer == A_PUZZLED_:
-        readString_(self.socket_) # For future use
-        raise Error("Puzzled!")
-      elif answer == A_DISCONNECTED:
-          raise Error("Disconnected from device!")
-      else:
-        raise Error("Unknown answer from device!")
+    if ( answer := readUInt_(self.socket_) ) == A_OK_:
+      readString_(self.socket_) # For future use
+      pass
+    elif answer == A_ERROR_:
+      raise Error("Unexpected response from device!")
+    elif answer == A_PUZZLED_:
+      readString_(self.socket_) # For future use
+      raise Error("Puzzled!")
+    elif answer == A_DISCONNECTED:
+        raise Error("Disconnected from device!")
+    else:
+      raise Error("Unknown answer from device!")
 
     

@@ -44,7 +44,6 @@ echo <<< EOD
     }
   </script>
   <script type="text/javascript">
-    var console = {};
     console.error = function(text){alert(text)};
   </script>
 </head>

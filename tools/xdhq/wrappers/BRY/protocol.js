@@ -126,7 +126,7 @@ function handleContent(feeder) {
 }
 
 function handleData(feeder) {
-  switch (top_()) {
+  switch (top()) {
     case d.UINT: // a, loop.
       if (handleUInt(feeder))
         pop();
@@ -169,7 +169,7 @@ function handleData(feeder) {
         pop();
       break;
     default:
-      if (top_() < 0)
+      if (top() < 0)
         exit_("Unknown data operation!");
       else
         exit_("Bad data operation!")
@@ -212,7 +212,7 @@ function pop() {
   return stack.pop();
 }
 
-function top_() {
+function top() {
 //  console.log(stack);
   return stack[stack.length - 1];
 }
@@ -255,7 +255,7 @@ module.exports = {
   handleData,
   push,
   pop,
-  top_,
+  top,
   pushUInt,
   getUInt,
   pushSInt,

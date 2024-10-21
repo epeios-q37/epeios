@@ -90,7 +90,6 @@ class Straight:
     else:
       return self.pwm.duty_ns(value)
 
-  
 
 class PCA:
   def __init__(self, sda, scl, driver, freq, *, duty_ns = None, duty_u16 = None):
@@ -125,7 +124,6 @@ class PCA:
     if value == None:
       return self.pca.duty(self.driver) << 4
     self.pca.duty(self.driver, value >> 4)
-  
 
 
 class Servo:
@@ -136,29 +134,30 @@ class Servo:
       self.max = u16_max
       self.range = range
   
-  class Home:
-    def __init__(self, angle, u16_offset):
+  class Tweak:
+    def __init__(self, angle, u16_offset, invert):
       self.angle = angle
       self.offset = u16_offset
+      self.invert = invert
   
   class Domain:
     def __init__(self, u16_min, u16_max):
       self.min = u16_min
       self.max = u16_max
   
-  def __init__(self, pwm, specs, home, domain = None):
+  def __init__(self, pwm, specs, tweak, domain = None):
     if domain == None:
       domain = Servo.Domain(specs.min, specs.max)
 
     self.pwm = pwm
     self.specs = specs
-    self.home = home
+    self.tweak = tweak
     self.domain = domain
 
     self.init()
 
   def angleToDuty_(self, angle):
-    u16 = self.specs.min + angle * ( self.specs.max - self.specs.min ) / self.specs.range + self.home.offset
+    u16 = self.specs.min + angle * ( self.specs.max - self.specs.min ) / self.specs.range + self.tweak.offset
 
     if u16 > self.domain.max:
       u16 = self.domain.max
@@ -169,11 +168,11 @@ class Servo:
 
 
   def init(self):
-    self.move(self.home.angle)
+    self.move(0)
 
   def move(self, angle):
     self.angle = angle
-    self.pwm.duty_u16(self.angleToDuty_(angle))
+    self.pwm.duty_u16(self.angleToDuty_(( -angle if self.tweak.invert else angle ) + self.tweak.angle))
 
   def current(self):
     return self.angle
@@ -206,7 +205,7 @@ def move(rawMoves, step=10):
   moves = []
 
   for move in rawMoves:
-    moves.append((servos[move[0]], move[1]+90))
+    moves.append((servos[move[0]], move[1]))
 
   moves_(moves, step)
 
