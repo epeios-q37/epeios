@@ -1,1 +1,0 @@
-{"F": {"Description": "Forward", "Content": "l-3:r L20:R20 l:r3 L-20:R-20"}, "B": {"Description": "Back again", "Content": "l-3:r L-20:R-20 l:r3 L20:R20"}, "RFB": {"Description": "Repeat forward then back", "Content": "5$F 5$B l:r:L:R"}}

@@ -1,36 +1,44 @@
-import javascript, sys, inspect
+import javascript, inspect
 from collections import OrderedDict
 from browser import aio
 
-javascript.import_js("atlastkbry.js", alias="atlastkjs")
+LIB_VERSION = "0.14.0"
+
+javascript.import_js("atlastk.js", "atlastkjs")
 
 _VOID = 0
 _STRING = 1
 _STRINGS = 2
 
 def _split(keysAndValues):
-	keys = []
-	values = []
+  keys = []
+  values = []
 
-	for key in keysAndValues:
-		keys.append(str(key))
-		values.append(str(keysAndValues[key]))
+  for key in keysAndValues:
+    value = keysAndValues[key]
+    if isinstance(value, list):
+      for subValue in value:
+        keys.append(str(key))
+        values.append(str(subValue))
+    else:
+      keys.append(str(key))
+      values.append(str(value))
 
-	return [keys,values]
+  return [keys,values]
 
 def _unsplit(keys,values):
-	i = 0
-	# With 'OrderedDict', the order of the items is kept under Python 2.
-	# This facilitates the retrieving of values by using 'values()' method.
-	# Dicts are ordered by default under Python 3.
-	keysAndValues = OrderedDict()
-	length = len(keys)
+  i = 0
+  # With 'OrderedDict', the order of the items is kept under Python 2.
+  # This facilitates the retrieving of values by using 'values()' method.
+  # Dicts are ordered by default under Python 3.
+  keysAndValues = OrderedDict()
+  length = len(keys)
 
-	while i < length:
-		keysAndValues[keys[i]] = values[i]
-		i += 1
+  while i < length:
+    keysAndValues[keys[i]] = values[i]
+    i += 1
 
-	return keysAndValues
+  return keysAndValues
 
 def broadcastAction(action, id = ""):
   atlastkjs.broadcastAction(action, id)  
@@ -39,40 +47,38 @@ def call_(instance, command, type, callback, *args):
   atlastkjs.call(instance, command, type, callback, *args)
   
 def voidCallback_(lock):
-  print("voidCallback")
   lock.release()
 
 def stringCallback_(jsString, lock, wrapper):
-  print("stringCallback: ", jsString)
   wrapper[0] = jsString
   lock.release()
 
 def stringsCallback_(jsStrings, lock, wrapper):
-  print("stringsCallback: ", jsStrings)
   wrapper[0] = jsStrings
-  print("R Before")
   lock.release()
-  print("R After")
 
 class Lock:
   def __init__(self):
     self.locked_ = False
 
   async def acquire(self):
-    print("A In")
     while self.locked_:
       await aio.sleep(0)
     self.locked_ = True
-    print("A Out")
 
   def release(self):
-    print("R In")
     self.locked_ = False
-    print("R Out")
 
 class DOM:
-  def __init__(self,userObject):
-    self.userObject = userObject
+  def __init__(self,userCallback):
+    args=[]
+
+    if ( userCallback is not None ):
+      if ( not(inspect.isclass(userCallback)) and len(inspect.getfullargspec(userCallback).args) == 1 ):
+        args.append(self)
+
+    self.userObject = userCallback(*args)
+
 
   async def call_(self, command, type, *args):
     lock = Lock()
@@ -80,26 +86,20 @@ class DOM:
     await lock.acquire()
 
     if type == _STRING:
-      print("Awaiting string!")
       wrapper = [""]
       call_(self, command, type, lambda result : stringCallback_(result, lock, wrapper), *args )
-      print("AS Before")
       await lock.acquire()
-      print("AS After")
       return wrapper[0]
     elif type == _STRINGS:
-      print("Awaiting stringS!")
       wrapper = [[]]
       call_(self, command, type, lambda result : stringsCallback_(result, lock, wrapper), *args )
-      print("ASS Before")
       await lock.acquire()
-      print("ASS After")
       return wrapper[0]
     elif type == _VOID:
       call_(self, command, type, lambda : voidCallback_(lock), *args )
       await lock.acquire()
     else:
-      sys.exit("Unknown return type !!!")  
+      raise Exception("Unknown return type !!!")  
 
     lock.release() 
     
@@ -218,7 +218,6 @@ class DOM:
     await self._layout("afterbegin",id,xml,xsl)
 
   async def inner(self,id,xml,xsl=""):
-    print("Inner !!!")
     await self._layout("inner",id,xml,xsl)
 
   async def end(self,id,xml,xsl=""):
@@ -419,7 +418,7 @@ class DOM:
     await self.call_("Log_1",_VOID,message)
 
 def _callback(userCallback):
-  return DOM(userCallback())
+  return DOM(userCallback)
 
 def buildArgs(callback, bundle):
   amount = len(inspect.getfullargspec(callback).args)
@@ -446,10 +445,14 @@ def buildArgs(callback, bundle):
   return args
 
 async def handleCallbackBundle(userCallbacks, bundle):
-  print(bundle)
-  callback = userCallbacks[bundle.action]
-  await callback(*buildArgs(callback, bundle))
-  atlastkjs.standBy(bundle.instance)
+  action = bundle.action
+
+  if action in userCallbacks:
+    callback = userCallbacks[action]
+    await callback(*buildArgs(callback, bundle))
+    atlastkjs.standBy(bundle.instance)
+  else:
+    await bundle.instance.alert(("\tDEV ERROR: missing callback for '" + action + "' action!"))
 
 async def handleCallbackBundles(userCallbacks):
   while True:
@@ -457,7 +460,64 @@ async def handleCallbackBundles(userCallbacks):
     aio.run(handleCallbackBundle(userCallbacks,bundle))
 
 def launch(callbacks, userCallback = lambda : None, headContent = ""):
-  atlastkjs.launch(lambda : _callback(userCallback), headContent)
+  atlastkjs.launch(lambda : _callback(userCallback), headContent.replace("_BrythonWorkaroundForClosingScriptTag_","</script>"), LIB_VERSION)
 
   aio.run(handleCallbackBundles(callbacks))
+
+class XML:
+  def _write(self,value):
+    self._xml += str(value) + "\0"
+
+  def __init__(self,rootTag):
+    self._xml = ""
+    self._write("dummy")
+    self._write(rootTag)
+
+  def pushTag(self,tag):
+    self._xml += ">"
+    self._write(tag)
+
+  push_tag = pushTag
+
+  def popTag(self):
+    self._xml += "<"
+
+  pop_tag = popTag
+  
+  def putAttribute(self,name,value):
+    self._xml += "A"
+    self._write(name)
+    self._write(str(value))
+
+  put_attribute = putAttribute
+  
+  def putValue(self,value):
+    self._xml += "V"
+    self._write(str(value))
+
+  put_value = putValue		
+
+  def putTagAndValue(self,tag,value):
+    self.pushTag(tag)
+    self.putValue(value)
+    self.popTag()
+
+  put_tag_and_value = putTagAndValue
+
+  def toString(self):
+    return self._xml
+
+  to_string = toString		
+
+def createXML(root_tag):
+  return XML(root_tag)
+
+def createHTML(root_tag=""):	# If 'root_tag' is empty, there will be no root tag in the tree.
+  return XML(root_tag)
+
+async def sleep(time):
+  await atlastkjs.sleep(time, lambda : None)
+
+def getAppURL(id=""):
+  return atlastkjs.getAppURL() + ("&_id=" + str(id) if id else "") 
 

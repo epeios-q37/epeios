@@ -1,7 +1,7 @@
 import os, json, socket, sys, threading, io, datetime
 from inspect import getframeinfo, stack
 
-CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ ) else "../" + "ucuq.json"
+CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
 
 if not os.path.isfile(CONFIG_FILE):
   print("Please launch the 'Config' app first to set the device to use!")
@@ -10,7 +10,7 @@ if not os.path.isfile(CONFIG_FILE):
 with open(CONFIG_FILE, "r") as config:
   CONFIG_ = json.load(config)
 
-DEVICE_ = CONFIG_["Selector"]
+DEVICE_ = CONFIG_["Device"]
 
 UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
 UCUQ_DEFAULT_PORT_ = "53800"
@@ -142,9 +142,7 @@ def getTokenAndId_(deviceId):
   return DEVICE_["Token"], DEVICE_["Id"] if deviceId == "" else deviceId
 
 
-def ignition_(socket, deviceId):
-  token, deviceId = getTokenAndId_(deviceId)
-
+def ignition_(socket, token, deviceId):
   writeString_(socket, token)
   writeString_(socket, deviceId)
 
@@ -154,10 +152,10 @@ def ignition_(socket, deviceId):
     raise Error(error)
 
 
-def connect_(deviceId):
+def connect_(token, deviceId):
   socket = init_()
   handshake_(socket)
-  ignition_(socket, deviceId)
+  ignition_(socket, token, deviceId)
 
   return socket
 
@@ -168,26 +166,41 @@ class Error(Exception):
 
 class UCUq:
   def connect_(self, deviceId):
-    self.socket_ = connect_(deviceId)
+    self.token, self.deviceId = getTokenAndId_(deviceId)
+    self.socket_ = connect_(self.token, self.deviceId)
 
 
-  def __init__(self, deviceId = None, dry_run=False):
-    self.socket_ = connect_(deviceId) if ( deviceId != None ) and not dry_run else None
-    self.dry_run = dry_run
+  def __init__(self, deviceId = None, dryRun=False):
+    if ( deviceId != None ) and not dryRun:
+      self.connect_(deviceId)
+
+    self.dryRun = dryRun
 
 
   def connect(self, deviceId = None):
-    if not self.dry_run:
+    if not self.dryRun:
       try:
         self.connect_(deviceId if deviceId != None else "")
       except:
         return False
       else:
         return True
+      
+
+  def getTokenAndDeviceId(self):
+    return self.token, self.deviceId
+  
+
+  def getToken(self):
+    return self.getTokenAndDeviceId()[0]
+
+
+  def getDeviceId(self):
+    return self.getTokenAndDeviceId()[1]
 
 
   def execute(self, script, expression = ""):
-    if self.dry_run:
+    if self.dryRun:
       print(script)
     if self.socket_:
       writeString_(self.socket_, R_EXECUTE_)

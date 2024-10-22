@@ -103,7 +103,41 @@ function protoTop() {
 /************/
 
 const s = {
-  STEERING: 301
+  STEERING: 301,
+  EXECUTE: 302,
+  ANSWER: 303,
+  RESULT: 304
+}
+
+function steering(feeder) {
+  while (!feeder.isEmpty() || cont) {
+    cont = false;
+
+    // console.log(stack)
+
+    switch (protoTop()) {
+      case s.STEERING:
+        break;
+      case s.EXECUTE:
+        protoPop();
+        executeCallback(protoGetUInt(), protoGetString())
+        break;
+      case s.ANSWER:
+        protoPop();
+        protoPush(s.RESULT);
+        protoPushString();
+        break;
+      case s.RESULT:
+        protoPop();
+        break;
+      default:
+        if ( protoTop() >= 0 )
+          exit_("Unknown steering operation!");
+        else
+          protoHandleData(feeder);
+        break;
+    }
+  }
 }
 
 /************/
@@ -112,7 +146,7 @@ const s = {
 
 const i = {
   IGNITION: 201,
-  ERROR: 202,
+  REPORT: 202,
 };
 
 function ignition(feeder, callback) {
@@ -122,13 +156,11 @@ function ignition(feeder, callback) {
       case i.IGNITION:
         protoPop();
         protoPush(s.STEERING);
-        log("Ignition out");
         return false;
         break;
-      case i.ERROR:
+      case i.REPORT:
         if (protoGetString().length) exit_(protoGetString());
         callback();
-        log("Yo!");
         protoPop();
         break;
       default:
@@ -161,7 +193,7 @@ function handshakes(feeder, deviceToken, deviceId) {
       case h.HANDSHAKES:
         protoPop();
         protoPush(i.IGNITION);
-        protoPush(i.ERROR);
+        protoPush(i.REPORT);
         protoPushString();
         return false;
         break;
@@ -205,8 +237,6 @@ var phase = p.HANDSHAKES;
 function onRead(data, deviceToken, deviceId, callback) {
   // console.log(">>>>> DATA:", data.length);
 
-  log("In");
-
   let feeder = protoGetFeeder(data);
 
   while (!feeder.isEmpty()) {
@@ -218,16 +248,13 @@ function onRead(data, deviceToken, deviceId, callback) {
         if (!ignition(feeder, callback)) phase = p.STEERING;
         break;
       case p.STEERING:
-        log("Steering")
-        serve(feeder);
+        steering(feeder);
         break;
       default:
         exit_("Unknown phase of value '" + step + "'!");
         break;
     }
   }
-
-  log("Out!")
 }
 
 function blob2Buffer(blob, cb) {
@@ -244,7 +271,6 @@ function blob2Buffer(blob, cb) {
 }
 
 function launch_(deviceToken, deviceId, libraryVersion, callback) {
-  log("Launch in")
   protoInit();
 
   phase = p.HANDSHAKES;
@@ -281,12 +307,16 @@ function launch_(deviceToken, deviceId, libraryVersion, callback) {
       onRead(buffer, deviceToken, deviceId, callback);
     });
   };
-
-  log("Launch out")
 }
 
-function execute_(script, expression) {
-  log(script + "'" + expression + "'");
+var executeCallback = undefined;
+
+function execute_(script, expression, callback) {
+  executeCallback = callback;
+
+  protoPush(s.EXECUTE);
+  protoPush(s.ANSWER);
+  protoPushUInt();
   
   ws.send(
     addString(

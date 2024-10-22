@@ -28,13 +28,25 @@ async def launch(deviceToken, deviceId):
   await lock.acquire()
 
 
+def executeCallback(data, code, result):
+  data["code"] = code
+  data["result"] = result
+  data["lock"].release()
+
+
 async def execute(script, expression = ""):
   lock = Lock()
 
   await lock.acquire()
 
-  ucuqjs.execute(script, expression)
+  data = {
+    "lock": lock
+  }
+
+  ucuqjs.execute(script, expression, lambda code, result: executeCallback(data, code, result))
 
   await lock.acquire()
+  
+  return data["result"]
 
 

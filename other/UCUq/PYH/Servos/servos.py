@@ -5,7 +5,7 @@ sys.path.extend(("..","../../atlastk"))
 
 import ucuq, atlastk
 
-TARGET = "Blue"
+TARGET = "" # if "", retrieved from config file.
 
 MACRO_MARKER_ = '$'
 
@@ -438,7 +438,7 @@ CALLBACKS = {
    "LoadFromFile": acLoadFromFile,
 }
 
-device = ucuq.UCUq(TARGET, dry_run=False)
+device = ucuq.UCUq(TARGET, dryRun=False)
 
 device.execute(MC_INIT)
 
@@ -451,11 +451,11 @@ def getServoConfig(key, subkey, preset, motor):
     return preset[key][subkey]
 
 
-def getServosConfig():
+def getServosConfig(target):
   servos = {}
 
   with open("servos.json", "r") as file:
-    config = json.load(file)[TARGET]
+    config = json.load(file)[target]
 
   preset = config["Preset"]
   motors = config["Motors"]
@@ -482,8 +482,9 @@ def getServosConfig():
 
   return servos
 
+servos = getServosConfig(target := device.getDeviceId())
 
-servos = getServosConfig()
+print(f"Target: '{target}'")
 
 for key in servos:
   servo = servos[key]

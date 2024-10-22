@@ -234,7 +234,7 @@ function getStrings() {
 }
 
 function pushUInt() {
-  push(d.DINT);
+  push(d.UINT);
 }
 
 function pushSInt() {

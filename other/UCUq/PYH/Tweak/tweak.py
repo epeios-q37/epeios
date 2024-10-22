@@ -318,7 +318,7 @@ CALLBACKS = {
   "WidthStep": lambda dom, id: dom.setAttribute(I_WIDTH, "step", dom.getValue(id)),
 }
 
-device = ucuq.UCUq("Blue")
+device = ucuq.UCUq("")
 device.execute(MC_INIT)
 
 atlastk.launch(CALLBACKS, headContent=HEAD)
