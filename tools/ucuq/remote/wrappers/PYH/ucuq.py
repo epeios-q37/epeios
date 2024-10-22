@@ -182,6 +182,7 @@ class UCUq:
       try:
         self.connect_(deviceId if deviceId != None else "")
       except:
+        self.dryRun = True
         return False
       else:
         return True
@@ -202,7 +203,7 @@ class UCUq:
   def execute(self, script, expression = ""):
     if self.dryRun:
       print(script)
-    if self.socket_:
+    elif self.socket_:
       writeString_(self.socket_, R_EXECUTE_)
       writeString_(self.socket_, script)
       writeString_(self.socket_, expression)
@@ -236,7 +237,6 @@ class UCUq:
 
     if ( answer := readUInt_(self.socket_) ) == A_OK_:
       readString_(self.socket_) # For future use
-      pass
     elif answer == A_ERROR_:
       raise Error("Unexpected response from device!")
     elif answer == A_PUZZLED_:

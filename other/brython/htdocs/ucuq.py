@@ -18,20 +18,17 @@ class Lock:
     self.locked_ = False
 
 
-async def launch(deviceToken, deviceId):
-  lock = Lock()
-
-  await lock.acquire()
-
-  ucuqjs.launch(deviceToken, deviceId, LIB_VERSION, lambda: lock.release())
-
-  await lock.acquire()
+def launch(deviceToken, deviceId):
+  ucuqjs.launch(deviceToken, deviceId, LIB_VERSION)
 
 
 def executeCallback(data, code, result):
   data["code"] = code
   data["result"] = result
   data["lock"].release()
+
+  if code != 0:
+    raise Exception(result)
 
 
 async def execute(script, expression = ""):

@@ -1,5 +1,8 @@
 proto = require("./protocol.js")
 
+var blabla = "Yo UCUq";
+var handler = undefined;
+
 const location = window.location;
 const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/ucuq/";
 
@@ -14,7 +17,7 @@ function exit_(message) {
 const PROTOCOL_LABEL = "c37cc83e-079f-448a-9541-5c63ce00d960";
 const PROTOCOL_VERSION = "0";
 
-var ws = undefined;
+var wsUCUq = undefined;
 var cont = true
 
 function convertUInt(value)
@@ -41,61 +44,53 @@ function addStrings(data, strings) {
 }
 
 function protoGetUInt() {
-  return proto.getUInt();
+  return handler.getUInt();
 }
 
 function protoGetSInt() {
-  return proto.getSInt();
+  return handler.getSInt();
 }
 
 function protoGetString() {
-  return proto.getString();
+  return handler.getString();
 }
 
 function protoGetStrings() {
-  return proto.getStrings();
-}
-
-function protoInit() {
-  proto.init();
-}
-
-function protoGetFeeder(data) {
-  return proto.getFeeder(data);
+  return handler.getStrings();
 }
 
 function protoHandleData(feeder) {
-  if ( proto.handleData(feeder) )
+  if ( handler.handleData(feeder) )
     cont = true;
 }
 
 function protoPush(op) {
-  return proto.push(op);
+  return handler.push(op);
 }
 
 function protoPushUInt() {
-  return proto.pushUInt();  
+  return handler.pushUInt();  
 }
 
 function protoPushSInt() {
-  return proto.pushSInt();  
+  return handler.pushSInt();  
 }
 
 function protoPushString() {
-  return proto.pushString();  
+  return handler.pushString();  
 }
 
 function protoPushStrings() {
-  return proto.pushStrings();  
+  return handler.pushStrings();  
 }
 
 function protoPop() {
   cont = true;
-  return proto.pop();
+  return handler.pop();
 }
 
 function protoTop() {
-  return proto.top();
+  return handler.top();
 }
 
 /************/
@@ -120,7 +115,7 @@ function steering(feeder) {
         break;
       case s.EXECUTE:
         protoPop();
-        executeCallback(protoGetUInt(), protoGetString())
+        executeCallback(protoGetSInt(), protoGetString())
         break;
       case s.ANSWER:
         protoPop();
@@ -149,7 +144,7 @@ const i = {
   REPORT: 202,
 };
 
-function ignition(feeder, callback) {
+function ignition(feeder) {
   while (!feeder.isEmpty() || cont) {
     cont = false;
     switch (protoTop()) {
@@ -160,7 +155,6 @@ function ignition(feeder, callback) {
         break;
       case i.REPORT:
         if (protoGetString().length) exit_(protoGetString());
-        callback();
         protoPop();
         break;
       default:
@@ -207,12 +201,12 @@ function handshakes(feeder, deviceToken, deviceId) {
       case h.NOTIFICATION:
         if (protoGetString().length) console.log(protoGetString() + "\n");
 
-        ws.send(addString(handleString(deviceToken), deviceId))
+        wsUCUq.send(addString(handleString(deviceToken), deviceId))
         protoPop();
         break;
       default:
         if ( protoTop() >= 0 )
-          exit_("Unknown handshake operation!");
+          exit_("UCUQ Unknown handshake operation!" + protoTop());
         else
           protoHandleData(feeder);
         break;
@@ -234,10 +228,10 @@ const p = {
 
 var phase = p.HANDSHAKES;
 
-function onRead(data, deviceToken, deviceId, callback) {
+function onRead(data, deviceToken, deviceId) {
   // console.log(">>>>> DATA:", data.length);
 
-  let feeder = protoGetFeeder(data);
+  let feeder = proto.getFeeder(data);
 
   while (!feeder.isEmpty()) {
     switch (phase) {
@@ -245,7 +239,7 @@ function onRead(data, deviceToken, deviceId, callback) {
         if (!handshakes(feeder, deviceToken, deviceId)) phase = p.IGNITION;
         break;
       case p.IGNITION:
-        if (!ignition(feeder, callback)) phase = p.STEERING;
+        if (!ignition(feeder)) phase = p.STEERING;
         break;
       case p.STEERING:
         steering(feeder);
@@ -270,27 +264,27 @@ function blob2Buffer(blob, cb) {
   reader.readAsArrayBuffer(blob)
 }
 
-function launch_(deviceToken, deviceId, libraryVersion, callback) {
-  protoInit();
+function launch_(deviceToken, deviceId, libraryVersion) {
+  handler = proto.getHandler();
 
   phase = p.HANDSHAKES;
 
   log("Connecting to '" + WS_URL_ + "'…");
 
-  if (ws !== undefined) ws.close();
+  if (wsUCUq !== undefined) wsUCUq.close();
 
-  ws = new WebSocket(WS_URL_);
+  wsUCUq = new WebSocket(WS_URL_);
 
-  ws.onerror = function (err) {
+  wsUCUq.onerror = function (err) {
     log("Unable to connect to '" + WS_URL_ + "'!");
   };
 
-  ws.onopen = function () {
+  wsUCUq.onopen = function () {
     log("Connected to '" + WS_URL_ + "'.");
     protoPush(h.HANDSHAKES);
     protoPush(h.ERROR);
     protoPushString();
-    ws.send(
+    wsUCUq.send(
       addString(
        addString(
           addString(handleString(PROTOCOL_LABEL), PROTOCOL_VERSION),
@@ -299,14 +293,17 @@ function launch_(deviceToken, deviceId, libraryVersion, callback) {
       ),
     );
   };
-  ws.onclose = function () {
+  wsUCUq.onclose = function () {
     log("Disconnected!");
   };
-  ws.onmessage = function (event) {
+  wsUCUq.onmessage = function (event) {
     blob2Buffer(event.data, function (err, buffer) {
-      onRead(buffer, deviceToken, deviceId, callback);
+      onRead(buffer, deviceToken, deviceId);
     });
   };
+
+  console.log("UCUq: ",blabla)
+  
 }
 
 var executeCallback = undefined;
@@ -316,9 +313,9 @@ function execute_(script, expression, callback) {
 
   protoPush(s.EXECUTE);
   protoPush(s.ANSWER);
-  protoPushUInt();
+  protoPushSInt();
   
-  ws.send(
+  wsUCUq.send(
     addString(
       addString(
         handleString("Execute_1"),
@@ -327,5 +324,5 @@ function execute_(script, expression, callback) {
   )
 }
 
-  module.exports.launch = launch_;
-  module.exports.execute = execute_;
+module.exports.launch = launch_;
+module.exports.execute = execute_;

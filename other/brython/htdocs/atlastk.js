@@ -1,5 +1,8 @@
 proto = require("./protocol.js")
 
+var blabla = "Yo ATK"
+handler = undefined;
+
 const location = window.location;
 const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/faas/";
 
@@ -69,61 +72,53 @@ function addStrings(data, strings) {
 }
 
 function protoGetUInt() {
-  return proto.getUInt();
+  return handler.getUInt();
 }
 
 function protoGetSInt() {
-  return proto.getSInt();
+  return handler.getSInt();
 }
 
 function protoGetString() {
-  return proto.getString();
+  return handler.getString();
 }
 
 function protoGetStrings() {
-  return proto.getStrings();
-}
-
-function protoInit() {
-  proto.init();
-}
-
-function protoGetFeeder(data) {
-  return proto.getFeeder(data);
+  return handler.getStrings();
 }
 
 function protoHandleData(feeder) {
-  if ( proto.handleData(feeder) )
+  if ( handler.handleData(feeder) )
     cont = true;
 }
 
 function protoPush(op) {
-  return proto.push(op);
+  return handler.push(op);
 }
 
 function protoPushUInt() {
-  return proto.pushUInt();  
+  return handler.pushUInt();  
 }
 
 function protoPushSInt() {
-  return proto.pushSInt();  
+  return handler.pushSInt();  
 }
 
 function protoPushString() {
-  return proto.pushString();  
+  return handler.pushString();  
 }
 
 function protoPushStrings() {
-  return proto.pushStrings();  
+  return handler.pushStrings();  
 }
 
 function protoPop() {
   cont = true;
-  return proto.pop();
+  return handler.pop();
 }
 
 function protoTop() {
-  return proto.top();
+  return handler.top();
 }
 
 
@@ -134,16 +129,16 @@ function protoTop() {
 var instance_ = undefined;
 
 const s = {
-  SERVE: 301,
-  COMMAND: 302,
-  CREATION: 303,
-  CLOSING: 304,
-  ERROR: 305,
-  LANGUAGE: 306,
-  LAUNCH: 307,
-  ID: 308,
-  ACTION: 309,
-  RESPONSE: 310,
+  SERVE: 401,
+  COMMAND: 402,
+  CREATION: 403,
+  CLOSING: 404,
+  ERROR: 405,
+  LANGUAGE: 406,
+  LAUNCH: 407,
+  ID: 408,
+  ACTION: 409,
+  RESPONSE: 410,
 };
 
 // Special ids.
@@ -523,7 +518,7 @@ function handshakes(feeder) {
         break;
       default:
         if ( protoTop() >= 0 )
-          exit_("Unknown handshake operation!");
+          exit_("Unknown handshake operation!" + protoTop());
         else
           protoHandleData(feeder);
         break;
@@ -548,7 +543,7 @@ var phase = p.HANDSHAKES;
 function onRead(data, createCallback, head) {
   // console.log(">>>>> DATA:", data.length);
 
-  let feeder = protoGetFeeder(data);
+  let feeder = proto.getFeeder(data);
 
   while (!feeder.isEmpty()) {
     switch (phase) {
@@ -582,7 +577,8 @@ function blob2Buffer(blob, cb) {
 }
 
 function launch_(createCallback, head, libraryVersion) {
-  protoInit();
+  handler = proto.getHandler();
+
   phase = p.HANDSHAKES;
   token = "";
 
@@ -616,6 +612,8 @@ function launch_(createCallback, head, libraryVersion) {
       onRead(buffer, createCallback, head);
     });
   };
+
+  console.log("ATK: ",blabla)
 }
 
 function addTagged(data, argument) {
