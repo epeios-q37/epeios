@@ -210,9 +210,7 @@ class UCUq:
 
       if ( answer := readUInt_(self.socket_) ) == A_OK_:
         if result := readString_(self.socket_):
-          with io.StringIO(result) as stream:
-            returned = json.load(stream)
-          return returned
+          return json.loads(result)
         else:
           return None
       elif answer == A_ERROR_:

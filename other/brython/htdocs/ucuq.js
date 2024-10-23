@@ -1,6 +1,5 @@
 proto = require("./protocol.js")
 
-var blabla = "Yo UCUq";
 var handler = undefined;
 
 const location = window.location;
@@ -11,6 +10,7 @@ function log(Message) {
 }
 
 function exit_(message) {
+  alert(message);
   throw new Error(message);
 }
 
@@ -301,9 +301,6 @@ function launch_(deviceToken, deviceId, libraryVersion) {
       onRead(buffer, deviceToken, deviceId);
     });
   };
-
-  console.log("UCUq: ",blabla)
-  
 }
 
 var executeCallback = undefined;

@@ -45,6 +45,8 @@ def acSave(dom):
 
   if token == "" and not "Token" in device:
     dom.alert("Please entre a token value!")
+    dom.focus("Token")
+    return
 
   if token != "":
     device["Token"] = token

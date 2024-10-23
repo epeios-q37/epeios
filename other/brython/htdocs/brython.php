@@ -2,8 +2,8 @@
 $sourceCode = str_replace("</script>", "_BrythonWorkaroundForClosingScriptTag_", $_REQUEST['code']);
 
 // Si modifié, adapter '/themes/hugo-book/layouts/_default/baseof.html' de atlastk.org et zelbinium.q37.info.
-$version = "3.12.4";
-$eruda_version="3.2.3";
+$version = "3.13.0";
+$eruda_version="3.4.0";
 
 if (!empty($_REQUEST['version'])) {
   $version = $_REQUEST['version'];
@@ -44,7 +44,7 @@ echo <<< EOD
     }
   </script>
   <script type="text/javascript">
-    console.error = function(text){alert(text)};
+    console.error = function(text){alert("Yo!!!!" + text)};
   </script>
 </head>
 <body onload="onLoad()" style="margin: 0;">

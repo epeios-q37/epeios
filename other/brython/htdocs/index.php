@@ -40,7 +40,7 @@ echo <<<BODY
     <script type="text/javascript">
       var editor = undefined;
       function dress() {
-        fillExamples();
+        fillDemosList();
         editor = ace.edit("Source", {
           showLineNumbers: true,
           newLineMode: "auto",
@@ -55,20 +55,32 @@ echo <<<BODY
       }
     </script>
     <script type="text/javascript">
-      function fillExamples() {
-        fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/List.json').then(function (response) {
+      function fillDemosList() {
+        fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/Demos.json').then(function (response) {
           return response.text();
-        }).then(function (list) {
-          entries = JSON.parse(list).entries;
+        }).then(function (demos) {
+          demoGroups = JSON.parse(demos);
+          
+          keys = Object.keys(demoGroups);
 
-          examples = document.getElementById("Examples");
+          select = document.getElementById("Demos");
 
-          for (let i = 0; i < entries.length; i++) {
-            entry = entries[i];
-            option = document.createElement("option");
-            option.innerText = entry;
-            option.value = entry;
-            examples.appendChild(option);
+          for ( var i in keys ) {
+            console.log(keys[i]);
+            optgroup = document.createElement("optgroup");
+            optgroup.label = keys[i];
+            
+            demos = demoGroups[keys[i]]
+            
+            for ( j in demos ) {
+              entry = demos[j];
+              option = document.createElement("option");
+              option.innerText = entry;
+              option.value = entry;
+              optgroup.appendChild(option);
+            }
+            
+            select.append(optgroup);
           }
 
           let code = decodeURIComponent(`$code`);
@@ -82,11 +94,11 @@ echo <<<BODY
               editor.focus();
             }
           } else if ( "{$demo}" !== "" ) {
-            examples.value = "{$demo}";
-            examples.dispatchEvent(new Event('change'));
+            demos.value = "{$demo}";
+            demos.dispatchEvent(new Event('change'));
           }
         }).catch(function (err) {
-        console.warn('Unable to retrieve example list: ', err);
+        console.warn('Unable to retrieve demos list: ', err);
       });
       }
     </script>
@@ -165,9 +177,9 @@ echo <<<BODY
       <summary class="source" style="display: flex; ; align-items: center;">
         <span role="term" class="source" aria-details="pure-css">Code</span>
         <span style="width: 10px;"></span>
-        <!-- Filled with the content of the 'List.json' file in the 'brython' GitHub repo.-->
-        <select id="Examples" onchange="getSourceCode(this.value)">
-          <option disabled="true" selected="true" value="">Select an example</option>
+        <!-- Filled with the content of the 'Demos.json' file in the 'brython' GitHub repo.-->
+        <select id="Demos" onchange="getSourceCode(this.value)">
+          <option disabled="true" selected="true" value="">Select a demo</option>
         </select>
         <span style="width: 5px;"></span>
         <button onclick="go();">Run</button>
@@ -176,7 +188,7 @@ echo <<<BODY
       </summary>
     </details>
     <div role="definition" id="pure-css" class="source" style="display: flex; flex-flow: column; height: 100%; padding: 0;">
-      <div id="Source"># Type your code here or select an example above,\n# and then click the 'Run' button. Enjoy!</div>
+      <div id="Source"># Type your code here or select a demo above,\n# and then click the 'Run' button. Enjoy!</div>
       <div>
         <details>
           <summary style="list-style: none;">

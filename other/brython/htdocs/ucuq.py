@@ -1,9 +1,12 @@
-import javascript
-from browser import aio
+import javascript, json, sys
+from browser import aio, alert, console
+from browser.local_storage import storage
+
+javascript.import_js("ucuq.js", "ucuqjs")
 
 LIB_VERSION = "0.0.1"
 
-javascript.import_js("ucuq.js", "ucuqjs")
+CONFIG_ITEM = "ucuq-config"
 
 class Lock:
   def __init__(self):
@@ -18,13 +21,22 @@ class Lock:
     self.locked_ = False
 
 
-def launch(deviceToken, deviceId):
-  ucuqjs.launch(deviceToken, deviceId, LIB_VERSION)
+def launch(deviceId=None):
+  if not CONFIG_ITEM in storage:
+    alert("Please launch the 'Config' app first to set the device to use!")
+    console.error = javascript.UNDEFINED  # To avoid the displaying of an alert by below 'exit()'.
+    sys.exit()
+
+  config = json.loads(storage[CONFIG_ITEM])
+
+  device = config["Device"]
+
+  ucuqjs.launch(device["Token"], deviceId if deviceId != None else device["Id"], LIB_VERSION)
 
 
 def executeCallback(data, code, result):
   data["code"] = code
-  data["result"] = result
+  data["result"] = json.loads(result) if result else None
   data["lock"].release()
 
   if code != 0:

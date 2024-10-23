@@ -1,6 +1,5 @@
 proto = require("./protocol.js")
 
-var blabla = "Yo ATK"
 handler = undefined;
 
 const location = window.location;
@@ -612,8 +611,6 @@ function launch_(createCallback, head, libraryVersion) {
       onRead(buffer, createCallback, head);
     });
   };
-
-  console.log("ATK: ",blabla)
 }
 
 function addTagged(data, argument) {
