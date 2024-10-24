@@ -239,7 +239,10 @@ function onRead(data, deviceToken, deviceId) {
         if (!handshakes(feeder, deviceToken, deviceId)) phase = p.IGNITION;
         break;
       case p.IGNITION:
-        if (!ignition(feeder)) phase = p.STEERING;
+        if (!ignition(feeder)) {
+          phase = p.STEERING;
+          wsUCUq.ignited = true;
+        }
         break;
       case p.STEERING:
         steering(feeder);
@@ -275,6 +278,8 @@ function launch_(deviceToken, deviceId, libraryVersion) {
 
   wsUCUq = new WebSocket(WS_URL_);
 
+  wsUCUq.ignited = false;
+
   wsUCUq.onerror = function (err) {
     log("Unable to connect to '" + WS_URL_ + "'!");
   };
@@ -305,20 +310,28 @@ function launch_(deviceToken, deviceId, libraryVersion) {
 
 var executeCallback = undefined;
 
+function subExecute(script, expression) {
+  if ( !wsUCUq.ignited )
+    setTimeout(() => subExecute(script, expression));
+  else {
+    protoPush(s.EXECUTE);
+    protoPush(s.ANSWER);
+    protoPushSInt();
+    
+    wsUCUq.send(
+      addString(
+        addString(
+          handleString("Execute_1"),
+          script),
+      expression)
+    );
+  }
+}
+
 function execute_(script, expression, callback) {
   executeCallback = callback;
 
-  protoPush(s.EXECUTE);
-  protoPush(s.ANSWER);
-  protoPushSInt();
-  
-  wsUCUq.send(
-    addString(
-      addString(
-        handleString("Execute_1"),
-        script),
-    expression)
-  )
+  subExecute(script, expression);
 }
 
 module.exports.launch = launch_;
