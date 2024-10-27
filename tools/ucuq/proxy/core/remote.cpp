@@ -23,10 +23,12 @@
 #include "registry.h"
 #include "messages.h"
 #include "device.h"
+#include "scripts.h"
 
 #include "sclm.h"
 
 #include "csdcmn.h"
+
 
 using namespace remote;
 
@@ -34,6 +36,7 @@ namespace {
   qENUM(Request_) { // Request issued by remote (received as string)
     rPing_1,
     rExecute_1,
+    rUpload_1,
     r_amount,
     r_Undefined
   };
@@ -45,6 +48,7 @@ namespace {
     switch ( Request ) {
       C(Ping_1);
       C(Execute_1);
+      C(Upload_1);
     default:
       qRFwk();
       break;
@@ -85,7 +89,7 @@ namespace {
     return Request;
   }
 
-  bso::sBool HandlePing_(
+  bso::sBool Ping_(
     flw::rRWFlow &Remote,
     flw::rRWFlow &Device,
     common::gTracker *Tracker)
@@ -125,7 +129,29 @@ namespace {
     return Cont;
   }
 
-  bso::sBool HandleExecute_(
+  namespace {
+    void Execute_(
+      const str::dString &Script,
+      const str::dString &Expression,
+      flw::rWFlow &Device,
+      const common::gTracker *Tracker)
+    {
+      bso::sBool Cont = true;
+    qRH;
+      str::wString Returned;   // Result of the JSONified evaluation the expression, or exception description if an error occured.
+    qRB;
+      common::Put(device::rExecute, Device, Tracker);
+      common::Put(Script, Device, Tracker);
+      common::Put(Expression, Device, Tracker);
+      common::Commit(Device, Tracker);
+    qRR;
+    qRT;
+    qRE;
+    }
+
+  }
+
+  bso::sBool Execute_(
     flw::rRWFlow &Remote,
     flw::rRWFlow &Device,
     const common::gTracker *Tracker)
@@ -142,10 +168,7 @@ namespace {
     common::Get(Remote, Script);
     common::Get(Remote, Expression);
 
-    common::Put(device::rExecute, Device, Tracker);
-    common::Put(Script, Device, Tracker);
-    common::Put(Expression, Device, Tracker);
-    common::Commit(Device, Tracker);
+    Execute_(Script, Expression, Device, Tracker);
 
     switch ( device::GetAnswer(Device, Tracker) ) {
     case device::aOK:
@@ -153,6 +176,101 @@ namespace {
       common::Get(Device, Returned, Tracker);
       common::Put(device::aOK, Remote);
       common::Put(Returned, Remote);
+      common::Commit(Remote);
+      break;
+    case device::aError:
+      Returned.Init();
+      common::Get(Device, Returned, Tracker);
+      common::Put(device::aError, Remote);
+      common::Put(Returned, Remote);
+      common::Commit(Remote);
+      break;
+    case device::aPuzzled:
+      Returned.Init();
+      common::Get(Device, Returned, Tracker);
+      common::Put(device::aPuzzled, Remote);
+      common::Put(Returned, Remote);
+      break;
+    case device::aDisconnected:
+      Cont = false;
+      break;
+    default:
+      qRGnr();
+      break;
+    }
+  qRR;
+  qRT;
+  qRE;
+    return Cont;
+  }
+
+  namespace {
+    void EleminateDuplicates_(str::dStrings &Strings)
+    {
+      sdr::sRow Row = Strings.Last();
+
+      while ( Row != qNIL ) {
+        if ( str::Search(Strings(Row), Strings) != Row ) {
+          if ( Strings.Last() == Row ) {
+            Row = Strings.Previous(Row);
+
+            Strings.Remove(Strings.Last());
+          }
+          else {
+            Strings.Remove(Row);
+
+            Row = Strings.Previous(Row);
+          }
+        } else {
+          Row = Strings.Previous(Row);
+        }
+      }
+    }
+        
+    void GetGlobalScript_(
+      str::dStrings &ScriptNames,
+      str::dString &GlobalScript)
+    {
+      ctn::qCMITEMsl(str::dString) Name;
+      sdr::sRow Row = ScriptNames.First();
+
+      Name.Init(ScriptNames);
+
+      while ( Row != qNIL ) {
+        scripts::GetScript(Name(Row), GlobalScript, ScriptNames);
+
+        Row = ScriptNames.Next(Row);
+      }
+    }
+  }
+
+  bso::sBool Upload_(
+    flw::rRWFlow &Remote,
+    flw::rRWFlow &Device,
+    const common::gTracker *Tracker)
+  {
+    bso::sBool Cont = true;
+  qRH;
+    str::wStrings ScriptNames;     // Scripts to upload.
+    str::wString Script, Returned;
+  qRB;
+    ScriptNames.Init();
+
+    common::Get(Remote, ScriptNames, Tracker);
+
+    EleminateDuplicates_(ScriptNames);
+
+    Script.Init();
+
+    GetGlobalScript_(ScriptNames, Script);
+
+    Execute_(Script, str::Empty, Device, Tracker);
+
+    switch ( device::GetAnswer(Device, Tracker) ) {
+    case device::aOK:
+      Returned.Init();
+      common::Get(Device, Returned, Tracker); // Ignored.
+      common::Put(device::aOK, Remote);
       common::Commit(Remote);
       break;
     case device::aError:
@@ -220,11 +338,15 @@ qRB;
     while ( !Remote.EndOfFlow() && Cont ) {
       switch ( GetRequest_(Remote) ) {
       case rExecute_1:
-        if ( !HandleExecute_(Remote, Device, &Tracker) )
+        if ( !Execute_(Remote, Device, &Tracker) )
           break;
         break;
       case rPing_1:
-        if ( !HandlePing_(Remote, Device, &Tracker) )
+        if ( !Ping_(Remote, Device, &Tracker) )
+          break;
+        break;
+      case rUpload_1:
+        if ( !Upload_(Remote, Device, &Tracker) )
           break;
         break;
       default:

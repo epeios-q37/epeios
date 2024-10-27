@@ -30,6 +30,7 @@ namespace registry {
 		using namespace sclr::parameter;
 
     extern rEntry Service;
+    extern rEntry ScriptsFileName;
   }
 
 	namespace definition {

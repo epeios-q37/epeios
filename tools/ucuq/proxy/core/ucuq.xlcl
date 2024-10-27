@@ -31,7 +31,11 @@
 		<Translation language="fr">Appelant '%1' inconnu !</Translation>
 		<Translation language="en">'%1' caller uknown!</Translation>
 	</Translations>
-	<!--
+  <Translations text="UnknownScript">
+    <Translation language="fr">Script '%1' inexistant !</Translation>
+    <Translation language="en">No '%1' script !</Translation>
+  </Translations>
+  <!--
 	<Translations text="">
 		<Translation language="fr"></Translation>
 		<Translation language="en"></Translation>

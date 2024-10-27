@@ -171,6 +171,26 @@ namespace common {
     return ucucmn::Get(Flow, String);
   }
 
+  inline const str::dStrings &Get(
+    flw::rRFlow &Flow,
+    str::dStrings &Strings,
+    const gTracker *Tracker = NULL)
+  {
+    Test_(Tracker);
+
+    return ucucmn::Get(Flow, Strings);
+  }
+
+  inline const str::dStrings &Get(
+    flw::rRFlow &Flow,
+    str::wStrings &Strings,
+    const gTracker *Tracker = NULL)
+  {
+    Test_(Tracker);
+
+    return ucucmn::Get(Flow, Strings);
+  }
+
   inline void Put(
     const str::dString &String,
     flw::rWFlow &Flow,

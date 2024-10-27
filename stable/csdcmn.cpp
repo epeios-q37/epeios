@@ -104,7 +104,7 @@ void csdcmn::Put_(
 	}
 }
 
-void csdcmn::Get_(
+const str::dStrings &csdcmn::Get_(
 	flw::rRFlow &Flow,
 	str::dStrings &Strings )
 {
@@ -122,10 +122,10 @@ qRB
 
 		Strings.Append( String );
 	}
-
 qRR
 qRT
 qRE
+	return Strings;
 }
 
 

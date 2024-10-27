@@ -237,6 +237,7 @@ function onRead(data, deviceToken, deviceId) {
     switch (phase) {
       case p.HANDSHAKES:
         if (!handshakes(feeder, deviceToken, deviceId)) phase = p.IGNITION;
+        console.log("Token: '" + deviceToken + "', Id: '" + deviceId +"'");
         break;
       case p.IGNITION:
         if (!ignition(feeder)) {

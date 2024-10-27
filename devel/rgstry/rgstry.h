@@ -2588,8 +2588,14 @@ namespace rgstry {
 /*******/
 
 namespace rgstry {
+	typedef row__ sRow;
+	typedef context___ rContext;
+
 	typedef tags_ dTags;
 	qW(Tags);
+
+	typedef registry_ dRegistry;
+	qW(Registry);
 }
 
 #endif

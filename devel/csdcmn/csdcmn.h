@@ -149,22 +149,22 @@ namespace csdcmn {
 		return Put_( Strings, Flow );
 	}
 
-	void Get_(
+	const str::dStrings &Get_(
 		flw::rRFlow &Flow,
 		str::dStrings &Strings );
 
-	inline void Get(
+	inline const str::dStrings &Get(
 		flw::rRFlow &Flow,
 		str::dStrings &Strings )
 	{
-		Get_( Flow, Strings );
+		return Get_( Flow, Strings );
 	}
 
-	inline void Get(
+	inline const str::dStrings &Get(
 		flw::rRFlow &Flow,
 		str::wStrings &Strings )
 	{
-		Get_( Flow, Strings );
+		return Get_( Flow, Strings );
 	}
 
 	template <typename integer> inline void Put(

@@ -145,7 +145,15 @@ with open("ucuq.json", "w") as outFile:
       </Translations>
       <Translations text="NewTokenArgDescription">
         <Translation language="fr">Nouveau jeton</Translation>
-        <Translation language="en">New 'token'</Translation>
+        <Translation language="en">New token</Translation>
+      </Translations>
+      <Translations text="NewProxyArgLabel">
+        <Translation language="fr">new-proxy</Translation>
+        <Translation language="en">new-proxy</Translation>
+      </Translations>
+      <Translations text="NewProxyArgDescription">
+        <Translation language="fr">Nouveau proxy</Translation>
+        <Translation language="en">New proxy</Translation>
       </Translations>
       <!--
       <Translations text="ArgLabel">

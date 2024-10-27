@@ -64,7 +64,7 @@ def displayGUI():
   atlastk.launch(CALLBACKS, headContent = HEAD)
 
 
-def display(line1, line2 ="",/,sda=21, scl=22):
+def display(line1, line2 ="",/,sda=14, scl=15):
   print(sda, scl, line1, line2)
   ucuq.launch(CMD.format(sda, scl, line1[:16], line2[:16]))
 
@@ -301,11 +301,11 @@ BODY = """
     <span id="ConfigBox" style="display: flex;flex-direction: column">
       <label style="display: flex;justify-content: space-between">
         <span>SDA:</span>
-        <input type="number" size="2" value="21" id="SDA">
+        <input type="number" size="2" value="14" id="SDA">
       </label>
       <label style="display: flex;justify-content: space-between">
         <span>SCL:</span>
-        <input type="number" size="2" value="22" id="SCL">
+        <input type="number" size="2" value="15" id="SCL">
       </label>
     </span>
     <span class="switch-container">

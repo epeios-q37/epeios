@@ -18,11 +18,18 @@
 */
 
 
-#include "registry.h"
+#ifndef SCRIPTS_INC_
+# define SCRIPTS_INC_
 
-using namespace registry;
+# include "rgstry.h"
 
-rEntry registry::parameter::Service("Service", sclr::Parameters);
-rEntry registry::parameter::ScriptsFileName("ScriptsFileName", sclr::Parameters);
+namespace scripts {
+  void Load(const fnm::rName & Name);
 
-rEntry registry::definition::Notification("Notification", sclr::Definitions);
+  bso::sBool GetScript(
+    const str::dString &Label,
+    str::dString &Script,
+    str::dStrings &Dependencies);  // Add a dependency only if no already present.
+}
+
+#endif

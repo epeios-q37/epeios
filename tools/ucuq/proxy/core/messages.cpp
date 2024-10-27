@@ -32,6 +32,7 @@ const char* messages::GetLabel(eId Id)
 		C(UnknownProtocol);
 		C(UnknownProtocolVersion);
     C(NoDeviceWithGivenTokenAndId);
+    C(UnknownScript);
 	default:
 		qRFwk();
 		break;

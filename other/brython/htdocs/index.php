@@ -17,44 +17,29 @@ echo <<<BODY
       integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA=="
       crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="text/javascript">
+      var old = '';
+      var editor = undefined;
+
       function go() {
         document.getElementById("Source").parentNode.previousElementSibling.removeAttribute("open");
         document.getElementById("Brython").style["display"] = "";
         document.getElementById("Code").value = editor.getValue();
         document.forms['Brython'].submit();
       }
-    </script>
-    <script type="text/javascript">
+
       function getSourceCode(demo) {
         document.getElementById("Brython").style["display"] = "none";
         fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/' + demo + '.py').then(function (response) {
           return response.text();
         }).then(function (data) {
           editor.session.setValue(data)
+          old = data;
           document.getElementById("Source").parentNode.previousElementSibling.setAttribute("open", 'true');
         }).catch(function (err) {
           console.warn('Something went wrong.', err);
         });
       }  
-    </script>
-    <script type="text/javascript">
-      var editor = undefined;
-      function dress() {
-        fillDemosList();
-        editor = ace.edit("Source", {
-          showLineNumbers: true,
-          newLineMode: "auto",
-          tabSize: 2,
-          wrap: true,
-          theme: "ace/theme/monokai",
-          mode: "ace/mode/python",
-          fontSize: 14,
-          showPrintMargin: false,
-        });
-        sendCode();
-      }
-    </script>
-    <script type="text/javascript">
+
       function fillDemosList() {
         fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/Demos.json').then(function (response) {
           return response.text();
@@ -66,7 +51,6 @@ echo <<<BODY
           select = document.getElementById("Demos");
 
           for ( var i in keys ) {
-            console.log(keys[i]);
             optgroup = document.createElement("optgroup");
             optgroup.label = keys[i];
             
@@ -86,23 +70,26 @@ echo <<<BODY
           let code = decodeURIComponent(`$code`);
           
           if ( code !== "" ) {
-            editor.session.setValue(code.replaceAll('_BrythonWorkaroundForBackQuote_', '`'));
-            editor.session.setValue(code.replaceAll('_BrythonWorkaroundForSingleQuote_', "'"));
+            code = code.replaceAll('_BrythonWorkaroundForBackQuote_', '`').replaceAll('_BrythonWorkaroundForSingleQuote_', "'")
+            editor.session.setValue(code);
+
+            old = code
 
             if ( '$cursor' !== "" ) {
               editor.moveCursorTo($cursor);
               editor.focus();
             }
           } else if ( "{$demo}" !== "" ) {
-            demos.value = "{$demo}";
-            demos.dispatchEvent(new Event('change'));
+            select.value = "{$demo}";
+            select.dispatchEvent(new Event('change'));
+          } else if ( localStorage.getItem("brython-buffer" ) != null ) {
+            editor.setValue(localStorage.getItem("brython-buffer"));
           }
         }).catch(function (err) {
         console.warn('Unable to retrieve demos list: ', err);
       });
       }
-    </script>
-    <script type="text/javascript">
+
       var code = undefined;
 
       function sendCode() {
@@ -111,7 +98,34 @@ echo <<<BODY
           window.parent.postMessage(["{$id}", code], '*');
         }
 
+        if ( old != editor.getValue() ) {
+          old = editor.getValue();
+          if ( old !== "" ) 
+            localStorage.setItem("brython-buffer", old);
+          else
+            localStorage.removeItem("brython-buffer");
+        }
+          
         window.setTimeout(sendCode, 150);
+      }
+
+
+      function dress() {
+        fillDemosList();
+        editor = ace.edit("Source", {
+          showLineNumbers: true,
+          newLineMode: "auto",
+          tabSize: 2,
+          wrap: true,
+          theme: "ace/theme/monokai",
+          mode: "ace/mode/python",
+          fontSize: 14,
+          showPrintMargin: false,
+        });
+
+        old = editor.getValue();
+
+        sendCode();
       }
     </script>
     <!-- Will be filled on run. -->

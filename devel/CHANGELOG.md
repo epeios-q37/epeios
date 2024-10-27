@@ -14,6 +14,10 @@
 - [trvl]: trivial modifications;
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
+- 
+## 2024-10-07
+- RGSTRY: [stdz];
+- CSDCMN: `Get(…)` functions on strings now return the strings;
 
 ## 2024-09-13
 - CSDBNS: use of 'inet_ntoa()' insead of by *Windows* no more recognized 'inet_ntop';

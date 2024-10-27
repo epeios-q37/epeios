@@ -48,11 +48,17 @@
     <Module>messages</Module>
     <Module>registry</Module>
     <Module>remote</Module>
+    <Module>scripts</Module>
     <Module>switcher</Module>
   </Modules>
   <SourceDirs>
     <SourceDir>../../</SourceDir>
   </SourceDirs>
+  <Files>
+    <Files Path="h:/hg/q37/epeios/tools/ucuq/proxy/core/">
+      <File>Scripts.xml</File>
+    </Files>
+  </Files>
   <Files RTW=".">
     <File>README.md</File>
     <File>Makefile</File>

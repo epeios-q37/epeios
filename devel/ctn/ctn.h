@@ -1128,34 +1128,38 @@ namespace ctn {
 	#define E_CONTAINER_( Type )	E_CONTAINERt_( Type, sdr::row__ )
 	#define E_CONTAINER( Type )		E_CONTAINERt( Type, sdr::row__ )
 
-	template <typename row, typename item, typename container> inline row Search_(
-		const item &Item,
+	template <typename row, typename entry, typename container, typename item> inline row Search_(
+		const entry &Entry,
 		const container &Container,
 		row Row )
 	{
+		item Item;
+
+		Item.Init(Container);
+
 		if ( Row == qNIL )
 			Row = Container.First();
 
-		while ( ( Row != qNIL ) && ( Container( Row ) != Item ) )
+		while ( ( Row != qNIL ) && ( Item( Row ) != Entry ) )
 			Row = Container.Next( Row );
 
 		return Row;
 	}
 
-	template <typename row, typename item> inline row Search(
-		const item &Item,
-		const ctn::mono_container_<item, row> &Container,
+	template <typename row, typename entry> inline row Search(
+		const entry &Entry,
+		const ctn::mono_container_<entry, row> &Container,
 		sdr::sRow First = qNIL )
 	{
-		return Search_<row, item, ctn::mono_container_<item, row>>( Item, Container, First );
+		return Search_<row, entry, ctn::mono_container_<entry, row>, ctn::const_mono_item<entry, row>>( Entry, Container, First );
 	}
 
-	template <typename row, typename item> inline row Search(
-		const item &Item,
-		const ctn::poly_container_<item, row> &Container,
+	template <typename row, typename entry> inline row Search(
+		const entry &Entry,
+		const ctn::poly_container_<entry, row> &Container,
 		sdr::sRow First = qNIL )
 	{
-		return Search_<row, item, ctn::poly_container_<item, row>>( Item, Container, First );
+		return Search_<row, entry, ctn::poly_container_<entry, row>, ctn::const_poly_item<entry, row>>( Entry, Container, First );
 	}
 
 # endif

@@ -6,9 +6,10 @@
   <xpp:expand href="../../../../CLI.xcfg"/>
   <Parameters>
     <Service>53800</Service>
-	<Language>en</Language>
+	  <Language>en</Language>
     <Command>Launch</Command>
     <!-- Default command -->
+    <ScriptsFileName>h:/hg/q37/epeios/tools/ucuq/proxy/core/Scripts.xml</ScriptsFileName>
   </Parameters>
   <Definitions>
     <Notification>

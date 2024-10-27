@@ -24,6 +24,9 @@ BODY = """
     <button xdh:onevent="Save">Save</button>
     <button xdh:onevent="Delete">Delete</button>
   </div>
+  <fieldset>
+    <output id="Output">Enter token and/or id.</output>
+  </fiedlset>
 </fieldset>
 """
 
@@ -48,7 +51,7 @@ async def acSave(dom):
   id = id.strip()
 
   if token == "" and not "Token" in device:
-    await dom.alert("Please entre a token value!")
+    await dom.alert("Please enter a token value!")
     await dom.focus("Token")
     return
   
@@ -62,7 +65,7 @@ async def acSave(dom):
 
   storage[CONFIG_ITEM] = json.dumps(config, indent=2)
 
-  await dom.alert("Config file updated!")
+  await dom.setValue("Output", "Config file updated!")
 
 
 async def acDelete(dom):
@@ -74,7 +77,7 @@ async def acDelete(dom):
     await dom.removeAttribute("Token", "placeholder")
     await dom.setValues({"Token": "", "Id": ""})
     await dom.focus("Token")
-    await dom.alert("Config deleted!")
+    await dom.setValue("Output", "Config deleted!")
 
 
 if CONFIG_ITEM in storage:

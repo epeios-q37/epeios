@@ -59,6 +59,20 @@ namespace ucucmn {
     return csdcmn::Get(Flow, String);
   }
 
+  inline const str::dStrings &Get(
+    flw::rRFlow &Flow,
+    str::dStrings &Strings)
+  {
+    return csdcmn::Get(Flow, Strings);
+  }
+
+  inline const str::dStrings &Get(
+    flw::rRFlow &Flow,
+    str::wStrings &Strings)
+  {
+    return csdcmn::Get(Flow, Strings);
+  }
+
   inline void Put(
     const str::dString &String,
     flw::rWFlow &Flow)
