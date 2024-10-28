@@ -9,7 +9,7 @@ TARGET = "" # if "", retrieved from config file.
 
 MACRO_MARKER_ = '$'
 
-DEFAULT_STEP = 10
+DEFAULT_SPEED = 10
 
 contentsHidden = True
 
@@ -40,9 +40,6 @@ with open('Body.html', 'r') as file:
 with open('Head.html', 'r') as file:
   HEAD = file.read()
 
-with open('mc_init.py', 'r') as file:
-  MC_INIT = file.read()
-
 MACRO_HTML="""
 <div class="macro" xdh:mark="Macro{}" style="margin-bottom: 3px;">
   <label>
@@ -64,30 +61,13 @@ MACRO_HTML="""
 </div>
 """
 
-stage = 0
-moves = []
-
-def move_(servo, angle, step = None):
-  command = f"move([(\"{servo}\", {int(angle)})]"
-
-  if step != None:
-    command += f",{step}"
-
-  command += ")"
-
-  device.execute(command)
-   
+servos = {}
 
 def reset_(dom):
-  step = 5
-  command = "move(["
-  
   for servo in servos:
-    command += f"('{servo}', 0),"
-  
-  command += f"], {step})"
+    servos[servo].reset()
 
-  device.execute(command)
+  device.render()
 
 
 def displayMacros(dom):
@@ -116,15 +96,20 @@ def updateFileList(dom):
 def acConnect(dom):
   dom.inner("", BODY)
   displayMacros(dom)
-#  reset_(dom)
   updateFileList(dom)
 
 
 def acTest():
   for servo in servos:
-    move_(servo, 25, 3)
-    move_(servo, -25, 3)
-    move_(servo, 0, 3)
+    servos[servo].angle(25)
+    device.render()
+    time.sleep(0.25)
+    servos[servo].angle(-25)
+    device.render()
+    time.sleep(0.25)
+    servos[servo].angle(0)
+    device.render()
+    time.sleep(0.25)
 
 
 def acReset(dom):
@@ -189,7 +174,7 @@ def getMacro(token):
 
 def getMoves(token):
   moves = []
-  step = None
+  speed = None
 
   with io.StringIO(token[0]) as stream:
     while char := stream.read(1):
@@ -221,7 +206,7 @@ def getMoves(token):
         angle = angle * 10 + int(char)
         char = stream.read(1)
 
-      moves.append((servo, angle * sign))
+      moves.append((servos[servo], angle * sign))
 
       if not char:
         break
@@ -230,28 +215,28 @@ def getMoves(token):
         if char != ':':
           raise Exception(f"Servo move can only be followed by '%' ({token[1]})!")
       else:
-        step = 0
+        speed = ""
 
         while (char := stream.read(1)) and char.isdigit():
-          step = step * 10 + int(char)
+          speed += char
 
         if char:
-          raise Exception("Unexpected char at end of servo moves ({token[1]})!")
+          raise Exception(f"Unexpected char at end of servo moves ({token[1]})!")
         
-    return { "moves": moves, "step": str(step) if step else None if step == None else ""}
+    return { "moves": moves, "speed": speed}
   
 
-def getStep(token):
-  step = 0
+def getSpeed(token):
+  speed = 0
 
   with io.StringIO(token[0]) as stream:
     if stream.read(1) != '%':
       raise Exception(f"Unexpected error ({token[1]})!")
     
     while (char := stream.read(1)) and char.isdigit():
-      step = step * 10 + int(char)
+      speed = speed * 10 + int(char)
 
-  return { "value": step if step else DEFAULT_STEP }
+  return { "value": speed if speed else DEFAULT_SPEED }
 
 
 def tokenize(string):
@@ -270,44 +255,29 @@ def getAST(tokens):
     if token[0][0].isdigit() or token[0][0] == MACRO_MARKER_:
       ast.append(("macro", getMacro(token)))
     elif token[0][0] == '%':
-      ast.append(("step", getStep(token)))
+      ast.append(("speed", getSpeed(token)))
     else:
       ast.append(("action",getMoves(token)))
 
   return ast
 
 
-def getCommand(moves, step, currentStep):
-  command = "move(["
-
-  for move in moves:
-    command += f"('{move[0]}',{move[1]}),"
-
-  command += "]," + ( step if step else str(currentStep) if step == None else str(DEFAULT_STEP) ) + ")"
-
-  return command
-
-
-def getCommands(dom, string, step = DEFAULT_STEP):
-  commands = ""
-
+def execute(dom, string, speed = DEFAULT_SPEED):
   try:
     ast = getAST(tokenize(string))
 
     for item in ast:
       match item[0]:
         case "action":
-          commands += getCommand(item[1]["moves"], item[1]["step"], step) + '\n'
+          tempSpeed = item[1]["speed"]
+          device.servoMoves(item[1]["moves"], ( speed if tempSpeed == None else ( int(tempSpeed) if tempSpeed != "" else DEFAULT_SPEED)) /10)
         case "macro":
           for _ in range(item[1]["amount"]):
-            commands += getCommands(dom, macros[item[1]["name"]]["Content"], step)
-        case "step":
-          step = item[1]["value"]
+            execute(dom, macros[item[1]["name"]]["Content"], speed)
+        case "speed":
+          speed = item[1]["value"]
   except Exception as err:
     dom.alert(err)
-    commands = ""
-
-  return commands
 
 
 def acExecute(dom, id):
@@ -322,7 +292,8 @@ def acExecute(dom, id):
   if dom.getValue("Reset") == "true":
     reset_(dom)
 
-  device.execute(getCommands(dom, moves))
+  execute(dom, moves)
+  device.render()
 
 
 def acSave(dom):
@@ -440,19 +411,17 @@ CALLBACKS = {
 
 device = ucuq.UCUq(TARGET, dryRun=False)
 
-device.execute(MC_INIT)
-
 command = ""
 
-def getServoConfig(key, subkey, preset, motor):
+def getServoSetup(key, subkey, preset, motor):
   if ( key in motor ) and ( subkey in motor[key] ):
     return motor [key][subkey]
   else:
     return preset[key][subkey]
 
 
-def getServosConfig(target):
-  servos = {}
+def getServosSetups(target):
+  setup = {}
 
   with open("servos.json", "r") as file:
     config = json.load(file)[target]
@@ -461,44 +430,47 @@ def getServosConfig(target):
   motors = config["Motors"]
 
   for label in motors:
-    servos[label] = {}
+    setup[label] = {}
 
     motor = motors[label]
 
     for key in CONFIG_KEYS:
-      servos[label][key] = {}
+      setup[label][key] = {}
 
       if key == HARDWARE_KEY:
-        mode = getServoConfig(key, HARDWARE_MODE_SUBKEY, motor, preset)
+        mode = getServoSetup(key, HARDWARE_MODE_SUBKEY, motor, preset)
 
-        servos[label][key][HARDWARE_MODE_SUBKEY] = mode
+        setup[label][key][HARDWARE_MODE_SUBKEY] = mode
 
         for subkey in CONFIG_KEYS[key][mode]:
-          servos[label][key][subkey] = getServoConfig(key, subkey, preset, motor)
+          setup[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
       else:
         for subkey in CONFIG_KEYS[key]:
-          servos[label][key][subkey] = getServoConfig(key, subkey, preset, motor)
+          setup[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
       
 
-  return servos
+  return setup
 
-servos = getServosConfig(target := device.getDeviceId())
+def createServos(device):
+  global servos
 
-print(f"Target: '{target}'")
+  setups = getServosSetups(target := device.getDeviceId())
 
-for key in servos:
-  servo = servos[key]
-  hardware = servo[HARDWARE_KEY]
-  specs = servo[SPECS_KEY]
-  tweak = servo[TWEAK_KEY]
-  if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
-    pwm = f"{M_STRAIGHT}({hardware["pin"]}, {specs["freq"]})"
-  elif hardware["mode"] == "PCA":
-    pwm = f"{M_PCA}({hardware["sda"]}, {hardware["scl"]}, {hardware["channel"]}, {specs["freq"]})"
-  else:
-    raise Exception("Unknown hardware mode!")
-  command += f"servos['{key}'] = Servo({pwm}, Servo.{SPECS_KEY}({specs["freq"]},{specs["u16_min"]},{specs["u16_max"]},{specs["range"]}),Servo.{TWEAK_KEY}({tweak["angle"]},{tweak["offset"]},{tweak["invert"]}))\n"
+  for label in setups:
+    servo = setups[label]
+    hardware = servo[HARDWARE_KEY]
+    specs = servo[SPECS_KEY]
+    tweak = servo[TWEAK_KEY]
+    if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
+      pwm = ucuq.PWM(device, hardware["pin"], specs["freq"])
+    elif hardware["mode"] == "PCA":
+      pwm = ucuq.PCA9685Channel(device, ucuq.PCA9685(device, hardware["sda"], hardware["scl"], specs["freq"]), hardware["channel"])
+    else:
+      raise Exception("Unknown hardware mode!")
+    servos[label] = ucuq.Servo(device, pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
 
-device.execute(command)
+  device.render()
+
+createServos(device)
 
 atlastk.launch(CALLBACKS, headContent = HEAD)
