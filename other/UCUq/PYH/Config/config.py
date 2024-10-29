@@ -17,9 +17,12 @@ BODY = """
       <input id="Id">
     </label>
   </fieldset>
-    <div style="margin: 5px;">
-      <button xdh:onevent="Save">Save</button>
-    </div>
+  <div style="display: flex; justify-content: space-around; margin: 5px;">
+    <button xdh:onevent="Save">Save</button>
+  </div>
+  <fieldset>
+    <output id="Output">Enter token and/or id.</output>
+  </fiedlset>
 </fieldset>
 """
 
@@ -59,7 +62,7 @@ def acSave(dom):
   with open(CONFIG_FILE, "w") as file:
     json.dump(config,file, indent=2)
 
-  dom.alert("Config file updated!")
+  dom.setValue("Output", "Config file updated!")
 
 CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
 

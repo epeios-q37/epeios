@@ -319,16 +319,19 @@ class UCUq(UCUq_):
     self.commands.append(command)
 
 
-  def render(self):
+  def render(self, expression = ""):
+    result = ""
+
     if self.pendingScripts:
       super().upload(self.pendingScripts)
       self.handledScripts.extend(self.pendingScripts)
       self.pendingScripts = []
 
     if self.commands:
-      print('\n'.join(self.commands))
-      super().execute('\n'.join(self.commands))
+      result = super().execute('\n'.join(self.commands), expression)
       self.commands = []
+
+    return result
 
 
   def servoMoves(self, moves, speed = 1):
@@ -358,9 +361,8 @@ class Core_:
 
   
   def __del__(self):
-    print(f"Del id: {self.id}")
     if self.id:
-      self.addCommand(f"del {ITEMS_}['{self.id}']")
+      self.addCommand(f"del {ITEMS_}[{self.id}]")
 
   
   def init(self):
@@ -377,6 +379,10 @@ class Core_:
   
   def addCommand(self, command):
     self.ucuq.addCommand(command)
+                         
+                         
+  def render(self):
+    self.ucuq.render()
   
 
 class GPIO(Core_):
@@ -415,12 +421,31 @@ class HT16K33(Core_):
   def init(self, sda, scl):
     super().init()
 
-    self.ucuq.addCommand(f"{self.getObject()} = HT16K33(I2C(0, scl=Pin({scl}), sda=Pin({sda})))")
+    self.ucuq.addCommand(f"{self.getObject()} = HT16K33(machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl})))")
     self.ucuq.addCommand(f"{self.getObject()}.set_brightness(0)")
 
 
+  def setBlinkRate(self, rate):
+    self.execute(f"{self.getObject()}.set_blink_rate({rate})")
+
+  def setBrightness(self, brightness):
+    self.execute(f"{self.getObject()}.set_brightness({brightness})")
+
+  def clear(self):
+    self.ucuq.addCommand(f"{self.getObject()}.clear()")
+    self.render()
+
+  def plot(self, x, y):
+    self.ucuq.addCommand(f"{self.getObject()}.plot({x},{y})")
+
   def draw(self, motif):
     self.ucuq.addCommand(f"{self.getObject()}.clear().draw('{motif}').render()")
+    self.render()
+
+  def render(self):
+    self.ucuq.addCommand(f"{self.getObject()}.render()")
+    super().render()
+
 
 
 class PCA9685(Core_):
@@ -463,8 +488,6 @@ class PCA9685(Core_):
       return self.execute("", f"{self.getObject()}.freq()")
   
 
-
-
 class PCA9685Channel(Core_):
   def __init__(self, ucuq, pca = None, channel = None, /):
     super().__init__(ucuq, "PCA9685Channel")
@@ -479,27 +502,34 @@ class PCA9685Channel(Core_):
   def init(self, pca, channel):
     super().init()
 
+    self.pca = pca # Not used inside this object, but to avoid pca being destroyed by GC, as it is used on the µc.
     self.addCommand(f"{self.getObject()} = PCA9685Channel({pca.getObject()}, {channel})")
+
+  def deinit(self):
+    self.addCommand(f"{self.getObject()}.deinit()")
 
 
   def duty_ns(self, ns = None):
     if ns == None:
-      return int(self.execute("", f"int(200000000 * {self.getObject()}.duty() / ({self.getObject()}.freq() * 819))"))
-    else:
-      self.addCommand(f"{self.getObject()}.duty(int({self.getObject()}.freq() * {ns} * 0.000004095)")
+      return int(self.execute("", f"{self.getObject()}.duty_ns()"))
+    self.addCommand(f"{self.getObject()}.duty_ns({ns})")
 
 
   def duty_u16(self, u16 = None):
     if u16 == None:
-      return int(self.execute("",f"{self.getObject()}.duty()")) << 4
-    else:
-      self.addCommand(f"{self.getObject()}.duty({u16 >> 4})")
+      return int(self.execute("",f"{self.getObject()}.duty_u16()"))
+    self.addCommand(f"{self.getObject()}.duty_u16({u16})")
   
 
+  def freq(self, freq = None):
+    if freq == None:
+      return int(self.execute("",f"{self.getObject()}.freq()"))
+    self.addCommand(f"{self.getObject()}.freq({freq})")
+  
 
 class PWM(Core_):
   def __init__(self, ucuq, pin = None, freq = None):
-    super().__init__(ucuq)
+    super().__init__(ucuq, "PWM")
 
     if freq != None:
       if pin == None:
@@ -518,14 +548,29 @@ class PWM(Core_):
   def duty_u16(self, u16 = None):
     if u16 == None:
       return int(self.execute("", f"{self.getObject()}.duty_u16()"))
-    else:
-      self.addCommand(f"{self.getObject()}.duty_u16({u16})")
+    self.addCommand(f"{self.getObject()}.duty_u16({u16})")
+
+
+  def duty_ns(self, ns = None):
+    if ns == None:
+      return int(self.execute("", f"{self.getObject()}.duty_ns()"))
+    self.addCommand(f"{self.getObject()}.duty_ns({ns})")
+
+
+  def freq(self, freq = None):
+    if freq == None:
+      return int(self.execute("", f"{self.getObject()}.freq()"))
+    self.addCommand(f"{self.getObject()}.freq({freq})")
+
+
+  def deinit(self):
+    self.addCommand(f"{self.getObject()}.deinit()")
 
 
 
 class Servo(Core_):
   class Specs:
-    def __init__(self,u16_min, u16_max, range):
+    def __init__(self, u16_min, u16_max, range):
       self.min = u16_min
       self.max = u16_max
       self.range = range
@@ -600,7 +645,7 @@ class Servo(Core_):
 
     if self.tweak.invert:
       angle = -angle
-    i
+
     return angle - self.tweak.angle
 
 
@@ -613,5 +658,41 @@ class Servo(Core_):
       return self.dutyToAngle(self.pwm.duty_u16())
     else:
       self.pwm.duty_u16(self.angleToDuty(angle))
+
+
+class WS2812(Core_):
+  def __init__(self, ucuq, pin = None, n = None):
+    super().__init__(ucuq, "WS2812")
+
+    if (pin == None) != (n == None):
+      raise Exception("Both or none of 'pin'/'n' must be defined")
+
+    if pin != None:
+      self.init(pin, n)
+
+  def init(self, pin, n):
+    super().init()
+
+    self.addCommand(f"{self.getObject()} = neopixel.NeoPixel(machine.Pin({pin}), {n})")
+
+
+  def len(self):
+    return int(self.execute("", f"{self.getObject()}.__len__()"))
+               
+
+  def value(self, index, val = None):
+    if val == None:
+      return self.execute("", f"{self.getObject()}.__getitem__({index})")
+    self.addCommand(f"{self.getObject()}.setitem({index}, {json.dumps(val)})")
+                       
+  def fill(self, val):
+    self.addCommand(f"{self.getObject()}.fill({json.dumps(val)})")
+
+  def write(self):
+    self.addCommand(f"{self.getObject()}.write()")
+    self.render()
+    
+  
+
 
     

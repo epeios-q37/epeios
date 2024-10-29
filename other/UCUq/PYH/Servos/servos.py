@@ -62,6 +62,8 @@ MACRO_HTML="""
 """
 
 servos = {}
+pca = None
+
 
 def reset_(dom):
   for servo in servos:
@@ -101,13 +103,13 @@ def acConnect(dom):
 
 def acTest():
   for servo in servos:
-    servos[servo].angle(25)
+    device.servoMoves([(servos[servo], 15)])
     device.render()
     time.sleep(0.25)
-    servos[servo].angle(-25)
+    device.servoMoves([(servos[servo], -15)])
     device.render()
     time.sleep(0.25)
-    servos[servo].angle(0)
+    device.servoMoves([(servos[servo], 0)])
     device.render()
     time.sleep(0.25)
 
@@ -452,7 +454,7 @@ def getServosSetups(target):
   return setup
 
 def createServos(device):
-  global servos
+  global servos, pca
 
   setups = getServosSetups(target := device.getDeviceId())
 
@@ -464,7 +466,9 @@ def createServos(device):
     if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
       pwm = ucuq.PWM(device, hardware["pin"], specs["freq"])
     elif hardware["mode"] == "PCA":
-      pwm = ucuq.PCA9685Channel(device, ucuq.PCA9685(device, hardware["sda"], hardware["scl"], specs["freq"]), hardware["channel"])
+      if not pca:
+        pca =  ucuq.PCA9685(device, hardware["sda"], hardware["scl"], specs["freq"])
+      pwm = ucuq.PCA9685Channel(device, pca, hardware["channel"])
     else:
       raise Exception("Unknown hardware mode!")
     servos[label] = ucuq.Servo(device, pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))

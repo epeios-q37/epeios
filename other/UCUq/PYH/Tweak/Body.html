@@ -13,7 +13,7 @@
         <div class="straight">
           <label>
             <span>Pin:</span>
-            <input id="Pin" type="number" size="2" value="15" min="0" max="99">
+            <input id="Pin" type="number" size="2" value="10" min="0" max="99">
           </label>
         </div>
         <div class="pca9685">
@@ -28,7 +28,7 @@
             </label>
             <label>
               <span>Driver:</span>
-              <input id="Driver" size="2" value="0">
+              <input id="Driver" size="2" value="4">
             </label>
           </fieldset>
         </div>
@@ -72,13 +72,13 @@
     </label>
     <span>
       <input id="Width" xdh:onevents="(click|Width)(change|Width)" type=number size="5" min="0" disabled="disabled"
-        step=".1">
+        step=".01">
       <select id="WidthStep" xdh:onevent="WidthStep">
         <optgroup label="Select step">
+          <option value=".01">0.01</option>
+          <option value=".02">0.02</option>
+          <option value=".05">0.05</option>
           <option value=".1">0.1</option>
-          <option value=".2">0.2</option>
-          <option value=".5">0.5</option>
-          <option value="1">1</option>
         </optgroup>
       </select>
     </span>

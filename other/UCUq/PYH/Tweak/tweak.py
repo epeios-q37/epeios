@@ -5,6 +5,8 @@ sys.path.extend(("..","../../atlastk"))
 
 import ucuq, atlastk
 
+pwm = None
+
 onDuty = False
 
 # Duties
@@ -34,35 +36,9 @@ O_RATIO = "TrueRatio"
 O_WIDTH = "TrueWidth"
 
 
-# Microcontroller scripts
-with open('mc_init.py', 'r') as file:
-  MC_INIT = file.read()
-
-MC_INIT_STRAIGHT = """
-pwm = Straight({pin}, {freq}, {duty}={value})
-"""
-
-MC_INIT_PCA9685 = """
-pwm = PCA({sda}, {scl}, {driver}, {freq}, {duty}={value})
-"""
-
-MC_RESET_PWM = """
-pwm.deinit()
-"""
-
-MC_SET_FREQ = """
-pwm.freq({})
-"""
-
-MC_SET_RATIO = """
-pwm.duty_u16({})
-"""
-
-MC_SET_WIDTH = """
-pwm.duty_ns({})
-"""
-
-MC_PARAMS = """
+MC_INIT = """
+def getParams(pwm):
+  return [pwm.freq(), pwm.duty_u16(), pwm.duty_ns()]
 """
 
 with open('Body.html', 'r') as file:
@@ -73,7 +49,7 @@ with open('Head.html', 'r') as file:
 
 
 def getParams():
-  return device.execute(MC_PARAMS, "getParams(pwm)") if onDuty else None
+  return device.execute("", f"getParams({pwm.getObject()})") if onDuty else None
 
 
 def getDuty(dom):
@@ -199,34 +175,36 @@ def updateDuties(dom, params = None):
 
 
 def initPWM(inputs):
+  global pwm
+  
   if inputs["Mode"] == M_STRAIGHT:
-    script = MC_INIT_STRAIGHT
+    pwm = ucuq.PWM(device, inputs[I_PIN], inputs[I_FREQ])
   elif inputs["Mode"] == M_PCA9685:
-    script = MC_INIT_PCA9685
+    pwm = ucuq.PCA9685Channel(device, ucuq.PCA9685(device, inputs[I_SDA], inputs[I_SCL], inputs[I_FREQ]), inputs[I_DRIVER],)
   else:
-    raise Exception("Unknwon mode!!!")
+    raise Exception("Unknown mode!!!")
 
-  return device.execute(script.format(
-    pin = inputs[I_PIN],
-    sda = inputs[I_SDA],
-    scl = inputs[I_SCL],
-    driver = inputs[I_DRIVER],
-    freq = inputs[I_FREQ],
-    duty = "duty_u16" if inputs[I_DUTY]["Type"] == D_RATIO else "duty_ns",
-    value = int(inputs[I_DUTY]["Value"] * (1 if inputs[I_DUTY]["Type"] == D_RATIO else 1000000))),
-    "getParams(pwm)")
+  if inputs[I_DUTY]["Type"] == D_RATIO:
+    pwm.duty_u16(int(inputs[I_DUTY]["Value"]))
+  else:
+    pwm.duty_ns(int(1000000 * float(inputs[I_DUTY]["Value"])))
+  
+  return device.render(f"getParams({pwm.getObject()})")
   
 
 def setFreq(freq):
-  return device.execute(MC_SET_FREQ.format(freq), "getParams(pwm)")
+  pwm.freq(freq)
+  return device.render(f"getParams({pwm.getObject()})")
   
 
 def setRatio(ratio):
-  return device.execute(MC_SET_RATIO.format(ratio), "getParams(pwm)")
+  pwm.duty_u16(ratio)
+  return device.render(f"getParams({pwm.getObject()})")
   
 
 def setWidth(width):
-  return device.execute(MC_SET_WIDTH.format(width), "getParams(pwm)")
+  pwm.duty_ns(width)
+  return device.render(f"getParams({pwm.getObject()})")
   
 
 def acConnect(dom):
@@ -260,7 +238,8 @@ def acSwitch(dom, id):
       onDuty = True
   else:
     if onDuty:
-      device.execute(MC_RESET_PWM)
+      pwm.deinit()
+      device.render()
       onDuty = False
     updateDuties(dom)
     dom.enableElement(I_MODE_BOX)
