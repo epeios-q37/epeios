@@ -22,7 +22,7 @@
 
 #include "switcher.h"
 #include "registry.h"
-#include "Scripts.h"
+#include "scripts.h"
 
 #include "sclm.h"
 #include "sclt.h"
