@@ -256,7 +256,7 @@ class DOM:
   get_marks = getMarks
 
   async def getMark( self,id):
-    return await self.get_marks([id])[id]
+    return (await self.get_marks([id]))[id]
 
   get_mark = getMark
 

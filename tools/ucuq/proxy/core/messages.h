@@ -31,7 +31,7 @@ namespace messages {
     iUnknownProtocolVersion,
     iNoDeviceWithGivenTokenAndId,  // %1: token, %2: id
     iUnknownCaller,  // %1: caller
-    iUnknownScript, // %1: script name
+    iUnknownModule, // %1: module name
     i_amount,
     i_Undefined
   };

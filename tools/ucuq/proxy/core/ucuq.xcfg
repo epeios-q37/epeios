@@ -9,7 +9,7 @@
 	  <Language>en</Language>
     <Command>Launch</Command>
     <!-- Default command -->
-    <ScriptsFileName>h:/hg/q37/epeios/tools/ucuq/proxy/core/Scripts.xml</ScriptsFileName>
+    <ModulesFileName>h:/hg/q37/epeios/tools/ucuq/proxy/core/Modules.xml</ModulesFileName>
   </Parameters>
   <Definitions>
     <Notification>

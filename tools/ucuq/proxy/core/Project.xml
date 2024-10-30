@@ -24,7 +24,7 @@
       <Modules Group="Core">
         <xpp:expand select="Core"/>
         <Module>sck</Module>
-        <Module>etrmrg</Module>
+        <Module>strmrg</Module>
       </Modules>
       <Modules Group="SCL">
         <xpp:expand select="SCL"/>
@@ -47,9 +47,9 @@
     <Module>device</Module>
     <Module>manager</Module>
     <Module>messages</Module>
+    <Module>modules</Module>
     <Module>registry</Module>
     <Module>remote</Module>
-    <Module>scripts</Module>
     <Module>switcher</Module>
   </Modules>
   <SourceDirs>
@@ -57,7 +57,7 @@
   </SourceDirs>
   <Files>
     <Files Path="h:/hg/q37/epeios/tools/ucuq/proxy/core/">
-      <File>Scripts.xml</File>
+      <File>Modules.xml</File>
     </Files>
   </Files>
   <Files RTW=".">

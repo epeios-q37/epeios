@@ -22,7 +22,7 @@
 
 #include "switcher.h"
 #include "registry.h"
-#include "scripts.h"
+#include "modules.h"
 
 #include "sclm.h"
 #include "sclt.h"
@@ -57,12 +57,12 @@ namespace {
 	void Launch_( void )
 	{
 	qRH;
-		str::wString ScriptFileName;
+		str::wString ModuleFileName;
 	qRB;
-		ScriptFileName.Init();
+	ModuleFileName.Init();
 
-		if ( sclm::OGetValue(registry::parameter::ScriptsFileName, ScriptFileName) )
-			scripts::Load(ScriptFileName);
+		if ( sclm::OGetValue(registry::parameter::ModulesFileName, ModuleFileName) )
+			modules::Load(ModuleFileName);
 
 		switcher::Process();
 	qRR;

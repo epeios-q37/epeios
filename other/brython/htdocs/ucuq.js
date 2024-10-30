@@ -99,9 +99,11 @@ function protoTop() {
 
 const s = {
   STEERING: 301,
-  EXECUTE: 302,
-  ANSWER: 303,
-  RESULT: 304
+  UPLOAD: 302,
+  UPLOAD_ANSWER: 303,
+  EXECUTE: 304,
+  EXECUTE_ANSWER: 305,
+  RESULT: 306
 }
 
 function steering(feeder) {
@@ -113,11 +115,21 @@ function steering(feeder) {
     switch (protoTop()) {
       case s.STEERING:
         break;
+      case s.UPLOAD:
+        protoPop();
+        uploadCallback(protoGetSInt(), protoGetString())  // result of 'protoGetString()' doesn't matter ir result of 'protoGetSInt()' is == 0.
+        break;
       case s.EXECUTE:
         protoPop();
         executeCallback(protoGetSInt(), protoGetString())
         break;
-      case s.ANSWER:
+      case s.UPLOAD_ANSWER:
+        protoPop();
+        if ( protoGetSInt() != 0 ) {
+          protoPush(s.RESULT);
+          protoPushString();
+        }
+      case s.EXECUTE_ANSWER:
         protoPop();
         protoPush(s.RESULT);
         protoPushString();
@@ -243,6 +255,9 @@ function onRead(data, deviceToken, deviceId) {
         if (!ignition(feeder)) {
           phase = p.STEERING;
           wsUCUq.ignited = true;
+
+        //  if (launchCallback)
+            launchCallback();
         }
         break;
       case p.STEERING:
@@ -268,7 +283,11 @@ function blob2Buffer(blob, cb) {
   reader.readAsArrayBuffer(blob)
 }
 
-function launch_(deviceToken, deviceId, libraryVersion) {
+launchCallback = undefined
+
+function launch_(deviceToken, deviceId, libraryVersion, callback) {
+  launchCallback = callback;
+
   handler = proto.getHandler();
 
   phase = p.HANDSHAKES;
@@ -309,14 +328,38 @@ function launch_(deviceToken, deviceId, libraryVersion) {
   };
 }
 
-var executeCallback = undefined;
-
-function subExecute(script, expression) {
+function subUpload_(modules) {
   if ( !wsUCUq.ignited )
-    setTimeout(() => subExecute(script, expression));
+    setTimeout(() => subUpload_(modules));
+  else {
+    protoPush(s.UPLOAD)
+    protoPush(s.EXECUTE_ANSWER);
+    protoPushSInt();
+
+    wsUCUq.send(
+      addStrings(
+        handleString("Upload_1"),
+        modules
+      )
+    )
+  }
+}
+
+var uploadCallback = undefined;
+
+function upload_(modules, callback) {
+  uploadCallback = callback;
+
+  subUpload_(modules);
+}
+
+
+function subExecute_(script, expression) {
+  if ( !wsUCUq.ignited )
+    setTimeout(() => subExecute_(script, expression));
   else {
     protoPush(s.EXECUTE);
-    protoPush(s.ANSWER);
+    protoPush(s.EXECUTE_ANSWER);
     protoPushSInt();
     
     wsUCUq.send(
@@ -329,11 +372,27 @@ function subExecute(script, expression) {
   }
 }
 
+var executeCallback = undefined;
+
 function execute_(script, expression, callback) {
   executeCallback = callback;
 
-  subExecute(script, expression);
+  subExecute_(script, expression);
+
+//  setTimeout(() => subExecute_(script, expression), 2000);
 }
 
+
+function timeout_(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function sleep_(time, fn, ...args) {
+  await timeout_(time);
+  return fn(...args);
+}
+
+module.exports.sleep = sleep_;
 module.exports.launch = launch_;
+module.exports.upload = upload_;
 module.exports.execute = execute_;

@@ -18,17 +18,17 @@
 */
 
 
-#ifndef SCRIPTS_INC_
-# define SCRIPTS_INC_
+#ifndef MODULES_INC_
+# define MODULES_INC_
 
 # include "rgstry.h"
 
-namespace scripts {
+namespace modules {
   void Load(const fnm::rName & Name);
 
-  bso::sBool GetScript(
+  bso::sBool GetModule(
     const str::dString &Label,
-    str::dString &Script,
+    str::dString &Module,
     str::dStrings &Dependencies);  // Add a dependency only if no already present.
 }
 

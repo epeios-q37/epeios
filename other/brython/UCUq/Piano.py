@@ -1,3 +1,75 @@
+import ucuq, atlastk, math
+
+BUZZER_PIN = 2
+LOUDSPEAKER_PIN = 6
+
+pinNotSet = True
+
+pwm = None
+baseFreq = 440.0*math.pow(math.pow(2,1.0/12), -16)
+ratio = 0.5
+
+async def acConnect(dom):
+  await dom.inner("", BODY)
+
+
+async def acPlay(dom,id):
+  global pwm
+
+  if pinNotSet:
+    await dom.alert("Please select a pin number!")
+  else:
+    freq = int(baseFreq*math.pow(math.pow(2,1.0/12), int(id)))
+    pwm.dutyU16(int(ratio*65535))
+    pwm.freq(freq)
+    ucuq.render()
+    await ucuq.sleepAwait(500)
+    pwm.dutyU16(0)
+    ucuq.render()
+
+
+async def acSetRatio(dom, id):
+  global ratio
+
+  ratio = float(dom.getValue(id))
+
+  await dom.setValue("RatioSlide" if id == "RatioValue" else "RatioValue", ratio)
+
+
+async def acSetPin(dom, id):
+  global pinNotSet, pwm
+
+  rawPin = await dom.getValue(id)
+  pin = None
+
+  if rawPin in ("Buzzer", "Loudspeaker"):
+    pin = BUZZER_PIN if rawPin == "Buzzer" else LOUDSPEAKER_PIN
+
+    await dom.disableElement("UserPin")
+    await dom.setValue("UserPin", pin)
+  elif rawPin != "User":
+    pin = int(rawPin)
+  else:
+    await dom.enableElement("UserPin")
+
+  if pin:
+    pinNotSet = False
+    pwm = ucuq.PWM(pin)
+    ucuq.render()
+
+CALLBACKS = {
+  "": acConnect,
+  "Play": acPlay,
+  "SetRatio": acSetRatio,
+  "SetPin": acSetPin
+}
+
+HEAD = """
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/beautiful-piano@0.0.6/styles.min.css"></link>
+  <script src="https://cdn.jsdelivr.net/npm/beautiful-piano@0.0.6/dist/piano.min.js"></script>
+"""
+
+BODY = """
 <fieldset>
   <fieldset>
     <ul id="beautiful-piano">
@@ -101,3 +173,9 @@
     </fieldset>
   </fieldset>
 </fieldset>
+"""
+
+
+felix = ucuq.launch()
+
+atlastk.launch(CALLBACKS, headContent=HEAD)

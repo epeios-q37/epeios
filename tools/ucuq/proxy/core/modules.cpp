@@ -18,7 +18,7 @@
 */
 
 
-#include "scripts.h"
+#include "modules.h"
 
 #include "messages.h"
 
@@ -26,14 +26,14 @@
 
 #include "strmrg.h"
 
-using namespace scripts;
+using namespace modules;
 
 namespace {
-  rgstry::wRegistry Scripts_;
+  rgstry::wRegistry Modules_;
   rgstry::sRow Root_;
-  rgstry::rEntry LooseScript_("Script");
-  rgstry::rEntry TaggedScript_(RGSTRY_TAGGING_ATTRIBUTE("name"), LooseScript_);
-  rgstry::rEntry TaggedScriptDependencies_("Dependencies", TaggedScript_);
+  rgstry::rEntry LooseModule_("Module");
+  rgstry::rEntry TaggedModule_(RGSTRY_TAGGING_ATTRIBUTE("name"), LooseModule_);
+  rgstry::rEntry TaggedModuleDependencies_("Dependencies", TaggedModule_);
   mtx::rMutex Mutex_;
 
   void Load_(const fnm::rName &Name)
@@ -42,9 +42,9 @@ namespace {
     rgstry::rContext Context;
     lcl::wMeaning Meaning;
     qRB;
-    tol::Init(Context, Scripts_);
+    tol::Init(Context, Modules_);
 
-    if ( (Root_ = rgstry::Fill(Name, xpp::rCriterions(fnm::rName()), "", Scripts_, Context)) == qNIL ) {
+    if ( (Root_ = rgstry::Fill(Name, xpp::rCriterions(fnm::rName()), "", Modules_, Context)) == qNIL ) {
       Meaning.Init();
       rgstry::GetMeaning(Context, Meaning);
       sclm::ReportAndAbort(Meaning);
@@ -56,11 +56,11 @@ namespace {
 
   namespace {
     namespace {
-      bso::sBool GetScript_(
+      bso::sBool GetModule_(
         const str::dString &Name,
-        str::dString &Script)
+        str::dString &Module)
       {
-        return Scripts_.GetValue(rgstry::rTEntry(TaggedScript_, Name), Root_, Script);
+        return Modules_.GetValue(rgstry::rTEntry(TaggedModule_, Name), Root_, Module);
       }
 
       namespace {
@@ -107,7 +107,7 @@ namespace {
       }
     }
 
-    void GetScriptDependencies_(
+    void GetModuleDependencies_(
       const str::dString &Name,
       str::dStrings &Dependencies)
     {
@@ -115,20 +115,20 @@ namespace {
 
       RawDependency.Init();
 
-      if ( Scripts_.GetValue(rgstry::rTEntry(TaggedScriptDependencies_, Name), Root_, RawDependency) ) {
+      if ( Modules_.GetValue(rgstry::rTEntry(TaggedModuleDependencies_, Name), Root_, RawDependency) ) {
         Split_(RawDependency, Dependencies);
       }
     }
   }
 
-  bso::sBool GetScriptAndDependencies_(
+  bso::sBool GetModuleAndDependencies_(
     const str::dString &Name,
-    str::dString &Script,
+    str::dString &Module,
     str::wStrings &Dependencies)
   {
-    GetScriptDependencies_(Name, Dependencies);
+    GetModuleDependencies_(Name, Dependencies);
 
-    return GetScript_(Name, Script);
+    return GetModule_(Name, Module);
   }
 
   namespace {
@@ -155,7 +155,7 @@ namespace {
   }
 }
 
-void scripts::Load(const fnm::rName & Name)
+void modules::Load(const fnm::rName & Name)
 {
 qRH;
   mtx::rHandle Handle;
@@ -168,9 +168,9 @@ qRT;
 qRE;
 }
 
-bso::sBool scripts::GetScript(
+bso::sBool modules::GetModule(
   const str::dString &Name,
-  str::dString &Script,
+  str::dString &Module,
   str::dStrings &Dependencies)
 {
   bso::sBool Found = false;
@@ -179,7 +179,7 @@ qRH;
 qRB;
   RawDependencies.Init();
 
-  if ( Found = GetScriptAndDependencies_(Name, Script, RawDependencies) )
+  if ( Found = GetModuleAndDependencies_(Name, Module, RawDependencies) )
     AddAbsentDependencies_(RawDependencies, Dependencies);
 qRR;
 qRT;
@@ -187,13 +187,13 @@ qRE;
   return Found;
 }
 
-qGCTOR(scripts) {
-  Scripts_.Init();
+qGCTOR(modules) {
+  Modules_.Init();
   Root_ = qNIL;
   Mutex_ = mtx::Create();
 }
 
-qGDTOR(Scripts) {
+qGDTOR(modules) {
   if ( Mutex_ != mtx::Undefined )
     mtx::Delete(Mutex_);
 

@@ -23,6 +23,6 @@
 using namespace registry;
 
 rEntry registry::parameter::Service("Service", sclr::Parameters);
-rEntry registry::parameter::ScriptsFileName("ScriptsFileName", sclr::Parameters);
+rEntry registry::parameter::ModulesFileName("ModulesFileName", sclr::Parameters);
 
 rEntry registry::definition::Notification("Notification", sclr::Definitions);

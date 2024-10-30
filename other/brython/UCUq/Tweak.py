@@ -14,7 +14,7 @@ I_MODE = "Mode"
 I_PIN = "Pin"
 I_SDA = "SDA"
 I_SCL = "SCL"
-I_DRIVER = "Driver"
+I_CHANNEL = "Channel"
 I_FREQ = "Freq"
 I_DUTY = "Duty"
 I_RATIO = "Ratio"
@@ -32,13 +32,13 @@ O_WIDTH = "TrueWidth"
 
 
 async def getParams():
-  return await ucuq.execute(MC_PARAMS, "getParams(pwm)") if onDuty else None
+  return (await ucuq.renderAwait(f"getParams({pwm.getObject()})")) if onDuty else None
 
 
 async def getDuty(dom):
-  if not ( duty:= await dom.getValue("Duty") ) in [D_RATIO, D_WIDTH]:
+  if not ( duty := await dom.getValue("Duty") ) in [D_RATIO, D_WIDTH]:
     raise Exception ("Bad duty value!!!")
-  
+
   return duty
 
 
@@ -52,19 +52,19 @@ def convert(value, converter):
 
 
 async def getInputs(dom):
-  values = await dom.getValues([I_MODE, I_PIN, I_SDA, I_SCL, I_DRIVER, I_FREQ, I_DUTY, I_RATIO, I_WIDTH])
+  values = await dom.getValues([I_MODE, I_PIN, I_SDA, I_SCL, I_CHANNEL, I_FREQ, I_DUTY, I_RATIO, I_WIDTH])
 
   return {
     I_MODE: values[I_MODE],
     I_PIN: convert(values[I_PIN], int),
     I_SDA: convert(values[I_SDA], int),
     I_SCL: convert(values[I_SCL], int),
-    I_DRIVER: convert(values[I_DRIVER], int),
+    I_CHANNEL: convert(values[I_CHANNEL], int),
     I_FREQ: convert(values[I_FREQ], int),
     I_DUTY: {
       "Type": values[I_DUTY],
       "Value": convert(values[I_RATIO], int) if values[I_DUTY] == D_RATIO else convert(values[I_WIDTH], float)
-    } 
+    }
   }
 
 
@@ -83,17 +83,17 @@ async def test(dom, inputs):
       await dom.alert("No or bad SCL value!")
     elif inputs[I_SDA]== None:
       await dom.alert("No or bad SDA value!")
-    elif inputs[I_DRIVER] == None:
-      await dom.alert("No or bad Driver value!")
+    elif inputs[I_CHANNEL] == None:
+      await dom.alert("No or bad Channel value!")
     else:
       error = False
   else:
     raise Exception("Unknown mode!!!")
-  
-  
+
+
   if error:
     return False
-  
+
   error = True
 
   if inputs[I_FREQ] ==  None:
@@ -110,7 +110,7 @@ async def test(dom, inputs):
       error = False
   else:
     raise Exception("Unknown duty type!!!")
-  
+
   return not error
 
 
@@ -131,12 +131,13 @@ async def updateDutyBox(dom, params = None):
     case "Width":
       await dom.enableElement("Width")
       await dom.disableElement("Ratio")
-      await dom.setValues({
-        I_RATIO: "",
-        I_WIDTH: params[2]/1000000 if onDuty else ""})
+      if onDuty:
+        await dom.setValues({
+          I_RATIO: "",
+          I_WIDTH: params[2]/1000000 if onDuty else ""})
     case _:
       raise Exception("!!!")
-    
+
 
 async def updateDuties(dom, params = None):
   if params == None:
@@ -158,39 +159,39 @@ async def updateDuties(dom, params = None):
 
 
 async def initPWM(inputs):
+  global pwm
+
   if inputs["Mode"] == M_STRAIGHT:
-    script = MC_INIT_STRAIGHT
+    pwm = ucuq.PWM(inputs[I_PIN], inputs[I_FREQ])
   elif inputs["Mode"] == M_PCA9685:
-    script = MC_INIT_PCA9685
+    pwm = ucuq.PCA9685Channel(ucuq.PCA9685(inputs[I_SDA], inputs[I_SCL], inputs[I_FREQ]), inputs[I_CHANNEL])
   else:
-    raise Exception("Unknwon mode!!!")
-    
-  return await ucuq.execute(script.format(
-    pin = inputs[I_PIN],
-    sda = inputs[I_SDA],
-    scl = inputs[I_SCL],
-    driver = inputs[I_DRIVER],
-    freq = inputs[I_FREQ],
-    duty = "duty_u16" if inputs[I_DUTY]["Type"] == D_RATIO else "duty_ns",
-    value = int(inputs[I_DUTY]["Value"] * (1 if inputs[I_DUTY]["Type"] == D_RATIO else 1000000))),
-    "getParams(pwm)")
-  
+    raise Exception("Unknown mode!!!")
+
+  if inputs[I_DUTY]["Type"] == D_RATIO:
+    pwm.dutyU16(int(inputs[I_DUTY]["Value"]))
+  else:
+    pwm.dutyNS(int(1000000 * float(inputs[I_DUTY]["Value"])))
+
+  return await getParams()
 
 async def setFreq(freq):
-  return await ucuq.execute(MC_SET_FREQ.format(freq), "getParams(pwm)")
-  
+  pwm.freq(freq)
+  return await getParams()
+
 
 async def setRatio(ratio):
-  return await ucuq.execute(MC_SET_RATIO.format(ratio), "getParams(pwm)")
-  
+  pwm.dutyU16(ratio)
+  return await getParams()
+
 
 async def setWidth(width):
-  return await ucuq.execute(MC_SET_WIDTH.format(width), "getParams(pwm)")
-  
+  pwm.dutyNS(width)
+  return await getParams()
+
 
 async def acConnect(dom):
   await dom.inner("", BODY)
-  await ucuq.execute(MC_INIT)
   await updateDutyBox(dom)
 
 
@@ -204,8 +205,8 @@ async def acMode(dom, id):
       await dom.disableElement("HidePCA9685")
     case _:
       raise Exception("Unknown mode!")
-  
-  
+
+
 async def acSwitch(dom, id):
   global onDuty
 
@@ -215,12 +216,12 @@ async def acSwitch(dom, id):
     if not await test(dom, inputs):
       await dom.setValue(id, False)
     else:
+      onDuty = True
       await dom.disableElement(I_MODE_BOX)
       await updateDuties(dom, await initPWM(inputs))
-      onDuty = True
   else:
     if onDuty:
-      await ucuq.execute(MC_RESET_PWM)
+      pwm.deinit()
       onDuty = False
     await updateDuties(dom)
     await dom.enableElement(I_MODE_BOX)
@@ -287,161 +288,8 @@ CALLBACKS = {
 }
 
 MC_INIT = """
-import machine, ustruct, time
-
-class PCA9685:
-  def __init__(self, i2c, address=0x40):
-    self.i2c = i2c
-    self.address = address
-    self.reset()
-
-  def _write(self, address, value):
-    self.i2c.writeto_mem(self.address, address, bytearray([value]))
-
-  def _read(self, address):
-    return self.i2c.readfrom_mem(self.address, address, 1)[0]
-
-  def reset(self):
-    self._write(0x00, 0x00) # Mode1
-
-  def freq(self, freq=None):
-    if freq is None:
-      return int(25000000.0 / 4096 / (self._read(0xfe) - 1))
-    prescale = int(25000000.0 / 4096.0 / freq + 1)
-    old_mode = self._read(0x00) # Mode 1
-    self._write(0x00, (old_mode & 0x7F) | 0x10) # Mode 1, sleep
-    self._write(0xfe, prescale) # Prescale
-    self._write(0x00, old_mode) # Mode 1
-    time.sleep_us(5)
-    self._write(0x00, old_mode | 0xa1) # Mode 1, autoincrement on
-
-  def pwm(self, index, on=None, off=None):
-    if on is None or off is None:
-      data = self.i2c.readfrom_mem(self.address, 0x06 + 4 * index, 4)
-      return ustruct.unpack('<HH', data)
-    data = ustruct.pack('<HH', on, off)
-    self.i2c.writeto_mem(self.address, 0x06 + 4 * index,  data)
-
-  def duty(self, index, value=None, invert=False):
-    if value is None:
-      pwm = self.pwm(index)
-      if pwm == (0, 4096):
-        value = 0
-      elif pwm == (4096, 0):
-        value = 4095
-      value = pwm[1]
-      if invert:
-        value = 4095 - value
-      return value
-    if not 0 <= value <= 4095:
-      raise ValueError("Out of range")
-    if invert:
-      value = 4095 - value
-    if value == 0:
-      self.pwm(index, 0, 4096)
-    elif value == 4095:
-      self.pwm(index, 4096, 0)
-    else:
-      self.pwm(index, 0, value)
-
-class Straight:
-  def __init__(self, pin, freq, *, duty_ns = None, duty_u16 = None):
-    self.pwm = machine.PWM(machine.Pin(pin), freq=freq)
-
-    if duty_ns != None:
-      if duty_u16 != None:
-        raise Exception ("duty_ns and duty_u16 can not be specified together!")
-      self.pwm.duty_ns(duty_ns)
-    elif duty_u16 != None:
-      self.pwm.duty_u16(duty_u16)
-
-
-  def deinit(self):
-    self.pwm.deinit()
-
-  def freq(self, value = None):
-    if value == None:
-      return self.pwm.freq()
-    else:
-      return self.pwm.freq(value)
-  
-  def duty_u16(self, value = None):
-    if value == None:
-      return self.pwm.duty_u16()
-    else:
-      return self.pwm.duty_u16(value)
-  
-  def duty_ns(self, value = None):
-    if value == None:
-      return self.pwm.duty_ns()
-    else:
-      return self.pwm.duty_ns(value)
-  
-
-class PCA:
-  def __init__(self, sda, scl, driver, freq, *, duty_ns = None, duty_u16 = None):
-    self.driver = driver
-    self.pca = PCA9685(machine.I2C(sda = sda, scl = scl))
-    self.pca.freq(freq)
-    if duty_ns != None:
-      if duty_u16 != None:
-        raise Exception ("duty_ns and duty_u16 can not be specified together!")
-      self.pca.duty(driver, self.nsToU12_(duty_ns))
-    elif duty_u16 != None:
-      self.pca.duty(driver, duty_u16 >> 4)
-    
-  def deinit(self):
-    self.pca.reset()
-
-  def nsToU12_(self, duty_ns):
-    return int(self.freq() * duty_ns * 0.000004095)
-  
-  def u12ToNS_(self, value):
-    return int(200000000 * value / (self.freq() * 819))
-  
-  def freq(self, value = None):
-    return self.pca.freq(value)
-  
-  def duty_ns(self, value = None):
-    if value == None:
-      return self.u12ToNS_(self.pca.duty(self.driver))
-    self.pca.duty(self.driver, self.nsToU12_(value))
-
-  def duty_u16(self, value = None):
-    if value == None:
-      return self.pca.duty(self.driver) << 4
-    self.pca.duty(self.driver, value >> 4)
-  
-
 def getParams(pwm):
   return [pwm.freq(), pwm.duty_u16(), pwm.duty_ns()]
-"""
-
-MC_INIT_STRAIGHT = """
-pwm = Straight({pin}, {freq}, {duty}={value})
-"""
-
-MC_INIT_PCA9685 = """
-pwm = PCA({sda}, {scl}, {driver}, {freq}, {duty}={value})
-"""
-
-MC_RESET_PWM = """
-pwm.deinit()
-"""
-
-MC_SET_FREQ = """
-pwm.freq({})
-"""
-
-MC_SET_RATIO = """
-pwm.duty_u16({})
-"""
-
-MC_SET_WIDTH = """
-pwm.duty_ns({})
-"""
-
-MC_PARAMS = """
 """
 
 HEAD = """
@@ -463,7 +311,7 @@ output {
   margin: auto;
 }
 
-.switch input { 
+.switch input {
   opacity: 0;
   width: 0;
   height: 0;
@@ -554,7 +402,7 @@ BODY = """
         <div class="straight">
           <label>
             <span>Pin:</span>
-            <input id="Pin" type="number" size="2" value="15" min="0" max="99">
+            <input id="Pin" type="number" size="2" value="10" min="0" max="99">
           </label>
         </div>
         <div class="pca9685">
@@ -568,8 +416,8 @@ BODY = """
               <input id="SCL" type="number" size="2" value="14" min="0" max="99">
             </label>
             <label>
-              <span>Driver:</span>
-              <input id="Driver" size="2" value="0">
+              <span>Channel:</span>
+              <input id="Channel" size="2" value="0">
             </label>
           </fieldset>
         </div>
@@ -593,15 +441,15 @@ BODY = """
       <span>Ratio (/65535):&nbsp;</span>
     </label>
     <span>
-      <input id="Ratio" xdh:onevents="(click|Ratio)(change|Ratio)" type="number" size="5" min="0" max="65535"
-        disabled="disabled" value="7000">
+      <input id="Ratio" xdh:onevents="(click|Ratio)(change|Ratio)" step="100" type="number" size="5" min="0" max="65535"
+        disabled="disabled" value="5000">
       <select id="RatioStep" xdh:onevent="RatioStep">
         <optgroup label="Select step">
           <option value="1">1</option>
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="50">50</option>
-          <option value="100">100</option>
+          <option value="100" selected="selected">100</option>
           <option value="1000">1000</option>
         </optgroup>
       </select>
@@ -613,13 +461,13 @@ BODY = """
     </label>
     <span>
       <input id="Width" xdh:onevents="(click|Width)(change|Width)" type=number size="5" min="0" disabled="disabled"
-        step=".1">
+        step=".01">
       <select id="WidthStep" xdh:onevent="WidthStep">
         <optgroup label="Select step">
+          <option value=".01">0.01</option>
+          <option value=".02">0.02</option>
+          <option value=".05">0.05</option>
           <option value=".1">0.1</option>
-          <option value=".2">0.2</option>
-          <option value=".5">0.5</option>
-          <option value="1">1</option>
         </optgroup>
       </select>
     </span>
@@ -628,7 +476,9 @@ BODY = """
 </fieldset>
 """
 
-ucuq.launch() # If no id given, using the one in teh config file.
+ucuq.launch() # If no id given, using the one in the config file.
+
+ucuq.addCommand(MC_INIT)
+ucuq.render()
 
 atlastk.launch(CALLBACKS, headContent=HEAD)
-

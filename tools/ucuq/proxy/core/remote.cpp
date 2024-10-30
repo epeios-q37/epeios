@@ -23,7 +23,7 @@
 #include "registry.h"
 #include "messages.h"
 #include "device.h"
-#include "scripts.h"
+#include "modules.h"
 
 #include "sclm.h"
 
@@ -131,7 +131,7 @@ namespace {
 
   namespace {
     void Execute_(
-      const str::dString &Script,
+      const str::dString &Module,
       const str::dString &Expression,
       flw::rWFlow &Device,
       const common::gTracker *Tracker)
@@ -141,7 +141,7 @@ namespace {
       str::wString Returned;   // Result of the JSONified evaluation the expression, or exception description if an error occured.
     qRB;
       common::Put(device::rExecute, Device, Tracker);
-      common::Put(Script, Device, Tracker);
+      common::Put(Module, Device, Tracker);
       common::Put(Expression, Device, Tracker);
       common::Commit(Device, Tracker);
     qRR;
@@ -159,16 +159,16 @@ namespace {
     bso::sBool Cont = true;
   qRH;
     str::wString
-      Script,     // Script to execute.
+      Module,     // Module to execute.
       Expression, // Expression to evaluate which result if JSONified and returned.
       Returned;   // Result of the JSONified evaluation the expression, or exception description if an error occured.
   qRB;
-    tol::Init(Script, Expression);
+    tol::Init(Module, Expression);
 
-    common::Get(Remote, Script);
+    common::Get(Remote, Module);
     common::Get(Remote, Expression);
 
-    Execute_(Script, Expression, Device, Tracker);
+    Execute_(Module, Expression, Device, Tracker);
 
     switch ( device::GetAnswer(Device, Tracker) ) {
     case device::aOK:
@@ -227,19 +227,19 @@ namespace {
       }
     }
         
-    void GetGlobalScript_(
-      str::dStrings &ScriptNames,
-      str::dString &GlobalScript)
+    void GetGlobalModule_(
+      str::dStrings &ModuleNames,
+      str::dString &GlobalModule)
     {
       ctn::qCMITEMsl(str::dString) Name;
-      sdr::sRow Row = ScriptNames.First();
+      sdr::sRow Row = ModuleNames.First();
 
-      Name.Init(ScriptNames);
+      Name.Init(ModuleNames);
 
       while ( Row != qNIL ) {
-        scripts::GetScript(Name(Row), GlobalScript, ScriptNames);
+        modules::GetModule(Name(Row), GlobalModule, ModuleNames);
 
-        Row = ScriptNames.Next(Row);
+        Row = ModuleNames.Next(Row);
       }
     }
   }
@@ -251,20 +251,20 @@ namespace {
   {
     bso::sBool Cont = true;
   qRH;
-    str::wStrings ScriptNames;     // Scripts to upload.
-    str::wString Script, Returned;
+    str::wStrings ModuleNames;     // Modules to upload.
+    str::wString Module, Returned;
   qRB;
-    ScriptNames.Init();
+    ModuleNames.Init();
 
-    common::Get(Remote, ScriptNames, Tracker);
+    common::Get(Remote, ModuleNames, Tracker);
 
-    EleminateDuplicates_(ScriptNames);
+    EleminateDuplicates_(ModuleNames);
 
-    Script.Init();
+    Module.Init();
 
-    GetGlobalScript_(ScriptNames, Script);
+    GetGlobalModule_(ModuleNames, Module);
 
-    Execute_(Script, str::Empty, Device, Tracker);
+    Execute_(Module, str::Empty, Device, Tracker);
 
     switch ( device::GetAnswer(Device, Tracker) ) {
     case device::aOK:
