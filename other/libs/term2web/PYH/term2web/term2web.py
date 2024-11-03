@@ -25,8 +25,8 @@ SOFTWARE.
 
 import os, sys, threading, time, html
 
-sys.path.append("./Atlas.zip")
-sys.path.append("../Atlas.zip")
+sys.path.append("./atlastk.zip")
+sys.path.append("../atlastk.zip")
 
 import atlastk as Atlas
 

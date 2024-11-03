@@ -435,8 +435,9 @@ class HT16K33(Core_):
     self.ucuq.addCommand(f"{self.getObject()}.clear()")
     self.render()
 
-  def plot(self, x, y):
-    self.ucuq.addCommand(f"{self.getObject()}.plot({x},{y})")
+  def plot(self, x, y, ink=True):
+    self.ucuq.addCommand(f"{self.getObject()}.plot({x},{y}, ink={1 if ink else 0})")
+    return self
 
   def draw(self, motif):
     self.ucuq.addCommand(f"{self.getObject()}.clear().draw('{motif}').render()")

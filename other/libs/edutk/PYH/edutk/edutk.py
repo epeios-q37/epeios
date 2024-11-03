@@ -34,8 +34,8 @@ import traceback
 # instead of being displayed in an alert box.
 _regularExceptions = False
 
-sys.path.append("./Atlas.zip")
-sys.path.append("../Atlas.zip")
+sys.path.append("./atlastk.zip")
+sys.path.append("../atlastk.zip")
 
 import atlastk as Atlas
 
@@ -162,7 +162,7 @@ def _getHead(path, title, i18n=None):
 
 # Should be almost identical as in 'Atlas.py'
 def _call(func, userObject, dom, id, action):
-  amount = len(inspect.getargspec(func).args)
+  amount = len(inspect.getfullargspec(func).args)
   args = []
 
   if (not(userObject)):

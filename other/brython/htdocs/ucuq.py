@@ -299,10 +299,16 @@ class HT16K33(Core_):
 
   def plot(self, x, y):
     addCommand(f"{self.getObject()}.plot({x},{y})")
+    return self
 
   def draw(self, motif):
     addCommand(f"{self.getObject()}.clear().draw('{motif}').render()")
     self.render()
+
+  def plot(self, x, y, ink=True):
+    addCommand(f"{self.getObject()}.plot({x}, {y}, ink={1 if ink else 0})")  
+    return self
+
 
   def render(self):
     addCommand(f"{self.getObject()}.render()")

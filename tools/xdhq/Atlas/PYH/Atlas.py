@@ -103,7 +103,7 @@ def worker(userCallback,dom,callbacks):
 	userObject = None
 
 	if ( userCallback != None ):
-		if ( not(inspect.isclass(userCallback)) and len(inspect.getargspec(userCallback).args) == 1 ):
+		if ( not(inspect.isclass(userCallback)) and len(inspect.getfullargspec(userCallback).args) == 1 ):
 			args.append(dom)
 
 		userObject = userCallback(*args)
