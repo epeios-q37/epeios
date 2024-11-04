@@ -23,7 +23,7 @@ def GetUUID_():
   return uuid_
 
 
-class Lock:
+class Lock_:
   def __init__(self):
     self.locked_ = False
 
@@ -36,26 +36,9 @@ class Lock:
     self.locked_ = False
 
 
-def launch_(deviceId, callback):
-  if not CONFIG_ITEM in storage:
-    alert("Please launch the 'Config' app first to set the device to use!")
-    console.error = javascript.UNDEFINED  # To avoid the displaying of an alert by below 'exit()'.
-    sys.exit()
-
-  config = json.loads(storage[CONFIG_ITEM])
-
-  device = config["Device"]
-
-  ucuqjs.launch(device["Token"], deviceId if deviceId != None else device["Id"], LIB_VERSION, callback)
-
-
 def uploadCallback_(code, result):
   if code != 0:
     raise Exception(result)
-
-
-def upload_(modules):
-  ucuqjs.upload(modules, lambda code, result: uploadCallback_(code, result))
 
 
 def executeCallback_(data, code, result):
@@ -72,117 +55,132 @@ def executeCallback_(data, code, result):
     data["result"] = jsonResult
     data["lock"].release()
 
-
-async def executeAwait_(script, expression):
-  lock = Lock()
-
-  await lock.acquire()
-
-  data = {
-    "lock": lock
-  }
-
-  ucuqjs.execute(script, expression, lambda code, result: executeCallback_(data, code, result))
-
-  await lock.acquire()
-  
-  return data["result"]
-
-
-def execute_(script):
-  ucuqjs.execute(script, "", lambda code, result: executeCallback_(None, code, result))
-
-
-async def launchSub_(function, lock):
-  await lock.acquire()
-
-  await function()
-
-
 def launchCallback_(lock):
   lock.release()
 
-# Does not handle an expression, otherwise it would need to be defined as 'async'.
-def launch(function = None,*,deviceId=None):
-  lock = Lock()
+class Device:
+  def connect_(self, deviceId, callback):
+    if not CONFIG_ITEM in storage:
+      alert("Please launch the 'Config' app first to set the device to use!")
+      console.error = javascript.UNDEFINED  # To avoid the displaying of an alert by below 'exit()'.
+      sys.exit()
 
-  if function:
-    aio.run(lock.acquire())
+    self.pendingModules_ = ["Init"]
+    self.handledModules_ = []
+    self.commands_ = []
 
-  launch_(deviceId, lambda: launchCallback_(lock) if function else lambda: None)
+    config = json.loads(storage[CONFIG_ITEM])
 
-  if function:
-    aio.run(launchSub_(function, lock))
+    device = config["Device"]
 
+    self.device_ = ucuqjs.launch(device["Token"], deviceId if deviceId != None else device["Id"], LIB_VERSION, callback)
 
-pendingModules = ["Init"]
-handledModules = []
-commands = []
-
-def addModule(module):
-  global pendingModules
-
-  if not module in pendingModules and not module in handledModules:
-    pendingModules.append(module)
+  def __init__(self):
+    self.launch()
 
 
-def addCommand(command):
-  global commands
-
-  commands.append(command)
-
-
-async def renderAwait(expression):
-  global pendingModules, handledModules, commands
-
-  result = ""
-
-  if pendingModules:
-    upload_(pendingModules)
-    handledModules.extend(pendingModules)
-    pendingModules = []
-
-  result = await executeAwait_('\n'.join(commands) if commands else "", expression)
-  commands = []
-
-  return result
-
-def render():
-  global pendingModules, handledModules, commands
-
-  if pendingModules:
-    upload_(pendingModules)
-    handledModules.extend(pendingModules)
-    pendingModules = []
-
-  if commands:
-    execute_('\n'.join(commands))
-  
-  commands = []
+  def upload_(self, modules):
+    print("Device: ", self.device_)
+    ucuqjs.upload(self.device_, modules, lambda code, result: uploadCallback_(code, result))
 
 
-def servoMoves( moves, speed = 1):
-  addModule("ServoMoves")
+  async def executeAwait_(self, script, expression):
+    lock = Lock_()
 
-  command = "servoMoves([\n"
+    await lock.acquire()
 
-  for move in moves:
-    servo = move[0]
+    data = {
+      "lock": lock
+    }
 
-    step = speed * (servo.specs.max - servo.specs.min) / servo.specs.range
+    ucuqjs.execute(self.device_, script, expression, lambda code, result: executeCallback_(data, code, result))
 
-    command += f"\t[{move[0].pwm.getObject()},{move[0].angleToDuty(move[1])}],\n"
+    await lock.acquire()
+    
+    return data["result"]
 
-  command += f"], {int(step)})"
 
-  addCommand(command)
+  def execute_(self, script):
+    ucuqjs.execute(self.device_, script, "", lambda code, result: executeCallback_(None, code, result))
+
+
+  async def launchSub_(function, lock):
+    await lock.acquire()
+
+    await function()
+
+
+  # Does not handle an expression, otherwise it would need to be defined as 'async'.
+  def launch(self, function = None,*,deviceId=None):
+    lock = Lock_()
+
+    if function:
+      aio.run(lock.acquire())
+
+    self.connect_(deviceId, lambda: launchCallback_(lock) if function else lambda: None)
+
+    if function:
+      aio.run(self.launchSub_(function, lock))
+
+
+  def addModule(self, module):
+    if not module in self.pendingModules_ and not module in self.handledModules_:
+      self.pendingModules_.append(module)
+
+
+  def addCommand(self, command):
+    self.commands_.append(command)
+
+
+  async def renderAwait(self, expression):
+    result = ""
+
+    if self.pendingModules_:
+      self.upload_(self.pendingModules_)
+      self.handledModules_.self.extend(self.pendingModules_)
+      self.pendingModules_ = []
+
+    result = await self.executeAwait_('\n'.join(commands) if commands else "", expression)
+    commands = []
+
+    return result
+
+  def render(self):
+    if self.pendingModules_:
+      self.upload_(self.pendingModules_)
+      self.handledModules_.extend(self.pendingModules_)
+      self.pendingModules_ = []
+
+    if self.commands_:
+      self.execute_('\n'.join(self.commands_))
+    
+    self.commands_ = []
+
+
+  def servoMoves(self, moves, speed = 1):
+    self.addModule("ServoMoves")
+
+    command = "servoMoves([\n"
+
+    for move in moves:
+      servo = move[0]
+
+      step = speed * (servo.specs.max - servo.specs.min) / servo.specs.range
+
+      command += f"\t[{move[0].pwm.getObject()},{move[0].angleToDuty(move[1])}],\n"
+
+    command += f"], {int(step)})"
+
+    self.addCommand(command)
 
 
 class Core_:
-  def __init__(self, module = ""):
-    if module:
-      addModule(module)
+  def __init__(self, device, module = ""):
     self.id = None
+    self.device_ = device
+
+    if module:
+      self.device_.addModule(module)
 
   
   def __del__(self):
@@ -195,7 +193,7 @@ class Core_:
 
   
   async def execute(self, script, expr = ""):
-    return await execute(script, expr)
+    return await self.device_.execute(script, expr)
     
     
   def getObject(self):
@@ -203,16 +201,16 @@ class Core_:
   
   
   def addCommand(self, command):
-    addCommand(command)
+    self.device_.addCommand(command)
                          
                          
   def render(self):
-    render()
+    self.render()
   
 
 class GPIO(Core_):
-  def __init__(self, pin = None):
-    super().__init__("GPIO")
+  def __init__(self, pin = None, device = None):
+    super().__init__(device, "GPIO")
 
     if pin:
       self.init(pin)
@@ -234,8 +232,8 @@ class GPIO(Core_):
 
 
 class WS2812(Core_):
-  def __init__(self, pin = None, n = None):
-    super().__init__("WS2812")
+  def __init__(self, pin = None, n = None, device = None):
+    super().__init__(device, "WS2812")
 
     if (pin == None) != (n == None):
       raise Exception("Both or none of 'pin'/'n' must be defined")
@@ -250,16 +248,16 @@ class WS2812(Core_):
 
 
   async def lenAwait(self):
-    return int(await executeAwait_("", f"{self.getObject()}.__len__()"))
+    return int(await self.executeAwait_("", f"{self.getObject()}.__len__()"))
                
 
   def value(self, index, val):
-    addCommand(f"{self.getObject()}.setitem({index}, {json.dumps(val)})")
+    self.addCommand(f"{self.getObject()}.setitem({index}, {json.dumps(val)})")
 
     return self
                        
   async def valueAwait(self, index):
-    return await executeAwait_("", f"{self.getObject()}.__getitem__({index})")
+    return await self.executeAwait_("", f"{self.getObject()}.__getitem__({index})")
                        
   def fill(self, val):
     self.addCommand(f"{self.getObject()}.fill({json.dumps(val)})")
@@ -271,8 +269,8 @@ class WS2812(Core_):
     
 
 class HT16K33(Core_):
-  def __init__(self, sda = None, scl = None):
-    super().__init__("HT16K33")
+  def __init__(self, sda = None, scl = None, device = None):
+    super().__init__(device, "HT16K33")
 
     if bool(sda) != bool(scl):
       raise Exception("None or both of sda/scl must be defined!")
@@ -283,41 +281,41 @@ class HT16K33(Core_):
   def init(self, sda, scl):
     super().init()
 
-    addCommand(f"{self.getObject()} = HT16K33(machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl})))")
-    addCommand(f"{self.getObject()}.set_brightness(0)")
+    self.addCommand(f"{self.getObject()} = HT16K33(machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl})))")
+    self.addCommand(f"{self.getObject()}.set_brightness(0)")
 
 
   def setBlinkRate(self, rate):
-    execute_(f"{self.getObject()}.set_blink_rate({rate})")
+    self.execute_(f"{self.getObject()}.set_blink_rate({rate})")
 
   def setBrightness(self, brightness):
-    execute_(f"{self.getObject()}.set_brightness({brightness})")
+    self.execute_(f"{self.getObject()}.set_brightness({brightness})")
 
   def clear(self):
-    addCommand(f"{self.getObject()}.clear()")
+    self.addCommand(f"{self.getObject()}.clear()")
     self.render()
 
   def plot(self, x, y):
-    addCommand(f"{self.getObject()}.plot({x},{y})")
+    self.addCommand(f"{self.getObject()}.plot({x},{y})")
     return self
 
   def draw(self, motif):
-    addCommand(f"{self.getObject()}.clear().draw('{motif}').render()")
+    self.addCommand(f"{self.getObject()}.clear().draw('{motif}').render()")
     self.render()
 
   def plot(self, x, y, ink=True):
-    addCommand(f"{self.getObject()}.plot({x}, {y}, ink={1 if ink else 0})")  
+    self.addCommand(f"{self.getObject()}.plot({x}, {y}, ink={1 if ink else 0})")  
     return self
 
 
   def render(self):
-    addCommand(f"{self.getObject()}.render()")
+    self.addCommand(f"{self.getObject()}.render()")
     super().render()
 
 
 class PWM(Core_):
-  def __init__(self, pin = None, freq = None):
-    super().__init__("PWM")
+  def __init__(self, pin = None, freq = None, device = None):
+    super().__init__(device, "PWM")
 
     if freq != None:
       if pin == None:
@@ -330,40 +328,40 @@ class PWM(Core_):
   def init(self, pin, freq = None):
     super().init()
 
-    addCommand(f"{self.getObject()} = machine.PWM(machine.Pin({pin}),freq={freq if freq else 50})")
+    self.addCommand(f"{self.getObject()} = machine.PWM(machine.Pin({pin}),freq={freq if freq else 50})")
 
 
   async def dutyU16Await(self):
-    return int(await executeAwait_("", f"{self.getObject()}.duty_u16()"))
+    return int(await self.executeAwait_("", f"{self.getObject()}.duty_u16()"))
 
 
   def dutyU16(self, u16):
-    addCommand(f"{self.getObject()}.duty_u16({u16})")
+    self.addCommand(f"{self.getObject()}.duty_u16({u16})")
 
 
   async def dutyNSAwait(self):
-    return int(await executeAwait_("", f"{self.getObject()}.duty_ns()"))
+    return int(await self.executeAwait_("", f"{self.getObject()}.duty_ns()"))
 
 
   def dutyNS(self, ns):
-    addCommand(f"{self.getObject()}.duty_ns({ns})")
+    self.addCommand(f"{self.getObject()}.duty_ns({ns})")
 
 
   async def freqAwait(self):
-    return int(await executeAwait_("", f"{self.getObject()}.freq()"))
+    return int(await self.executeAwait_("", f"{self.getObject()}.freq()"))
 
 
   def freq(self, freq):
-    addCommand(f"{self.getObject()}.freq({freq})")
+    self.addCommand(f"{self.getObject()}.freq({freq})")
 
 
   def deinit(self):
-    addCommand(f"{self.getObject()}.deinit()")
+    self.addCommand(f"{self.getObject()}.deinit()")
 
 
 class PCA9685(Core_):
-  def __init__(self, sda = None, scl = None, freq = None, addr = None):
-    super().__init__("PCA9685")
+  def __init__(self, sda = None, scl = None, freq = None, addr = None, device = None):
+    super().__init__(device, "PCA9685")
 
     if (sda != None) != bool(scl != None) :
       raise Exception("None or both of 'sda'/'scl' must be defined!")
@@ -379,12 +377,12 @@ class PCA9685(Core_):
   def init(self, sda, scl, *, freq = None, addr = None):
     super().init()
 
-    addCommand(f"{self.getObject()} = PCA9685({sda}, {scl}, {addr if addr else 0x40})")
+    self.addCommand(f"{self.getObject()} = PCA9685({sda}, {scl}, {addr if addr else 0x40})")
     self.freq(freq if freq else 50)
 
 
   def deinit(self):
-    addCommand(f"{self.getObject()}.reset()")
+    self.addCommand(f"{self.getObject()}.reset()")
                     
 
   def nsToU12_(self, duty_ns):
@@ -394,15 +392,15 @@ class PCA9685(Core_):
     return int(200000000 * value / (self.freq() * 819))
 
   async def freqAwait(self):
-    return await executeAwait_("", f"{self.getObject()}.freq()")
+    return await self.executeAwait_("", f"{self.getObject()}.freq()")
 
   def freq(self, freq):
-    return addCommand(f"{self.getObject()}.freq({freq})")
+    return self.addCommand(f"{self.getObject()}.freq({freq})")
   
 
 class PCA9685Channel(Core_):
-  def __init__(self, pca = None, channel = None, /):
-    super().__init__("PCA9685Channel")
+  def __init__(self, pca = None, channel = None, device = None):
+    super().__init__(device, "PCA9685Channel")
 
     if bool(pca) != (channel != None):
       raise Exception("Both or none of 'pca' and 'channel' must be defined!")
@@ -415,14 +413,14 @@ class PCA9685Channel(Core_):
     super().init()
 
     self.pca = pca # Not used inside this object, but to avoid pca being destroyed by GC, as it is used on the µc.
-    addCommand(f"{self.getObject()} = PCA9685Channel({pca.getObject()}, {channel})")
+    self.addCommand(f"{self.getObject()} = PCA9685Channel({pca.getObject()}, {channel})")
 
   def deinit(self):
-    addCommand(f"{self.getObject()}.deinit()")
+    self.addCommand(f"{self.getObject()}.deinit()")
 
 
   async def dutyNSAwait(self,):
-    return int(await executeAwait_("", f"{self.getObject()}.duty_ns()"))
+    return int(await self.executeAwait_("", f"{self.getObject()}.duty_ns()"))
     self.addCommand(f"{self.getObject()}.duty_ns({ns})")
 
   def dutyNS(self, ns):
@@ -430,17 +428,17 @@ class PCA9685Channel(Core_):
 
 
   async def dutyU16Await(self, u16 = None):
-    return int(await executeAwait_("",f"{self.getObject()}.duty_u16()"))
+    return int(await self.executeAwait_("",f"{self.getObject()}.duty_u16()"))
   
   def dutyU16(self, u16):
-    addCommand(f"{self.getObject()}.duty_u16({u16})")
+    self.addCommand(f"{self.getObject()}.duty_u16({u16})")
   
 
   async def freq(self):
-    return int(await executeAwait_("",f"{self.getObject()}.freq()"))
+    return int(await self.executeAwait_("",f"{self.getObject()}.freq()"))
   
   def freq(self, freq):
-    addCommand(f"{self.getObject()}.freq({freq})")
+    self.addCommand(f"{self.getObject()}.freq({freq})")
   
 
 
@@ -473,8 +471,8 @@ class Servo(Core_):
         raise Exception("'domain' can not be defined without 'specs'!")
 
 
-  def __init__(self, pwm = None, specs = None, /, *, tweak = None, domain = None):
-    super().__init__("Servo")
+  def __init__(self, pwm = None, specs = None, /, *, tweak = None, domain = None, device = None):
+    super().__init__(device, "Servo")
 
     self.test_(pwm, specs, tweak, domain)
 

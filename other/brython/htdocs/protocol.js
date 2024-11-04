@@ -108,14 +108,14 @@ class Handler {
   
   }
 
-handleUInt(feeder) {
-    if (feeder.isEmpty()) return false;
-  
-    let byte = feeder.get(1)[0];
-    this.UInt = (this.UInt << 7) + (byte & 0x7f);
-  
-    return !(byte & 0x80);
-  }
+  handleUInt(feeder) {
+      if (feeder.isEmpty()) return false;
+    
+      let byte = feeder.get(1)[0];
+      this.UInt = (this.UInt << 7) + (byte & 0x7f);
+    
+      return !(byte & 0x80);
+    }
   
   handleContent(feeder) {
     if (this.Length === 0) return true;

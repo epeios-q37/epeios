@@ -17,82 +17,6 @@ function exit_(message) {
 const PROTOCOL_LABEL = "c37cc83e-079f-448a-9541-5c63ce00d960";
 const PROTOCOL_VERSION = "0";
 
-var wsUCUq = undefined;
-var cont = true
-
-function convertUInt(value)
-{
-  return proto.convertUInt(value);
-}
-
-function convertSInt(value)
-{
-  return proto.convertSInt(value);
-}
-
-function handleString(string)
-{
-  return proto.handleString(string);
-}
-
-function addString(data, string) {
-  return proto.addString(data, string);
-}
-
-function addStrings(data, strings) {
-  return proto.addStrings(data, strings);
-}
-
-function protoGetUInt() {
-  return handler.getUInt();
-}
-
-function protoGetSInt() {
-  return handler.getSInt();
-}
-
-function protoGetString() {
-  return handler.getString();
-}
-
-function protoGetStrings() {
-  return handler.getStrings();
-}
-
-function protoHandleData(feeder) {
-  if ( handler.handleData(feeder) )
-    cont = true;
-}
-
-function protoPush(op) {
-  return handler.push(op);
-}
-
-function protoPushUInt() {
-  return handler.pushUInt();  
-}
-
-function protoPushSInt() {
-  return handler.pushSInt();  
-}
-
-function protoPushString() {
-  return handler.pushString();  
-}
-
-function protoPushStrings() {
-  return handler.pushStrings();  
-}
-
-function protoPop() {
-  cont = true;
-  return handler.pop();
-}
-
-function protoTop() {
-  return handler.top();
-}
-
 /************/
 /* STEERING */
 /************/
@@ -106,42 +30,49 @@ const s = {
   RESULT: 306
 }
 
-function steering(feeder) {
-  while (!feeder.isEmpty() || cont) {
-    cont = false;
+function steering(handler, feeder) {
+  console.log("Steering", feeder)
+  while (!feeder.isEmpty() || feeder.cont) {
+    feeder.cont = false;
 
     // console.log(stack)
 
-    switch (protoTop()) {
+    switch (handler.top()) {
       case s.STEERING:
         break;
       case s.UPLOAD:
-        protoPop();
-        uploadCallback(protoGetSInt(), protoGetString())  // result of 'protoGetString()' doesn't matter ir result of 'protoGetSInt()' is == 0.
+        handler.pop(feeder);
+        feeder.cont = true;
+        handler.uploadCallback(handler.getSInt(), handler.getString())  // result of 'handler.getString()' doesn't matter ir result of 'handler.getSInt()' is == 0.
         break;
       case s.EXECUTE:
-        protoPop();
-        executeCallback(protoGetSInt(), protoGetString())
+        handler.pop(feeder);
+        feeder.cont = true;
+        executeCallback(handler.getSInt(), handler.getString())
         break;
       case s.UPLOAD_ANSWER:
-        protoPop();
-        if ( protoGetSInt() != 0 ) {
-          protoPush(s.RESULT);
-          protoPushString();
+        handler.pop(feeder);
+        feeder.cont = true;
+        if ( handler.getSInt() != 0 ) {
+          handler.push(s.RESULT);
+          handler.pushString();
         }
       case s.EXECUTE_ANSWER:
-        protoPop();
-        protoPush(s.RESULT);
-        protoPushString();
+        handler.pop(feeder);
+        feeder.cont = true;
+        handler.push(s.RESULT);
+        handler.pushString();
         break;
       case s.RESULT:
-        protoPop();
+        handler.pop(feeder);
+        feeder.cont = true;
         break;
       default:
-        if ( protoTop() >= 0 )
+        if ( handler.top() >= 0 )
           exit_("Unknown steering operation!");
         else
-          protoHandleData(feeder);
+        if ( handler.handleData(feeder) )
+          feeder.cont = true;
         break;
     }
   }
@@ -156,24 +87,28 @@ const i = {
   REPORT: 202,
 };
 
-function ignition(feeder) {
-  while (!feeder.isEmpty() || cont) {
-    cont = false;
-    switch (protoTop()) {
+function ignition(handler, feeder) {
+  console.log("Ignition", feeder)
+  while (!feeder.isEmpty() || feeder.cont) {
+    feeder.cont = false;
+    switch (handler.top()) {
       case i.IGNITION:
-        protoPop();
-        protoPush(s.STEERING);
+        handler.pop(feeder);
+        feeder.cont = true;
+        handler.push(s.STEERING);
         return false;
         break;
       case i.REPORT:
-        if (protoGetString().length) exit_(protoGetString());
-        protoPop();
+        if (handler.getString().length) exit_(handler.getString());
+        handler.pop(feeder);
+        feeder.cont = true;
         break;
       default:
-        if ( protoTop() >= 0 )
+        if ( handler.top() >= 0 )
           exit_("Unknown ignition operation!");
         else
-          protoHandleData(feeder);
+        if ( handler.handleData(feeder) )
+          feeder.cont = true;
         break;
     }
   }
@@ -192,35 +127,44 @@ const h = {
   NOTIFICATION: 103,
 };
 
-function handshakes(feeder, deviceToken, deviceId) {
-  while (!feeder.isEmpty() || cont) {
-    cont = false;
-    switch (protoTop()) {
+function handshakes(handler, feeder, deviceToken, deviceId) {
+  while (!feeder.isEmpty() || feeder.cont) {
+    console.log("Handshake", feeder)
+    feeder.cont = false;
+    switch (handler.top()) {
       case h.HANDSHAKES:
-        protoPop();
-        protoPush(i.IGNITION);
-        protoPush(i.REPORT);
-        protoPushString();
+        handler.pop(feeder);
+        feeder.cont = true;
+        handler.push(i.IGNITION);
+        handler.push(i.REPORT);
+        handler.pushString();
+        log("1");
         return false;
         break;
       case h.ERROR:
-        if (protoGetString().length) exit_(protoGetString());
+        log("2");
+        if (handler.getString().length) exit_(handler.getString());
 
-        protoPop();
-        protoPush(h.NOTIFICATION);
-        protoPushString();
+        handler.pop(feeder);
+        feeder.cont = true;
+        handler.push(h.NOTIFICATION);
+        handler.pushString();
         break;
       case h.NOTIFICATION:
-        if (protoGetString().length) console.log(protoGetString() + "\n");
+        log("3");
+        if (handler.getString().length) console.log(handler.getString() + "\n");
 
-        wsUCUq.send(addString(handleString(deviceToken), deviceId))
-        protoPop();
+        handler.ws.send(proto.addString(proto.handleString(deviceToken), deviceId))
+        handler.pop(feeder);
+        feeder.cont = true;
         break;
       default:
-        if ( protoTop() >= 0 )
-          exit_("UCUQ Unknown handshake operation!" + protoTop());
+        log("4");
+        if ( handler.top() >= 0 )
+          exit_("UCUQ Unknown handshake operation!" + handler.top());
         else
-          protoHandleData(feeder);
+        if ( handler.handleData(feeder) )
+          feeder.cont = true;
         break;
     }
   }
@@ -240,28 +184,29 @@ const p = {
 
 var phase = p.HANDSHAKES;
 
-function onRead(data, deviceToken, deviceId) {
-  // console.log(">>>>> DATA:", data.length);
+function onRead(handler, data, deviceToken, deviceId) {
+  console.log(">>>>> DATA:", data.length);
 
   let feeder = proto.getFeeder(data);
+  feeder.cont = true;
 
   while (!feeder.isEmpty()) {
     switch (phase) {
       case p.HANDSHAKES:
-        if (!handshakes(feeder, deviceToken, deviceId)) phase = p.IGNITION;
-        console.log("Token: '" + deviceToken + "', Id: '" + deviceId +"'");
+        if (!handshakes(handler, feeder, deviceToken, deviceId)) phase = p.IGNITION;
+        console.log("Token: '" + deviceToken + "', Id: '" + deviceId +"'", feeder);
         break;
       case p.IGNITION:
-        if (!ignition(feeder)) {
+        if (!ignition(handler, feeder)) {
           phase = p.STEERING;
-          wsUCUq.ignited = true;
+          handler.ignited = true;
 
         //  if (launchCallback)
             launchCallback();
         }
         break;
       case p.STEERING:
-        steering(feeder);
+        steering(handler, feeder);
         break;
       default:
         exit_("Unknown phase of value '" + step + "'!");
@@ -294,78 +239,78 @@ function launch_(deviceToken, deviceId, libraryVersion, callback) {
 
   log("Connecting to '" + WS_URL_ + "'…");
 
-  if (wsUCUq !== undefined) wsUCUq.close();
+  handler.ws = new WebSocket(WS_URL_);
 
-  wsUCUq = new WebSocket(WS_URL_);
+  handler.ignited = false;
 
-  wsUCUq.ignited = false;
+  console.log(handler)
 
-  wsUCUq.onerror = function (err) {
+  handler.ws.onerror = function (err) {
     log("Unable to connect to '" + WS_URL_ + "'!");
   };
 
-  wsUCUq.onopen = function () {
+  handler.ws.onopen = function () {
     log("Connected to '" + WS_URL_ + "'.");
-    protoPush(h.HANDSHAKES);
-    protoPush(h.ERROR);
-    protoPushString();
-    wsUCUq.send(
-      addString(
-       addString(
-          addString(handleString(PROTOCOL_LABEL), PROTOCOL_VERSION),
+    handler.push(h.HANDSHAKES);
+    handler.push(h.ERROR);
+    handler.pushString();
+    handler.ws.send(
+      proto.addString(
+        proto.addString(
+          proto.addString(proto.handleString(PROTOCOL_LABEL), PROTOCOL_VERSION),
           "Remote"),
         "BRY " + libraryVersion,
       ),
     );
   };
-  wsUCUq.onclose = function () {
+  handler.ws.onclose = function () {
     log("Disconnected!");
   };
-  wsUCUq.onmessage = function (event) {
+  handler.ws.onmessage = function (event) {
     blob2Buffer(event.data, function (err, buffer) {
-      onRead(buffer, deviceToken, deviceId);
+      onRead(handler, buffer, deviceToken, deviceId);
     });
   };
+
+  return handler;
 }
 
-function subUpload_(modules) {
-  if ( !wsUCUq.ignited )
-    setTimeout(() => subUpload_(modules));
+function subUpload_(handler, modules) {
+  if ( !handler.ignited )
+    setTimeout(() => subUpload_(handler, modules));
   else {
-    protoPush(s.UPLOAD)
-    protoPush(s.EXECUTE_ANSWER);
-    protoPushSInt();
+    handler.push(s.UPLOAD)
+    handler.push(s.EXECUTE_ANSWER);
+    handler.pushSInt();
 
-    wsUCUq.send(
-      addStrings(
-        handleString("Upload_1"),
+    handler.ws.send(
+      proto.addStrings(
+        proto.handleString("Upload_1"),
         modules
       )
     )
   }
 }
 
-var uploadCallback = undefined;
+function upload_(handler, modules, callback) {
+  handler.uploadCallback = callback;
 
-function upload_(modules, callback) {
-  uploadCallback = callback;
-
-  subUpload_(modules);
+  subUpload_(handler, modules);
 }
 
 
-function subExecute_(script, expression) {
-  if ( !wsUCUq.ignited )
-    setTimeout(() => subExecute_(script, expression));
+function subExecute_(handler, script, expression) {
+  if ( !handler.ignited )
+    setTimeout(() => subExecute_(handler, script, expression));
   else {
-    protoPush(s.EXECUTE);
-    protoPush(s.EXECUTE_ANSWER);
-    protoPushSInt();
+    handler.push(s.EXECUTE);
+    handler.push(s.EXECUTE_ANSWER);
+    handler.pushSInt();
     
-    wsUCUq.send(
-      addString(
-        addString(
-          handleString("Execute_1"),
+    handler.ws.send(
+      proto.addString(
+        proto.addString(
+          proto.handleString("Execute_1"),
           script),
       expression)
     );
@@ -374,10 +319,10 @@ function subExecute_(script, expression) {
 
 var executeCallback = undefined;
 
-function execute_(script, expression, callback) {
+function execute_(handler, script, expression, callback) {
   executeCallback = callback;
 
-  subExecute_(script, expression);
+  subExecute_(handler, script, expression);
 
 //  setTimeout(() => subExecute_(script, expression), 2000);
 }
