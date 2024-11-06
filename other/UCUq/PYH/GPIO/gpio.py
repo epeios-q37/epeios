@@ -307,8 +307,6 @@ CALLBACKS = {
   "PWM": lambda GPIO, dom: GPIO.setAllMode(dom,Mode.PWM),
 }
 
-device = ucuq.UCUq("Red")
-
 syncSettings()
 
 atlastk.launch(CALLBACKS, GPIO, headContent=HEAD)

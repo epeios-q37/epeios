@@ -36,19 +36,21 @@ MATRICES = (
   "00003ffc40025ffa2ff417e8081007e",
 )
 
+TEST_DELAY = 0.1
+
 def test():
   for y in range(8):
     for x in range(16):
       matrix.plot(x,y)
     matrix.render()
-    # time.sleep(.06)
+    ucuq.sleep(TEST_DELAY)
     matrix.clear()
 
   for x in range(16):
     for y in range(8):
       matrix.plot(x,y)
     matrix.render()
-    # time.sleep(.06)
+    ucuq.sleep(TEST_DELAY)
     matrix.clear()
 
   for x in range(16):
@@ -59,15 +61,14 @@ def test():
 
   for b in range(0, 16):
     matrix.setBrightness(b)
-    device.render()
-    # time.sleep(0.05)
+    ucuq.sleep(TEST_DELAY)
 
   for b in range(15, -1, -1):
     matrix.setBrightness(b)
-    device.render()
-    # time.sleep(0.05)
+    ucuq.sleep(TEST_DELAY)
 
-  matrix.clear()
+  matrix.clear().render()
+  ucuq.render()
 
 
 def drawOnGUI(dom, motif = pattern):
@@ -108,7 +109,9 @@ def setHexa(dom, motif = pattern):
 
 
 def drawOnMatrix(motif = pattern):
-  matrix.draw(motif)
+  matrix.draw(motif).render()
+
+  ucuq.render()
 
 def draw(dom, motif = pattern):
   global pattern
@@ -178,23 +181,14 @@ def acAll(dom):
 
 def acBrightness(dom, id):
   matrix.setBrightness(int(dom.getValue(id)))
-  device.render()
+  ucuq.render()
 
 def acBlinkRate(dom, id):
   matrix.setBlinkRate(float(dom.getValue(id)))
-  device.render()
+  ucuq.render()
 
 def acDraw(dom, id):
   draw(dom,MATRICES[int(dom.getMark(id))])
-
-def connect_(id):
-  device = ucuq.UCUq()
-
-  if not device.connect(id):
-    print(f"Device '{id}' not available.")
-
-  return device
-
 
 CALLBACKS = {
   "": acConnect,
@@ -207,12 +201,11 @@ CALLBACKS = {
   "Draw": acDraw
 }
 
-device = ucuq.UCUq("")
-matrix = ucuq.HT16K33(device, 4, 5)
+matrix = ucuq.HT16K33(4, 5)
 matrix.clear()
 matrix.setBrightness(0)
 matrix.setBlinkRate(0)
-device.render()
+ucuq.render()
 
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

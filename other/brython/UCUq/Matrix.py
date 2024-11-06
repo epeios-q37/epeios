@@ -294,8 +294,6 @@ CALLBACKS = {
   "Draw": acDraw
 }
 
-ucuq.launch()
-
 matrix = ucuq.HT16K33(4, 5)
 matrix.clear()
 matrix.setBrightness(0)

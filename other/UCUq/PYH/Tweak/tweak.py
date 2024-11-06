@@ -49,7 +49,7 @@ with open('Head.html', 'r') as file:
 
 
 def getParams():
-  return device.execute("", f"getParams({pwm.getObject()})") if onDuty else None
+  return ucuq.render(f"getParams({pwm.getObject()})") if onDuty else None
 
 
 def getDuty(dom):
@@ -178,33 +178,33 @@ def initPWM(inputs):
   global pwm
   
   if inputs["Mode"] == M_STRAIGHT:
-    pwm = ucuq.PWM(device, inputs[I_PIN], inputs[I_FREQ])
+    pwm = ucuq.PWM(inputs[I_PIN], inputs[I_FREQ])
   elif inputs["Mode"] == M_PCA9685:
-    pwm = ucuq.PCA9685Channel(device, ucuq.PCA9685(device, inputs[I_SDA], inputs[I_SCL], inputs[I_FREQ]), inputs[I_DRIVER],)
+    pwm = ucuq.PCA9685Channel(ucuq.PCA9685(inputs[I_SDA], inputs[I_SCL], inputs[I_FREQ]), inputs[I_DRIVER],)
   else:
     raise Exception("Unknown mode!!!")
 
   if inputs[I_DUTY]["Type"] == D_RATIO:
-    pwm.duty_u16(int(inputs[I_DUTY]["Value"]))
+    pwm.setU16(int(inputs[I_DUTY]["Value"]))
   else:
-    pwm.duty_ns(int(1000000 * float(inputs[I_DUTY]["Value"])))
+    pwm.setNS(int(1000000 * float(inputs[I_DUTY]["Value"])))
   
-  return device.render(f"getParams({pwm.getObject()})")
+  return ucuq.render(f"getParams({pwm.getObject()})")
   
 
 def setFreq(freq):
-  pwm.freq(freq)
-  return device.render(f"getParams({pwm.getObject()})")
+  pwm.setFreq(freq)
+  return ucuq.render(f"getParams({pwm.getObject()})")
   
 
 def setRatio(ratio):
-  pwm.duty_u16(ratio)
-  return device.render(f"getParams({pwm.getObject()})")
+  pwm.setU16(ratio)
+  return ucuq.render(f"getParams({pwm.getObject()})")
   
 
 def setWidth(width):
-  pwm.duty_ns(width)
-  return device.render(f"getParams({pwm.getObject()})")
+  pwm.setNS(width)
+  return ucuq.render(f"getParams({pwm.getObject()})")
   
 
 def acConnect(dom):
@@ -239,7 +239,7 @@ def acSwitch(dom, id):
   else:
     if onDuty:
       pwm.deinit()
-      device.render()
+      ucuq.render()
       onDuty = False
     updateDuties(dom)
     dom.enableElement(I_MODE_BOX)
@@ -297,7 +297,6 @@ CALLBACKS = {
   "WidthStep": lambda dom, id: dom.setAttribute(I_WIDTH, "step", dom.getValue(id)),
 }
 
-device = ucuq.UCUq("")
-device.execute(MC_INIT)
+ucuq.addCommand(MC_INIT)
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

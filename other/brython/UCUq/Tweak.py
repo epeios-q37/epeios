@@ -169,9 +169,9 @@ async def initPWM(inputs):
     raise Exception("Unknown mode!!!")
 
   if inputs[I_DUTY]["Type"] == D_RATIO:
-    pwm.dutyU16(int(inputs[I_DUTY]["Value"]))
+    pwm.setU16(int(inputs[I_DUTY]["Value"]))
   else:
-    pwm.dutyNS(int(1000000 * float(inputs[I_DUTY]["Value"])))
+    pwm.setNS(int(1000000 * float(inputs[I_DUTY]["Value"])))
 
   return await getParams()
 
@@ -181,12 +181,12 @@ async def setFreq(freq):
 
 
 async def setRatio(ratio):
-  pwm.dutyU16(ratio)
+  pwm.setU16(ratio)
   return await getParams()
 
 
 async def setWidth(width):
-  pwm.dutyNS(width)
+  pwm.setNS(width)
   return await getParams()
 
 
@@ -475,8 +475,6 @@ BODY = """
   </div>
 </fieldset>
 """
-
-ucuq.launch() # If no id given, using the one in the config file.
 
 ucuq.addCommand(MC_INIT)
 ucuq.render()

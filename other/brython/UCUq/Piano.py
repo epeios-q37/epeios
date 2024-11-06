@@ -20,11 +20,11 @@ async def acPlay(dom,id):
     await dom.alert("Please select a pin number!")
   else:
     freq = int(baseFreq*math.pow(math.pow(2,1.0/12), int(id)))
-    pwm.dutyU16(int(ratio*65535))
-    pwm.freq(freq)
+    pwm.setU16(int(ratio*65535))
+    pwm.setFreq(freq)
     ucuq.render()
     await ucuq.sleepAwait(500)
-    pwm.dutyU16(0)
+    pwm.setU16(0)
     ucuq.render()
 
 
@@ -174,8 +174,5 @@ BODY = """
   </fieldset>
 </fieldset>
 """
-
-
-felix = ucuq.launch()
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

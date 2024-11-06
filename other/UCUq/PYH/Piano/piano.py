@@ -30,11 +30,11 @@ def acPlay(dom,id):
     dom.alert("Please select a pin number!")
   else:
     freq = int(baseFreq*math.pow(math.pow(2,1.0/12), int(id)))
-    pwm.duty_u16(int(ratio*65535))
-    pwm.freq(freq)
-    felix.addCommand("time.sleep(0.5)")
-    pwm.duty_u16(0)
-    felix.render()
+    pwm.setU16(int(ratio*65535))
+    pwm.setFreq(freq)
+    ucuq.sleep(0.5)
+    pwm.setU16(0)
+    ucuq.render()
 
 
 def acSetRatio(dom, id):
@@ -63,8 +63,8 @@ def acSetPin(dom, id):
     
   if pin:
     pinNotSet = False
-    pwm = ucuq.PWM(felix, pin)
-    felix.render()
+    pwm = ucuq.PWM(pin)
+    ucuq.render()
 
 CALLBACKS = {
   "": acConnect,
@@ -77,8 +77,5 @@ HEAD = """
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/beautiful-piano@0.0.6/styles.min.css"></link>
   <script src="https://cdn.jsdelivr.net/npm/beautiful-piano@0.0.6/dist/piano.min.js"></script>
 """
-
-
-felix = ucuq.UCUq("")
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

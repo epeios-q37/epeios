@@ -167,8 +167,6 @@ HEAD = """
 <script src="https://cdn.jsdelivr.net/npm/reinvented-color-wheel@0.4.0"></script>
 """
 
-ucuq.launch()
-
 leds = ucuq.WS2812(16, 4)
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

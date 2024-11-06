@@ -81,8 +81,6 @@ CALLBACKS = {
   "Reset": acReset
 }
 
-device = ucuq.UCUq("")
-leds = ucuq.WS2812(device, 16, 4)
-
+leds = ucuq.WS2812(16, 4)
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

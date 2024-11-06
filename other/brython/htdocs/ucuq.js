@@ -1,7 +1,5 @@
 proto = require("./protocol.js")
 
-var handler = undefined;
-
 const location = window.location;
 const WS_URL_ = (location.protocol === "http:" ? "ws" : "wss") + "://" + location.hostname + "/ucuq/";
 
@@ -30,10 +28,9 @@ const s = {
   RESULT: 306
 }
 
-function steering(handler, feeder) {
-  console.log("Steering", feeder)
-  while (!feeder.isEmpty() || feeder.cont) {
-    feeder.cont = false;
+function steering(handler) {
+  while (!handler.feeder.isEmpty() || handler.feeder.cont) {
+    handler.feeder.cont = false;
 
     // console.log(stack)
 
@@ -41,38 +38,38 @@ function steering(handler, feeder) {
       case s.STEERING:
         break;
       case s.UPLOAD:
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         handler.uploadCallback(handler.getSInt(), handler.getString())  // result of 'handler.getString()' doesn't matter ir result of 'handler.getSInt()' is == 0.
         break;
       case s.EXECUTE:
-        handler.pop(feeder);
-        feeder.cont = true;
-        executeCallback(handler.getSInt(), handler.getString())
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
+        handler.executeCallback(handler.getSInt(), handler.getString())
         break;
       case s.UPLOAD_ANSWER:
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         if ( handler.getSInt() != 0 ) {
           handler.push(s.RESULT);
           handler.pushString();
         }
       case s.EXECUTE_ANSWER:
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         handler.push(s.RESULT);
         handler.pushString();
         break;
       case s.RESULT:
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         break;
       default:
         if ( handler.top() >= 0 )
           exit_("Unknown steering operation!");
         else
-        if ( handler.handleData(feeder) )
-          feeder.cont = true;
+        if ( handler.handleData(handler.feeder) )
+          handler.feeder.cont = true;
         break;
     }
   }
@@ -87,28 +84,27 @@ const i = {
   REPORT: 202,
 };
 
-function ignition(handler, feeder) {
-  console.log("Ignition", feeder)
-  while (!feeder.isEmpty() || feeder.cont) {
-    feeder.cont = false;
+function ignition(handler) {
+  while (!handler.feeder.isEmpty() || handler.feeder.cont) {
+    handler.feeder.cont = false;
     switch (handler.top()) {
       case i.IGNITION:
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         handler.push(s.STEERING);
         return false;
         break;
       case i.REPORT:
         if (handler.getString().length) exit_(handler.getString());
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         break;
       default:
         if ( handler.top() >= 0 )
           exit_("Unknown ignition operation!");
         else
-        if ( handler.handleData(feeder) )
-          feeder.cont = true;
+        if ( handler.handleData(handler.feeder) )
+          handler.feeder.cont = true;
         break;
     }
   }
@@ -127,44 +123,39 @@ const h = {
   NOTIFICATION: 103,
 };
 
-function handshakes(handler, feeder, deviceToken, deviceId) {
-  while (!feeder.isEmpty() || feeder.cont) {
-    console.log("Handshake", feeder)
-    feeder.cont = false;
+function handshakes(handler, deviceToken, deviceId) {
+  while (!handler.feeder.isEmpty() || handler.feeder.cont) {
+    handler.feeder.cont = false;
     switch (handler.top()) {
       case h.HANDSHAKES:
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         handler.push(i.IGNITION);
         handler.push(i.REPORT);
         handler.pushString();
-        log("1");
         return false;
         break;
       case h.ERROR:
-        log("2");
         if (handler.getString().length) exit_(handler.getString());
 
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         handler.push(h.NOTIFICATION);
         handler.pushString();
         break;
       case h.NOTIFICATION:
-        log("3");
         if (handler.getString().length) console.log(handler.getString() + "\n");
 
         handler.ws.send(proto.addString(proto.handleString(deviceToken), deviceId))
-        handler.pop(feeder);
-        feeder.cont = true;
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
         break;
       default:
-        log("4");
         if ( handler.top() >= 0 )
           exit_("UCUQ Unknown handshake operation!" + handler.top());
         else
-        if ( handler.handleData(feeder) )
-          feeder.cont = true;
+        if ( handler.handleData(handler.feeder) )
+          handler.feeder.cont = true;
         break;
     }
   }
@@ -182,31 +173,26 @@ const p = {
   STEERING: 3,
 };
 
-var phase = p.HANDSHAKES;
-
 function onRead(handler, data, deviceToken, deviceId) {
-  console.log(">>>>> DATA:", data.length);
+  handler.feeder = proto.getFeeder(data);
+  handler.feeder.cont = true;
 
-  let feeder = proto.getFeeder(data);
-  feeder.cont = true;
-
-  while (!feeder.isEmpty()) {
-    switch (phase) {
+  while (!handler.feeder.isEmpty()) {
+    switch (handler.phase) {
       case p.HANDSHAKES:
-        if (!handshakes(handler, feeder, deviceToken, deviceId)) phase = p.IGNITION;
-        console.log("Token: '" + deviceToken + "', Id: '" + deviceId +"'", feeder);
+        if (!handshakes(handler, deviceToken, deviceId)) handler.phase = p.IGNITION;
         break;
       case p.IGNITION:
-        if (!ignition(handler, feeder)) {
-          phase = p.STEERING;
+        if (!ignition(handler)) {
+          handler.phase = p.STEERING;
           handler.ignited = true;
 
         //  if (launchCallback)
-            launchCallback();
+            handler.launchCallback();
         }
         break;
       case p.STEERING:
-        steering(handler, feeder);
+        steering(handler);
         break;
       default:
         exit_("Unknown phase of value '" + step + "'!");
@@ -228,22 +214,19 @@ function blob2Buffer(blob, cb) {
   reader.readAsArrayBuffer(blob)
 }
 
-launchCallback = undefined
-
 function launch_(deviceToken, deviceId, libraryVersion, callback) {
-  launchCallback = callback;
+  let handler = proto.getHandler();
+  handler.deviceId = deviceId;
 
-  handler = proto.getHandler();
+  handler.launchCallback = callback;
 
-  phase = p.HANDSHAKES;
+  handler.phase = p.HANDSHAKES;
 
   log("Connecting to '" + WS_URL_ + "'…");
 
   handler.ws = new WebSocket(WS_URL_);
 
   handler.ignited = false;
-
-  console.log(handler)
 
   handler.ws.onerror = function (err) {
     log("Unable to connect to '" + WS_URL_ + "'!");
@@ -317,10 +300,8 @@ function subExecute_(handler, script, expression) {
   }
 }
 
-var executeCallback = undefined;
-
 function execute_(handler, script, expression, callback) {
-  executeCallback = callback;
+  handler.executeCallback = callback;
 
   subExecute_(handler, script, expression);
 
