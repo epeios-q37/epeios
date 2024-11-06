@@ -176,16 +176,20 @@ def connect_(token, deviceId):
 class Error(Exception):
   pass
 
-
 def render(expression=""):
-  if device_ == None:
-    raise Error("'render()': default device not initialized!")
-  return device_.render(expression)
+  return getDevice_().render(expression)
 
 def sleep(secs):
-  if device_ == None:
-    raise Error("'sleep()': default device not initialized!")
-  device_.sleep(secs)
+  return getDevice_().sleep(secs)
+
+def getTokenAndDeviceId():
+  return getDevice_().getTokenAndDeviceId()
+
+def getToken():
+  return getDevice_().getToken()
+
+def getDeviceId():
+  return getDevice_().getDeviceId()
 
 
 CONFIG_DEVICE_ENTRY = "Device"
@@ -227,10 +231,13 @@ class Device_:
     if token == None or id == None:
       token, id = handlingConfig_(token, id)
 
-    self.socket_ = connect_(token, id)
+    self.token = token
+    self.id = id
+
+    self.socket_ = connect_(self.token, self.id)
 
   def getTokenAndDeviceId(self):
-    return self.token, self.deviceId
+    return self.token, self.id
 
   def getToken(self):
     return self.getTokenAndDeviceId()[0]
@@ -258,7 +265,7 @@ class Device_:
       readString_(self.socket_) # For future use
       raise Error("Puzzled!")
     elif answer == A_DISCONNECTED:
-        raise Error("Disconnected from DEVICE!")
+        raise Error("Disconnected from device!")
     else:
       raise Error("Unknown answer from device!")
 
@@ -288,7 +295,7 @@ class Device_:
         readString_(self.socket_) # For future use
         raise Error("Puzzled!")
       elif answer == A_DISCONNECTED:
-          raise Error("Disconnected from DEVICE!")
+          raise Error("Disconnected from device!")
       else:
         raise Error("Unknown answer from device!")
 

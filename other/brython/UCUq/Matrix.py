@@ -24,15 +24,15 @@ def drawLittleMatrix(motif):
   return html
 
 
-async def drawLittleMatrixes(dom, matrixes):
+async def drawLittleMatrices(dom, matrices):
   html = ""
 
-  for i, matrix in enumerate(matrixes):
+  for i, matrix in enumerate(matrices):
     html += f"<fieldset xdh:mark=\"{i}\" style=\"cursor: pointer;\" class=\"little-matrix\" xdh:onevent=\"Draw\">"\
       + drawLittleMatrix(matrix)\
       +"</fieldset>"
 
-  await dom.inner("LittleMatrixes", html)
+  await dom.inner("LittleMatrices", html)
 
 
 async def setHexa(dom, motif = pattern):
@@ -40,7 +40,8 @@ async def setHexa(dom, motif = pattern):
 
 
 def drawOnMatrix(motif = pattern):
-  matrix.draw(motif)
+  matrix.draw(motif).render()
+  ucuq.render()
 
 async def draw(dom, motif = pattern):
   global pattern
@@ -61,49 +62,8 @@ async def acConnect(dom):
 
   await dom.executeVoid("patchHexaInput();")
 
-  await drawLittleMatrixes(dom,MATRIXES)
+  await drawLittleMatrices(dom,MATRICES)
 
-
-async def acTest():
-  for y in range(8):
-    for x in range(16):
-      matrix.plot(x,y)
-    matrix.render()
-    # time.sleep(.06)
-    matrix.clear()
-
-  for x in range(16):
-    for y in range(8):
-      matrix.plot(x,y)
-    matrix.render()
-    # time.sleep(.06)
-    matrix.clear()
-
-  for x in range(16):
-    for y in range(8):
-      matrix.plot(x,y)
-
-  matrix.render()
-
-  for b in range(0, 16):
-    matrix.setBrightness(b)
-    ucuq.render()
-    # time.sleep(0.05)
-
-  for b in range(15, -1, -1):
-    matrix.setBrightness(b)
-    ucuq.render()
-    # time.sleep(0.05)
-
-  matrix.clear()
-
-
-def plot(x,y,ink=True):
-  matrix.plot(x,y)
-  matrix.render()
-
-def clear():
-  matrix.clear()
 
 
 async def acToggle(dom, id):
@@ -137,7 +97,7 @@ async def acHexa(dom):
 
 
 async def acAll(dom):
-  for matrix in MATRIXES:
+  for matrix in MATRICES:
     await draw(dom, matrix)
     await ucuq.sleepAwait(1000)
 
@@ -151,9 +111,46 @@ async def acBlinkRate(dom, id):
   ucuq.render()
 
 async def acDraw(dom, id):
-  await draw(dom,MATRIXES[int(await dom.getMark(id))])
+  await draw(dom,MATRICES[int(await dom.getMark(id))])
 
-MATRIXES = (
+
+TEST_DELAY = 0.1
+
+async def acTest():
+  for y in range(8):
+    for x in range(16):
+      matrix.plot(x,y)
+    matrix.render()
+    ucuq.sleep(TEST_DELAY)
+    matrix.clear()
+
+  for x in range(16):
+    for y in range(8):
+      matrix.plot(x,y)
+    matrix.render()
+    ucuq.sleep(TEST_DELAY)
+    matrix.clear()
+
+  for x in range(16):
+    for y in range(8):
+      matrix.plot(x,y)
+
+  matrix.render()
+
+  for b in range(0, 16):
+    matrix.setBrightness(b)
+    ucuq.sleep(TEST_DELAY)
+
+  for b in range(15, -1, -1):
+    matrix.setBrightness(b)
+    ucuq.sleep(TEST_DELAY)
+
+  matrix.clear().render()
+  ucuq.render()
+
+
+
+MATRICES = (
   "0FF0300C4002866186614002300C0FF",
   "000006000300FFFFFFFF030006",
   "00004002200410080810042003c",
@@ -278,7 +275,7 @@ BODY = """
     <button xdh:onevent="Test">Test</button>
     <button xdh:onevent="All">All</button>
   </fieldset>
-  <fieldset id="LittleMatrixes" style="display: grid; grid-template-columns: auto auto auto auto;">
+  <fieldset id="LittleMatrices" style="display: grid; grid-template-columns: auto auto auto auto;">
   </fieldset>
 </fieldset>
 """

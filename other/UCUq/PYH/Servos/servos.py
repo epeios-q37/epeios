@@ -411,8 +411,6 @@ CALLBACKS = {
    "LoadFromFile": acLoadFromFile,
 }
 
-device = ucuq.UCUq(TARGET, dryRun=False)
-
 command = ""
 
 def getServoSetup(key, subkey, preset, motor):
@@ -453,10 +451,10 @@ def getServosSetups(target):
 
   return setup
 
-def createServos(device):
+def createServos():
   global servos, pca
 
-  setups = getServosSetups(target := device.getDeviceId())
+  setups = getServosSetups(target := ucuq.getDeviceId())
 
   for label in setups:
     servo = setups[label]
@@ -464,17 +462,17 @@ def createServos(device):
     specs = servo[SPECS_KEY]
     tweak = servo[TWEAK_KEY]
     if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
-      pwm = ucuq.PWM(device, hardware["pin"], specs["freq"])
+      pwm = ucuq.PWM(hardware["pin"], specs["freq"])
     elif hardware["mode"] == "PCA":
       if not pca:
-        pca =  ucuq.PCA9685(device, hardware["sda"], hardware["scl"], specs["freq"])
-      pwm = ucuq.PCA9685Channel(device, pca, hardware["channel"])
+        pca =  ucuq.PCA9685(hardware["sda"], hardware["scl"], specs["freq"])
+      pwm = ucuq.PCA9685Channel(pca, hardware["channel"])
     else:
       raise Exception("Unknown hardware mode!")
-    servos[label] = ucuq.Servo(device, pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
+    servos[label] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
 
-  device.render()
+  ucuq.render()
 
-createServos(device)
+createServos()
 
 atlastk.launch(CALLBACKS, headContent = HEAD)

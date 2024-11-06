@@ -27,19 +27,13 @@ def GetUUID_():
   return uuid_
 
 def render():
-  if device_ == None:
-    alert("'render()': default device not initialized!")
-  device_.render()
+  getDevice_().render()
 
 async def renderAwait(expr):
-  if device_ == None:
-    alert("'render()': default device not initialized!")
-  return await device_.renderAwait(expr)
+  return await getDevice_().renderAwait()
 
 def sleep(secs):
-  if device_ == None:
-    alert("'sleep()': default device not initialized!")
-  device_.sleep(secs)
+  getDevice_.sleep(secs)
 
 
 class Lock_:
@@ -194,7 +188,7 @@ class Device:
 # UCUq COMMON #
 ###############
 
-def getDevice_(device):
+def getDevice_(device = None):
   if device == None:
     global device_
 
@@ -426,7 +420,7 @@ class PCA9685(Core_):
     super().init()
 
     self.addCommand(f"{self.getObject()} = PCA9685({sda}, {scl}, {addr if addr else 0x40})")
-    self.freq(freq if freq else 50)
+    self.setFreq(freq if freq else 50)
 
 
   def deinit(self):
@@ -442,7 +436,7 @@ class PCA9685(Core_):
   async def getFreqAwait(self):
     return await self.executeAwait_("", f"{self.getObject()}.freq()")
 
-  def frsetF(self, freq):
+  def setFreq(self, freq):
     return self.addCommand(f"{self.getObject()}.freq({freq})")
   
 
@@ -572,7 +566,7 @@ class Servo(Core_):
 
 
   def reset(self):
-    self.angle(0)
+    self.setAngle(0)
 
 
   async def getAngleAwait(self):
