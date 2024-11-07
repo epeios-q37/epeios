@@ -1,7 +1,7 @@
 import os, sys, time, io, json, datetime, binascii
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
-sys.path.extend(("..","../../atlastk"))
+sys.path.extend(("../..","../../atlastk.zip"))
 
 import ucuq, atlastk
 

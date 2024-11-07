@@ -1,7 +1,7 @@
 import os, sys, time, io, json, datetime
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
-sys.path.extend(("..","../../atlastk"))
+sys.path.extend(("../..","../../atlastk.zip"))
 
 import ucuq, atlastk
 
@@ -69,7 +69,7 @@ def reset_(dom):
   for servo in servos:
     servos[servo].reset()
 
-  device.render()
+  ucuq.render()
 
 
 def displayMacros(dom):
@@ -103,14 +103,14 @@ def acConnect(dom):
 
 def acTest():
   for servo in servos:
-    device.servoMoves([(servos[servo], 15)])
-    device.render()
+    ucuq.servoMoves([(servos[servo], 15)])
+    ucuq.render()
     time.sleep(0.25)
-    device.servoMoves([(servos[servo], -15)])
-    device.render()
+    ucuq.servoMoves([(servos[servo], -15)])
+    ucuq.render()
     time.sleep(0.25)
-    device.servoMoves([(servos[servo], 0)])
-    device.render()
+    ucuq.servoMoves([(servos[servo], 0)])
+    ucuq.render()
     time.sleep(0.25)
 
 
@@ -272,7 +272,7 @@ def execute(dom, string, speed = DEFAULT_SPEED):
       match item[0]:
         case "action":
           tempSpeed = item[1]["speed"]
-          device.servoMoves(item[1]["moves"], ( speed if tempSpeed == None else ( int(tempSpeed) if tempSpeed != "" else DEFAULT_SPEED)) /10)
+          ucuq.servoMoves(item[1]["moves"], ( speed if tempSpeed == None else ( int(tempSpeed) if tempSpeed != "" else DEFAULT_SPEED)) /10)
         case "macro":
           for _ in range(item[1]["amount"]):
             execute(dom, macros[item[1]["name"]]["Content"], speed)
@@ -295,7 +295,7 @@ def acExecute(dom, id):
     reset_(dom)
 
   execute(dom, moves)
-  device.render()
+  ucuq.render()
 
 
 def acSave(dom):

@@ -1,7 +1,9 @@
 import os, sys, json
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
-sys.path.extend(("..","../../atlastk"))
+sys.path.append("../../atlastk.zip")
+
+print(sys.path)
 
 import atlastk
 

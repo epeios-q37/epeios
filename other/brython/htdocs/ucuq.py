@@ -202,7 +202,7 @@ def getDevice_(device = None):
 def addCommand(command, /,device = None):
   getDevice_(device).addCommand(command)
 
-def servoMoves(self, moves, speed = 1,/,device = None):
+def servoMoves(moves, speed = 1,/,device = None):
   device = getDevice_(device)
 
   device.addModule("ServoMoves")

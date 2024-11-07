@@ -1,10 +1,10 @@
 # Notes à l'usage du développeur
 
-## *Micropytho*
+## *Micropython*
 
 L'extension *VSCode* *MicroPython* permet de lancer l'exécution d'un fichier *Python* sur un *Raspberry Pico (W)*, mais fonctionne aussi avec quelques *ESP32* bien que cette extension est censé être dédiés au *Raspberry Pico (W)*
 
-## Connection with Wi-Fi
+## Connection au WiFi
 
 Le code suivant peut être utilisé pour la fonction *init_* de quelques *ESP32*,, mais pas avec un *Raspberry Pi Pico W*, pour lequel `poller.poll()` rend la main de suite malgré le *timeout*. L'objet *socket* contient alors un membre *status* dont la valeur diffère selon que la connection a réussi ou non (à investiguer).
 

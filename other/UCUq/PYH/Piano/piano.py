@@ -1,7 +1,7 @@
 import os, sys, time
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
-sys.path.extend(("..","../../atlastk"))
+sys.path.extend(("../..","../../atlastk.zip"))
 
 import atlastk, ucuq
 
