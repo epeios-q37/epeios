@@ -208,6 +208,10 @@ def setWidth(width):
   
 
 def acConnect(dom):
+  ucuq.handleATK(dom)
+  
+  ucuq.addCommand(MC_INIT)
+
   dom.inner("", BODY)
   updateDutyBox(dom)
 
@@ -296,7 +300,5 @@ CALLBACKS = {
   "Width": acWidth,
   "WidthStep": lambda dom, id: dom.setAttribute(I_WIDTH, "step", dom.getValue(id)),
 }
-
-ucuq.addCommand(MC_INIT)
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

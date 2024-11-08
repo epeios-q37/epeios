@@ -191,6 +191,11 @@ async def setWidth(width):
 
 
 async def acConnect(dom):
+  await ucuq.handleATKAwait(dom)
+  
+  ucuq.addCommand(MC_INIT)
+  ucuq.render()
+  
   await dom.inner("", BODY)
   await updateDutyBox(dom)
 
@@ -475,8 +480,5 @@ BODY = """
   </div>
 </fieldset>
 """
-
-ucuq.addCommand(MC_INIT)
-ucuq.render()
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

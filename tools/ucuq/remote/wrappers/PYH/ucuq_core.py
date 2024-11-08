@@ -1,4 +1,4 @@
-import os, json, socket, sys, threading, datetime
+import os, json, socket, sys, threading, datetime, time
 from inspect import getframeinfo, stack
 
 CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
@@ -191,6 +191,23 @@ def getToken():
 def getDeviceId():
   return getDevice_().getDeviceId()
 
+def ping():
+  return getDevice_().ping()
+
+def handleATK(dom):
+  dom.inner("", "<h1>Connecting…</h1>")
+
+  try:
+    label = ping()
+  except Exception as err:
+    dom.inner("", f"<h3>Error: {err}</h3>")
+    raise
+
+  dom.inner("", f"<h2>Connected ('{label}').</h2>")
+
+  time.sleep(1.5)
+
+  return label
 
 CONFIG_DEVICE_ENTRY = "Device"
 CONFIG_DEVICE_TOKEN_ENTRY = "Token"
@@ -304,7 +321,7 @@ class Device_:
     writeString_(self.socket_, R_PING_)
 
     if ( answer := readUInt_(self.socket_) ) == A_OK_:
-      readString_(self.socket_) # For future use
+      return readString_(self.socket_)
     elif answer == A_ERROR_:
       raise Error("Unexpected response from device!")
     elif answer == A_PUZZLED_:

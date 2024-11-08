@@ -20,6 +20,8 @@ baseFreq = 440.0*math.pow(math.pow(2,1.0/12), -16)
 ratio = 0.5
 
 def acConnect(dom):
+  ucuq.handleATK(dom)
+
   dom.inner("", BODY)
 
 

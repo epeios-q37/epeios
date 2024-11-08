@@ -96,6 +96,10 @@ def updateFileList(dom):
 
 
 def acConnect(dom):
+  ucuq.handleATK(dom)
+
+  createServos()
+
   dom.inner("", BODY)
   displayMacros(dom)
   updateFileList(dom)
@@ -472,7 +476,5 @@ def createServos():
     servos[label] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
 
   ucuq.render()
-
-createServos()
 
 atlastk.launch(CALLBACKS, headContent = HEAD)

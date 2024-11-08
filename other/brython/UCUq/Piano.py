@@ -10,6 +10,8 @@ baseFreq = 440.0*math.pow(math.pow(2,1.0/12), -16)
 ratio = 0.5
 
 async def acConnect(dom):
+  await ucuq.handleATKAwait(dom)
+  
   await dom.inner("", BODY)
 
 
@@ -23,7 +25,7 @@ async def acPlay(dom,id):
     pwm.setU16(int(ratio*65535))
     pwm.setFreq(freq)
     ucuq.render()
-    await ucuq.sleepAwait(500)
+    ucuq.sleep(.5)
     pwm.setU16(0)
     ucuq.render()
 
@@ -31,7 +33,7 @@ async def acPlay(dom,id):
 async def acSetRatio(dom, id):
   global ratio
 
-  ratio = float(dom.getValue(id))
+  ratio = float(await dom.getValue(id))
 
   await dom.setValue("RatioSlide" if id == "RatioValue" else "RatioValue", ratio)
 

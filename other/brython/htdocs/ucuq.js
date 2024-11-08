@@ -25,7 +25,9 @@ const s = {
   UPLOAD_ANSWER: 303,
   EXECUTE: 304,
   EXECUTE_ANSWER: 305,
-  RESULT: 306
+  PING: 306,
+  PING_ANSWER: 307,
+  RESULT: 308
 }
 
 function steering(handler) {
@@ -47,6 +49,11 @@ function steering(handler) {
         handler.feeder.cont = true;
         handler.executeCallback(handler.getSInt(), handler.getString())
         break;
+      case s.PING:
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
+        handler.pingCallback(handler.getSInt(), handler.getString())
+        break;
       case s.UPLOAD_ANSWER:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
@@ -55,6 +62,12 @@ function steering(handler) {
           handler.pushString();
         }
       case s.EXECUTE_ANSWER:
+        handler.pop(handler.feeder);
+        handler.feeder.cont = true;
+        handler.push(s.RESULT);
+        handler.pushString();
+        break;
+      case s.PING_ANSWER:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         handler.push(s.RESULT);
@@ -308,6 +321,25 @@ function execute_(handler, script, expression, callback) {
 //  setTimeout(() => subExecute_(script, expression), 2000);
 }
 
+function subPing_(handler) {
+  if ( !handler.ignited )
+    setTimeout(() => subPing_(handler));
+  else {
+    handler.push(s.PING);
+    handler.push(s.PING_ANSWER);
+    handler.pushSInt();
+    
+    handler.ws.send(proto.handleString("Ping_1"));
+  }
+}
+
+function ping_(handler, callback) {
+  handler.pingCallback = callback;
+
+  subPing_(handler);
+}
+
+
 
 function timeout_(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -318,7 +350,9 @@ async function sleep_(time, fn, ...args) {
   return fn(...args);
 }
 
+// ATTENTION: si ajout, mettre script 'Build' à jour !!!
 module.exports.sleep = sleep_;
 module.exports.launch = launch_;
 module.exports.upload = upload_;
 module.exports.execute = execute_;
+module.exports.ping = ping_;

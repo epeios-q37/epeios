@@ -47,7 +47,13 @@ A_ERROR_ = 1
 A_PUZZLED_ = 2
 A_DISCONNECTED_ = 3
 
+wifi = None
+
 def getMacAddress_():
+  global wifi
+  if not wifi:
+    wifi = network.WLAN(network.STA_IF)
+    wifi.active(True) # Otherwise the MAC address is NUL.
   return binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
 
 
@@ -110,6 +116,8 @@ def wlanDisconnect_():
 
 
 def wlanConnect_(wlan, callback):
+  global wifi
+
   wifi = network.WLAN(network.STA_IF)
 
   if not wifi.isconnected():
@@ -223,13 +231,25 @@ def init_(host, port, callback):
     return False
   else:
     return True
+  
+
+def getDeviceLabel_():
+  if "Kit" in CONFIG_:
+    kit = CONFIG_["Kit"]
+
+    id = getSelectorId_(SELECTOR_)
+
+    if id in kit:
+      return kit[id]
+    
+  return uos.uname().sysname
 
 
 def handshake_():
   writeString_(PROTOCOL_LABEL_)
   writeString_(PROTOCOL_VERSION_)
   writeString_("Device")
-  writeString_(uos.uname().sysname)
+  writeString_(getDeviceLabel_())
 
   error = readString_()
 
@@ -257,7 +277,7 @@ def serve_():
 
     if request == R_PING_:
       writeUInt_(A_OK_)
-      writeString_("")  # For future use.
+      writeString_(getDeviceLabel_())
     elif request == R_EXECUTE_:
       script = readString_()
       expression = readString_()

@@ -11,7 +11,36 @@
 </div>
 <fieldset>
   <legend>WS2012</legend>
-  <fieldset style="display: flex; flex-direction: column; align-content: space-between">
+  <fieldset style="display: flex;">
+    <fieldset id="HardwareBox" style="display: flex; flex-direction: column; justify-content: center;">
+      <div style="display: flex; justify-content: center;">
+      <select id="Preset" xdh:onevent="Preset">
+        <option value="User">User defined</option>
+        <optgroup label="Freenove">
+          <option value="Bipedal">Bipedal</option>
+          <option value="Dog">Dog (ESP32)</option>
+        </optgroup>
+      </select>
+        </div>
+      <div style="margin: 10px">
+      <label>
+        <span>Pin:</span>
+        <input id="Pin" size="2" type="number">
+      </label>
+      <label>
+        <span>Count:</span>
+        <input id="Count" size="3" type="number">
+      </label>
+        </div>
+    </fieldset>
+    <span class="switch-container">
+      <label class="switch">
+        <input id="Switch" type="checkbox" xdh:onevent="Switch">
+        <span class="slider round"></span>
+      </label>
+    </span>
+  </fieldset>
+  <fieldset id="SlidersBox" style="display: flex; flex-direction: column; align-content: space-between">
     <div>
       <label style="display: flex; align-items: center;">
         <span>R:&nbsp;</span>
@@ -37,7 +66,7 @@
     </div>
   </fieldset>
   </span>
-  <fieldset style="display: flex; justify-content: center; flex-direction: column">
+  <fieldset id="PickerBox" style="display: flex; justify-content: center; flex-direction: column">
     <div id="color-wheel-container" xdh:onevent="Select"></div>
     <label class="label-checkbox" style="display: flex; justify-content: center;">
       <input type="checkbox" checked onchange="colorWheel.wheelReflectsSaturation = this.checked; colorWheel.redraw()">

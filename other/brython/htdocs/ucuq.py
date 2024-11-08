@@ -17,7 +17,7 @@ device_ = None
 uuid_ = 0
 
 async def sleepAwait(time):
-  await ucuqjs.sleep(time, lambda : None)
+  await ucuqjs.sleep(1000 * time, lambda : None)
 
 def GetUUID_():
   global uuid_
@@ -30,10 +30,29 @@ def render():
   getDevice_().render()
 
 async def renderAwait(expr):
-  return await getDevice_().renderAwait()
+  return await getDevice_().renderAwait(expr)
 
 def sleep(secs):
-  getDevice_.sleep(secs)
+  getDevice_().sleep(secs)
+
+async def pingAwait():
+  return await getDevice_().pingAwait()
+
+async def handleATKAwait(dom):
+  await dom.inner("", "<h1>Connecting…</h1>")
+
+  try:
+    label = await pingAwait()
+  except Exception as err:
+    await dom.inner("", f"<h3>Error: {err}</h3>")
+    raise
+
+  await dom.inner("", f"<h2>Connected ('{label}').</h2>")
+
+  await sleepAwait(1.5)
+
+  return label
+
 
 
 class Lock_:
@@ -66,6 +85,15 @@ def executeCallback_(data, code, result):
   if data:
     data["code"] = code
     data["result"] = jsonResult
+    data["lock"].release()
+
+def pingCallback_(data, code, result):
+  if code != 0:
+    raise Exception(result)
+
+  if data:
+    data["code"] = code
+    data["result"] = result
     data["lock"].release()
 
 def launchCallback_(lock):
@@ -146,6 +174,22 @@ class Device:
 
   def execute_(self, script):
     ucuqjs.execute(self.device_, script, "", lambda code, result: executeCallback_(None, code, result))
+
+
+  async def pingAwait(self):
+    lock = Lock_()
+
+    await lock.acquire()
+
+    data = {
+      "lock": lock
+    }
+
+    ucuqjs.ping(self.device_, lambda code, result: pingCallback_(data, code, result))
+
+    await lock.acquire()
+    
+    return data["result"]
 
 
   def addModule(self, module):
