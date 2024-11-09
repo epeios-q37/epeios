@@ -26,11 +26,11 @@ def GetUUID_():
 
   return uuid_
 
-def render():
-  getDevice_().render()
+def commit():
+  getDevice_().commit()
 
-async def renderAwait(expr):
-  return await getDevice_().renderAwait(expr)
+async def commitAwait(expr):
+  return await getDevice_().commitAwait(expr)
 
 def sleep(secs):
   getDevice_().sleep(secs)
@@ -39,15 +39,15 @@ async def pingAwait():
   return await getDevice_().pingAwait()
 
 async def handleATKAwait(dom):
-  await dom.inner("", "<h1>Connecting…</h1>")
+  await dom.inner("", "<h3>Connecting…</h3>")
 
   try:
     label = await pingAwait()
   except Exception as err:
-    await dom.inner("", f"<h3>Error: {err}</h3>")
+    await dom.inner("", f"<h5>Error: {err}</h5>")
     raise
 
-  await dom.inner("", f"<h2>Connected ('{label}').</h2>")
+  await dom.inner("", f"<h3>'{label}'</h3>")
 
   await sleepAwait(1.5)
 
@@ -139,10 +139,10 @@ class Device:
       self.connect(id, token)
 
   def __del__(self):
-    self.render()
+    self.commit()
 
   def connect(self, id, token = None):
-    self.pendingModules_ = ["Init"]
+    self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
     self.commands_ = []
 
@@ -201,7 +201,7 @@ class Device:
     self.commands_.append(command)
 
 
-  async def renderAwait(self, expression):
+  async def commitAwait(self, expression):
     result = ""
 
     if self.pendingModules_:
@@ -217,7 +217,7 @@ class Device:
   def sleep(self, secs):
     self.addCommand(f"time.sleep({secs})")
 
-  def render(self):
+  def commit(self):
     if self.pendingModules_:
       self.upload_(self.pendingModules_)
       self.handledModules_.extend(self.pendingModules_)
@@ -249,7 +249,7 @@ def addCommand(command, /,device = None):
 def servoMoves(moves, speed = 1,/,device = None):
   device = getDevice_(device)
 
-  device.addModule("ServoMoves")
+  device.addModule("ServoMoves-1")
 
   command = "servoMoves([\n"
 
@@ -276,47 +276,51 @@ class Core_:
   
   def __del__(self):
     if self.id:
-      self.device_.execute_(f"del {ITEMS_}[{self.id}]")
+      self.addCommand(f"del {ITEMS_}[{self.id}]")
   
-  def init(self):
+  def init(self, instanciation):
     self.id = GetUUID_()
+    if instanciation:
+      self.addCommand(f"{self.getObject()} = {instanciation}")
 
   def getObject(self):
     return f"{ITEMS_}[{self.id}]"
 
   def addCommand(self, command):
     self.device_.addCommand(command)
+
+  def addMethods(self, methods):
+    self.addCommand(f"{self.getObject()}.{methods}")
                          
-  def render(self):
-    self.device_.render()
+  def commit(self):
+    self.device_.commit()
   
 
 class GPIO(Core_):
   def __init__(self, pin = None, device = None):
-    super().__init__(device, "GPIO")
+    super().__init__(device, "GPIO-1")
 
     if pin:
       self.init(pin)
 
 
   def init(self, pin):
-    super().init()
     self.pin = f'"{pin}"' if isinstance(pin,str) else pin
 
-    self.addCommand(f"{self.getObject()} = GPIO({self.pin})")
+    super().init(f"GPIO({self.pin})")
 
 
-  def on(self, state = True):
-    self.addCommand(f"{self.getObject()}.on({state})")
+  def high(self, value = True):
+    self.addMEthods(f"high({value})")
 
 
-  def off(self):
-    self.on(False)
+  def low(self):
+    self.high(False)
 
 
 class WS2812(Core_):
   def __init__(self, pin = None, n = None, device = None):
-    super().__init__(device, "WS2812")
+    super().__init__(device, "WS2812-1")
 
     if (pin == None) != (n == None):
       raise Exception("Both or none of 'pin'/'n' must be defined")
@@ -325,17 +329,14 @@ class WS2812(Core_):
       self.init(pin, n)
 
   def init(self, pin, n):
-    super().init()
-
-    self.addCommand(f"{self.getObject()} = neopixel.NeoPixel(machine.Pin({pin}), {n})")
-
+    super().init(f"neopixel.NeoPixel(machine.Pin({pin}), {n})")
 
   async def lenAwait(self):
     return int(await self.executeAwait_("", f"{self.getObject()}.__len__()"))
                
 
   def setValue(self, index, val):
-    self.addCommand(f"{self.getObject()}.setitem({index}, {json.dumps(val)})")
+    self.addMethods(f"setitem({index}, {json.dumps(val)})")
 
     return self
                        
@@ -343,17 +344,17 @@ class WS2812(Core_):
     return await self.executeAwait_("", f"{self.getObject()}.__getitem__({index})")
                        
   def fill(self, val):
-    self.addCommand(f"{self.getObject()}.fill({json.dumps(val)})")
+    self.addMethods(f"fill({json.dumps(val)})")
     return self
 
   def write(self):
-    self.addCommand(f"{self.getObject()}.write()")
-    self.render()
+    self.addMethods(f"write()")
+    self.commit()
     
 
 class HT16K33(Core_):
   def __init__(self, sda = None, scl = None, device = None):
-    super().__init__(device, "HT16K33")
+    super().__init__(device, "HT16K33-1")
 
     if bool(sda) != bool(scl):
       raise Exception("None or both of sda/scl must be defined!")
@@ -362,46 +363,45 @@ class HT16K33(Core_):
 
 
   def init(self, sda, scl):
-    super().init()
+    super().init(f"HT16K33(machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl})))")
 
-    self.addCommand(f"{self.getObject()} = HT16K33(machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl})))")
-    self.addCommand(f"{self.getObject()}.set_brightness(0)")
+    self.addMethods(f"set_brightness(0)")
 
 
   def setBlinkRate(self, rate):
-    self.addCommand(f"{self.getObject()}.set_blink_rate({rate})")
+    self.addMethods(f"set_blink_rate({rate})")
 
     return self
 
   def setBrightness(self, brightness):
-    self.addCommand(f"{self.getObject()}.set_brightness({brightness})")
+    self.addMethods(f"set_brightness({brightness})")
 
     return self
 
   def clear(self):
-    self.addCommand(f"{self.getObject()}.clear()")
+    self.addMethods(f"clear()")
 
     return self
 
   def draw(self, motif):
-    self.addCommand(f"{self.getObject()}.clear().draw('{motif}').render()")
+    self.addMethods(f"clear().draw('{motif}').render()")
 
     return self
 
   def plot(self, x, y, ink=True):
-    self.addCommand(f"{self.getObject()}.plot({x}, {y}, ink={1 if ink else 0})")  
+    self.addMethods(f"plot({x}, {y}, ink={1 if ink else 0})")  
 
     return self
 
-  def render(self):
-    self.addCommand(f"{self.getObject()}.render()")
+  def commit(self):
+    self.addMethods(f"render()")
 
     return self
 
 
 class PWM(Core_):
   def __init__(self, pin = None, freq = None, device = None):
-    super().__init__(device, "PWM")
+    super().__init__(device, "PWM-1")
 
     if freq != None:
       if pin == None:
@@ -412,9 +412,7 @@ class PWM(Core_):
 
 
   def init(self, pin, freq = None):
-    super().init()
-
-    self.addCommand(f"{self.getObject()} = machine.PWM(machine.Pin({pin}),freq={freq if freq else 50})")
+    super().init(f"machine.PWM(machine.Pin({pin}),freq={freq if freq else 50})")
 
 
   async def getU16Await(self):
@@ -422,7 +420,7 @@ class PWM(Core_):
 
 
   def setU16(self, u16):
-    self.addCommand(f"{self.getObject()}.duty_u16({u16})")
+    self.addMethods(f"duty_u16({u16})")
 
 
   async def getNSAwait(self):
@@ -430,7 +428,7 @@ class PWM(Core_):
 
 
   def setNS(self, ns):
-    self.addCommand(f"{self.getObject()}.duty_ns({ns})")
+    self.addMethods(f"duty_ns({ns})")
 
 
   async def getFreqAwait(self):
@@ -438,16 +436,16 @@ class PWM(Core_):
 
 
   def setFreq(self, freq):
-    self.addCommand(f"{self.getObject()}.freq({freq})")
+    self.addMethods(f"freq({freq})")
 
 
   def deinit(self):
-    self.addCommand(f"{self.getObject()}.deinit()")
+    self.addMethods(f"deinit()")
 
 
 class PCA9685(Core_):
   def __init__(self, sda = None, scl = None, freq = None, addr = None, device = None):
-    super().__init__(device, "PCA9685")
+    super().__init__(device, "PCA9685-1")
 
     if (sda != None) != bool(scl != None) :
       raise Exception("None or both of 'sda'/'scl' must be defined!")
@@ -461,14 +459,13 @@ class PCA9685(Core_):
 
 
   def init(self, sda, scl, *, freq = None, addr = None):
-    super().init()
+    super().init(f"PCA9685({sda}, {scl}, {addr if addr else 0x40})")
 
-    self.addCommand(f"{self.getObject()} = PCA9685({sda}, {scl}, {addr if addr else 0x40})")
     self.setFreq(freq if freq else 50)
 
 
   def deinit(self):
-    self.addCommand(f"{self.getObject()}.reset()")
+    self.addMethods(f"reset()")
                     
 
   def nsToU12_(self, duty_ns):
@@ -481,12 +478,12 @@ class PCA9685(Core_):
     return await self.executeAwait_("", f"{self.getObject()}.freq()")
 
   def setFreq(self, freq):
-    return self.addCommand(f"{self.getObject()}.freq({freq})")
+    return self.addMethods(f"freq({freq})")
   
 
-class PCA9685Channel(Core_):
+class PWM_PCA9685(Core_):
   def __init__(self, pca = None, channel = None, device = None):
-    super().__init__(device, "PCA9685Channel")
+    super().__init__(device, "PWM_PCA9685-1")
 
     if bool(pca) != (channel != None):
       raise Exception("Both or none of 'pca' and 'channel' must be defined!")
@@ -496,37 +493,77 @@ class PCA9685Channel(Core_):
 
 
   def init(self, pca, channel):
-    super().init()
+    super().init(f"PWM_PCA9685({pca.getObject()}, {channel})")
 
     self.pca = pca # Not used inside this object, but to avoid pca being destroyed by GC, as it is used on the µc.
-    self.addCommand(f"{self.getObject()} = PCA9685Channel({pca.getObject()}, {channel})")
 
   def deinit(self):
-    self.addCommand(f"{self.getObject()}.deinit()")
+    self.addMethods(f"deinit()")
 
 
   async def getNSAwait(self,):
     return int(await self.executeAwait_("", f"{self.getObject()}.duty_ns()"))
-    self.addCommand(f"{self.getObject()}.duty_ns({ns})")
 
   def setNS(self, ns):
-    self.addCommand(f"{self.getObject()}.duty_ns({ns})")
+    self.addMethods(f"duty_ns({ns})")
 
 
   async def getU16Await(self, u16 = None):
     return int(await self.executeAwait_("",f"{self.getObject()}.duty_u16()"))
   
   def setU16(self, u16):
-    self.addCommand(f"{self.getObject()}.duty_u16({u16})")
+    self.addMethods(f"duty_u16({u16})")
   
 
   async def getFreqAwait(self):
     return int(await self.executeAwait_("",f"{self.getObject()}.freq()"))
   
   def setFreq(self, freq):
-    self.addCommand(f"{self.getObject()}.freq({freq})")
-  
+    self.addMethods(f"freq({freq})")
 
+
+class LCD_PCF8574(Core_):
+  def __init__(self, sda, scl, num_lines, num_columns,/,i2c_addr = None, device = None):
+    super().__init__(device, "LCD_PCF8574-1")
+    self.init(sda, scl, num_lines, num_columns)
+
+  def init(self, sda,scl, num_lines, num_columns, i2c_addr = None):
+    super().init(f"LCD_PCF8574(machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl})),{num_lines},{num_columns}{f",i2c_addr={i2c_addr}" if i2c_addr != None else ""})")
+
+  def moveTo(self, x, y):
+    self.addMethods(f"move_to({x},{y})")
+
+  def putString(self, string):
+    self.addMethods(f"putstr(\"{string}\")")
+
+  def clear(self):
+    self.addMethods("clear()")
+
+  def showCursor(self, value = True):
+    self.addMethods("show_cursor()" if value else "hide_cursor()")
+
+  def hideCursor(self):
+    self.showCursor(False)
+
+  def blinkCursorOn(self, value = True):
+    self.addMethods("blink_cursor_on()" if value else "blink_cursor_off()")
+
+  def blinkCursorOff(self):
+    self.blinkCursorOn(False)
+
+  def displayOn(self, value = True):
+    self.addMethods("display_on()" if value else "display_off()")
+
+  def displayOff(self):
+    self.displayOn(False)
+
+  def backlightOn(self, value = True):
+    self.addMethods("backlight_on()" if value else "backlight_off()")
+
+  def backlightOff(self):
+    self.backlightOn(False)
+
+  
 
 class Servo(Core_):
   class Specs:
@@ -547,7 +584,7 @@ class Servo(Core_):
       self.max = u16_max
 
 
-  def test_(self, pwm, specs, tweak, domain):
+  def test_(self, specs, tweak, domain):
     if tweak:
       if not specs:
         raise Exception("'tweak' can not be defined without 'specs'!")
@@ -558,18 +595,18 @@ class Servo(Core_):
 
 
   def __init__(self, pwm = None, specs = None, /, *, tweak = None, domain = None, device = None):
-    super().__init__(device, "Servo")
+    super().__init__(device, "Servo-1")
 
-    self.test_(pwm, specs, tweak, domain)
+    self.test_(specs, tweak, domain)
 
     if pwm:
       self.init(pwm, specs, tweak = tweak, domain = domain)
 
 
   def init(self, pwm, specs, tweak = None, domain = None):
-    super().init()
+    super().init("")
 
-    self.test_(pwm, specs, tweak, domain)
+    self.test_(specs, tweak, domain)
 
     if not tweak:
       tweak = self.Tweak(specs.range/2, 0, False)

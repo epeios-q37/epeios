@@ -1,9 +1,9 @@
-import ucuq, atlastk
+import ucuq, atlastk, datetime
 
-GUI = True
+GUI = False
 
 def displayNUI():
-  display("Line 1", "Line 2")
+  display(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Line 2")
 
 ############
 # GUI part #
@@ -66,7 +66,8 @@ def displayGUI():
 
 def display(line1, line2 ="",/,sda=14, scl=15):
   print(sda, scl, line1, line2)
-  ucuq.launch(CMD.format(sda, scl, line1[:16], line2[:16]))
+  ucuq.addCommand(CMD.format(sda, scl, line1[:20], line2[:20]))
+  ucuq.commit()
 
 
 CMD = """
@@ -283,7 +284,7 @@ devices = i2c.scan()
 
 try:
     if devices != []:
-        lcd = I2CLcd(i2c, devices[0], 2, 16)
+        lcd = I2CLcd(i2c, devices[0], 2, 20)
         lcd.move_to(0, 0)
         lcd.putstr("{}")
         lcd.move_to(0, 1)

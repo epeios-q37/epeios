@@ -59,7 +59,7 @@ def acSave(dom):
 
   host, port, token, id = (value.strip() for value in dom.getValues([PROXY_HOST_LABEL, PROXY_PORT_LABEL, DEVICE_TOKEN_LABEL, DEVICE_ID_LABEL]).values())
 
-  if token and DEVICE_TOKEN_LABEL not in device:
+  if not token and DEVICE_TOKEN_LABEL not in device:
     dom.alert("Please enter a token value!")
     dom.focus(DEVICE_TOKEN_LABEL)
     return

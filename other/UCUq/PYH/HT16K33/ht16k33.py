@@ -23,14 +23,14 @@ def test():
     for y in range(8):
       for x in range(16):
         matrix.plot(x,y)
-      matrix.render()
+      matrix.commit()
       ucuq.sleep(TEST_DELAY)
       matrix.clear()
 
     for x in range(16):
       for y in range(8):
         matrix.plot(x,y)
-      matrix.render()
+      matrix.commit()
       ucuq.sleep(TEST_DELAY)
       matrix.clear()
 
@@ -38,7 +38,7 @@ def test():
       for y in range(8):
         matrix.plot(x,y)
 
-    matrix.render()
+    matrix.commit()
 
     for b in range(0, 16):
       matrix.setBrightness(b)
@@ -48,8 +48,8 @@ def test():
       matrix.setBrightness(b)
       ucuq.sleep(TEST_DELAY)
 
-    matrix.clear().render()
-    ucuq.render()
+    matrix.clear().commit()
+    ucuq.commit()
 
 
 def drawOnGUI(dom, motif = pattern):
@@ -91,9 +91,9 @@ def setHexa(dom, motif = pattern):
 
 def drawOnMatrix(motif = pattern):
   if matrix:
-    matrix.draw(motif).render()
+    matrix.draw(motif).commit()
 
-    ucuq.render()
+    ucuq.commit()
 
 def draw(dom, motif = pattern):
   global pattern
@@ -170,10 +170,10 @@ def launch(dom, sda, scl):
 
   try:
     matrix = ucuq.HT16K33(sda, scl)
-    matrix.clear()
+    matrix.clear().commit()
     matrix.setBrightness(0)
     matrix.setBlinkRate(0)
-    ucuq.render()
+    ucuq.commit()
   except Exception as err:
     dom.alert(err)
     onDuty = False
@@ -205,7 +205,7 @@ def acSwitch(dom, id):
 def plot(x,y,ink=True):
   if matrix:
     matrix.plot(x,y)
-    matrix.render()
+    matrix.commit()
 
 
 def clear():
@@ -251,11 +251,11 @@ def acAll(dom):
 
 def acBrightness(dom, id):
   matrix.setBrightness(int(dom.getValue(id)))
-  ucuq.render()
+  ucuq.commit()
 
 def acBlinkRate(dom, id):
   matrix.setBlinkRate(float(dom.getValue(id)))
-  ucuq.render()
+  ucuq.commit()
 
 def acDraw(dom, id):
   draw(dom,MATRICES[int(dom.getMark(id))])

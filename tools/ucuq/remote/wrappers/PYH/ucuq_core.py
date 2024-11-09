@@ -176,8 +176,8 @@ def connect_(token, deviceId):
 class Error(Exception):
   pass
 
-def render(expression=""):
-  return getDevice_().render(expression)
+def commit(expression=""):
+  return getDevice_().commit(expression)
 
 def sleep(secs):
   return getDevice_().sleep(secs)
@@ -195,15 +195,15 @@ def ping():
   return getDevice_().ping()
 
 def handleATK(dom):
-  dom.inner("", "<h1>Connecting…</h1>")
+  dom.inner("", "<h3>Connecting…</h3>")
 
   try:
     label = ping()
   except Exception as err:
-    dom.inner("", f"<h3>Error: {err}</h3>")
+    dom.inner("", f"<h5>Error: {err}</h5>")
     raise
 
-  dom.inner("", f"<h2>Connected ('{label}').</h2>")
+  dom.inner("", f"<h3>'{label}'</h3>")
 
   time.sleep(1.5)
 
@@ -335,7 +335,7 @@ class Device_:
     
 class Device(Device_):
   def __init__(self, /, id = None, token = None, now = True):
-    self.pendingModules = ["Init"]
+    self.pendingModules = ["Init_1"]
     self.handledModules = []
     self.commands = []
 
@@ -348,7 +348,7 @@ class Device(Device_):
   def addCommand(self, command):
     self.commands.append(command)
 
-  def render(self, expression = ""):
+  def commit(self, expression = ""):
     result = ""
 
     if self.pendingModules:

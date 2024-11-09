@@ -49,7 +49,7 @@ with open('Head.html', 'r') as file:
 
 
 def getParams():
-  return ucuq.render(f"getParams({pwm.getObject()})") if onDuty else None
+  return ucuq.commit(f"getParams({pwm.getObject()})") if onDuty else None
 
 
 def getDuty(dom):
@@ -189,22 +189,22 @@ def initPWM(inputs):
   else:
     pwm.setNS(int(1000000 * float(inputs[I_DUTY]["Value"])))
   
-  return ucuq.render(f"getParams({pwm.getObject()})")
+  return ucuq.commit(f"getParams({pwm.getObject()})")
   
 
 def setFreq(freq):
   pwm.setFreq(freq)
-  return ucuq.render(f"getParams({pwm.getObject()})")
+  return ucuq.commit(f"getParams({pwm.getObject()})")
   
 
 def setRatio(ratio):
   pwm.setU16(ratio)
-  return ucuq.render(f"getParams({pwm.getObject()})")
+  return ucuq.commit(f"getParams({pwm.getObject()})")
   
 
 def setWidth(width):
   pwm.setNS(width)
-  return ucuq.render(f"getParams({pwm.getObject()})")
+  return ucuq.commit(f"getParams({pwm.getObject()})")
   
 
 def acConnect(dom):
@@ -243,7 +243,7 @@ def acSwitch(dom, id):
   else:
     if onDuty:
       pwm.deinit()
-      ucuq.render()
+      ucuq.commit()
       onDuty = False
     updateDuties(dom)
     dom.enableElement(I_MODE_BOX)

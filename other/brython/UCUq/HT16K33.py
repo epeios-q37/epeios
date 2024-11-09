@@ -12,14 +12,14 @@ def test():
     for y in range(8):
       for x in range(16):
         matrix.plot(x,y)
-      matrix.render()
+      matrix.commit()
       ucuq.sleep(TEST_DELAY)
       matrix.clear()
 
     for x in range(16):
       for y in range(8):
         matrix.plot(x,y)
-      matrix.render()
+      matrix.commit()
       ucuq.sleep(TEST_DELAY)
       matrix.clear()
 
@@ -27,7 +27,7 @@ def test():
       for y in range(8):
         matrix.plot(x,y)
 
-    matrix.render()
+    matrix.commit()
 
     for b in range(0, 16):
       matrix.setBrightness(b)
@@ -37,8 +37,8 @@ def test():
       matrix.setBrightness(b)
       ucuq.sleep(TEST_DELAY)
 
-    matrix.clear().render()
-    ucuq.render()
+    matrix.clear().commit()
+    ucuq.commit()
 
 
 async def drawOnGUIAwait(dom, motif = pattern):
@@ -80,9 +80,9 @@ async def setHexaAwait(dom, motif = pattern):
 
 def drawOnMatrix(motif = pattern):
   if matrix:
-    matrix.draw(motif).render()
+    matrix.draw(motif).commit()
 
-    ucuq.render()
+    ucuq.commit()
 
 async def drawAwait(dom, motif = pattern):
   global pattern
@@ -159,10 +159,10 @@ async def launchAwait(dom, sda, scl):
 
   try:
     matrix = ucuq.HT16K33(sda, scl)
-    matrix.clear()
+    matrix.clear().commit()
     matrix.setBrightness(0)
     matrix.setBlinkRate(0)
-    ucuq.render()
+    ucuq.commit()
   except Exception as err:
     await dom.alert(err)
     onDuty = False
@@ -198,7 +198,7 @@ async def acTest():
 def plot(x,y,ink=True):
   if matrix:
     matrix.plot(x,y)
-    matrix.render()
+    matrix.commit()
 
 
 def clear():
@@ -247,11 +247,11 @@ async def acAll(dom):
 
 async def acBrightness(dom, id):
   matrix.setBrightness(int(await dom.getValue(id)))
-  ucuq.render()
+  ucuq.commit()
 
 async def acBlinkRate(dom, id):
   matrix.setBlinkRate(float(await dom.getValue(id)))
-  ucuq.render()
+  ucuq.commit()
 
 async def acDraw(dom, id):
   await drawAwait(dom, MATRICES[int(await dom.getMark(id))])

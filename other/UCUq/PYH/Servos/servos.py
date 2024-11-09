@@ -69,7 +69,7 @@ def reset_(dom):
   for servo in servos:
     servos[servo].reset()
 
-  ucuq.render()
+  ucuq.commit()
 
 
 def displayMacros(dom):
@@ -108,13 +108,13 @@ def acConnect(dom):
 def acTest():
   for servo in servos:
     ucuq.servoMoves([(servos[servo], 15)])
-    ucuq.render()
+    ucuq.commit()
     time.sleep(0.25)
     ucuq.servoMoves([(servos[servo], -15)])
-    ucuq.render()
+    ucuq.commit()
     time.sleep(0.25)
     ucuq.servoMoves([(servos[servo], 0)])
-    ucuq.render()
+    ucuq.commit()
     time.sleep(0.25)
 
 
@@ -299,7 +299,7 @@ def acExecute(dom, id):
     reset_(dom)
 
   execute(dom, moves)
-  ucuq.render()
+  ucuq.commit()
 
 
 def acSave(dom):
@@ -475,6 +475,6 @@ def createServos():
       raise Exception("Unknown hardware mode!")
     servos[label] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
 
-  ucuq.render()
+  ucuq.commit()
 
 atlastk.launch(CALLBACKS, headContent = HEAD)

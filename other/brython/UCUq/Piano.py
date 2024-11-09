@@ -24,10 +24,10 @@ async def acPlay(dom,id):
     freq = int(baseFreq*math.pow(math.pow(2,1.0/12), int(id)))
     pwm.setU16(int(ratio*65535))
     pwm.setFreq(freq)
-    ucuq.render()
+    ucuq.commit()
     ucuq.sleep(.5)
     pwm.setU16(0)
-    ucuq.render()
+    ucuq.commit()
 
 
 async def acSetRatio(dom, id):
@@ -57,7 +57,7 @@ async def acSetPin(dom, id):
   if pin:
     pinNotSet = False
     pwm = ucuq.PWM(pin)
-    ucuq.render()
+    ucuq.commit()
 
 CALLBACKS = {
   "": acConnect,

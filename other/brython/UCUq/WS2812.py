@@ -32,7 +32,7 @@ async def launchAwait(dom, pin, count):
 
   try:
     leds = ucuq.WS2812(pin, count)
-    ucuq.render()
+    ucuq.commit()
   except Exception as err:
     await dom.alert(err)
     onDuty = False

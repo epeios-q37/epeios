@@ -32,7 +32,7 @@ O_WIDTH = "TrueWidth"
 
 
 async def getParams():
-  return (await ucuq.renderAwait(f"getParams({pwm.getObject()})")) if onDuty else None
+  return (await ucuq.commitAwait(f"getParams({pwm.getObject()})")) if onDuty else None
 
 
 async def getDuty(dom):
@@ -164,7 +164,7 @@ async def initPWM(inputs):
   if inputs["Mode"] == M_STRAIGHT:
     pwm = ucuq.PWM(inputs[I_PIN], inputs[I_FREQ])
   elif inputs["Mode"] == M_PCA9685:
-    pwm = ucuq.PCA9685Channel(ucuq.PCA9685(inputs[I_SDA], inputs[I_SCL], inputs[I_FREQ]), inputs[I_CHANNEL])
+    pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(inputs[I_SDA], inputs[I_SCL], inputs[I_FREQ]), inputs[I_CHANNEL])
   else:
     raise Exception("Unknown mode!!!")
 
@@ -194,7 +194,7 @@ async def acConnect(dom):
   await ucuq.handleATKAwait(dom)
   
   ucuq.addCommand(MC_INIT)
-  ucuq.render()
+  ucuq.commit()
   
   await dom.inner("", BODY)
   await updateDutyBox(dom)

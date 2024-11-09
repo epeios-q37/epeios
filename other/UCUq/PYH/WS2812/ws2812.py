@@ -43,7 +43,7 @@ def launch(dom, pin, count):
 
   try:
     leds = ucuq.WS2812(pin, count)
-    ucuq.render()
+    ucuq.commit()
   except Exception as err:
     dom.alert(err)
     onDuty = False

@@ -9,7 +9,16 @@
 	  <Language>en</Language>
     <Command>Launch</Command>
     <!-- Default command -->
-    <ModulesFileName>h:/hg/q37/epeios/tools/ucuq/proxy/core/Modules.xml</ModulesFileName>
+    <xpp:define name="WindowsHGRoot">
+      <xpp:bloc>h:/hg</xpp:bloc>
+    </xpp:define>
+    <xpp:define name="LinuxHGRoot">
+      <xpp:bloc>/home/csimon/hg</xpp:bloc>
+    </xpp:define>
+    <ModulesFileName>
+      <xpp:expand select="LinuxHGRoot"/>
+      <xpp:bloc>/q37/epeios/tools/ucuq/proxy/core/Modules.xml</xpp:bloc>
+    </ModulesFileName>
   </Parameters>
   <Definitions>
     <Notification>
