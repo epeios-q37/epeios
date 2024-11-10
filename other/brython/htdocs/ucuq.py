@@ -74,6 +74,7 @@ def uploadCallback_(code, result):
 
 
 def executeCallback_(data, code, result):
+  print(f"Execute callback: '{result}'")
   if code != 0:
     raise Exception(result)
 
@@ -191,15 +192,19 @@ class Device:
     
     return data["result"]
 
-
   def addModule(self, module):
     if not module in self.pendingModules_ and not module in self.handledModules_:
       self.pendingModules_.append(module)
 
+  def addModules(self, modules):
+    if isinstance( modules, str):
+      self.addModule(modules)
+    else:
+      for module in modules:
+        self.addModule(module)
 
   def addCommand(self, command):
     self.commands_.append(command)
-
 
   async def commitAwait(self, expression):
     result = ""
@@ -266,13 +271,13 @@ def servoMoves(moves, speed = 1,/,device = None):
 
 
 class Core_:
-  def __init__(self, device, module = ""):
+  def __init__(self, device, modules = ""):
     self.id = None
 
     self.device_ = getDevice_(device)
 
-    if module:
-      self.device_.addModule(module)
+    if modules:
+      self.device_.addModules(modules)
   
   def __del__(self):
     if self.id:
@@ -292,9 +297,6 @@ class Core_:
   def addMethods(self, methods):
     self.addCommand(f"{self.getObject()}.{methods}")
                          
-  def commit(self):
-    self.device_.commit()
-  
 
 class GPIO(Core_):
   def __init__(self, pin = None, device = None):
@@ -311,7 +313,7 @@ class GPIO(Core_):
 
 
   def high(self, value = True):
-    self.addMEthods(f"high({value})")
+    self.addMethods(f"high({value})")
 
 
   def low(self):
@@ -323,7 +325,7 @@ class WS2812(Core_):
     super().__init__(device, "WS2812-1")
 
     if (pin == None) != (n == None):
-      raise Exception("Both or none of 'pin'/'n' must be defined")
+      raise Exception("Both or none of 'pin'/'n' must be given")
 
     if pin != None:
       self.init(pin, n)
@@ -349,21 +351,33 @@ class WS2812(Core_):
 
   def write(self):
     self.addMethods(f"write()")
-    self.commit()
+
+class I2C(Core_):
+  def __init__(self, sda = None, scl = None, /, device = None):
+    super().__init__(device, "I2C-1")
+
+    if bool(sda) != bool(scl):
+      raise Exception("None or both of sda/scl must be given!")
+    elif sda != None:
+      self.init(sda, scl)
+
+  def init(self, sda, scl):
+    super().init(f"machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl}))")
+
+  async def scanAwait(self):
+    return (await commitAwait(f"{self.getObject()}.scan()"))
     
 
 class HT16K33(Core_):
-  def __init__(self, sda = None, scl = None, device = None):
+  def __init__(self, i2c = None, /, addr = None, device = None):
     super().__init__(device, "HT16K33-1")
 
-    if bool(sda) != bool(scl):
-      raise Exception("None or both of sda/scl must be defined!")
-    elif sda:
-      self.init(sda, scl)
+    if i2c:
+      self.init(i2c)
 
 
-  def init(self, sda, scl):
-    super().init(f"HT16K33(machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl})))")
+  def init(self, i2c, addr = None):
+    super().init(f"HT16K33({i2c.getObject()}, {addr})")
 
     self.addMethods(f"set_brightness(0)")
 
@@ -405,7 +419,7 @@ class PWM(Core_):
 
     if freq != None:
       if pin == None:
-        raise Exception("'freq' cannot be defined without 'pin'!")
+        raise Exception("'freq' cannot be given without 'pin'!")
       
     if pin != None:
       self.init(pin, freq)
@@ -444,22 +458,19 @@ class PWM(Core_):
 
 
 class PCA9685(Core_):
-  def __init__(self, sda = None, scl = None, freq = None, addr = None, device = None):
+  def __init__(self, i2c = None, freq = None,/, addr = None, device = None):
     super().__init__(device, "PCA9685-1")
 
-    if (sda != None) != bool(scl != None) :
-      raise Exception("None or both of 'sda'/'scl' must be defined!")
-    
-    if sda:
-      self.init(sda, scl, freq = freq, addr = addr)
+    if i2c:
+      self.init(i2c, freq = freq, addr = addr)
     elif freq:
-      raise Exception("'freq' cannot be defined without 'sda' and 'scl'!")
+      raise Exception("freq cannot be given without i2c!")
     elif addr:
-      raise Exception("'addr' cannot be defined without 'sda' and 'scl'!")
+      raise Exception("addr cannot be given without i2c!")
 
 
-  def init(self, sda, scl, *, freq = None, addr = None):
-    super().init(f"PCA9685({sda}, {scl}, {addr if addr else 0x40})")
+  def init(self, i2c, /, freq = None, addr = None):
+    super().init(f"PCA9685({i2c.getObject()}, {addr})")
 
     self.setFreq(freq if freq else 50)
 
@@ -486,7 +497,7 @@ class PWM_PCA9685(Core_):
     super().__init__(device, "PWM_PCA9685-1")
 
     if bool(pca) != (channel != None):
-      raise Exception("Both or none of 'pca' and 'channel' must be defined!")
+      raise Exception("Both or none of 'pca' and 'channel' must be given!")
     
     if pca:
       self.init(pca, channel)
@@ -523,12 +534,16 @@ class PWM_PCA9685(Core_):
 
 
 class LCD_PCF8574(Core_):
-  def __init__(self, sda, scl, num_lines, num_columns,/,i2c_addr = None, device = None):
+  def __init__(self, i2c, num_lines, num_columns,/,addr = None, device = None):
     super().__init__(device, "LCD_PCF8574-1")
-    self.init(sda, scl, num_lines, num_columns)
 
-  def init(self, sda,scl, num_lines, num_columns, i2c_addr = None):
-    super().init(f"LCD_PCF8574(machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl})),{num_lines},{num_columns}{f",i2c_addr={i2c_addr}" if i2c_addr != None else ""})")
+    if i2c:
+      self.init(i2c, num_lines, num_columns, addr = addr)
+    elif addr != None:
+      raise Exception("addr can not be given without i2c!")
+
+  def init(self, i2c, num_lines, num_columns, addr = None):
+    super().init(f"LCD_PCF8574({i2c.getObject()},{num_lines},{num_columns},{addr})")
 
   def moveTo(self, x, y):
     self.addMethods(f"move_to({x},{y})")
@@ -587,11 +602,11 @@ class Servo(Core_):
   def test_(self, specs, tweak, domain):
     if tweak:
       if not specs:
-        raise Exception("'tweak' can not be defined without 'specs'!")
+        raise Exception("'tweak' can not be given without 'specs'!")
 
     if domain:
       if not specs:
-        raise Exception("'domain' can not be defined without 'specs'!")
+        raise Exception("'domain' can not be given without 'specs'!")
 
 
   def __init__(self, pwm = None, specs = None, /, *, tweak = None, domain = None, device = None):
@@ -655,3 +670,48 @@ class Servo(Core_):
 
   def setAngle(self, angle):
     return self.pwm.setU16(self.angleToDuty(angle))
+  
+
+class SSD1306(Core_):
+  def show(self):
+    self.addMethods("show()")
+
+  def powerOff(self):
+    self.addMethods("poweroff()")
+
+  def contrast(self, contrast):
+    self.addMethods(f"contrast({contrast})")
+
+  def invert(self, invert):
+    self.addMethods(f"invert({invert})")
+
+  def fill(self, col):
+    self.addMethods(f"invert({col})")
+
+  def pixel(self, x, y, col):
+    self.addMethods(f"pixel({x},{y},{col})")
+
+  def scroll(self, dx, dy, col):
+    self.addMethods(f"scroll({dx},{dy})")
+
+  def text(self, string, x, y, col=1):
+    self.addMethods(f"text('{string}',{x}, {y}, {col})")
+
+class SSD1306_I2C(SSD1306):
+  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False, device = None):
+    super().__init__(device, ("SSD1306-1", "SSD1306_I2C-1"))
+
+    if bool(width) != bool(height) != bool(i2c):
+      raise Exception("All or none of width/height/i2c must be given!")
+    elif width:
+      self.init(width, height, i2c, external_vcc = external_vcc, addr= addr)
+    elif addr:
+      raise Exception("addr can not be given without i2c!")
+      
+
+  def init(self, width, height, i2c, /, external_vcc = False, addr = None):
+    super().init(f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})")
+
+
+
+    
