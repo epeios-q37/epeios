@@ -74,7 +74,6 @@ def uploadCallback_(code, result):
 
 
 def executeCallback_(data, code, result):
-  print(f"Execute callback: '{result}'")
   if code != 0:
     raise Exception(result)
 

@@ -105,8 +105,7 @@ class Handler {
     this.Amount = 0;
     this.Strings = [];
     this.stack = new Array();
-  
-  }
+    }
 
   handleUInt(feeder) {
       if (feeder.isEmpty()) return false;
@@ -140,7 +139,7 @@ class Handler {
         // console.log("sInt: ", sInt);
         break;
       case d.LENGTH: // c.
-      this.Length = this.UInt;
+        this.Length = this.UInt;
         this.pop();
         this.push(d.CONTENT);
         // console.log("length: ", length);

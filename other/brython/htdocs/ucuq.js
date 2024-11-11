@@ -34,25 +34,26 @@ function steering(handler) {
   while (!handler.feeder.isEmpty() || handler.feeder.cont) {
     handler.feeder.cont = false;
 
-    // console.log(stack)
-
     switch (handler.top()) {
       case s.STEERING:
         break;
       case s.UPLOAD:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
-        handler.uploadCallback(handler.getSInt(), handler.getString())  // result of 'handler.getString()' doesn't matter ir result of 'handler.getSInt()' is == 0.
+        handler.callback(handler.getSInt(), handler.getString())  // result of 'handler.getString()' doesn't matter ir result of 'handler.getSInt()' is == 0.
+        handler.callback = undefined;
         break;
       case s.EXECUTE:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
-        handler.executeCallback(handler.getSInt(), handler.getString())
+        handler.callback(handler.getSInt(), handler.getString())
+        handler.callback = undefined;
         break;
       case s.PING:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
-        handler.pingCallback(handler.getSInt(), handler.getString())
+        handler.callback(handler.getSInt(), handler.getString())
+        handler.callback = undefined;
         break;
       case s.UPLOAD_ANSWER:
         handler.pop(handler.feeder);
@@ -61,6 +62,7 @@ function steering(handler) {
           handler.push(s.RESULT);
           handler.pushString();
         }
+        break;
       case s.EXECUTE_ANSWER:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
@@ -198,10 +200,8 @@ function onRead(handler, data, deviceToken, deviceId) {
       case p.IGNITION:
         if (!ignition(handler)) {
           handler.phase = p.STEERING;
-          handler.ignited = true;
-
-        //  if (launchCallback)
-            handler.launchCallback();
+          handler.callback();
+          handler.callback = undefined
         }
         break;
       case p.STEERING:
@@ -231,15 +231,13 @@ function launch_(deviceToken, deviceId, libraryVersion, callback) {
   let handler = proto.getHandler();
   handler.deviceId = deviceId;
 
-  handler.launchCallback = callback;
+  handler.callback = callback;
 
   handler.phase = p.HANDSHAKES;
 
   log("Connecting to '" + WS_URL_ + "'…");
 
   handler.ws = new WebSocket(WS_URL_);
-
-  handler.ignited = false;
 
   handler.ws.onerror = function (err) {
     log("Unable to connect to '" + WS_URL_ + "'!");
@@ -271,75 +269,74 @@ function launch_(deviceToken, deviceId, libraryVersion, callback) {
   return handler;
 }
 
-function subUpload_(handler, modules) {
-  if ( !handler.ignited )
-    setTimeout(() => subUpload_(handler, modules));
-  else {
-    handler.push(s.UPLOAD)
-    handler.push(s.EXECUTE_ANSWER);
-    handler.pushSInt();
+var funcStack = []
 
-    handler.ws.send(
-      proto.addStrings(
-        proto.handleString("Upload_1"),
-        modules
-      )
-    )
+function subOperate_(handler) {
+  if ( handler.callback !== undefined ) {
+    if ( funcStack.length )
+      setTimeout(() => subOperate_(handler));
+  } else if ( funcStack.length ) {
+    item = funcStack.shift();
+    handler.callback = item[2];
+    item[0](handler, ...item[1]);
+    subOperate_(handler);
   }
 }
 
-function upload_(handler, modules, callback) {
-  handler.uploadCallback = callback;
+function operate_(handler, func, args, callback) {
+  funcStack.push([func, args, callback]);
 
-  subUpload_(handler, modules);
+  if ( funcStack.length === 1 )
+    subOperate_(handler);
+}
+
+function subUpload_(handler, modules) {
+  handler.push(s.UPLOAD)
+  handler.push(s.UPLOAD_ANSWER);
+  handler.pushSInt();
+
+  handler.ws.send(
+    proto.addStrings(
+      proto.handleString("Upload_1"),
+      modules
+    )
+  )
+}
+
+function upload_(handler, modules, callback) {
+  operate_(handler, subUpload_, [modules], callback);
 }
 
 
 function subExecute_(handler, script, expression) {
-  if ( !handler.ignited )
-    setTimeout(() => subExecute_(handler, script, expression));
-  else {
-    handler.push(s.EXECUTE);
-    handler.push(s.EXECUTE_ANSWER);
-    handler.pushSInt();
-    
-    handler.ws.send(
+  handler.push(s.EXECUTE);
+  handler.push(s.EXECUTE_ANSWER);
+  handler.pushSInt();
+  
+  handler.ws.send(
+    proto.addString(
       proto.addString(
-        proto.addString(
-          proto.handleString("Execute_1"),
-          script),
-      expression)
-    );
-  }
+        proto.handleString("Execute_1"),
+        script),
+    expression)
+  );
 }
 
 function execute_(handler, script, expression, callback) {
-  handler.executeCallback = callback;
-
-  subExecute_(handler, script, expression);
-
-//  setTimeout(() => subExecute_(script, expression), 2000);
+  operate_(handler, subExecute_, [script, expression], callback)
 }
 
 function subPing_(handler) {
-  if ( !handler.ignited )
-    setTimeout(() => subPing_(handler));
-  else {
-    handler.push(s.PING);
-    handler.push(s.PING_ANSWER);
-    handler.pushSInt();
-    
-    handler.ws.send(proto.handleString("Ping_1"));
-  }
+  handler.push(s.PING);
+  handler.push(s.PING_ANSWER);
+  handler.pushSInt();
+  
+  handler.ws.send(proto.handleString("Ping_1"));
 }
 
 function ping_(handler, callback) {
-  handler.pingCallback = callback;
-
-  subPing_(handler);
+  operate_(handler, subPing_, [], callback)
 }
-
-
 
 function timeout_(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -350,7 +347,7 @@ async function sleep_(time, fn, ...args) {
   return fn(...args);
 }
 
-// ATTENTION: si ajout, mettre script 'Build' à jour !!!
+// ATTENTION: si modification, mettre script 'Build' à jour !!!
 module.exports.sleep = sleep_;
 module.exports.launch = launch_;
 module.exports.upload = upload_;
