@@ -37,7 +37,7 @@ def update_(R, G, B):
   if ws2812:
     ws2812.fill((int(R), int(G), int(B)))
     ws2812.write()
-    ws2812.commit()
+    ucuq.commit()
 
 def launch(dom, pin, count):
   global ws2812, onDuty

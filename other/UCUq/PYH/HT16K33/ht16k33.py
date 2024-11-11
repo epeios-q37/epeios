@@ -23,14 +23,14 @@ def test():
     for y in range(8):
       for x in range(16):
         ht16k33.plot(x,y)
-      ht16k33.commit()
+      ht16k33.show()
       ucuq.sleep(TEST_DELAY)
       ht16k33.clear()
 
     for x in range(16):
       for y in range(8):
         ht16k33.plot(x,y)
-      ht16k33.commit()
+      ht16k33.show()
       ucuq.sleep(TEST_DELAY)
       ht16k33.clear()
 
@@ -38,7 +38,7 @@ def test():
       for y in range(8):
         ht16k33.plot(x,y)
 
-    ht16k33.commit()
+    ht16k33.show()
 
     for b in range(0, 16):
       ht16k33.setBrightness(b)
@@ -48,7 +48,7 @@ def test():
       ht16k33.setBrightness(b)
       ucuq.sleep(TEST_DELAY)
 
-    ht16k33.clear().commit()
+    ht16k33.clear().show()
     ucuq.commit()
 
 
@@ -91,7 +91,7 @@ def setHexa(dom, motif = pattern):
 
 def drawOnMatrix(motif = pattern):
   if ht16k33:
-    ht16k33.draw(motif).commit()
+    ht16k33.draw(motif).show()
 
     ucuq.commit()
 
@@ -170,7 +170,7 @@ def launch(dom, sda, scl):
 
   try:
     ht16k33 = ucuq.HT16K33(ucuq.I2C(sda, scl))
-    ht16k33.clear().commit()
+    ht16k33.clear().show()
     ht16k33.setBrightness(0)
     ht16k33.setBlinkRate(0)
     ucuq.commit()
@@ -205,7 +205,7 @@ def acSwitch(dom, id):
 def plot(x,y,ink=True):
   if ht16k33:
     ht16k33.plot(x,y)
-    ht16k33.commit()
+    ht16k33.show()
 
 
 def clear():

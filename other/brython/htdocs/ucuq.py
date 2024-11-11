@@ -410,7 +410,7 @@ class HT16K33(Core_):
 
     return self
 
-  def commit(self):
+  def show(self):
     self.addMethods(f"render()")
 
     return self
