@@ -1,43 +1,43 @@
-import ucuq, atlastk
+import ucuq, atlastk, binascii
 
 onDuty = False
-matrix = None
+ht16k33 = None
 
 pattern = "0" * 32
 
 TEST_DELAY = 0.05
 
 def test():
-  if matrix:
+  if ht16k33:
     for y in range(8):
       for x in range(16):
-        matrix.plot(x,y)
-      matrix.commit()
+        ht16k33.plot(x,y)
+      ht16k33.commit()
       ucuq.sleep(TEST_DELAY)
-      matrix.clear()
+      ht16k33.clear()
 
     for x in range(16):
       for y in range(8):
-        matrix.plot(x,y)
-      matrix.commit()
+        ht16k33.plot(x,y)
+      ht16k33.commit()
       ucuq.sleep(TEST_DELAY)
-      matrix.clear()
+      ht16k33.clear()
 
     for x in range(16):
       for y in range(8):
-        matrix.plot(x,y)
+        ht16k33.plot(x,y)
 
-    matrix.commit()
+    ht16k33.commit()
 
     for b in range(0, 16):
-      matrix.setBrightness(b)
+      ht16k33.setBrightness(b)
       ucuq.sleep(TEST_DELAY)
 
     for b in range(15, -1, -1):
-      matrix.setBrightness(b)
+      ht16k33.setBrightness(b)
       ucuq.sleep(TEST_DELAY)
 
-    matrix.clear().commit()
+    ht16k33.clear().commit()
     ucuq.commit()
 
 
@@ -79,8 +79,8 @@ async def setHexaAwait(dom, motif = pattern):
 
 
 def drawOnMatrix(motif = pattern):
-  if matrix:
-    matrix.draw(motif).commit()
+  if ht16k33:
+    ht16k33.draw(motif).commit()
 
     ucuq.commit()
 
@@ -155,13 +155,13 @@ async def acPreset(dom, id):
 
 
 async def launchAwait(dom, sda, scl):
-  global matrix, onDuty
+  global ht16k33, onDuty
 
   try:
-    matrix = ucuq.HT16K33(sda, scl)
-    matrix.clear().commit()
-    matrix.setBrightness(0)
-    matrix.setBlinkRate(0)
+    ht16k33 = ucuq.HT16K33(ucuq.I2C(sda, scl))
+    ht16k33.clear().commit()
+    ht16k33.setBrightness(0)
+    ht16k33.setBlinkRate(0)
     ucuq.commit()
   except Exception as err:
     await dom.alert(err)
@@ -196,14 +196,14 @@ async def acTest():
 
 
 def plot(x,y,ink=True):
-  if matrix:
-    matrix.plot(x,y)
-    matrix.commit()
+  if ht16k33:
+    ht16k33.plot(x,y)
+    ht16k33.commit()
 
 
 def clear():
-  if matrix:
-    matrix.clear()
+  if ht16k33:
+    ht16k33.clear()
 
 
 async def acToggle(dom, id):
@@ -246,11 +246,11 @@ async def acAll(dom):
 
 
 async def acBrightness(dom, id):
-  matrix.setBrightness(int(await dom.getValue(id)))
+  ht16k33.setBrightness(int(await dom.getValue(id)))
   ucuq.commit()
 
 async def acBlinkRate(dom, id):
-  matrix.setBlinkRate(float(await dom.getValue(id)))
+  ht16k33.setBlinkRate(float(await dom.getValue(id)))
   ucuq.commit()
 
 async def acDraw(dom, id):
