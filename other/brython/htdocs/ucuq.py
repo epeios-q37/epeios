@@ -26,6 +26,10 @@ def GetUUID_():
 
   return uuid_
 
+
+def launchAsync(func, *args, **kwargs):
+  aio.run(func(*args, **kwargs))
+
 def commit():
   getDevice_().commit()
 

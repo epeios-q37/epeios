@@ -11,7 +11,7 @@ with open('Body.html', 'r') as file:
 with open('Head.html', 'r') as file:
   HEAD = file.read()
 
-leds = None
+ws2812 = None
 onDuty = False
 
 def convert_(hex):
@@ -34,15 +34,16 @@ def getAllValues_(R, G, B):
   return getNValues_(R, G, B) | getSValues_(R, G, B)
 
 def update_(R, G, B):
-  if leds:
-    leds.fill((int(R), int(G), int(B)))
-    leds.write()
+  if ws2812:
+    ws2812.fill((int(R), int(G), int(B)))
+    ws2812.write()
+    ws2812.commit()
 
 def launch(dom, pin, count):
-  global leds, onDuty
+  global ws2812, onDuty
 
   try:
-    leds = ucuq.WS2812(pin, count)
+    ws2812 = ucuq.WS2812(pin, count)
     ucuq.commit()
   except Exception as err:
     dom.alert(err)

@@ -345,6 +345,13 @@ class Device(Device_):
     if not module in self.pendingModules and not module in self.handledModules:
       self.pendingModules.append(module)
 
+  def addModules(self, modules):
+    if isinstance( modules, str):
+      self.addModule(modules)
+    else:
+      for module in modules:
+        self.addModule(module)
+
   def addCommand(self, command):
     self.commands.append(command)
 
