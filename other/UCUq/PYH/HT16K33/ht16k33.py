@@ -133,7 +133,7 @@ def updateUI(dom, onDuty):
         
 
 def acConnect(dom):
-  label = ucuq.handleATK(dom)
+  label = ucuq.handleATK(dom)["kit"]["label"]
 
   dom.inner("", BODY)
 

@@ -39,26 +39,6 @@ async def commitAwait(expr):
 def sleep(secs):
   getDevice_().sleep(secs)
 
-async def pingAwait():
-  return await getDevice_().pingAwait()
-
-async def handleATKAwait(dom):
-  await dom.inner("", "<h3>Connecting…</h3>")
-
-  try:
-    label = await pingAwait()
-  except Exception as err:
-    await dom.inner("", f"<h5>Error: {err}</h5>")
-    raise
-
-  await dom.inner("", f"<h3>'{label}'</h3>")
-
-  await sleepAwait(1.5)
-
-  return label
-
-
-
 class Lock_:
   def __init__(self):
     self.locked_ = False
@@ -89,15 +69,6 @@ def executeCallback_(data, code, result):
   if data:
     data["code"] = code
     data["result"] = jsonResult
-    data["lock"].release()
-
-def pingCallback_(data, code, result):
-  if code != 0:
-    raise Exception(result)
-
-  if data:
-    data["code"] = code
-    data["result"] = result
     data["lock"].release()
 
 def launchCallback_(lock):
@@ -180,21 +151,6 @@ class Device:
     ucuqjs.execute(self.device_, script, "", lambda code, result: executeCallback_(None, code, result))
 
 
-  async def pingAwait(self):
-    lock = Lock_()
-
-    await lock.acquire()
-
-    data = {
-      "lock": lock
-    }
-
-    ucuqjs.ping(self.device_, lambda code, result: pingCallback_(data, code, result))
-
-    await lock.acquire()
-    
-    return data["result"]
-
   def addModule(self, module):
     if not module in self.pendingModules_ and not module in self.handledModules_:
       self.pendingModules_.append(module)
@@ -208,6 +164,8 @@ class Device:
 
   def addCommand(self, command):
     self.commands_.append(command)
+
+    return self
 
   async def commitAwait(self, expression):
     result = ""
@@ -239,6 +197,47 @@ class Device:
 ###############
 # UCUq COMMON #
 ###############
+
+INFO_SCRIPT = """
+def ucuqGetKitLabel(): 
+  if "Kit" in CONFIG_:
+    kit = CONFIG_["Kit"]
+
+    id = getSelectorId_(SELECTOR_)
+
+    if id in kit:
+      return kit[id]
+    else:
+      return ""
+
+def ucuqStructToDict(obj):
+    return {attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}
+
+def ucuqGetInfos():
+  return {
+    "kit": {
+      "label": ucuqGetKitLabel()
+    },
+    "uname": ucuqStructToDict(uos.uname())
+  }
+"""
+
+async def handleATKAwait(dom):
+  await dom.inner("", "<h3>Connecting…</h3>")
+  
+  addCommand(INFO_SCRIPT)
+
+  try:
+    info = await commitAwait("ucuqGetInfos()")
+  except Exception as err:
+    await dom.inner("", f"<h5>Error: {err}</h5>")
+    raise
+
+  await dom.inner("", f"<h3>'{info['kit']['label']}'</h3>")
+
+  await sleepAwait(1.5)
+
+  return info
 
 def getDevice_(device = None):
   if device == None:
@@ -297,8 +296,10 @@ class Core_:
   def addCommand(self, command):
     self.device_.addCommand(command)
 
+    return self
+
   def addMethods(self, methods):
-    self.addCommand(f"{self.getObject()}.{methods}")
+    return self.addCommand(f"{self.getObject()}.{methods}")
                          
 
 class GPIO(Core_):
@@ -341,7 +342,7 @@ class WS2812(Core_):
                
 
   def setValue(self, index, val):
-    self.addMethods(f"setitem({index}, {json.dumps(val)})")
+    self.addMethods(f"__setitem__({index}, {json.dumps(val)})")
 
     return self
                        
@@ -382,38 +383,28 @@ class HT16K33(Core_):
   def init(self, i2c, addr = None):
     super().init(f"HT16K33({i2c.getObject()}, {addr})")
 
-    self.addMethods(f"set_brightness(0)")
+    return self.addMethods(f"set_brightness(0)")
 
 
   def setBlinkRate(self, rate):
-    self.addMethods(f"set_blink_rate({rate})")
+    return self.addMethods(f"set_blink_rate({rate})")
 
-    return self
 
   def setBrightness(self, brightness):
-    self.addMethods(f"set_brightness({brightness})")
-
-    return self
+    return self.addMethods(f"set_brightness({brightness})")
 
   def clear(self):
-    self.addMethods(f"clear()")
-
-    return self
+    return self.addMethods(f"clear()")
 
   def draw(self, motif):
-    self.addMethods(f"clear().draw('{motif}').render()")
-
-    return self
+    return self.addMethods(f"clear().draw('{motif}').render()")
 
   def plot(self, x, y, ink=True):
-    self.addMethods(f"plot({x}, {y}, ink={1 if ink else 0})")  
-
-    return self
+    return self.addMethods(f"plot({x}, {y}, ink={1 if ink else 0})")  
 
   def show(self):
-    self.addMethods(f"render()")
+    return self.addMethods(f"render()")
 
-    return self
 
 
 class PWM(Core_):
@@ -546,40 +537,40 @@ class LCD_PCF8574(Core_):
       raise Exception("addr can not be given without i2c!")
 
   def init(self, i2c, num_lines, num_columns, addr = None):
-    super().init(f"LCD_PCF8574({i2c.getObject()},{num_lines},{num_columns},{addr})")
+    return super().init(f"LCD_PCF8574({i2c.getObject()},{num_lines},{num_columns},{addr})")
 
   def moveTo(self, x, y):
-    self.addMethods(f"move_to({x},{y})")
+    return self.addMethods(f"move_to({x},{y})")
 
   def putString(self, string):
-    self.addMethods(f"putstr(\"{string}\")")
+    return self.addMethods(f"putstr(\"{string}\")")
 
   def clear(self):
-    self.addMethods("clear()")
+    return self.addMethods("clear()")
 
   def showCursor(self, value = True):
-    self.addMethods("show_cursor()" if value else "hide_cursor()")
+    return self.addMethods("show_cursor()" if value else "hide_cursor()")
 
   def hideCursor(self):
-    self.showCursor(False)
+    return self.showCursor(False)
 
   def blinkCursorOn(self, value = True):
-    self.addMethods("blink_cursor_on()" if value else "blink_cursor_off()")
+    return self.addMethods("blink_cursor_on()" if value else "blink_cursor_off()")
 
   def blinkCursorOff(self):
-    self.blinkCursorOn(False)
+    return self.blinkCursorOn(False)
 
   def displayOn(self, value = True):
-    self.addMethods("display_on()" if value else "display_off()")
+    return self.addMethods("display_on()" if value else "display_off()")
 
   def displayOff(self):
-    self.displayOn(False)
+    return self.displayOn(False)
 
   def backlightOn(self, value = True):
-    self.addMethods("backlight_on()" if value else "backlight_off()")
+    return self.addMethods("backlight_on()" if value else "backlight_off()")
 
   def backlightOff(self):
-    self.backlightOn(False)
+    return self.backlightOn(False)
 
   
 

@@ -25,8 +25,6 @@ const s = {
   UPLOAD_ANSWER: 303,
   EXECUTE: 304,
   EXECUTE_ANSWER: 305,
-  PING: 306,
-  PING_ANSWER: 307,
   RESULT: 308
 }
 
@@ -49,12 +47,6 @@ function steering(handler) {
         handler.callback(handler.getSInt(), handler.getString())
         handler.callback = undefined;
         break;
-      case s.PING:
-        handler.pop(handler.feeder);
-        handler.feeder.cont = true;
-        handler.callback(handler.getSInt(), handler.getString())
-        handler.callback = undefined;
-        break;
       case s.UPLOAD_ANSWER:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
@@ -64,12 +56,6 @@ function steering(handler) {
         }
         break;
       case s.EXECUTE_ANSWER:
-        handler.pop(handler.feeder);
-        handler.feeder.cont = true;
-        handler.push(s.RESULT);
-        handler.pushString();
-        break;
-      case s.PING_ANSWER:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         handler.push(s.RESULT);
@@ -326,18 +312,6 @@ function execute_(handler, script, expression, callback) {
   operate_(handler, subExecute_, [script, expression], callback)
 }
 
-function subPing_(handler) {
-  handler.push(s.PING);
-  handler.push(s.PING_ANSWER);
-  handler.pushSInt();
-  
-  handler.ws.send(proto.handleString("Ping_1"));
-}
-
-function ping_(handler, callback) {
-  operate_(handler, subPing_, [], callback)
-}
-
 function timeout_(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -352,4 +326,4 @@ module.exports.sleep = sleep_;
 module.exports.launch = launch_;
 module.exports.upload = upload_;
 module.exports.execute = execute_;
-module.exports.ping = ping_;
+

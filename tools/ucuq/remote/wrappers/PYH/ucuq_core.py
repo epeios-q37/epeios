@@ -31,7 +31,6 @@ _writeLock = threading.Lock()
 ITEMS_ = "i_"
 
 # Request
-R_PING_ = "Ping_1"
 R_EXECUTE_ = "Execute_1"
 R_UPLOAD_ = "Upload_1"
 
@@ -191,24 +190,6 @@ def getToken():
 def getDeviceId():
   return getDevice_().getDeviceId()
 
-def ping():
-  return getDevice_().ping()
-
-def handleATK(dom):
-  dom.inner("", "<h3>Connecting…</h3>")
-
-  try:
-    label = ping()
-  except Exception as err:
-    dom.inner("", f"<h5>Error: {err}</h5>")
-    raise
-
-  dom.inner("", f"<h3>'{label}'</h3>")
-
-  time.sleep(1.5)
-
-  return label
-
 CONFIG_DEVICE_ENTRY = "Device"
 CONFIG_DEVICE_TOKEN_ENTRY = "Token"
 CONFIG_DEVICE_ID_ENTRY = "Id"
@@ -317,25 +298,9 @@ class Device_:
         raise Error("Unknown answer from device!")
 
 
-  def ping(self):
-    writeString_(self.socket_, R_PING_)
-
-    if ( answer := readUInt_(self.socket_) ) == A_OK_:
-      return readString_(self.socket_)
-    elif answer == A_ERROR_:
-      raise Error("Unexpected response from device!")
-    elif answer == A_PUZZLED_:
-      readString_(self.socket_) # For future use
-      raise Error("Puzzled!")
-    elif answer == A_DISCONNECTED:
-        raise Error("Disconnected from device!")
-    else:
-      raise Error("Unknown answer from device!")
-    
-    
 class Device(Device_):
   def __init__(self, /, id = None, token = None, now = True):
-    self.pendingModules = ["Init_1"]
+    self.pendingModules = ["Init-1"]
     self.handledModules = []
     self.commands = []
 

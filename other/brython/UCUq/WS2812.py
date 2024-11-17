@@ -1,7 +1,105 @@
-import atlastk, ucuq
+import atlastk, ucuq, time
+
+ws = ucuq.WS2812(16,4)
+
+RB_LIMIT = 30
+RB_DELAY = .04
 
 ws2812 = None
 onDuty = False
+
+rbTiming = 0
+
+async def timedCommit():
+  global rbTiming
+
+  if rbTiming > 3:
+    await ucuq.commitAwait("")
+    rbTiming = 0
+  else:
+    rbTiming += 1    
+
+
+def r2y(l, i):
+  ws.setValue(l,[RB_LIMIT, i, 0])
+  
+def y2g(l, i):
+  ws.setValue(l,[RB_LIMIT - i, RB_LIMIT, 0])
+  
+def g2c(l, i):
+  ws.setValue(l,[0, RB_LIMIT, i])
+  
+def c2b(l, i):
+  ws.setValue(l,[0, RB_LIMIT - i, RB_LIMIT])
+  
+def b2m(l, i):
+  ws.setValue(l,[i, 0, RB_LIMIT])
+  
+def m2r(l, i):
+  ws.setValue(l,[RB_LIMIT, 0, RB_LIMIT - i])
+  
+def rbShade(l, v, i):
+  match v % 6:
+    case 0:
+      r2y(l,i)
+    case 1:
+      y2g(l,i)
+    case 2:
+      g2c(l,i)
+    case 3:
+      c2b(l,i)
+    case 4:
+      b2m(l,i)
+    case 5:
+      m2r(l,i)
+      
+def rbFade(l, v, i, inOut):
+  if not inOut:
+    i = RB_LIMIT - i
+  match v % 6:
+    case 0:
+      ws.setValue(l,[i,0,0])
+    case 1:
+      ws.setValue(l,[i,i,0])
+    case 2:
+      ws.setValue(l,[0,i,0])
+    case 3:
+      ws.setValue(l,[0,i,i])
+    case 4:
+      ws.setValue(l,[0,0,i])
+    case 5:
+      ws.setValue(l,[i,0,i])
+      
+      
+def rbFadeAll(leds, inOut):
+  for i in range(RB_LIMIT+1):
+    for led in leds:
+      rbFade(led, leds[led], i, inOut)
+    ws.write()
+    ucuq.sleep(RB_DELAY)
+
+  ucuq.commit()
+
+async def rbLoop(leds):
+  for v in range(6):
+    for i in range(RB_LIMIT + 1):
+      for led in leds:
+        rbShade(led, leds[led] + v, i)
+      ws.write()
+      ucuq.sleep(RB_DELAY)
+    await timedCommit()
+      
+
+async def rainbow():
+  leds = {}
+  
+  for led in range(4):
+    leds[led] = 3-led
+    
+  rbFadeAll(leds, True)
+  await rbLoop(leds)
+  await rbLoop(leds)
+  rbFadeAll(leds, False)
 
 def convert_(hex):
   return int(int(hex,16) * 100 / 256)
@@ -72,7 +170,7 @@ async def updateUIAwait(dom, onDuty):
         raise Exception("Unknown preset!")
 
 async def acConnect(dom):
-  label = await ucuq.handleATKAwait(dom)
+  label = (await ucuq.handleATKAwait(dom))['kit']['label']
 
   await dom.inner("", BODY)
   await dom.executeVoid("setColorWheel()")
@@ -143,6 +241,9 @@ async def acAdjust(dom):
   await dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
   update_(R, G, B)
 
+async def acRainbow():
+  await rainbow()
+
 async def acReset(dom):
   await dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
   await dom.setValues(getAllValues_(0, 0, 0))
@@ -164,6 +265,7 @@ CALLBACKS = {
   "Select": acSelect,
   "Slide": acSlide,
   "Adjust": acAdjust,
+  "Rainbow": acRainbow,
   "Reset": acReset
 }
 
@@ -345,7 +447,8 @@ BODY = """
         <span>&nbsp;</span>
         <input id="NB" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" size="3">
       </label>
-      <div style="display: flex; justify-content: center;">
+      <div style="display: flex; justify-content: space-evenly;">
+        <button xdh:onevent="Rainbow">Rainbow</button>
         <button xdh:onevent="Reset">Reset</button>
       </div>
     </div>

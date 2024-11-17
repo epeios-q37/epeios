@@ -122,7 +122,7 @@ async def updateUIAwait(dom, onDuty):
         
 
 async def acConnect(dom):
-  label = await ucuq.handleATKAwait(dom)
+  label = (await ucuq.handleATKAwait(dom))['kit']['label']
 
   await dom.inner("", BODY)
 
