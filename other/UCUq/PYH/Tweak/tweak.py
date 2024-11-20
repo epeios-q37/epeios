@@ -19,7 +19,8 @@ I_MODE = "Mode"
 I_PIN = "Pin"
 I_SDA = "SDA"
 I_SCL = "SCL"
-I_DRIVER = "Driver"
+I_CHANNEL = "Channel"
+I_SOFT = "Soft"
 I_FREQ = "Freq"
 I_DUTY = "Duty"
 I_RATIO = "Ratio"
@@ -69,14 +70,15 @@ def convert(value, converter):
 
 
 def getInputs(dom):
-  values = dom.getValues([I_MODE, I_PIN, I_SDA, I_SCL, I_DRIVER, I_FREQ, I_DUTY, I_RATIO, I_WIDTH])
+  values = dom.getValues([I_MODE, I_PIN, I_SDA, I_SCL, I_CHANNEL, I_SOFT, I_FREQ, I_DUTY, I_RATIO, I_WIDTH])
 
   return {
     I_MODE: values[I_MODE],
     I_PIN: convert(values[I_PIN], int),
     I_SDA: convert(values[I_SDA], int),
     I_SCL: convert(values[I_SCL], int),
-    I_DRIVER: convert(values[I_DRIVER], int),
+    I_CHANNEL: convert(values[I_CHANNEL], int),
+    I_SOFT: True if values[I_SOFT] == "true" else False,
     I_FREQ: convert(values[I_FREQ], int),
     I_DUTY: {
       "Type": values[I_DUTY],
@@ -100,8 +102,8 @@ def test(dom, inputs):
       dom.alert("No or bad SCL value!")
     elif inputs[I_SDA]== None:
       dom.alert("No or bad SDA value!")
-    elif inputs[I_DRIVER] == None:
-      dom.alert("No or bad Driver value!")
+    elif inputs[I_CHANNEL] == None:
+      dom.alert("No or bad Channel value!")
     else:
       error = False
   else:
@@ -146,8 +148,8 @@ def updateDutyBox(dom, params = None):
         I_WIDTH: "",
         I_RATIO: params[1] if onDuty else ""})
     case "Width":
-      dom.enableElement("Width")
-      dom.disableElement("Ratio")
+      dom.enableElement(I_WIDTH)
+      dom.disableElement(I_RATIO)
       dom.setValues({
         I_RATIO: "",
         I_WIDTH: params[2]/1000000 if onDuty else ""})
@@ -177,10 +179,11 @@ def updateDuties(dom, params = None):
 def initPWM(inputs):
   global pwm
   
-  if inputs["Mode"] == M_STRAIGHT:
+  if inputs[I_MODE] == M_STRAIGHT:
     pwm = ucuq.PWM(inputs[I_PIN], inputs[I_FREQ])
-  elif inputs["Mode"] == M_PCA9685:
-    pwm = ucuq.PCA9685Channel(ucuq.PCA9685(inputs[I_SDA], inputs[I_SCL], inputs[I_FREQ]), inputs[I_DRIVER],)
+  elif inputs[I_MODE] == M_PCA9685:
+    i2c = ucuq.SoftI2C if inputs[I_SOFT] else ucuq.I2C
+    pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(i2c(inputs[I_SDA], inputs[I_SCL]), inputs[I_FREQ]), inputs[I_CHANNEL])
   else:
     raise Exception("Unknown mode!!!")
 

@@ -1,88 +1,23 @@
 import atlastk, ucuq, random
 
-RB_LIMIT = 30
 RB_DELAY = .05
-RB_TOTAL = RB_LIMIT * 7
+RB_MAX = 30
 
 ws2812 = None
 nbLed = 0
 
-rbTiming = None
-
-def r2y(i):
-  return [RB_LIMIT, i, 0]
-  
-def y2g(i):
-  return [RB_LIMIT - i, RB_LIMIT, 0]
-  
-def g2c(i):
-  return [0, RB_LIMIT, i]
-  
-def c2b(i):
-  return [0, RB_LIMIT - i, RB_LIMIT]
-  
-def b2m(i):
-  return [i, 0, RB_LIMIT]
-  
-def m2r(i):
-  return [RB_LIMIT, 0, RB_LIMIT - i]
-  
-def rbShade(v, i):
-  match int(v) % 6:
-    case 0:
-      return r2y(i)
-    case 1:
-      return y2g(i)
-    case 2:
-      return g2c(i)
-    case 3:
-      return c2b(i)
-    case 4:
-      return b2m(i)
-    case 5:
-      return m2r(i)
-      
-def rbFade(v, i, inOut):
-  if not inOut:
-    i = RB_LIMIT - i
-  match int(v) % 6:
-    case 0:
-      return [i,0,0]
-    case 1:
-      return [i,i,0]
-    case 2:
-      return [0,i,0]
-    case 3:
-      return [0,i,i]
-    case 4:
-      return [0,0,i]
-    case 5:
-      return [i,0,i]
-      
-
-def rbLoopOne(d, i):
-  if i < RB_LIMIT:
-    return rbFade(d, i, True)
-  elif i > RB_LIMIT * 6:
-    return rbFade((d + 5 )% 6, i % RB_LIMIT, False)
-  else:
-    return rbShade(d + (i - RB_LIMIT) / RB_LIMIT, i % RB_LIMIT)
-    
-
-def rbLoop():
+def rainbow():
   v =  random.randint(0, 5)
-  for i in range(RB_TOTAL):
-    ws2812.fill(rbLoopOne(v, i)).write()
+  for i in range(RB_MAX * 7):
+    ws2812.fill(ucuq.rbShadeFade(v, i, RB_MAX)).write()
     ucuq.sleep(RB_DELAY)
   ws2812.fill([0]*3).write()
-  ucuq.commit()      
+  ucuq.commit() 
 
-
-def rainbow():
-  rbLoop()
 
 def convert_(hex):
   return int(int(hex,16) * 100 / 256)
+
 
 def getValues_(target, R, G, B):
   return {
@@ -118,6 +53,11 @@ def launch(dom, pin, count):
   else:
     nbLed = count
 
+
+def reset(dom):
+  dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
+  dom.setValues(getAllValues_(0, 0, 0))
+  update_(0, 0, 0)
 
 def updateUI(dom, onDuty):
   ids = ["SlidersBox", "PickerBox"]
@@ -225,14 +165,12 @@ def acAdjust(dom):
   dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
   update_(R, G, B)
 
-def acRainbow():
+def acRainbow(dom):
+  reset(dom)
   rainbow()
 
 def acReset(dom):
-  dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
-  dom.setValues(getAllValues_(0, 0, 0))
-  update_(0, 0, 0)
-
+  reset(dom)
 def connect_(id):
   device = ucuq.UCUq()
 

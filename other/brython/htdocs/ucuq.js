@@ -321,9 +321,16 @@ async function sleep_(time, fn, ...args) {
   return fn(...args);
 }
 
+// Workaround to the brython 'unicodedata.normalize()' bug.
+function toASCII_(text) {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+
 // ATTENTION: si modification, mettre script 'Build' à jour !!!
 module.exports.sleep = sleep_;
 module.exports.launch = launch_;
 module.exports.upload = upload_;
 module.exports.execute = execute_;
+module.exports.toASCII = toASCII_;
 

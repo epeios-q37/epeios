@@ -2,7 +2,12 @@ import os, sys, time, io, json, datetime
 
 import ucuq, atlastk
 
-onDuty = False
+# States
+S_OFF_DUTY = 0
+S_STRAIGHT = "Straight"
+S_PCA9685 = "PCA9685"
+
+state = S_OFF_DUTY
 
 # Duties
 D_RATIO = "Ratio"
@@ -14,8 +19,10 @@ I_MODE = "Mode"
 I_PIN = "Pin"
 I_SDA = "SDA"
 I_SCL = "SCL"
+I_SOFT = "Soft"
 I_CHANNEL = "Channel"
 I_FREQ = "Freq"
+I_OFFSET = "Offset"
 I_DUTY = "Duty"
 I_RATIO = "Ratio"
 I_RATIO_STEP = "RatioStep"
@@ -29,10 +36,11 @@ M_PCA9685 = "PCA9685"
 O_FREQ = "TrueFreq"
 O_RATIO = "TrueRatio"
 O_WIDTH = "TrueWidth"
+O_PRESCALE = "TruePrescale"
 
 
 async def getParams():
-  return (await ucuq.commitAwait(f"getParams({pwm.getObject()})")) if onDuty else None
+  return (await ucuq.commitAwait(f"getParams({pwm.getObject()},{state == S_PCA9685})")) if state else None
 
 
 async def getDuty(dom):
@@ -52,7 +60,7 @@ def convert(value, converter):
 
 
 async def getInputs(dom):
-  values = await dom.getValues([I_MODE, I_PIN, I_SDA, I_SCL, I_CHANNEL, I_FREQ, I_DUTY, I_RATIO, I_WIDTH])
+  values = await dom.getValues([I_MODE, I_PIN, I_SDA, I_SCL, I_CHANNEL, I_SOFT, I_FREQ, I_OFFSET, I_DUTY, I_RATIO, I_WIDTH])
 
   return {
     I_MODE: values[I_MODE],
@@ -60,7 +68,9 @@ async def getInputs(dom):
     I_SDA: convert(values[I_SDA], int),
     I_SCL: convert(values[I_SCL], int),
     I_CHANNEL: convert(values[I_CHANNEL], int),
+    I_SOFT: True if values[I_SOFT] == "true" else False,
     I_FREQ: convert(values[I_FREQ], int),
+    I_OFFSET: convert(values[I_OFFSET], int),
     I_DUTY: {
       "Type": values[I_DUTY],
       "Value": convert(values[I_RATIO], int) if values[I_DUTY] == D_RATIO else convert(values[I_WIDTH], float)
@@ -124,17 +134,19 @@ async def updateDutyBox(dom, params = None):
     case "Ratio":
       await dom.enableElement(I_RATIO)
       await dom.disableElement(I_WIDTH)
-      if onDuty:
+      if state:
         await dom.setValues({
-        I_WIDTH: "",
-        I_RATIO: params[1] if onDuty else ""})
+          I_WIDTH: "",
+          I_RATIO: params[1]
+        })
     case "Width":
-      await dom.enableElement("Width")
-      await dom.disableElement("Ratio")
-      if onDuty:
+      await dom.enableElement(I_WIDTH)
+      await dom.disableElement(I_RATIO)
+      if state:
         await dom.setValues({
           I_RATIO: "",
-          I_WIDTH: params[2]/1000000 if onDuty else ""})
+          I_WIDTH: params[2]/1000000
+        })
     case _:
       raise Exception("!!!")
 
@@ -147,24 +159,27 @@ async def updateDuties(dom, params = None):
     await dom.setValues({
       O_FREQ: params[0],
       O_RATIO: params[1],
-      O_WIDTH: params[2]/1000000
+      O_WIDTH: params[2]/1000000,
+      O_PRESCALE: params[3]
     })
   else:
     await dom.setValues({
       O_FREQ: "N/A",
       O_RATIO: "N/A",
       O_WIDTH: "N/A",
+      O_PRESCALE: "N/A"
     })
-
 
 
 async def initPWM(inputs):
   global pwm
 
-  if inputs["Mode"] == M_STRAIGHT:
+  if inputs[I_MODE] == M_STRAIGHT:
     pwm = ucuq.PWM(inputs[I_PIN], inputs[I_FREQ])
-  elif inputs["Mode"] == M_PCA9685:
-    pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(inputs[I_SDA], inputs[I_SCL], inputs[I_FREQ]), inputs[I_CHANNEL])
+  elif inputs[I_MODE] == M_PCA9685:
+    i2c = ucuq.SoftI2C if inputs[I_SOFT] else ucuq.I2C
+    pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(i2c(inputs[I_SDA], inputs[I_SCL]), inputs[I_FREQ]), inputs[I_CHANNEL])
+    pwm.setOffset(inputs[I_OFFSET])
   else:
     raise Exception("Unknown mode!!!")
 
@@ -175,8 +190,14 @@ async def initPWM(inputs):
 
   return await getParams()
 
+
 async def setFreq(freq):
-  pwm.freq(freq)
+  pwm.setFreq(freq)
+  return await getParams()
+
+
+async def setOffset(offset):
+  pwm.setOffset(offset)
   return await getParams()
 
 
@@ -213,7 +234,7 @@ async def acMode(dom, id):
 
 
 async def acSwitch(dom, id):
-  global onDuty
+  global state
 
   if await dom.getValue(id) == "true":
     inputs = await getInputs(dom)
@@ -221,13 +242,13 @@ async def acSwitch(dom, id):
     if not await test(dom, inputs):
       await dom.setValue(id, False)
     else:
-      onDuty = True
+      state = S_PCA9685 if inputs[I_MODE] == M_PCA9685 else S_STRAIGHT
       await dom.disableElement(I_MODE_BOX)
       await updateDuties(dom, await initPWM(inputs))
   else:
-    if onDuty:
+    if state:
       pwm.deinit()
-      onDuty = False
+      state = S_OFF_DUTY
     await updateDuties(dom)
     await dom.enableElement(I_MODE_BOX)
 
@@ -237,19 +258,30 @@ async def acSelect(dom):
 
 
 async def acFreq(dom, id):
-  if onDuty:
-    value = await dom.getValue(id)
+  if state:
+    freq = await dom.getValue(id)
 
     try:
-      freq = int(value)
+      freq = int(freq)
     except:
       pass
     else:
       await updateDuties(dom, await setFreq(freq))
 
+async def acOffset(dom, id):
+  if state:
+    offset = await dom.getValue(id)
+
+    try:
+      offset = int(offset)
+    except:
+      pass
+    else:
+      await updateDuties(dom, await setOffset(offset))
+
 
 async def acRatio(dom, id):
-  if onDuty:
+  if state:
     value = await dom.getValue(id)
 
     try:
@@ -265,7 +297,7 @@ async def acRadioStep(dom, id):
 
 
 async def acWidth(dom, id):
-  if onDuty:
+  if state:
     value = await dom.getValue(id)
 
     try:
@@ -285,6 +317,7 @@ CALLBACKS = {
   "Mode": acMode,
   "Switch": acSwitch,
   "Freq": acFreq,
+  "Offset": acOffset,
   "Select": acSelect,
   "Ratio": acRatio,
   "RatioStep": acRadioStep,
@@ -293,8 +326,8 @@ CALLBACKS = {
 }
 
 MC_INIT = """
-def getParams(pwm):
-  return [pwm.freq(), pwm.duty_u16(), pwm.duty_ns()]
+def getParams(pwm, prescale):
+  return [pwm.freq(), pwm.duty_u16(), pwm.duty_ns(), pwm.prescale() if prescale else 0]
 """
 
 HEAD = """
@@ -384,8 +417,14 @@ input:checked + .slider:before {
     display: none;
   }
 </style>
+<style>
+label.prescale-offset {
+  display: flex;
+  justify-content: right;
+}
+</style>
 <style id="HidePCA9685">
-  .pca9685 {
+  .pca9685, .prescale-offset {
     display: none;
   }
 </style>
@@ -414,16 +453,23 @@ BODY = """
           <fieldset>
             <label>
               <span>SDA:</span>
-              <input id="SDA" type="number" size="2" value="13" min="0" max="99">
+              <input id="SDA" type="number" size="2" value="0" min="0" max="99">
             </label>
             <label>
               <span>SCL:</span>
-              <input id="SCL" type="number" size="2" value="14" min="0" max="99">
+              <input id="SCL" type="number" size="2" value="1" min="0" max="99">
             </label>
-            <label>
-              <span>Channel:</span>
-              <input id="Channel" size="2" value="0">
-            </label>
+            <br>
+            <span style="display: flex; justify-content: space-between">
+              <label>
+                <span>Soft:</span>
+                <input id="Soft" checked="" type="checkbox">
+              </label>
+              <label>
+                <span>Channel:</span>
+                <input id="Channel" size="2" value="0">
+              </label>
+            </span>
           </fieldset>
         </div>
     </fieldset>
@@ -434,13 +480,18 @@ BODY = """
       </label>
     </span>
   </div>
-  <div xdh:radio="duty" id="Duty" xdh:onevent="Select"
+  <fieldset xdh:radio="duty" id="Duty" xdh:onevent="Select"
     style="display: grid; grid-template-columns: repeat(3, max-content);">
     <label style="display: flex; justify-content: right;">Freq. (Hz):&nbsp;</label>
     <span>
       <input id="Freq" xdh:onevents="(click|Freq)(change|Freq)" type="number" size="7" value="50">
     </span>
     <output id="TrueFreq">N/A</output>
+    <label class="prescale-offset">Prescale offset:&nbsp;</label>
+    <span class="prescale-offset">
+      <input id="Offset" xdh:onevents="(click|Offset)(change|Offset)" type="number" size="7" value="0">
+    </span>
+    <output class="prescale-offset" id="TruePrescale">N/A</output>
     <label style="display: flex; justify-content: space-between;">
       <input name="duty" type="radio" value="Ratio" checked="checked">
       <span>Ratio (/65535):&nbsp;</span>
@@ -477,7 +528,7 @@ BODY = """
       </select>
     </span>
     <output id="TrueWidth">N/A</output>
-  </div>
+  </fieldset>
 </fieldset>
 """
 

@@ -194,8 +194,9 @@ CONFIG_DEVICE_ENTRY = "Device"
 CONFIG_DEVICE_TOKEN_ENTRY = "Token"
 CONFIG_DEVICE_ID_ENTRY = "Id"
 
-def displayMissingConfigMessage_():
-  raise Error("Please launch the 'Config' app first to set the device to use!")
+def displayExitMessage_(Message):
+  raise Error(Message)
+
 
 def handlingConfig_(token, id):
   if CONFIG_DEVICE_ENTRY not in CONFIG_:

@@ -1,202 +1,10 @@
-import javascript, json, sys
-from browser import aio, alert, console
-from browser.local_storage import storage
-
-javascript.import_js("ucuq.js", "ucuqjs")
-
-LIB_VERSION = "0.0.1"
-
-CONFIG_ITEM = "ucuq-config"
-CONFIG_DEVICE_ENTRY = "Device"
-CONFIG_DEVICE_TOKEN_ENTRY = "Token"
-CONFIG_DEVICE_ID_ENTRY = "Id"
-
-ITEMS_ = "i_"
-
-device_ = None
-uuid_ = 0
-
-async def sleepAwait(time):
-  await ucuqjs.sleep(1000 * time, lambda : None)
-
-def GetUUID_():
-  global uuid_
-
-  uuid_ += 1
-
-  return uuid_
-
-
-def launchAsync(func, *args, **kwargs):
-  aio.run(func(*args, **kwargs))
-
-def commit():
-  getDevice_().commit()
-
-async def commitAwait(expr):
-  return await getDevice_().commitAwait(expr)
-
-def sleep(secs):
-  getDevice_().sleep(secs)
-
-class Lock_:
-  def __init__(self):
-    self.locked_ = False
-
-  async def acquire(self):
-    while self.locked_:
-      await aio.sleep(0)
-    self.locked_ = True
-
-  def release(self):
-    self.locked_ = False
-
-
-def uploadCallback_(code, result):
-  if code != 0:
-    raise Exception(result)
-
-
-def executeCallback_(data, code, result):
-  if code != 0:
-    raise Exception(result)
-
-  try:
-    jsonResult = json.loads(result) if result else None
-  except:
-    jsonResult = result
-
-  if data:
-    data["code"] = code
-    data["result"] = jsonResult
-    data["lock"].release()
-
-def launchCallback_(lock):
-  lock.release()
-
 def displayMissingConfigMessage_():
-  alert("Please launch the 'Config' app first to set the device to use!")
-  console.error = javascript.UNDEFINED  # To avoid the displaying of an alert by below 'exit()'.
-  sys.exit()
-
-def handlingConfig_(token, id):
-  if not CONFIG_ITEM in storage:
-    displayMissingConfigMessage_()
-
-  try:
-    config = json.loads(storage[CONFIG_ITEM])
-  except:
-    displayMissingConfigMessage_()
-
-  if CONFIG_DEVICE_ENTRY not in config:
-    displayMissingConfigMessage_()
-
-  device = config[CONFIG_DEVICE_ENTRY]
-
-  if token == None:
-    if CONFIG_DEVICE_TOKEN_ENTRY not in device:
-      displayMissingConfigMessage_()
-
-    token = device[CONFIG_DEVICE_TOKEN_ENTRY]
-
-  if id == None:
-    if CONFIG_DEVICE_ID_ENTRY not in device:
-      displayMissingConfigMessage_()
-
-    id = device[CONFIG_DEVICE_ID_ENTRY]
-
-  return token, id
+  displayExitMessage_("Please launch the 'Config' app first to set the device to use!")
 
 
-class Device:
-  def __init__(self, /, id = None, token = None, now = True):
-    if now:
-      self.connect(id, token)
+def setDevice(id, token = None):
+  getDevice_(id = id, token = token)
 
-  def __del__(self):
-    self.commit()
-
-  def connect(self, id, token = None):
-    self.pendingModules_ = ["Init-1"]
-    self.handledModules_ = []
-    self.commands_ = []
-
-    if token == None or id == None:
-      token, id = handlingConfig_(token, id)
-
-    self.device_ = ucuqjs.launch(token, id, LIB_VERSION, lambda: None)
-
-  
-  def upload_(self, modules):
-    ucuqjs.upload(self.device_, modules, lambda code, result: uploadCallback_(code, result))
-
-
-  async def executeAwait_(self, script, expression):
-    lock = Lock_()
-
-    await lock.acquire()
-
-    data = {
-      "lock": lock
-    }
-
-    ucuqjs.execute(self.device_, script, expression, lambda code, result: executeCallback_(data, code, result))
-
-    await lock.acquire()
-    
-    return data["result"]
-
-
-  def execute_(self, script):
-    ucuqjs.execute(self.device_, script, "", lambda code, result: executeCallback_(None, code, result))
-
-
-  def addModule(self, module):
-    if not module in self.pendingModules_ and not module in self.handledModules_:
-      self.pendingModules_.append(module)
-
-  def addModules(self, modules):
-    if isinstance( modules, str):
-      self.addModule(modules)
-    else:
-      for module in modules:
-        self.addModule(module)
-
-  def addCommand(self, command):
-    self.commands_.append(command)
-
-    return self
-
-  async def commitAwait(self, expression):
-    result = ""
-
-    if self.pendingModules_:
-      self.upload_(self.pendingModules_)
-      self.handledModules_.extend(self.pendingModules_)
-      self.pendingModules_ = []
-
-    result = await self.executeAwait_('\n'.join(self.commands_) if self.commands_ else "", expression)
-    self.commands_ = []
-
-    return result
-  
-  def sleep(self, secs):
-    self.addCommand(f"time.sleep({secs})")
-
-  def commit(self):
-    if self.pendingModules_:
-      self.upload_(self.pendingModules_)
-      self.handledModules_.extend(self.pendingModules_)
-      self.pendingModules_ = []
-
-    if self.commands_:
-      self.execute_('\n'.join(self.commands_))
-    
-    self.commands_ = []
-
-###############
-# UCUq COMMON #
-###############
 
 INFO_SCRIPT = """
 def ucuqGetKitLabel(): 
@@ -239,11 +47,17 @@ async def handleATKAwait(dom):
 
   return info
 
-def getDevice_(device = None):
+def getDevice_(device = None, *, id = None, token = None):
+
+  if device  and ( token or id):
+    displayExitMessage_("'device' can not be given together with 'token' or 'id'!")
+
   if device == None:
     global device_
 
-    if device_ == None:
+    if token or id:
+      device_ = Device(id = id, token = token)
+    elif device_ == None:
       device_ = Device()
     
     return device_
@@ -252,24 +66,6 @@ def getDevice_(device = None):
 
 def addCommand(command, /,device = None):
   getDevice_(device).addCommand(command)
-
-def servoMoves(moves, speed = 1,/,device = None):
-  device = getDevice_(device)
-
-  device.addModule("ServoMoves-1")
-
-  command = "servoMoves([\n"
-
-  for move in moves:
-    servo = move[0]
-
-    step = speed * (servo.specs.max - servo.specs.min) / servo.specs.range
-
-    command += f"\t[{move[0].pwm.getObject()},{move[0].angleToDuty(move[1])}],\n"
-
-  command += f"], {int(step)})"
-
-  device.addCommand(command)
 
 
 class Core_:
@@ -300,6 +96,9 @@ class Core_:
 
   def addMethods(self, methods):
     return self.addCommand(f"{self.getObject()}.{methods}")
+
+  def callMethodAwait(self, method):
+    return self.device_.commitAwait(f"{self.getObject()}.{method}")
                          
 
 class GPIO(Core_):
@@ -338,7 +137,7 @@ class WS2812(Core_):
     super().init(f"neopixel.NeoPixel(machine.Pin({pin}), {n})")
 
   async def lenAwait(self):
-    return int(await self.executeAwait_("", f"{self.getObject()}.__len__()"))
+    return int(await self.callMethodAwait("__len__()"))
                
 
   def setValue(self, index, val):
@@ -347,7 +146,7 @@ class WS2812(Core_):
     return self
                        
   async def getValueAwait(self, index):
-    return await self.executeAwait_("", f"{self.getObject()}.__getitem__({index})")
+    return await self.callMethodAwait(f"__getitem__({index})")
                        
   def fill(self, val):
     self.addMethods(f"fill({json.dumps(val)})")
@@ -356,21 +155,28 @@ class WS2812(Core_):
   def write(self):
     self.addMethods(f"write()")
 
-class I2C(Core_):
+class I2C_Core_(Core_):
   def __init__(self, sda = None, scl = None, /, device = None):
     super().__init__(device, "I2C-1")
 
-    if bool(sda) != bool(scl):
+    if sda == None != scl == None:
       raise Exception("None or both of sda/scl must be given!")
     elif sda != None:
       self.init(sda, scl)
 
+  async def scanAwait(self):
+    return (await commitAwait(f"{self.getObject()}.scan()"))
+
+
+class I2C(I2C_Core_):
   def init(self, sda, scl):
     super().init(f"machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl}))")
 
-  async def scanAwait(self):
-    return (await commitAwait(f"{self.getObject()}.scan()"))
-    
+
+class SoftI2C(I2C_Core_):
+  def init(self, sda, scl):
+    super().init(f"machine.SoftI2C(sda=machine.Pin({sda}), scl=machine.Pin({scl}))")
+  
 
 class HT16K33(Core_):
   def __init__(self, i2c = None, /, addr = None, device = None):
@@ -424,7 +230,7 @@ class PWM(Core_):
 
 
   async def getU16Await(self):
-    return int(await self.executeAwait_("", f"{self.getObject()}.duty_u16()"))
+    return int(await self.callMethodAwait("duty_u16()"))
 
 
   def setU16(self, u16):
@@ -432,7 +238,7 @@ class PWM(Core_):
 
 
   async def getNSAwait(self):
-    return int(await self.executeAwait_("", f"{self.getObject()}.duty_ns()"))
+    return int(await self.callMethodAwait("duty_ns()"))
 
 
   def setNS(self, ns):
@@ -440,7 +246,7 @@ class PWM(Core_):
 
 
   async def getFreqAwait(self):
-    return int(await self.executeAwait_("", f"{self.getObject()}.freq()"))
+    return int(await self.callMethodAwait("freq()"))
 
 
   def setFreq(self, freq):
@@ -452,7 +258,7 @@ class PWM(Core_):
 
 
 class PCA9685(Core_):
-  def __init__(self, i2c = None, freq = None,/, addr = None, device = None):
+  def __init__(self, i2c = None, freq = None, *, addr = None, device = None):
     super().__init__(device, "PCA9685-1")
 
     if i2c:
@@ -479,11 +285,23 @@ class PCA9685(Core_):
   def u12ToNS_(self, value):
     return int(200000000 * value / (self.freq() * 819))
 
+  async def setOffsetAwait(self):
+    return int(await self.callMethodAwait("offset()"))
+
+  def setOffset(self, offset):
+    return self.addMethods(f"offset({offset})")
+
   async def getFreqAwait(self):
-    return await self.executeAwait_("", f"{self.getObject()}.freq()")
+    return int(await self.callMethodAwait("freq()"))
 
   def setFreq(self, freq):
     return self.addMethods(f"freq({freq})")
+
+  async def getPrescaleAwait(self):
+    return int(await self.callMethodAwait("prescale()"))
+
+  def setPrescale(self, value):
+    return self.addMethods(f"prescale({value})")
   
 
 class PWM_PCA9685(Core_):
@@ -496,7 +314,6 @@ class PWM_PCA9685(Core_):
     if pca:
       self.init(pca, channel)
 
-
   def init(self, pca, channel):
     super().init(f"PWM_PCA9685({pca.getObject()}, {channel})")
 
@@ -505,27 +322,36 @@ class PWM_PCA9685(Core_):
   def deinit(self):
     self.addMethods(f"deinit()")
 
+  async def getOffset(self):
+    return self.pca.offset()
 
-  async def getNSAwait(self,):
-    return int(await self.executeAwait_("", f"{self.getObject()}.duty_ns()"))
+  def setOffset(self, offset):
+    self.pca.setOffset(offset)
+
+  async def getNSAwait(self):
+    return int(await self.callMethodAwait(f"duty_ns()"))
 
   def setNS(self, ns):
     self.addMethods(f"duty_ns({ns})")
 
-
   async def getU16Await(self, u16 = None):
-    return int(await self.executeAwait_("",f"{self.getObject()}.duty_u16()"))
+    return int(await self.callMethodAwait("duty_u16()"))
   
   def setU16(self, u16):
     self.addMethods(f"duty_u16({u16})")
   
-
   async def getFreqAwait(self):
-    return int(await self.executeAwait_("",f"{self.getObject()}.freq()"))
+    return await self.pca.getFreqAwait()
   
   def setFreq(self, freq):
-    self.addMethods(f"freq({freq})")
+    self.pca.setFreq(freq)
 
+  async def getPrescaleAwait(self):
+    return await self.pca.getPrescaleAwait()
+  
+  def setPrescale(self, value):
+    self.pca.setPrescale(value)
+  
 
 class LCD_PCF8574(Core_):
   def __init__(self, i2c, num_lines, num_columns,/,addr = None, device = None):
@@ -668,28 +494,28 @@ class Servo(Core_):
 
 class SSD1306(Core_):
   def show(self):
-    self.addMethods("show()")
+    return self.addMethods("show()")
 
   def powerOff(self):
-    self.addMethods("poweroff()")
+    return self.addMethods("poweroff()")
 
   def contrast(self, contrast):
-    self.addMethods(f"contrast({contrast})")
+    return self.addMethods(f"contrast({contrast})")
 
   def invert(self, invert):
-    self.addMethods(f"invert({invert})")
+    return self.addMethods(f"invert({invert})")
 
   def fill(self, col):
-    self.addMethods(f"invert({col})")
+    return self.addMethods(f"fill({col})")
 
   def pixel(self, x, y, col):
-    self.addMethods(f"pixel({x},{y},{col})")
+    return self.addMethods(f"pixel({x},{y},{col})")
 
-  def scroll(self, dx, dy, col):
-    self.addMethods(f"scroll({dx},{dy})")
+  def scroll(self, dx, dy):
+    return self.addMethods(f"scroll({dx},{dy})")
 
   def text(self, string, x, y, col=1):
-    self.addMethods(f"text('{string}',{x}, {y}, {col})")
+    return self.addMethods(f"text('{string}',{x}, {y}, {col})")
 
 class SSD1306_I2C(SSD1306):
   def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False, device = None):
@@ -707,5 +533,63 @@ class SSD1306_I2C(SSD1306):
     super().init(f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})")
 
 
+def servoMoves(moves, speed = 1,/,device = None):
+  device = getDevice_(device)
 
+  device.addModule("ServoMoves-1")
+
+  command = "servoMoves([\n"
+
+  for move in moves:
+    servo = move[0]
+
+    step = speed * (servo.specs.max - servo.specs.min) / servo.specs.range
+
+    command += f"\t[{move[0].pwm.getObject()},{move[0].angleToDuty(move[1])}],\n"
+
+  command += f"], {int(step)})"
+
+  device.addCommand(command)
+
+
+def rbShade(variant, i, max):
+  match int(variant) % 6:
+    case 0:
+      return [max, i, 0]
+    case 1:
+      return [max - i, max, 0]
+    case 2:
+      return [0, max, i]
+    case 3:
+      return [0, max - i, max]
+    case 4:
+      return [i, 0, max]
+    case 5:
+      return [max, 0, max - i]
+      
+def rbFade(variant, i, max, inOut):
+  if not inOut:
+    i = max - i
+  match variant % 6:
+    case 0:
+      return [i,0,0]
+    case 1:
+      return [i,i,0]
+    case 2:
+      return [0,i,0]
+    case 3:
+      return [0,i,i]
+    case 4:
+      return [0,0,i]
+    case 5:
+      return [i,0,i]
+      
+
+def rbShadeFade(variant, i, max):
+  if i < max:
+    return rbFade(variant, i, max, True)
+  elif i > max * 6:
+    return rbFade((variant + 5 ) % 6, i % max, max, False)
+  else:
+    return rbShade(variant + int( (i - max) / max ), i % max, max)
     

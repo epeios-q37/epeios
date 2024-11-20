@@ -20,16 +20,23 @@
           <fieldset>
             <label>
               <span>SDA:</span>
-              <input id="SDA" type="number" size="2" value="13" min="0" max="99">
+              <input id="SDA" type="number" size="2" value="0" min="0" max="99">
             </label>
             <label>
               <span>SCL:</span>
-              <input id="SCL" type="number" size="2" value="14" min="0" max="99">
+              <input id="SCL" type="number" size="2" value="1" min="0" max="99">
             </label>
-            <label>
-              <span>Driver:</span>
-              <input id="Driver" size="2" value="4">
-            </label>
+            <br>
+            <span style="display: flex; justify-content: space-between">
+              <label>
+                <span>Soft:</span>
+                <input id="Soft" checked="" type="checkbox">
+              </label>
+              <label>
+                <span>Channel:</span>
+                <input id="Channel" size="2" value="0">
+              </label>
+            </span>
           </fieldset>
         </div>
     </fieldset>
@@ -52,15 +59,15 @@
       <span>Ratio (/65535):&nbsp;</span>
     </label>
     <span>
-      <input id="Ratio" xdh:onevents="(click|Ratio)(change|Ratio)" type="number" size="5" min="0" max="65535"
-        disabled="disabled" value="7000">
+      <input id="Ratio" xdh:onevents="(click|Ratio)(change|Ratio)" step="100" type="number" size="5" min="0" max="65535"
+        disabled="disabled" value="5000">
       <select id="RatioStep" xdh:onevent="RatioStep">
         <optgroup label="Select step">
           <option value="1">1</option>
           <option value="10">10</option>
           <option value="20">20</option>
           <option value="50">50</option>
-          <option value="100">100</option>
+          <option value="100" selected="selected">100</option>
           <option value="1000">1000</option>
         </optgroup>
       </select>
