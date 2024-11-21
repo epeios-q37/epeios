@@ -178,8 +178,9 @@ async def initPWM(inputs):
     pwm = ucuq.PWM(inputs[I_PIN], inputs[I_FREQ])
   elif inputs[I_MODE] == M_PCA9685:
     i2c = ucuq.SoftI2C if inputs[I_SOFT] else ucuq.I2C
-    pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(i2c(inputs[I_SDA], inputs[I_SCL]), inputs[I_FREQ]), inputs[I_CHANNEL])
+    pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(i2c(inputs[I_SDA], inputs[I_SCL])), inputs[I_CHANNEL])
     pwm.setOffset(inputs[I_OFFSET])
+    pwm.setFreq(inputs[I_FREQ])
   else:
     raise Exception("Unknown mode!!!")
 

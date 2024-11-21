@@ -214,19 +214,15 @@ class HT16K33(Core_):
 
 
 class PWM(Core_):
-  def __init__(self, pin = None, freq = None, device = None):
+  def __init__(self, pin = None, device = None):
     super().__init__(device, "PWM-1")
 
-    if freq != None:
-      if pin == None:
-        raise Exception("'freq' cannot be given without 'pin'!")
-      
     if pin != None:
-      self.init(pin, freq)
+      self.init(pin)
 
 
-  def init(self, pin, freq = None):
-    super().init(f"machine.PWM(machine.Pin({pin}),freq={freq if freq else 50})")
+  def init(self, pin):
+    super().init(f"machine.PWM(machine.Pin({pin}))")
 
 
   async def getU16Await(self):
@@ -258,26 +254,17 @@ class PWM(Core_):
 
 
 class PCA9685(Core_):
-  def __init__(self, i2c = None, freq = None, *, addr = None, device = None):
+  def __init__(self, i2c = None, *, addr = None, device = None):
     super().__init__(device, "PCA9685-1")
 
     if i2c:
-      self.init(i2c, freq = freq, addr = addr)
-    elif freq:
-      raise Exception("freq cannot be given without i2c!")
-    elif addr:
-      raise Exception("addr cannot be given without i2c!")
+      self.init(i2c, addr = addr)
 
-
-  def init(self, i2c, /, freq = None, addr = None):
+  def init(self, i2c, addr = None):
     super().init(f"PCA9685({i2c.getObject()}, {addr})")
-
-    self.setFreq(freq if freq else 50)
-
 
   def deinit(self):
     self.addMethods(f"reset()")
-                    
 
   def nsToU12_(self, duty_ns):
     return int(self.freq() * duty_ns * 0.000004095)
@@ -285,7 +272,7 @@ class PCA9685(Core_):
   def u12ToNS_(self, value):
     return int(200000000 * value / (self.freq() * 819))
 
-  async def setOffsetAwait(self):
+  async def getOffsetAwait(self):
     return int(await self.callMethodAwait("offset()"))
 
   def setOffset(self, offset):
@@ -322,8 +309,8 @@ class PWM_PCA9685(Core_):
   def deinit(self):
     self.addMethods(f"deinit()")
 
-  async def getOffset(self):
-    return self.pca.offset()
+  async def getOffsetAwait(self):
+    return self.pca.getOffsetAwait()
 
   def setOffset(self, offset):
     self.pca.setOffset(offset)
@@ -508,7 +495,7 @@ class SSD1306(Core_):
   def fill(self, col):
     return self.addMethods(f"fill({col})")
 
-  def pixel(self, x, y, col):
+  def pixel(self, x, y, col = 1):
     return self.addMethods(f"pixel({x},{y},{col})")
 
   def scroll(self, dx, dy):
@@ -516,6 +503,15 @@ class SSD1306(Core_):
 
   def text(self, string, x, y, col=1):
     return self.addMethods(f"text('{string}',{x}, {y}, {col})")
+  
+  def rect(self, x, y, w, h, col, fill=True):
+    return self.addMethods(f"rect({x},{y},{w},{h},{col},{fill})")
+
+  def draw(self, pattern, width, mul = 1):
+    if width % 4:
+      raise Exception("'width' must be a multiple of 4!")
+    return self.addMethods(f"draw('{pattern}',{width},{mul})")
+
 
 class SSD1306_I2C(SSD1306):
   def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False, device = None):

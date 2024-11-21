@@ -105,7 +105,8 @@
       "Hardware": {
         "mode": "PCA",
         "sda": 13,
-        "scl": 14
+        "scl": 14,
+        "offset": 9
       },
       "Specs": {
         "freq": 50,
@@ -191,6 +192,16 @@
         "Hardware": {
           "channel": 15
         }
+      }
+    }
+  },
+  "Mini": {
+    "Preset": {
+      "Hardware": {
+        "mode": "SoftPCA",
+        "sda": 0,
+        "scl": 1,
+        "offset": 8
       }
     }
   }
