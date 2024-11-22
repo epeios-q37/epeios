@@ -28,7 +28,7 @@ TWEAK_KEY = "Tweak"
 CONFIG_KEYS = {
   HARDWARE_KEY: {
     M_STRAIGHT: ["pin"],
-    M_PCA: ["sda", "scl", "channel"]
+    M_PCA: ["sda", "scl", "channel", "offset", "soft"]
   },
   SPECS_KEY: ["freq", "u16_min", "u16_max", "range"],
   TWEAK_KEY: ["angle", "offset", "invert"]
@@ -417,15 +417,32 @@ CALLBACKS = {
 
 command = ""
 
+def getSetupDefaultValue(key, subkey):
+  if key == HARDWARE_KEY:
+    if subkey == "offset":
+      return 0
+    elif subkey == "soft":
+      return False
+  elif key == TWEAK_KEY:
+    if subkey in ["angle", "offset"]:
+      return 0
+    elif subkey == "invert":
+      return False
+  
+  raise Exception(f"Missing value for '{key}/{subkey}' in servos setup file!")
+
+
 def getServoSetup(key, subkey, preset, motor):
   if ( key in motor ) and ( subkey in motor[key] ):
     return motor [key][subkey]
-  else:
+  elif subkey in preset[key]:
     return preset[key][subkey]
+  else:
+    return getSetupDefaultValue(key, subkey)
 
 
 def getServosSetups(target):
-  setup = {}
+  setups = {}
 
   with open("servos.json", "r") as file:
     config = json.load(file)[target]
@@ -434,46 +451,52 @@ def getServosSetups(target):
   motors = config["Motors"]
 
   for label in motors:
-    setup[label] = {}
+    setups[label] = {}
 
     motor = motors[label]
 
     for key in CONFIG_KEYS:
-      setup[label][key] = {}
+      setups[label][key] = {}
 
       if key == HARDWARE_KEY:
         mode = getServoSetup(key, HARDWARE_MODE_SUBKEY, motor, preset)
 
-        setup[label][key][HARDWARE_MODE_SUBKEY] = mode
+        setups[label][key][HARDWARE_MODE_SUBKEY] = mode
 
         for subkey in CONFIG_KEYS[key][mode]:
-          setup[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
+          setups[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
       else:
         for subkey in CONFIG_KEYS[key]:
-          setup[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
-      
+          setups[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
 
-  return setup
+  print(setups)
+
+  return setups
 
 def createServos():
   global servos, pca
 
   setups = getServosSetups(target := ucuq.getDeviceId())
 
-  for label in setups:
-    servo = setups[label]
+  for setup in setups:
+    servo = setups[setup]
     hardware = servo[HARDWARE_KEY]
     specs = servo[SPECS_KEY]
     tweak = servo[TWEAK_KEY]
     if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
-      pwm = ucuq.PWM(hardware["pin"], specs["freq"])
+      pwm = ucuq.PWM(hardware["pin"])
+      pwm.setFreq(specs["freq"])
     elif hardware["mode"] == "PCA":
       if not pca:
-        pca =  ucuq.PCA9685(hardware["sda"], hardware["scl"], specs["freq"])
-      pwm = ucuq.PCA9685Channel(pca, hardware["channel"])
+        i2c = ucuq.SoftI2C if hardware["soft"] else ucuq.I2C
+        pca =  ucuq.PCA9685(i2c(hardware["sda"], hardware["scl"]))
+        pca.setFreq(specs["freq"])
+        pca.setOffset(hardware["offset"])
+        print(pca.getPrescale())
+      pwm = ucuq.PWM_PCA9685(pca, hardware["channel"])
     else:
       raise Exception("Unknown hardware mode!")
-    servos[label] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
+    servos[setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
 
   ucuq.commit()
 
