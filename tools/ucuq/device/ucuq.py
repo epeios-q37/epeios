@@ -234,7 +234,7 @@ def init_(host, port, callback):
   
 
 def getDeviceLabel_():
-  if "Kit" in CONFIG_:
+  if "Kits" in CONFIG_:
     kit = CONFIG_["Kit"]
 
     id = getSelectorId_(SELECTOR_)
@@ -282,7 +282,6 @@ def serve_():
       script = readString_()
       expression = readString_()
       returned = ""
-
       try:
         exec(script)
         if expression:
@@ -295,7 +294,6 @@ def serve_():
       else:
         writeUInt_(A_OK_)
         writeString_(returned)
-        print(returned)
     else:
       writeUInt_(A_PUZZLED_)
       writeString_("")  # For future use

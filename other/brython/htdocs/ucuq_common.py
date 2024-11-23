@@ -6,46 +6,87 @@ def setDevice(id, token = None):
   getDevice_(id = id, token = token)
 
 
-INFO_SCRIPT = """
-def ucuqGetKitLabel(): 
-  if "Kit" in CONFIG_:
-    kit = CONFIG_["Kit"]
+INFO_SCRIPT_ = """
+def ucuqGetKit(): 
+  kit = CONFIG_["Kit"]
 
-    id = getSelectorId_(SELECTOR_)
+  id = getSelectorId_(SELECTOR_)
 
-    if id in kit:
-      return kit[id]
-    else:
-      return ""
+  if id in kit:
+    return kit[id]
+  else:
+    return kit["None"]
 
 def ucuqStructToDict(obj):
     return {attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}
 
 def ucuqGetInfos():
   return {
-    "kit": {
-      "label": ucuqGetKitLabel()
-    },
+    "Kit": ucuqGetKit(),
     "uname": ucuqStructToDict(uos.uname())
   }
 """
 
-async def handleATKAwait(dom):
+ATK_STYLE = """
+<style>
+.ucuq {
+  max-height: 200px;
+  overflow: hidden;
+  opacity: 1;
+  animation: ucuqFadeOut 2s forwards;
+}
+
+@keyframes ucuqFadeOut {
+  0% {
+  max-height: 200px;
+  }
+  100% {
+    max-height: 0;
+  }
+}
+</style>
+"""
+
+ATK_BODY = """
+<div style="display: flex; justify-content: center;" class="ucuq">
+  <h3>'{}'</h3>
+</div>
+<div id="ucuq_body">
+</div>
+"""
+
+async def handleATKAwait(dom, body, *, device = None):
+  device = getDevice_(device)
+
   await dom.inner("", "<h3>Connecting…</h3>")
   
-  addCommand(INFO_SCRIPT)
+  device.addCommand(INFO_SCRIPT_)
 
   try:
-    info = await commitAwait("ucuqGetInfos()")
+    info = await device.commitAwait("ucuqGetInfos()")
   except Exception as err:
     await dom.inner("", f"<h5>Error: {err}</h5>")
     raise
 
-  await dom.inner("", f"<h3>'{info['kit']['label']}'</h3>")
+  kit = info["Kit"]
+
+  kit["label"] = f"{kit['brand']}/{kit['model']}/{kit['variant']}"
+
+  info["Kit"] = kit
+  await dom.inner("", ATK_BODY.format(info['Kit']['label']))
+
+  await dom.inner("ucuq_body", body)
+
+  await sleepAwait(0.5)
+
+  await dom.begin("", ATK_STYLE)
 
   await sleepAwait(1.5)
 
+  dom.inner("", body)
+
   return info
+
 
 def getDevice_(device = None, *, id = None, token = None):
 
@@ -529,24 +570,28 @@ class SSD1306_I2C(SSD1306):
     super().init(f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})")
 
 
-def servoMoves(moves, speed = 1,/,device = None):
+def pwmJumps(jumps, step = 100, delay = 0.05, *,device = None):
   device = getDevice_(device)
 
-  device.addModule("ServoMoves-1")
+  device.addModule("PWMJumps-1")
 
-  command = "servoMoves([\n"
+  command = "pwmJumps([\n"
 
-  for move in moves:
-    servo = move[0]
+  for jump in jumps:
+    command += f"\t[{jump[0].getObject()},{jump[1]}],\n"
 
-    step = speed * (servo.specs.max - servo.specs.min) / servo.specs.range
-
-    command += f"\t[{move[0].pwm.getObject()},{move[0].angleToDuty(move[1])}],\n"
-
-  command += f"], {int(step)})"
+  command += f"], {step}, {delay})"
 
   device.addCommand(command)
 
+def servoMoves(moves, step = 100, delay = 0.05, *,device = None):
+  jumps = []
+  
+  for move in moves:
+    servo = move[0]
+    jumps.append([servo.pwm, servo.angleToDuty(move[1])])
+
+  pwmJumps(jumps, step, delay, device = device)
 
 def rbShade(variant, i, max):
   match int(variant) % 6:

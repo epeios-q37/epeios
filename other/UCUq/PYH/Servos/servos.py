@@ -25,6 +25,8 @@ HARDWARE_MODE_SUBKEY = "mode"
 SPECS_KEY = "Specs"
 TWEAK_KEY = "Tweak"
 
+STEP = int(1625 / 180)
+
 CONFIG_KEYS = {
   HARDWARE_KEY: {
     M_STRAIGHT: ["pin"],
@@ -65,11 +67,12 @@ servos = {}
 pca = None
 
 
-def reset_(dom):
-  for servo in servos:
-    servos[servo].reset()
+def reset_():
+  moves = []
+  for servo in servos.values():
+    moves.append([servo, 0])
 
-  ucuq.commit()
+  ucuq.servoMoves(moves, int(2 * STEP * DEFAULT_SPEED))
 
 
 def displayMacros(dom):
@@ -106,20 +109,19 @@ def acConnect(dom):
 
 
 def acTest():
+  reset_()
+  step = int(STEP * DEFAULT_SPEED / 2)
+  ucuq.commit()
   for servo in servos:
-    ucuq.servoMoves([(servos[servo], 15)])
-    ucuq.commit()
-    time.sleep(0.25)
-    ucuq.servoMoves([(servos[servo], -15)])
-    ucuq.commit()
-    time.sleep(0.25)
-    ucuq.servoMoves([(servos[servo], 0)])
-    ucuq.commit()
-    time.sleep(0.25)
-
+    ucuq.servoMoves([[servos[servo], 15]], step)
+    ucuq.servoMoves([[servos[servo], -15]], step)
+    ucuq.servoMoves([[servos[servo], 0]], step)
+  
+  ucuq.commit()
 
 def acReset(dom):
-  reset_(dom)
+  reset_()
+  ucuq.commit()
 
 
 def getToken(stream):
@@ -276,7 +278,7 @@ def execute(dom, string, speed = DEFAULT_SPEED):
       match item[0]:
         case "action":
           tempSpeed = item[1]["speed"]
-          ucuq.servoMoves(item[1]["moves"], ( speed if tempSpeed == None else ( int(tempSpeed) if tempSpeed != "" else DEFAULT_SPEED)) /10)
+          ucuq.servoMoves(item[1]["moves"], int(STEP * ( speed if tempSpeed == None else ( int(tempSpeed) if tempSpeed != "" else DEFAULT_SPEED))))
         case "macro":
           for _ in range(item[1]["amount"]):
             execute(dom, macros[item[1]["name"]]["Content"], speed)
@@ -296,7 +298,8 @@ def acExecute(dom, id):
     moves = macros[mark[5:]]["Content"]
 
   if dom.getValue("Reset") == "true":
-    reset_(dom)
+    reset_()
+    ucuq.commit()
 
   execute(dom, moves)
   ucuq.commit()
@@ -468,8 +471,6 @@ def getServosSetups(target):
       else:
         for subkey in CONFIG_KEYS[key]:
           setups[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
-
-  print(setups)
 
   return setups
 
