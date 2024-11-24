@@ -55,25 +55,55 @@ ATK_BODY = """
 </div>
 """
 
-async def handleATKAwait(dom, body, *, device = None):
+K_UNKNOWN = 0
+K_BIPEDAL = 1
+K_DOG = 2
+K_DIY = 3
+
+# Infos keys and subkeys
+
+I_KIT_KEY = "Kit"
+I_KIT_BRAND_KEY = "brand"
+I_KIT_MODEL_KEY = "model"
+I_KIT_VARIANT_KEY = "variant"
+I_KIT_LABEL_KEY = "label"
+I_UNAME_KEY = "uname"
+
+KITS_ = {
+  "Freenove/Bipedal/RPiPicoW": K_BIPEDAL,
+  "Freenove/Dog/ESP32": K_DOG,
+  "q37.info/ESP32-C3FH4/1": K_DIY
+}
+
+async def getInfosAwait(device = None):
   device = getDevice_(device)
 
-  await dom.inner("", "<h3>Connecting…</h3>")
-  
   device.addCommand(INFO_SCRIPT_)
 
-  try:
-    info = await device.commitAwait("ucuqGetInfos()")
-  except Exception as err:
-    await dom.inner("", f"<h5>Error: {err}</h5>")
-    raise
+  return await device.commitAwait("ucuqGetInfos()")
 
-  kit = info["Kit"]
 
-  kit["label"] = f"{kit['brand']}/{kit['model']}/{kit['variant']}"
+def getKitLabel(infos):
+  kit = infos[I_KIT_KEY]
 
-  info["Kit"] = kit
-  await dom.inner("", ATK_BODY.format(info['Kit']['label']))
+  return f"{kit[I_KIT_BRAND_KEY]}/{kit[I_KIT_MODEL_KEY]}/{kit[I_KIT_VARIANT_KEY]}"
+
+
+def getKitId(infos):
+  label = getKitLabel(infos)
+
+  if label in KITS_:
+    return KITS_[label]
+  else:
+    return K_UNKNOWN
+
+
+async def ATKConnectAwait(dom, body, *, device = None):
+  await dom.inner("", "<h3>Connecting…</h3>")
+  
+  infos = await getInfosAwait(device)
+
+  await dom.inner("", ATK_BODY.format(getKitLabel(infos)))
 
   await dom.inner("ucuq_body", body)
 
@@ -85,7 +115,7 @@ async def handleATKAwait(dom, body, *, device = None):
 
   dom.inner("", body)
 
-  return info
+  return infos
 
 
 def getDevice_(device = None, *, id = None, token = None):

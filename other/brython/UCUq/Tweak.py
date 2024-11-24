@@ -13,8 +13,16 @@ state = S_OFF_DUTY
 D_RATIO = "Ratio"
 D_WIDTH = "Width"
 
-# Inputs
-I_MODE_BOX = "ModeBox"
+# Presets
+P_USER = "None"
+P_BIPEDAL = "Bipedal"
+P_DOG = "Dog"
+P_DIY = "DIY"
+
+# Interface elements
+I_PRESET = "Preset"
+I_HARDWARE_BOX = "HardwareBox"
+I_SETTINGS_BOX = "SettingsBox"
 I_MODE = "Mode"
 I_PIN = "Pin"
 I_SDA = "SDA"
@@ -29,6 +37,7 @@ I_RATIO_STEP = "RatioStep"
 I_WIDTH = "Width"
 
 # Modes
+M_NONE = "None"
 M_STRAIGHT = "Straight"
 M_PCA9685 = "PCA9685"
 
@@ -37,6 +46,38 @@ O_FREQ = "TrueFreq"
 O_RATIO = "TrueRatio"
 O_WIDTH = "TrueWidth"
 O_PRESCALE = "TruePrescale"
+
+
+# Default hardware settings
+SETTINGS = {
+  P_USER: {
+    I_MODE: M_NONE,
+  },
+  P_BIPEDAL: {
+    I_MODE: M_STRAIGHT,
+    I_PIN: "10"
+  },
+  P_DOG: {
+    I_MODE: M_PCA9685,
+    I_SOFT: "false",
+    I_SDA: "13",
+    I_SCL: "14"
+  },
+  P_DIY: {
+    I_MODE: M_PCA9685,
+    I_SOFT: "false",
+    I_SDA: "8",
+    I_SCL: "9"
+  }
+}
+
+# Presets by kit ids
+PRESETS = {
+  ucuq.K_UNKNOWN: P_USER,
+  ucuq.K_BIPEDAL: P_BIPEDAL,
+  ucuq.K_DOG: P_DOG,
+  ucuq.K_DIY: P_DIY
+}
 
 
 async def getParams():
@@ -175,7 +216,8 @@ async def initPWM(inputs):
   global pwm
 
   if inputs[I_MODE] == M_STRAIGHT:
-    pwm = ucuq.PWM(inputs[I_PIN], inputs[I_FREQ])
+    pwm = ucuq.PWM(inputs[I_PIN])
+    pwm.setFreq(inputs[I_FREQ])
   elif inputs[I_MODE] == M_PCA9685:
     i2c = ucuq.SoftI2C if inputs[I_SOFT] else ucuq.I2C
     pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(i2c(inputs[I_SDA], inputs[I_SCL])), inputs[I_CHANNEL])
@@ -213,26 +255,48 @@ async def setWidth(width):
 
 
 async def acConnect(dom):
-  await ucuq.handleATKAwait(dom)
+  preset = PRESETS[ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))]
+
+  await updateSettingsUIFollowingPreset_(dom, preset)
+
+  await dom.setValue(I_PRESET, preset)
   
   ucuq.addCommand(MC_INIT)
   ucuq.commit()
   
-  await dom.inner("", BODY)
   await updateDutyBox(dom)
+  await dom.enableElement(I_HARDWARE_BOX)
+
+async def updateSettingsUIFollowingMode_(dom, mode):
+  if mode == M_NONE:
+    await dom.enableElement("HideStraight")
+    await dom.enableElement("HidePCA9685")
+  elif mode == M_STRAIGHT:
+    await dom.disableElement("HideStraight")
+    await dom.enableElement("HidePCA9685")
+  elif mode == M_PCA9685:
+    await dom.enableElement("HideStraight")
+    await dom.disableElement("HidePCA9685")
+  else:
+    raise Exception("Unknown mode!")
+
+
+async def updateSettingsUIFollowingPreset_(dom, preset):
+  setting = SETTINGS[preset]
+
+  await updateSettingsUIFollowingMode_(dom, setting[I_MODE])
+
+  await dom.setValues(setting)
+
+
+async def acPreset(dom, id):
+  preset = await dom.getValue(id)
+
+  await updateSettingsUIFollowingPreset_(dom, preset)
 
 
 async def acMode(dom, id):
-  match await dom.getValue(id):
-    case "Straight":
-      await dom.disableElement("HideStraight")
-      await dom.enableElement("HidePCA9685")
-    case "PCA9685":
-      await dom.enableElement("HideStraight")
-      await dom.disableElement("HidePCA9685")
-    case _:
-      raise Exception("Unknown mode!")
-
+  await updateSettingsUIFollowingMode_(dom, await dom.getValue(id))
 
 async def acSwitch(dom, id):
   global state
@@ -244,14 +308,14 @@ async def acSwitch(dom, id):
       await dom.setValue(id, False)
     else:
       state = S_PCA9685 if inputs[I_MODE] == M_PCA9685 else S_STRAIGHT
-      await dom.disableElement(I_MODE_BOX)
+      await dom.disableElement(I_HARDWARE_BOX)
       await updateDuties(dom, await initPWM(inputs))
   else:
     if state:
       pwm.deinit()
       state = S_OFF_DUTY
     await updateDuties(dom)
-    await dom.enableElement(I_MODE_BOX)
+    await dom.enableElement(I_HARDWARE_BOX)
 
 
 async def acSelect(dom):
@@ -315,6 +379,7 @@ async def acWidthStep(dom, id):
 
 CALLBACKS = {
   "": acConnect,
+  "Preset": acPreset,
   "Mode": acMode,
   "Switch": acSwitch,
   "Freq": acFreq,
@@ -425,7 +490,7 @@ label.prescale-offset {
 }
 </style>
 <style id="HidePCA9685">
-  .pca9685, .prescale-offset {
+  .pca9685, prescale-offset, label.prescale-offset {
     display: none;
   }
 </style>
@@ -435,44 +500,62 @@ BODY = """
 <fieldset style="display: flex; flex-direction: column">
   <legend>PWM</legend>
   <div style="display: flex; justify-content: space-between;">
-    <fieldset id="ModeBox" style="display: flex;">
-      <div style="align-content: center;">
-        <select id="Mode" xdh:onevent="Mode">
-          <option selected="Selected" disabled="disabled" value="">Select mode</option>
-          <option value="Straight">Straight</option>
-          <option value="PCA9685">PCA9685</option>
-        </select>
-      </div>
+    <fieldset id="HardwareBox" style="display: flex; flex-direction: column" disabled="">
+      <legend>Hardware</legend>
       <div>
-        <div class="straight">
-          <label>
-            <span>Pin:</span>
-            <input id="Pin" type="number" size="2" value="10" min="0" max="99">
-          </label>
+        <label>
+          <span>Preset:</span>
+          <select id="Preset" xdh:onevent="Preset">
+            <option value="None">User</option>
+            <optgroup label="Freenove">
+              <option value="Bipedal">Bipedal</option>
+              <option value="Dog">Dog</option>
+            </optgroup>
+            <option value="DIY">DIY</option>
+          </select>
+        </label>
+      </div>
+      <fieldset id="SettingsBox" style="display: flex; ">
+        <legend>Settings</legend>
+        <div style="align-content: center;">
+          <select id="Mode" xdh:onevent="Mode">
+            <option selected="Selected" disabled="disabled" value="None">Select mode</option>
+            <option value="Straight">Straight</option>
+            <option value="PCA9685">PCA9685</option>
+          </select>
         </div>
-        <div class="pca9685">
-          <fieldset>
+        <div>
+          <div class="straight">
             <label>
-              <span>SDA:</span>
-              <input id="SDA" type="number" size="2" value="0" min="0" max="99">
+              <span>Pin:</span>
+              <input id="Pin" type="number" size="2" value="10" min="0" max="99">
             </label>
-            <label>
-              <span>SCL:</span>
-              <input id="SCL" type="number" size="2" value="1" min="0" max="99">
-            </label>
-            <br>
-            <span style="display: flex; justify-content: space-between">
+          </div>
+          <div class="pca9685">
+            <fieldset>
               <label>
-                <span>Soft:</span>
-                <input id="Soft" checked="" type="checkbox">
+                <span>SDA:</span>
+                <input id="SDA" type="number" size="2" value="0" min="0" max="99">
               </label>
               <label>
-                <span>Channel:</span>
-                <input id="Channel" size="2" value="0">
+                <span>SCL:</span>
+                <input id="SCL" type="number" size="2" value="1" min="0" max="99">
               </label>
-            </span>
-          </fieldset>
+              <br>
+              <span style="display: flex; justify-content: space-between">
+                <label>
+                  <span>Soft:</span>
+                  <input id="Soft" type="checkbox">
+                </label>
+                <label>
+                  <span>Channel:</span>
+                  <input type="number" id="Channel" size="2" value="0">
+                </label>
+              </span>
+            </fieldset>
+          </div>
         </div>
+      </fieldset>
     </fieldset>
     <span class="switch-container">
       <label class="switch">
@@ -483,6 +566,7 @@ BODY = """
   </div>
   <fieldset xdh:radio="duty" id="Duty" xdh:onevent="Select"
     style="display: grid; grid-template-columns: repeat(3, max-content);">
+    <legend>Parameters</legend>
     <label style="display: flex; justify-content: right;">Freq. (Hz):&nbsp;</label>
     <span>
       <input id="Freq" xdh:onevents="(click|Freq)(change|Freq)" type="number" size="7" value="50">
@@ -530,7 +614,6 @@ BODY = """
     </span>
     <output id="TrueWidth">N/A</output>
   </fieldset>
-</fieldset>
-"""
+</fieldset>"""
 
 atlastk.launch(CALLBACKS, headContent=HEAD)
