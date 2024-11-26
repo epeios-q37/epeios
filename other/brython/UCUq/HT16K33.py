@@ -2,6 +2,7 @@ import ucuq, atlastk, binascii
 
 onDuty = False
 ht16k33 = None
+mirror = None
 
 pattern = "0" * 32
 
@@ -84,6 +85,11 @@ def drawOnMatrix(motif = pattern):
 
     ucuq.commit()
 
+    if mirror:
+      mirror.fill(0).draw(motif, 16, mul=8).show()
+
+      mirror.getDevice().commit()
+
 async def drawAwait(dom, motif = pattern):
   global pattern
 
@@ -122,9 +128,7 @@ async def updateUIAwait(dom, onDuty):
         
 
 async def acConnect(dom):
-  label = (await ucuq.handleATKAwait(dom))['kit']['label']
-
-  await dom.inner("", BODY)
+  id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
   await drawAwait(dom, "")
 
@@ -133,9 +137,8 @@ async def acConnect(dom):
   await drawLittleMatricesAwait(dom,MATRICES)
 
   if not onDuty:
-    match label:
-      case "Freenove.Robot.Bipedal.RPIPicoW":
-        await dom.setValue("Preset", "Bipedal")
+    if id == ucuq.K_BIPEDAL:
+      await dom.setValue("Preset", "Bipedal")
 
   await updateUIAwait(dom, onDuty)
 
@@ -195,19 +198,9 @@ async def acTest():
   test()
 
 
-def plot(x,y,ink=True):
-  if ht16k33:
-    ht16k33.plot(x,y)
-    ht16k33.show()
-
-
-def clear():
-  if ht16k33:
-    ht16k33.clear()
-
-
 async def acToggle(dom, id):
   if not onDuty:
+    dom.alert("Please switch on!")
     return
 
   global pattern
@@ -223,8 +216,6 @@ async def acToggle(dom, id):
   bin = bin[:offset] + bytearray([bin[offset] ^ (1 << (pos % 8))]) + bin[offset+1:]
 
   pattern = (binascii.hexlify(bin[::-1]).decode()[::-1])
-
-  plot(x, y,  bin[offset] & (1 << (pos % 8)))
 
   await drawAwait(dom, pattern)
 
@@ -256,6 +247,20 @@ async def acBlinkRate(dom, id):
 async def acDraw(dom, id):
   await drawAwait(dom, MATRICES[int(await dom.getMark(id))])
 
+async def acMirror(dom, id):
+  global mirror
+
+  state = (await dom.getValue(id)) == "true"
+
+  if state:
+    if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
+      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.SoftI2C(0, 1, ucuq.Device(id="Yellow")))
+    else:
+      await dom.setValue(id, "false")
+  else:
+    mirror = None
+  
+
 CALLBACKS = {
   "": acConnect,
   "Preset": acPreset,
@@ -266,7 +271,8 @@ CALLBACKS = {
   "Brightness": acBrightness,
   "Blink": acBlinkRate,
   "Hexa": acHexa,
-  "Draw": acDraw
+  "Draw": acDraw,
+  "Mirror": acMirror
 }
 
 MATRICES = (
@@ -484,6 +490,7 @@ BODY = """
         <option value="2">2 Hz</option>
       </select>
     </label>
+    <input xdh:onevent="Mirror" type="checkbox"/>
   </fieldset>
   <fieldset id="MatricesBox" style="display: grid; grid-template-columns: auto auto auto auto;">
   </fieldset>

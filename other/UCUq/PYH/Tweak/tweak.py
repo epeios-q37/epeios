@@ -1,33 +1,47 @@
-import os, sys, time, io, json, datetime
+import os, sys
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 sys.path.extend(("../..","../../atlastk.zip"))
 
 import ucuq, atlastk
 
-pwm = None
+# States
+S_OFF_DUTY = 0
+S_STRAIGHT = "Straight"
+S_PCA9685 = "PCA9685"
 
-onDuty = False
+state = S_OFF_DUTY
 
 # Duties
 D_RATIO = "Ratio"
 D_WIDTH = "Width"
 
-# Inputs
-I_MODE_BOX = "ModeBox"
-I_MODE = "Mode"
-I_PIN = "Pin"
-I_SDA = "SDA"
-I_SCL = "SCL"
-I_CHANNEL = "Channel"
-I_SOFT = "Soft"
-I_FREQ = "Freq"
-I_DUTY = "Duty"
-I_RATIO = "Ratio"
-I_RATIO_STEP = "RatioStep"
-I_WIDTH = "Width"
+# Presets
+P_USER = "None"
+P_BIPEDAL = "Bipedal"
+P_DOG = "Dog"
+P_DIY = "DIY"
+
+# Interface elements
+W_PRESET = "Preset"
+W_HARDWARE_BOX = "HardwareBox"
+W_SWITCH = "Switch"
+W_SETTINGS_BOX = "SettingsBox"
+W_MODE = "Mode"
+W_PIN = "Pin"
+W_SDA = "SDA"
+W_SCL = "SCL"
+W_SOFT = "Soft"
+W_CHANNEL = "Channel"
+W_FREQ = "Freq"
+W_OFFSET = "Offset"
+W_DUTY = "Duty"
+W_RATIO = "Ratio"
+W_RATIO_STEP = "RatioStep"
+W_WIDTH = "Width"
 
 # Modes
+M_NONE = "None"
 M_STRAIGHT = "Straight"
 M_PCA9685 = "PCA9685"
 
@@ -35,28 +49,55 @@ M_PCA9685 = "PCA9685"
 O_FREQ = "TrueFreq"
 O_RATIO = "TrueRatio"
 O_WIDTH = "TrueWidth"
+O_PRESCALE = "TruePrescale"
 
 
-MC_INIT = """
-def getParams(pwm):
-  return [pwm.freq(), pwm.duty_u16(), pwm.duty_ns()]
-"""
+# Default hardware settings
+SETTINGS = {
+  P_USER: {
+    W_MODE: M_NONE,
+    W_OFFSET: "0"
+  },
+  P_BIPEDAL: {
+    W_MODE: M_STRAIGHT,
+    W_PIN: "10",
+    W_WIDTH: "1.5"
+  },
+  P_DOG: {
+    W_MODE: M_PCA9685,
+    W_SOFT: "false",
+    W_SDA: "13",
+    W_SCL: "14",
+    W_OFFSET: "9",
+    W_WIDTH: "1.5"
+  },
+  P_DIY: {
+    W_MODE: M_PCA9685,
+    W_SOFT: "false",
+    W_SDA: "8",
+    W_SCL: "9",
+    W_OFFSET: "8",
+    W_WIDTH: "1.5"
+  }
+}
 
-with open('Body.html', 'r') as file:
-  BODY = file.read()
-
-with open('Head.html', 'r') as file:
-  HEAD = file.read()
+# Presets by kit ids
+PRESETS = {
+  ucuq.K_UNKNOWN: P_USER,
+  ucuq.K_BIPEDAL: P_BIPEDAL,
+  ucuq.K_DOG: P_DOG,
+  ucuq.K_DIY: P_DIY
+}
 
 
 def getParams():
-  return ucuq.commit(f"getParams({pwm.getObject()})") if onDuty else None
+  return (ucuq.commit(f"getParams({pwm.getObject()},{state == S_PCA9685})")) if state else None
 
 
 def getDuty(dom):
-  if not ( duty:= dom.getValue("Duty") ) in [D_RATIO, D_WIDTH]:
+  if not ( duty := dom.getValue("Duty") ) in [D_RATIO, D_WIDTH]:
     raise Exception ("Bad duty value!!!")
-  
+
   return duty
 
 
@@ -70,66 +111,67 @@ def convert(value, converter):
 
 
 def getInputs(dom):
-  values = dom.getValues([I_MODE, I_PIN, I_SDA, I_SCL, I_CHANNEL, I_SOFT, I_FREQ, I_DUTY, I_RATIO, I_WIDTH])
+  values = dom.getValues([W_MODE, W_PIN, W_SDA, W_SCL, W_CHANNEL, W_SOFT, W_FREQ, W_OFFSET, W_DUTY, W_RATIO, W_WIDTH])
 
   return {
-    I_MODE: values[I_MODE],
-    I_PIN: convert(values[I_PIN], int),
-    I_SDA: convert(values[I_SDA], int),
-    I_SCL: convert(values[I_SCL], int),
-    I_CHANNEL: convert(values[I_CHANNEL], int),
-    I_SOFT: True if values[I_SOFT] == "true" else False,
-    I_FREQ: convert(values[I_FREQ], int),
-    I_DUTY: {
-      "Type": values[I_DUTY],
-      "Value": convert(values[I_RATIO], int) if values[I_DUTY] == D_RATIO else convert(values[I_WIDTH], float)
-    } 
+    W_MODE: values[W_MODE],
+    W_PIN: convert(values[W_PIN], int),
+    W_SDA: convert(values[W_SDA], int),
+    W_SCL: convert(values[W_SCL], int),
+    W_CHANNEL: convert(values[W_CHANNEL], int),
+    W_SOFT: True if values[W_SOFT] == "true" else False,
+    W_FREQ: convert(values[W_FREQ], int),
+    W_OFFSET: convert(values[W_OFFSET], int),
+    W_DUTY: {
+      "Type": values[W_DUTY],
+      "Value": convert(values[W_RATIO], int) if values[W_DUTY] == D_RATIO else convert(values[W_WIDTH], float)
+    }
   }
 
 
 def test(dom, inputs):
   error = True
 
-  if inputs[I_MODE] == "":
+  if inputs[W_MODE] == "":
     dom.alert("Please select a mode!")
-  elif inputs[I_MODE] == M_STRAIGHT:
-    if inputs[I_PIN] == None:
+  elif inputs[W_MODE] == M_STRAIGHT:
+    if inputs[W_PIN] == None:
       dom.alert("Bad or no pin value!")
     else:
       error = False
-  elif inputs[I_MODE] == M_PCA9685:
-    if inputs[I_SCL] == None:
+  elif inputs[W_MODE] == M_PCA9685:
+    if inputs[W_SCL] == None:
       dom.alert("No or bad SCL value!")
-    elif inputs[I_SDA]== None:
+    elif inputs[W_SDA]== None:
       dom.alert("No or bad SDA value!")
-    elif inputs[I_CHANNEL] == None:
+    elif inputs[W_CHANNEL] == None:
       dom.alert("No or bad Channel value!")
     else:
       error = False
   else:
     raise Exception("Unknown mode!!!")
-  
-  
+
+
   if error:
     return False
-  
+
   error = True
 
-  if inputs[I_FREQ] ==  None:
+  if inputs[W_FREQ] ==  None:
     dom.alert("Bad or no freq. value!")
-  elif inputs[I_DUTY]["Type"] == D_RATIO:
-    if inputs[I_DUTY]["Value"] == None:
+  elif inputs[W_DUTY]["Type"] == D_RATIO:
+    if inputs[W_DUTY]["Value"] == None:
       dom.alert("Bad or no ratio value!")
     else:
       error = False
-  elif inputs[I_DUTY]["Type"] == D_WIDTH:
-    if inputs[I_DUTY]["Value"] == None:
+  elif inputs[W_DUTY]["Type"] == D_WIDTH:
+    if inputs[W_DUTY]["Value"] == None:
       dom.alert("Bad or no width value!")
     else:
       error = False
   else:
     raise Exception("Unknown duty type!!!")
-  
+
   return not error
 
 
@@ -141,21 +183,24 @@ def updateDutyBox(dom, params = None):
 
   match getDuty(dom):
     case "Ratio":
-      dom.enableElement(I_RATIO)
-      dom.disableElement(I_WIDTH)
-      if onDuty:
+      dom.enableElement(W_RATIO)
+      dom.disableElement(W_WIDTH)
+      if state:
         dom.setValues({
-        I_WIDTH: "",
-        I_RATIO: params[1] if onDuty else ""})
+          W_WIDTH: "",
+          W_RATIO: params[1]
+        })
     case "Width":
-      dom.enableElement(I_WIDTH)
-      dom.disableElement(I_RATIO)
-      dom.setValues({
-        I_RATIO: "",
-        I_WIDTH: params[2]/1000000 if onDuty else ""})
+      dom.enableElement(W_WIDTH)
+      dom.disableElement(W_RATIO)
+      if state:
+        dom.setValues({
+          W_RATIO: "",
+          W_WIDTH: params[2]/1000000
+        })
     case _:
       raise Exception("!!!")
-    
+
 
 def updateDuties(dom, params = None):
   if params == None:
@@ -165,74 +210,106 @@ def updateDuties(dom, params = None):
     dom.setValues({
       O_FREQ: params[0],
       O_RATIO: params[1],
-      O_WIDTH: params[2]/1000000
+      O_WIDTH: params[2]/1000000,
+      O_PRESCALE: params[3]
     })
   else:
     dom.setValues({
       O_FREQ: "N/A",
       O_RATIO: "N/A",
       O_WIDTH: "N/A",
+      O_PRESCALE: "N/A"
     })
-
 
 
 def initPWM(inputs):
   global pwm
-  
-  if inputs[I_MODE] == M_STRAIGHT:
-    pwm = ucuq.PWM(inputs[I_PIN], inputs[I_FREQ])
-  elif inputs[I_MODE] == M_PCA9685:
-    i2c = ucuq.SoftI2C if inputs[I_SOFT] else ucuq.I2C
-    pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(i2c(inputs[I_SDA], inputs[I_SCL]), inputs[I_FREQ]), inputs[I_CHANNEL])
+
+  if inputs[W_MODE] == M_STRAIGHT:
+    pwm = ucuq.PWM(inputs[W_PIN])
+    pwm.setFreq(inputs[W_FREQ])
+  elif inputs[W_MODE] == M_PCA9685:
+    i2c = ucuq.SoftI2C if inputs[W_SOFT] else ucuq.I2C
+    pwm = ucuq.PWM_PCA9685(ucuq.PCA9685(i2c(inputs[W_SDA], inputs[W_SCL])), inputs[W_CHANNEL])
+    pwm.setOffset(inputs[W_OFFSET])
+    pwm.setFreq(inputs[W_FREQ])
   else:
     raise Exception("Unknown mode!!!")
 
-  if inputs[I_DUTY]["Type"] == D_RATIO:
-    pwm.setU16(int(inputs[I_DUTY]["Value"]))
+  if inputs[W_DUTY]["Type"] == D_RATIO:
+    pwm.setU16(int(inputs[W_DUTY]["Value"]))
   else:
-    pwm.setNS(int(1000000 * float(inputs[I_DUTY]["Value"])))
-  
-  return ucuq.commit(f"getParams({pwm.getObject()})")
-  
+    pwm.setNS(int(1000000 * float(inputs[W_DUTY]["Value"])))
+
+  return getParams()
+
 
 def setFreq(freq):
   pwm.setFreq(freq)
-  return ucuq.commit(f"getParams({pwm.getObject()})")
-  
+  return getParams()
+
+
+def setOffset(offset):
+  pwm.setOffset(offset)
+  return getParams()
+
 
 def setRatio(ratio):
   pwm.setU16(ratio)
-  return ucuq.commit(f"getParams({pwm.getObject()})")
-  
+  return getParams()
+
 
 def setWidth(width):
   pwm.setNS(width)
-  return ucuq.commit(f"getParams({pwm.getObject()})")
-  
+  return getParams()
+
 
 def acConnect(dom):
-  ucuq.handleATK(dom)
+  preset = PRESETS[ucuq.getKitId(ucuq.ATKConnect(dom, BODY))]
+
+  updateSettingsUIFollowingPreset_(dom, preset)
+
+  dom.setValue(W_PRESET, preset)
   
   ucuq.addCommand(MC_INIT)
-
-  dom.inner("", BODY)
+  ucuq.commit()
+  
   updateDutyBox(dom)
+  dom.enableElement(W_HARDWARE_BOX)
+
+def updateSettingsUIFollowingMode_(dom, mode):
+  if mode == M_NONE:
+    dom.enableElement("HideStraight")
+    dom.enableElement("HidePCA9685")
+  elif mode == M_STRAIGHT:
+    dom.disableElement("HideStraight")
+    dom.enableElement("HidePCA9685")
+  elif mode == M_PCA9685:
+    dom.enableElement("HideStraight")
+    dom.disableElement("HidePCA9685")
+  else:
+    raise Exception("Unknown mode!")
+
+
+def updateSettingsUIFollowingPreset_(dom, preset):
+  setting = SETTINGS[preset]
+
+  updateSettingsUIFollowingMode_(dom, setting[W_MODE])
+
+  dom.setValues(setting)
+
+
+def acPreset(dom, id):
+  preset = dom.getValue(id)
+
+  updateSettingsUIFollowingPreset_(dom, preset)
 
 
 def acMode(dom, id):
-  match dom.getValue(id):
-    case "Straight":
-      dom.disableElement("HideStraight")
-      dom.enableElement("HidePCA9685")
-    case "PCA9685":
-      dom.enableElement("HideStraight")
-      dom.disableElement("HidePCA9685")
-    case _:
-      raise Exception("Unknown mode!")
-  
-  
+  updateSettingsUIFollowingMode_(dom, dom.getValue(id))
+
 def acSwitch(dom, id):
-  global onDuty
+  global state
 
   if dom.getValue(id) == "true":
     inputs = getInputs(dom)
@@ -240,16 +317,15 @@ def acSwitch(dom, id):
     if not test(dom, inputs):
       dom.setValue(id, False)
     else:
-      dom.disableElement(I_MODE_BOX)
+      state = S_PCA9685 if inputs[W_MODE] == M_PCA9685 else S_STRAIGHT
+      dom.disableElements([W_SETTINGS_BOX, W_PRESET])
       updateDuties(dom, initPWM(inputs))
-      onDuty = True
   else:
-    if onDuty:
+    if state:
       pwm.deinit()
-      ucuq.commit()
-      onDuty = False
+      state = S_OFF_DUTY
     updateDuties(dom)
-    dom.enableElement(I_MODE_BOX)
+    dom.enableElements([W_SETTINGS_BOX, W_PRESET])
 
 
 def acSelect(dom):
@@ -257,19 +333,30 @@ def acSelect(dom):
 
 
 def acFreq(dom, id):
-  if onDuty:
-    value = dom.getValue(id)
+  if state:
+    freq = dom.getValue(id)
 
     try:
-      freq = int(value)
+      freq = int(freq)
     except:
       pass
     else:
       updateDuties(dom, setFreq(freq))
 
+def acOffset(dom, id):
+  if state:
+    offset = dom.getValue(id)
+
+    try:
+      offset = int(offset)
+    except:
+      pass
+    else:
+      updateDuties(dom, setOffset(offset))
+
 
 def acRatio(dom, id):
-  if onDuty:
+  if state:
     value = dom.getValue(id)
 
     try:
@@ -280,8 +367,12 @@ def acRatio(dom, id):
       updateDuties(dom, setRatio(ratio))
 
 
+def acRatioStep(dom, id):
+  dom.setAttribute(W_RATIO, "step", dom.getValue(id)),
+
+
 def acWidth(dom, id):
-  if onDuty:
+  if state:
     value = dom.getValue(id)
 
     try:
@@ -292,16 +383,33 @@ def acWidth(dom, id):
       updateDuties(dom, setWidth(int(1000000 * width)))
 
 
+def acWidthStep(dom, id):
+  dom.setAttribute(W_WIDTH, "step", dom.getValue(id)),
+
+
 CALLBACKS = {
   "": acConnect,
+  "Preset": acPreset,
   "Mode": acMode,
   "Switch": acSwitch,
   "Freq": acFreq,
+  "Offset": acOffset,
   "Select": acSelect,
   "Ratio": acRatio,
-  "RatioStep": lambda dom, id: dom.setAttribute(I_RATIO, "step", dom.getValue(id)),
+  "RatioStep": acRatioStep,
   "Width": acWidth,
-  "WidthStep": lambda dom, id: dom.setAttribute(I_WIDTH, "step", dom.getValue(id)),
+  "WidthStep": acWidthStep
 }
+
+MC_INIT = """
+def getParams(pwm, prescale):
+  return [pwm.freq(), pwm.duty_u16(), pwm.duty_ns(), pwm.prescale() if prescale else 0]
+"""
+
+with open('Body.html', 'r') as file:
+  BODY = file.read()
+
+with open('Head.html', 'r') as file:
+  HEAD = file.read()
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

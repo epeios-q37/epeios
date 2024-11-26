@@ -82,17 +82,26 @@
     </ul>
   </fieldset>
   <fieldset style="display: flex; justify-content: space-around">
-    <fieldset>
+    <fieldset id="PinBox">
       <legend>Pin</legend>
-      <select id="PredefinedPin" xdh:onevent="SetPin">
+      <select id="Preset" xdh:onevent="Preset">
         <option value="User">User defined</option>
         <optgroup label="Freenove Bipedal Robot">
           <option value="Buzzer">Buzzer</option>
           <option value="Loudspeaker">Loudspeaker</option>
         </optgroup>
+        <optgroup label="q37.info">
+          <option value="DIY">DIY</option>
+        </optgroup>
       </select>
-      <input xdh:onevent="SetPin" id="UserPin" type="number" size="2" min="1" max="99">
+      <input id="Pin" type="number" size="2" min="1" max="99">
     </fieldset>
+    <span class="switch-container">
+       <label class="switch">
+        <input id="Switch"  type="checkbox" xdh:onevent="Switch">
+        <span class="slider round"></span>
+       </label>
+    </span>        
     <fieldset style="display: flex; align-items: center;">
       <legend>Ratio</legend>
       <input id="RatioSlide" xdh:onevent="SetRatio" type="range" min="0" max="1" step=".025" value=".5">

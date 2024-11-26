@@ -1,10 +1,35 @@
-import atlastk, ucuq, random
+import atlastk, ucuq, random, json
 
 RB_MAX = 30
 RB_DELAY = .04
 
 ws2812 = None
 onDuty = False
+oledDIY = None
+
+# Presets
+P_USER = "User"
+P_BIPEDAL = "Bipedal"
+P_DOG = "Dog"
+P_DIY = "DIY"
+
+SPOKEN_COLORS =  {
+  "rouge": [30, 0, 0],
+  "vert": [0, 30, 0],
+  "bleu": [0, 0, 30],
+  "jaune": [30, 30, 0],
+  "cyan": [0, 30, 30],
+  "magenta": [30, 0, 30],
+  "orange": [30, 15, 0],
+  "violet": [15, 0, 30],
+  "rose": [30, 15, 15],
+  "gris": [15, 15, 15],
+  "noir": [0, 0, 0],
+  "blanc": [30, 30, 30],
+  "marron": [15, 7, 0],
+  "turquoise": [0, 15, 15],
+  "beige": [30, 25, 20]
+}
 
 def rainbow():
   v =  random.randint(0, 5)
@@ -34,10 +59,11 @@ def getSValues_(R, G, B):
 def getAllValues_(R, G, B):
   return getNValues_(R, G, B) | getSValues_(R, G, B)
 
-def update_(R, G, B):
+def update_(r, g, b):
   if ws2812:
-    ws2812.fill([int(R), int(G), int(B)])
-    ws2812.write()
+    ws2812.fill([int(r), int(g), int(b)]).write()
+    if oledDIY:
+      oledDIY.fill(0).text(f"R: {r}", 0, 5).text(f"G: {g}", 0, 20).text(f"B: {b}", 0, 35).show()
     ucuq.commit()
 
 async def launchAwait(dom, pin, count):
@@ -71,52 +97,45 @@ async def updateUIAwait(dom, onDuty):
     await dom.enableElement("HardwareBox")
     await dom.setValue("Switch", "false")
 
-    match await dom.getValue("Preset"):
-      case "User":
-        await dom.enableElements(["Pin", "Count"])
-      case "Bipedal":
-        await dom.setValues({
-          "Pin": 16,
-          "Count": 4
-        })
-        await dom.disableElements(["Pin", "Count"])
-      case "Dog":
+    preset = await dom.getValue("Preset")
+
+    if preset == P_BIPEDAL:
+      await dom.setValues({
+        "Pin": 16,
+        "Count": 4
+      })
+    elif preset == P_DOG:
         await dom.setValues({
           "Pin": 0,
           "Count": 4
         })
-        await dom.disableElements(["Pin", "Count"])
-      case _:
-        raise Exception("Unknown preset!")
+    elif preset == P_DIY:
+        await dom.setValues({
+          "Pin": 3,
+          "Count": 8
+        })
+    elif preset != P_USER:
+      raise Exception("Unknown preset!")
 
 async def acConnect(dom):
-  label = (await ucuq.handleATKAwait(dom))['kit']['label']
+  global oledDIY
+  id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
-  await dom.inner("", BODY)
   await dom.executeVoid("setColorWheel()")
   await dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
 
   if not onDuty:
-    match label:
-      case "Freenove.Robot.Bipedal.RPIPicoW":
-        await dom.setValue("Preset", "Bipedal")
-      case "Freenove.Robot.Dog.ESP32":
-        await dom.setValue("Preset", "Dog")
+    if id == ucuq.K_BIPEDAL:
+      await dom.setValue("Preset", P_BIPEDAL)
+    elif id == ucuq.K_DOG:
+      await dom.setValue("Preset", P_DOG)
+    elif id == ucuq.K_DIY:
+      oledDIY = ucuq.SSD1306_I2C(128, 64, ucuq.SoftI2C(0, 1))
+      await dom.setValue("Preset", P_DIY)
 
   await updateUIAwait(dom, False)
 
 async def acPreset(dom):
-  match await dom.getValue("Preset"):
-    case "User":
-      await dom.setValues({
-        "Pin": "",
-        "Count": ""
-      })
-    case "Bipedal" | "Dog":
-      pass
-    case _:
-      raise Exception("Unknown preset!")
-    
   await updateUIAwait(dom, onDuty)
 
 
@@ -161,21 +180,31 @@ async def acAdjust(dom):
   await dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
   update_(R, G, B)
 
+
+async def acListen(dom):
+  await dom.executeVoid("launch()")
+  
+async def acDisplay(dom):
+  colors = json.loads(await dom.getValue("Color"))
+
+  for color in colors:
+    color = color.lower()
+    if color in SPOKEN_COLORS:
+      r, g, b = SPOKEN_COLORS[color]
+      await dom.setValues(getAllValues_(r, g, b))
+      await dom.executeVoid(f"colorWheel.rgb = [{r},{g},{b}]")
+      update_(r, g, b)
+      if oledDIY:
+        oledDIY.text(color, 0, 50).show()
+        ucuq.commit()
+      break;
+
 async def acRainbow(dom):
   await resetAwait(dom)
   rainbow()
 
 async def acReset(dom):
-  resetAwait(dom)
-
-def connect_(id):
-  device = ucuq.UCUq()
-
-  if not device.connect(id):
-    print(f"Device '{id}' not available.")
-
-  return device
-
+  await resetAwait(dom)
 
 CALLBACKS = {
   "": acConnect,
@@ -184,9 +213,12 @@ CALLBACKS = {
   "Select": acSelect,
   "Slide": acSlide,
   "Adjust": acAdjust,
+  "Listen": acListen,
+  "Display": acDisplay,
   "Rainbow": acRainbow,
   "Reset": acReset
 }
+
 
 HEAD = """
 <script type="text/javascript">
@@ -301,6 +333,51 @@ HEAD = """
     border-radius: 50%;
   }
 </style>
+<script>
+  var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+  var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
+  
+  var recognition = new SpeechRecognition();
+  
+  recognition.continuous = false;
+  recognition.lang = 'fr-FR';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 5;
+  
+  function launch() {
+    recognition.start();
+    console.log('Ready to receive a color command.');
+  };
+  
+  recognition.onresult = function(event) {
+    var color = event.results[0][0].transcript;
+    console.log('Confidence: ' + event.results[0][0].confidence);
+    results = event.results[0];
+    array = [];
+    for (const cle in results) {
+      if (results.hasOwnProperty(cle)) {
+          console.log(`${cle}: ${results[cle].transcript}`);
+          array.push(results[cle].transcript);
+      }
+      console.log(array)
+    }
+    console.log(color);
+    document.getElementById("Color").value = JSON.stringify(array);
+    launchEvent("test|BUTTON|click||(Display)");
+  };
+  
+  recognition.onspeechend = function() {
+    recognition.start();
+  };
+  
+  recognition.onnomatch = function(event) {
+    console.warn("I didn't recognise that color.");
+  };
+  
+  recognition.onerror = function(event) {
+    console.err('Error occurred in recognition: ' + event.error);
+  };
+  </script>
 """
 
 BODY = """
@@ -326,16 +403,19 @@ BODY = """
           <option value="Bipedal">Bipedal</option>
           <option value="Dog">Dog (ESP32)</option>
         </optgroup>
+        <optgroup label="q37.info">
+          <option value="DIY">DIY</option>
+        </optgroup>
       </select>
         </div>
       <div style="margin: 10px">
       <label>
         <span>Pin:</span>
-        <input id="Pin" size="2" type="number">
+        <input id="Pin" style="width: 4ch" type="number">
       </label>
       <label>
         <span>Count:</span>
-        <input id="Count" size="3" type="number">
+        <input id="Count" style="width: 5ch" type="number">
       </label>
         </div>
     </fieldset>
@@ -352,21 +432,22 @@ BODY = """
         <span>R:&nbsp;</span>
         <input id="SR" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
         <span>&nbsp;</span>
-        <input id="NR" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" size="3">
+        <input id="NR" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch"">
       </label>
       <label style="display: flex; align-items: center;">
         <span>V:&nbsp;</span>
         <input id="SG" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
         <span>&nbsp;</span>
-        <input id="NG" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" size="3">
+        <input id="NG" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
       </label>
       <label style="display: flex; align-items: center;">
         <span>B:&nbsp;</span>
         <input id="SB" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
         <span>&nbsp;</span>
-        <input id="NB" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" size="3">
+        <input id="NB" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
       </label>
       <div style="display: flex; justify-content: space-evenly;">
+        <button xdh:onevent="Listen">Listen</button>
         <button xdh:onevent="Rainbow">Rainbow</button>
         <button xdh:onevent="Reset">Reset</button>
       </div>
@@ -381,6 +462,7 @@ BODY = """
     </label>
   </fieldset>
 </fieldset>
+<input id="Color" type="hidden">
 """
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

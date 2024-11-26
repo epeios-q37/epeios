@@ -38,7 +38,7 @@ ATK_STYLE = """
 
 @keyframes ucuqFadeOut {
   0% {
-  max-height: 200px;
+    max-height: 200px;
   }
   100% {
     max-height: 0;
@@ -140,20 +140,29 @@ def addCommand(command, /,device = None):
 
 
 class Core_:
-  def __init__(self, device, modules = ""):
+  def __init__(self, device = None):
     self.id = None
-
-    self.device_ = getDevice_(device)
-
-    if modules:
-      self.device_.addModules(modules)
+    self.device_ = device
   
   def __del__(self):
     if self.id:
       self.addCommand(f"del {ITEMS_}[{self.id}]")
+
+  def getDevice(self):
+    return self.device_
   
-  def init(self, instanciation):
+  def init(self, modules, instanciation, device):
     self.id = GetUUID_()
+
+    if self.device_:
+        if device and device != self.device_:
+          raise Exception("'device' already given!")
+    else:
+      self.device_ = getDevice_(device)
+
+    if modules:
+      self.device_.addModules(modules)
+
     if instanciation:
       self.addCommand(f"{self.getObject()} = {instanciation}")
 
@@ -174,16 +183,15 @@ class Core_:
 
 class GPIO(Core_):
   def __init__(self, pin = None, device = None):
-    super().__init__(device, "GPIO-1")
+    super().__init__(device)
 
     if pin:
       self.init(pin)
 
-
-  def init(self, pin):
+  def init(self, pin, device):
     self.pin = f'"{pin}"' if isinstance(pin,str) else pin
 
-    super().init(f"GPIO({self.pin})")
+    super().init("GPIO-1", f"GPIO({self.pin})", device)
 
 
   def high(self, value = True):
@@ -196,7 +204,7 @@ class GPIO(Core_):
 
 class WS2812(Core_):
   def __init__(self, pin = None, n = None, device = None):
-    super().__init__(device, "WS2812-1")
+    super().__init__(device)
 
     if (pin == None) != (n == None):
       raise Exception("Both or none of 'pin'/'n' must be given")
@@ -204,8 +212,8 @@ class WS2812(Core_):
     if pin != None:
       self.init(pin, n)
 
-  def init(self, pin, n):
-    super().init(f"neopixel.NeoPixel(machine.Pin({pin}), {n})")
+  def init(self, pin, n, device = None):
+    super().init("WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device)
 
   async def lenAwait(self):
     return int(await self.callMethodAwait("__len__()"))
@@ -227,38 +235,38 @@ class WS2812(Core_):
     self.addMethods(f"write()")
 
 class I2C_Core_(Core_):
-  def __init__(self, sda = None, scl = None, /, device = None):
-    super().__init__(device, "I2C-1")
+  def __init__(self, sda = None, scl = None, device = None):
+    super().__init__(device)
 
     if sda == None != scl == None:
       raise Exception("None or both of sda/scl must be given!")
     elif sda != None:
-      self.init(sda, scl)
+      self.init(sda, scl, device)
 
   async def scanAwait(self):
     return (await commitAwait(f"{self.getObject()}.scan()"))
 
 
 class I2C(I2C_Core_):
-  def init(self, sda, scl):
-    super().init(f"machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl}))")
+  def init(self, sda, scl, device = None):
+    super().init("I2C-1", f"machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device)
 
 
 class SoftI2C(I2C_Core_):
-  def init(self, sda, scl):
-    super().init(f"machine.SoftI2C(sda=machine.Pin({sda}), scl=machine.Pin({scl}))")
+  def init(self, sda, scl, device = None):
+    super().init("I2C-1", f"machine.SoftI2C(sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device)
   
 
 class HT16K33(Core_):
-  def __init__(self, i2c = None, /, addr = None, device = None):
-    super().__init__(device, "HT16K33-1")
+  def __init__(self, i2c = None, /, addr = None):
+    super().__init__()
 
     if i2c:
       self.init(i2c)
 
 
   def init(self, i2c, addr = None):
-    super().init(f"HT16K33({i2c.getObject()}, {addr})")
+    super().init("HT16K33-1", f"HT16K33({i2c.getObject()}, {addr})", i2c.getDevice())
 
     return self.addMethods(f"set_brightness(0)")
 
@@ -286,14 +294,14 @@ class HT16K33(Core_):
 
 class PWM(Core_):
   def __init__(self, pin = None, device = None):
-    super().__init__(device, "PWM-1")
+    super().__init__(device)
 
     if pin != None:
-      self.init(pin)
+      self.init(pin, device)
 
 
-  def init(self, pin):
-    super().init(f"machine.PWM(machine.Pin({pin}))")
+  def init(self, pin, device = None):
+    super().init("PWM-1", f"machine.PWM(machine.Pin({pin}))", device)
 
 
   async def getU16Await(self):
@@ -325,14 +333,14 @@ class PWM(Core_):
 
 
 class PCA9685(Core_):
-  def __init__(self, i2c = None, *, addr = None, device = None):
-    super().__init__(device, "PCA9685-1")
+  def __init__(self, i2c = None, *, addr = None):
+    super().__init__()
 
     if i2c:
       self.init(i2c, addr = addr)
 
   def init(self, i2c, addr = None):
-    super().init(f"PCA9685({i2c.getObject()}, {addr})")
+    super().init("PCA9685-1", f"PCA9685({i2c.getObject()}, {addr})", i2c.getDevice())
 
   def deinit(self):
     self.addMethods(f"reset()")
@@ -363,8 +371,8 @@ class PCA9685(Core_):
   
 
 class PWM_PCA9685(Core_):
-  def __init__(self, pca = None, channel = None, device = None):
-    super().__init__(device, "PWM_PCA9685-1")
+  def __init__(self, pca = None, channel = None):
+    super().__init__()
 
     if bool(pca) != (channel != None):
       raise Exception("Both or none of 'pca' and 'channel' must be given!")
@@ -373,7 +381,7 @@ class PWM_PCA9685(Core_):
       self.init(pca, channel)
 
   def init(self, pca, channel):
-    super().init(f"PWM_PCA9685({pca.getObject()}, {channel})")
+    super().init("PWM_PCA9685-1", f"PWM_PCA9685({pca.getObject()}, {channel})", pca.getDevice())
 
     self.pca = pca # Not used inside this object, but to avoid pca being destroyed by GC, as it is used on the µc.
 
@@ -412,8 +420,8 @@ class PWM_PCA9685(Core_):
   
 
 class LCD_PCF8574(Core_):
-  def __init__(self, i2c, num_lines, num_columns,/,addr = None, device = None):
-    super().__init__(device, "LCD_PCF8574-1")
+  def __init__(self, i2c, num_lines, num_columns,/,addr = None):
+    super().__init__()
 
     if i2c:
       self.init(i2c, num_lines, num_columns, addr = addr)
@@ -421,7 +429,7 @@ class LCD_PCF8574(Core_):
       raise Exception("addr can not be given without i2c!")
 
   def init(self, i2c, num_lines, num_columns, addr = None):
-    return super().init(f"LCD_PCF8574({i2c.getObject()},{num_lines},{num_columns},{addr})")
+    return super().init("LCD_PCF8574-1", f"LCD_PCF8574({i2c.getObject()},{num_lines},{num_columns},{addr})", i2c.getDevice())
 
   def moveTo(self, x, y):
     return self.addMethods(f"move_to({x},{y})")
@@ -487,8 +495,8 @@ class Servo(Core_):
         raise Exception("'domain' can not be given without 'specs'!")
 
 
-  def __init__(self, pwm = None, specs = None, /, *, tweak = None, domain = None, device = None):
-    super().__init__(device, "Servo-1")
+  def __init__(self, pwm = None, specs = None, /, *, tweak = None, domain = None):
+    super().__init__()
 
     self.test_(specs, tweak, domain)
 
@@ -497,7 +505,7 @@ class Servo(Core_):
 
 
   def init(self, pwm, specs, tweak = None, domain = None):
-    super().init("")
+    super().init("Servo-1", "", pwm.getDevice())
 
     self.test_(specs, tweak, domain)
 
@@ -578,15 +586,15 @@ class SSD1306(Core_):
   def rect(self, x, y, w, h, col, fill=True):
     return self.addMethods(f"rect({x},{y},{w},{h},{col},{fill})")
 
-  def draw(self, pattern, width, mul = 1):
+  def draw(self, pattern, width, ox = 0, oy = 0, mul = 1):
     if width % 4:
       raise Exception("'width' must be a multiple of 4!")
-    return self.addMethods(f"draw('{pattern}',{width},{mul})")
+    return self.addMethods(f"draw('{pattern}',{width},{ox},{oy},{mul})")
 
 
 class SSD1306_I2C(SSD1306):
-  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False, device = None):
-    super().__init__(device, ("SSD1306-1", "SSD1306_I2C-1"))
+  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False):
+    super().__init__()
 
     if bool(width) != bool(height) != bool(i2c):
       raise Exception("All or none of width/height/i2c must be given!")
@@ -595,9 +603,8 @@ class SSD1306_I2C(SSD1306):
     elif addr:
       raise Exception("addr can not be given without i2c!")
       
-
   def init(self, width, height, i2c, /, external_vcc = False, addr = None):
-    super().init(f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})")
+    super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice())
 
 
 def pwmJumps(jumps, step = 100, delay = 0.05, *,device = None):

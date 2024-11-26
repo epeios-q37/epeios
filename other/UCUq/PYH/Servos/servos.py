@@ -99,11 +99,12 @@ def updateFileList(dom):
 
 
 def acConnect(dom):
-  ucuq.handleATK(dom)
+  ucuq.ATKConnect(dom, BODY)
 
+  print("Av.")
   createServos()
+  print("Ap.")
 
-  dom.inner("", BODY)
   displayMacros(dom)
   updateFileList(dom)
 
@@ -490,10 +491,9 @@ def createServos():
     elif hardware["mode"] == "PCA":
       if not pca:
         i2c = ucuq.SoftI2C if hardware["soft"] else ucuq.I2C
-        pca =  ucuq.PCA9685(i2c(hardware["sda"], hardware["scl"]))
+        pca = ucuq.PCA9685(i2c(hardware["sda"], hardware["scl"]))
         pca.setFreq(specs["freq"])
         pca.setOffset(hardware["offset"])
-        print(pca.getPrescale())
       pwm = ucuq.PWM_PCA9685(pca, hardware["channel"])
     else:
       raise Exception("Unknown hardware mode!")

@@ -1,20 +1,15 @@
-import os, sys, time, binascii
+import os, sys
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 sys.path.extend(("../..","../../atlastk.zip"))
 
-import ucuq, atlastk
+import ucuq, atlastk, binascii
 
 onDuty = False
 ht16k33 = None
+mirror = None
 
 pattern = "0" * 32
-
-with open('Head.html', 'r') as file:
-  HEAD = file.read()
-
-with open('Body.html', 'r') as file:
-  BODY = file.read()
 
 TEST_DELAY = 0.05
 
@@ -95,6 +90,11 @@ def drawOnMatrix(motif = pattern):
 
     ucuq.commit()
 
+    if mirror:
+      mirror.fill(0).draw(motif, 16, mul=8).show()
+
+      mirror.getDevice().commit()
+
 def draw(dom, motif = pattern):
   global pattern
 
@@ -133,9 +133,7 @@ def updateUI(dom, onDuty):
         
 
 def acConnect(dom):
-  label = ucuq.handleATK(dom)["kit"]["label"]
-
-  dom.inner("", BODY)
+  id = ucuq.getKitId(ucuq.ATKConnect(dom, BODY))
 
   draw(dom, "")
 
@@ -144,9 +142,8 @@ def acConnect(dom):
   drawLittleMatrices(dom,MATRICES)
 
   if not onDuty:
-    match label:
-      case "Freenove.Robot.Bipedal.RPIPicoW":
-        dom.setValue("Preset", "Bipedal")
+    if id == ucuq.K_BIPEDAL:
+      dom.setValue("Preset", "Bipedal")
 
   updateUI(dom, onDuty)
 
@@ -184,13 +181,13 @@ def launch(dom, sda, scl):
 def acSwitch(dom, id):
   global onDuty
 
-  state = dom.getValue(id) == "true"
+  state = (dom.getValue(id)) == "true"
 
   if state:
     updateUI(dom, state)
 
     try:
-      sda, scl = (int(value.strip()) for value in dom.getValues(["SDA", "SCL"]).values())
+      sda, scl = (int(value.strip()) for value in (dom.getValues(["SDA", "SCL"])).values())
     except:
       dom.alert("No or bad value for SDA/SCL!")
       updateUI(dom, False)
@@ -202,21 +199,18 @@ def acSwitch(dom, id):
   updateUI(dom, onDuty)
 
 
-def plot(x,y,ink=True):
-  if ht16k33:
-    ht16k33.plot(x,y)
-    ht16k33.show()
-
-
-def clear():
-  if ht16k33:
-    ht16k33.clear()
+def acTest():
+  test()
 
 
 def acToggle(dom, id):
+  if not onDuty:
+    dom.alert("Please switch on!")
+    return
+
   global pattern
 
-  [x, y] = list(map(lambda v: int(v), dom.getMark(id).split()))
+  [x, y] = list(map(lambda v: int(v), (dom.getMark(id)).split()))
 
   pos = y * 16 + ( 4 * int(x / 4) + (3 - x % 4)) 
 
@@ -227,8 +221,6 @@ def acToggle(dom, id):
   bin = bin[:offset] + bytearray([bin[offset] ^ (1 << (pos % 8))]) + bin[offset+1:]
 
   pattern = (binascii.hexlify(bin[::-1]).decode()[::-1])
-
-  plot(x, y,  bin[offset] & (1 << (pos % 8)))
 
   draw(dom, pattern)
 
@@ -246,7 +238,7 @@ def acHexa(dom):
 def acAll(dom):
   for matrix in MATRICES:
     draw(dom, matrix)
-    time.sleep(0.5)
+    ucuq.time.sleep(0.5)
 
 
 def acBrightness(dom, id):
@@ -258,19 +250,34 @@ def acBlinkRate(dom, id):
   ucuq.commit()
 
 def acDraw(dom, id):
-  draw(dom,MATRICES[int(dom.getMark(id))])
+  draw(dom, MATRICES[int(dom.getMark(id))])
+
+def acMirror(dom, id):
+  global mirror
+
+  state = (dom.getValue(id)) == "true"
+
+  if state:
+    if ( dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
+      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.SoftI2C(0, 1, ucuq.Device(id="Yellow")))
+    else:
+      dom.setValue(id, "false")
+  else:
+    mirror = None
+  
 
 CALLBACKS = {
   "": acConnect,
   "Preset": acPreset,
   "Switch": acSwitch,
-  "Test": lambda: test(),
+  "Test": acTest,
   "All": acAll,
   "Toggle": acToggle,
   "Brightness": acBrightness,
   "Blink": acBlinkRate,
   "Hexa": acHexa,
-  "Draw": acDraw
+  "Draw": acDraw,
+  "Mirror": acMirror
 }
 
 MATRICES = (
@@ -295,5 +302,11 @@ MATRICES = (
   "00003c3c727272727e7e7e7e3c3c",
   "00003ffc40025ffa2ff417e8081007e",
 )
+
+with open('Body.html', 'r') as file:
+  BODY = file.read()
+
+with open('Head.html', 'r') as file:
+  HEAD = file.read()
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

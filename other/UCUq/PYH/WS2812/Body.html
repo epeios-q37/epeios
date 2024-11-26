@@ -20,16 +20,19 @@
           <option value="Bipedal">Bipedal</option>
           <option value="Dog">Dog (ESP32)</option>
         </optgroup>
+        <optgroup label="q37.info">
+          <option value="DIY">DIY</option>
+        </optgroup>
       </select>
         </div>
       <div style="margin: 10px">
       <label>
         <span>Pin:</span>
-        <input id="Pin" size="2" type="number">
+        <input id="Pin" style="width: 4ch" type="number">
       </label>
       <label>
         <span>Count:</span>
-        <input id="Count" size="3" type="number">
+        <input id="Count" style="width: 5ch" type="number">
       </label>
         </div>
     </fieldset>
@@ -46,21 +49,23 @@
         <span>R:&nbsp;</span>
         <input id="SR" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
         <span>&nbsp;</span>
-        <input id="NR" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" size="3">
+        <input id="NR" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch"">
       </label>
       <label style="display: flex; align-items: center;">
         <span>V:&nbsp;</span>
         <input id="SG" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
         <span>&nbsp;</span>
-        <input id="NG" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" size="3">
+        <input id="NG" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
       </label>
       <label style="display: flex; align-items: center;">
         <span>B:&nbsp;</span>
         <input id="SB" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
         <span>&nbsp;</span>
-        <input id="NB" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" size="3">
+        <input id="NB" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
       </label>
-      <div style="display: flex; justify-content: center;">
+      <div style="display: flex; justify-content: space-evenly;">
+        <button xdh:onevent="Listen">Listen</button>
+        <button xdh:onevent="Rainbow">Rainbow</button>
         <button xdh:onevent="Reset">Reset</button>
       </div>
     </div>
@@ -74,3 +79,4 @@
     </label>
   </fieldset>
 </fieldset>
+<input id="Color" type="hidden">

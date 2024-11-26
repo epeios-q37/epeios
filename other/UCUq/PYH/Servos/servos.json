@@ -78,7 +78,7 @@
           "pin": 11
         },
         "Tweak": {
-          "offset": 185
+          "offset": -15
         }
       },
       "R": {
@@ -195,7 +195,7 @@
       }
     }
   },
-  "Mini": {
+  "Yellow": {
     "Preset": {
       "Hardware": {
         "mode": "PCA",

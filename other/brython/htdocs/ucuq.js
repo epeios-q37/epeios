@@ -215,11 +215,11 @@ function blob2Buffer(blob, cb) {
 
 function launch_(deviceToken, deviceId, libraryVersion, callback) {
   let handler = proto.getHandler();
+
   handler.deviceId = deviceId;
-
   handler.callback = callback;
-
   handler.phase = p.HANDSHAKES;
+  handler.funcStack = [];
 
   log("Connecting to '" + WS_URL_ + "'…");
 
@@ -255,14 +255,12 @@ function launch_(deviceToken, deviceId, libraryVersion, callback) {
   return handler;
 }
 
-var funcStack = []
-
 function subOperate_(handler) {
   if ( handler.callback !== undefined ) {
-    if ( funcStack.length )
+    if ( handler.funcStack.length )
       setTimeout(() => subOperate_(handler));
-  } else if ( funcStack.length ) {
-    item = funcStack.shift();
+  } else if ( handler.funcStack.length ) {
+    let item = handler.funcStack.shift();
     handler.callback = item[2];
     item[0](handler, ...item[1]);
     subOperate_(handler);
@@ -270,9 +268,9 @@ function subOperate_(handler) {
 }
 
 function operate_(handler, func, args, callback) {
-  funcStack.push([func, args, callback]);
+  handler.funcStack.push([func, args, callback]);
 
-  if ( funcStack.length === 1 )
+  if ( handler.funcStack.length === 1 )
     subOperate_(handler);
 }
 
