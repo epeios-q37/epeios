@@ -8,7 +8,10 @@ import atlastk
 DEFAULT_HOST = "ucuq.q37.info"
 DEFAULT_PORT = "53800"
 
-CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
+def isDev():
+  return "Q37_EPEIOS" in os.environ
+
+CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if isDev() else "../" ) + "ucuq.json"
 
 DEVICE_LABEL = "Device"
 DEVICE_TOKEN_LABEL = "Token"
@@ -98,6 +101,12 @@ def acSave(dom):
   dom.setValue("Output", "Config file updated!")
 
 
+def acDelete(dom):
+  if isDev():
+    dom.alert("You are in development environment, deleting config file is not possible!")
+  elif dom.confirm("Are you sur you want to delete config file ?"):
+    os.remove(CONFIG_FILE)
+
 if os.path.isfile(CONFIG_FILE):
   with open(CONFIG_FILE, "r") as file:
     config = json.load(file)
@@ -110,7 +119,8 @@ proxy = config[PROXY_LABEL]
 
 CALLBACKS = {
   "": acConnect,
-  "Save": acSave
+  "Save": acSave,
+  "Delete": acDelete
 }
 
 BODY = """
@@ -142,6 +152,7 @@ BODY = """
   </fieldset>
   <div style="display: flex; justify-content: space-around; margin: 5px;">
     <button xdh:onevent="Save">Save</button>
+    <button xdh:onevent="Delete">Delete</button>
   </div>
   <fieldset>
     <output id="Output">Enter token and/or id.</output>

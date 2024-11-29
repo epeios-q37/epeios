@@ -312,7 +312,7 @@ namespace {
     tol::Init(TrueToken, Id);
 
     if ( GetTrueTokenAndId_(Selector.Token, TrueToken, Id) ) {
-      if ( !Selector.Id.Amount() != !Id.Amount() )
+      if ( Selector.Id.Amount() || Id.Amount() )
         Row = seeker_::SearchInIndex(TrueToken, Id.Amount() ? Id : Selector.Id);
     } else if ( Selector.Id.Amount() )
       Row = seeker_::SearchInIndex(Selector.Token, Selector.Id);

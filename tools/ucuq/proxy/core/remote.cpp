@@ -34,7 +34,6 @@ using namespace remote;
 
 namespace {
   qENUM(Request_) { // Request issued by remote (received as string)
-    rPing_1,
     rExecute_1,
     rUpload_1,
     r_amount,
@@ -46,7 +45,6 @@ namespace {
   const char *GetLabel_(eRequest_ Request)
   {
     switch ( Request ) {
-      C(Ping_1);
       C(Execute_1);
       C(Upload_1);
     default:
@@ -87,46 +85,6 @@ namespace {
   qRT;
   qRE;
     return Request;
-  }
-
-  bso::sBool Ping_(
-    flw::rRWFlow &Remote,
-    flw::rRWFlow &Device,
-    common::gTracker *Tracker)
-  {
-    bso::sBool Cont = true;
-   qRH;
-    str::wString Returned;
-  qRB;
-    common::Put(device::rPing, Device, Tracker);
-    common::Commit(Device, Tracker);
-
-    switch ( device::GetAnswer(Device, Tracker) ) {
-    case device::aOK:
-      Returned.Init();
-      common::Get(Device, Returned, Tracker);
-      common::Put(device::aOK, Remote);
-      common::Put(Returned, Remote);
-      common::Commit(Remote);
-      break;
-    case device::aPuzzled:
-      Returned.Init();
-      common::Get(Device, Returned, Tracker);
-      common::Put(device::aPuzzled, Remote);
-      common::Put(Returned, Remote);
-      common::Commit(Remote);
-      break;
-    case device::aDisconnected:
-      Cont = false;
-      break;
-    default:
-      qRGnr();
-      break;
-    }
-  qRR;
-  qRT;
-  qRE;
-    return Cont;
   }
 
   namespace {
@@ -271,6 +229,7 @@ namespace {
       Returned.Init();
       common::Get(Device, Returned, Tracker); // Ignored.
       common::Put(device::aOK, Remote);
+      common::Put(str::Empty, Remote);  // For future use.
       common::Commit(Remote);
       break;
     case device::aError:
@@ -339,10 +298,6 @@ qRB;
       switch ( GetRequest_(Remote) ) {
       case rExecute_1:
         if ( !Execute_(Remote, Device, &Tracker) )
-          break;
-        break;
-      case rPing_1:
-        if ( !Ping_(Remote, Device, &Tracker) )
           break;
         break;
       case rUpload_1:

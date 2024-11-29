@@ -17,6 +17,12 @@ ITEMS_ = "i_"
 device_ = None
 uuid_ = 0
 
+try:
+  CONFIG = json.loads(storage[CONFIG_ITEM])
+except:
+  CONFIG = None
+
+
 async def sleepAwait(time):
   await ucuqjs.sleep(1000 * time, lambda : None)
 
@@ -44,7 +50,7 @@ class Lock_:
   def __init__(self):
     self.locked_ = False
 
-  async def acquire(self):
+  async def acquireAwait(self):
     while self.locked_:
       await aio.sleep(0)
     self.locked_ = True
@@ -55,26 +61,30 @@ class Lock_:
 
 def uploadCallback_(code, result):
   if code != 0:
+    print("Upload callback")
     raise Exception(result)
 
 
 def executeCallback_(data, code, result):
+  print(0)
   if code != 0:
-    raise Exception(result)
-
-  try:
-    jsonResult = json.loads(result) if result else None
-  except:
-    jsonResult = result
+    print(1)
+    if not data:
+      print(2)  
+      raise Exception(result)
+    else:
+      print(3)
+      jsonResult = result
+  else:
+    try:
+      jsonResult = json.loads(result) if result else None
+    except:
+      jsonResult = result
 
   if data:
     data["code"] = code
     data["result"] = jsonResult
     data["lock"].release()
-
-
-def launchCallback_(lock):
-  lock.release()
 
 
 def displayExitMessage_(message):
@@ -83,18 +93,13 @@ def displayExitMessage_(message):
   sys.exit()
 
 def handlingConfig_(token, id):
-  if not CONFIG_ITEM in storage:
+  if not CONFIG:
     displayMissingConfigMessage_()
 
-  try:
-    config = json.loads(storage[CONFIG_ITEM])
-  except:
+  if CONFIG_DEVICE_ENTRY not in CONFIG:
     displayMissingConfigMessage_()
 
-  if CONFIG_DEVICE_ENTRY not in config:
-    displayMissingConfigMessage_()
-
-  device = config[CONFIG_DEVICE_ENTRY]
+  device = CONFIG[CONFIG_DEVICE_ENTRY]
 
   if token == None:
     if CONFIG_DEVICE_TOKEN_ENTRY not in device:
@@ -112,32 +117,30 @@ def handlingConfig_(token, id):
 
 
 class Device:
-  def __init__(self, *, id = None, token = None, now = True):
+  def __init__(self, *, id = None, token = None, now = True, callback = None):
     if now:
-      self.connect(id, token)
+      self.connect(id, token = token, callback = callback)
 
   def __del__(self):
     self.commit()
 
-  def connect(self, id, token = None):
+  def connect(self, id, *, token = None, callback = None):
+    if token == None and id == None:
+      token, id = handlingConfig_(token, id)
+
+    self.device_ = ucuqjs.launch(token if token else "", id if id else "", LIB_VERSION, callback if callback else lambda *args: None) # 'None' for callback is not converted in 'undefined' in JS.
+
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
     self.commands_ = []
-
-    if token == None or id == None:
-      token, id = handlingConfig_(token, id)
-
-    self.device_ = ucuqjs.launch(token, id, LIB_VERSION, lambda: None)
-
   
   def upload_(self, modules):
     ucuqjs.upload(self.device_, modules, lambda code, result: uploadCallback_(code, result))
 
-
   async def executeAwait_(self, script, expression):
     lock = Lock_()
 
-    await lock.acquire()
+    await lock.acquireAwait()
 
     data = {
       "lock": lock
@@ -145,7 +148,11 @@ class Device:
 
     ucuqjs.execute(self.device_, script, expression, lambda code, result: executeCallback_(data, code, result))
 
-    await lock.acquire()
+    await lock.acquireAwait()
+
+    if data["code"]:
+      print("Yo!")
+      raise Exception(data["result"])
     
     return data["result"]
 
@@ -200,4 +207,25 @@ class Device:
 # Workaround to the 'Brython' 'unicodedata.normalize()' bug (https://github.com/brython-dev/brython/issues/2514).
 def toASCII(text):
   return ucuqjs.toASCII(text)
+
+
+async def findDeviceAwait(dom):
+  data = {
+    "lock": Lock_()
+  }
+
+  await data["lock"].acquireAwait()
+
+  for deviceId in DEVICES:
+    await dom.inner("", f"<h3>Connecting to '{deviceId}'…</h3>")
+
+    device = Device(token = DEVICES[deviceId], callback = lambda success: ignitionCallback(data, success))
+
+    await data["lock"].acquireAwait()
+
+    if data["success"]:
+      return device
+  
+  return None
+
 

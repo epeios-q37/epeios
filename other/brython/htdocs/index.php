@@ -4,7 +4,8 @@ $demo = $_REQUEST["demo"];
 $version = $_REQUEST["version"];
 $code = $_REQUEST["code"];
 $cursor = $_REQUEST["cursor"];
-$id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "_BrythonIdNotSet_";
+$id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "_BrythonIdNotSet_"; // For the Zelbinium sandboxes.
+$go = isset($_REQUEST["go"]) ? "true" : "false";
 
 echo <<<BODY
 <html>
@@ -35,6 +36,8 @@ echo <<<BODY
           editor.session.setValue(data)
           old = data;
           document.getElementById("Source").parentNode.previousElementSibling.setAttribute("open", 'true');
+          if ($go)
+            go();
         }).catch(function (err) {
           console.warn('Something went wrong.', err);
         });
@@ -79,11 +82,16 @@ echo <<<BODY
               editor.moveCursorTo($cursor);
               editor.focus();
             }
+
+            if ($go)
+              go();
           } else if ( "{$demo}" !== "" ) {
             select.value = "{$demo}";
             select.dispatchEvent(new Event('change'));
           } else if ( localStorage.getItem("brython-buffer" ) != null ) {
             editor.setValue(localStorage.getItem("brython-buffer"));
+            if ($go)
+              go();
           }
         }).catch(function (err) {
         console.warn('Unable to retrieve demos list: ', err);
@@ -106,7 +114,7 @@ echo <<<BODY
             localStorage.removeItem("brython-buffer");
         }
           
-        window.setTimeout(sendCode, 150);
+        window.setTimeout(sendCode, 150, false);
       }
 
 
@@ -186,7 +194,7 @@ echo <<<BODY
     </style>
   </head>
 
-  <body style="margin: 0 5px 0 5px;" onload="dress()">
+  <body style="margin: 0 5px 0 5px;" onload="dress();">
     <details class="source" open="true">
       <summary class="source" style="display: flex; ; align-items: center;">
         <span role="term" class="source" aria-details="pure-css">Code</span>

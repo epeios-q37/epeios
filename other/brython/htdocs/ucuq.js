@@ -50,10 +50,8 @@ function steering(handler) {
       case s.UPLOAD_ANSWER:
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
-        if ( handler.getSInt() != 0 ) {
-          handler.push(s.RESULT);
-          handler.pushString();
-        }
+        handler.push(s.RESULT);
+        handler.pushString();
         break;
       case s.EXECUTE_ANSWER:
         handler.pop(handler.feeder);
@@ -96,7 +94,12 @@ function ignition(handler) {
         return false;
         break;
       case i.REPORT:
-        if (handler.getString().length) exit_(handler.getString());
+        if ( handler.callback ) {
+          handler.callback(handler.getString().length == 0);
+          handler.callback = undefined;
+        } else if (handler.getString().length) {
+          exit_(handler.getString());
+        }
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         break;
@@ -186,8 +189,6 @@ function onRead(handler, data, deviceToken, deviceId) {
       case p.IGNITION:
         if (!ignition(handler)) {
           handler.phase = p.STEERING;
-          handler.callback();
-          handler.callback = undefined
         }
         break;
       case p.STEERING:

@@ -1,9 +1,24 @@
+DEVICES = {
+    "Yellow": "%YELLOW_UID%",
+    "Black": "%BLACK_UID%",
+    "Red": "%RED_UID%",
+    "Blue": "%BLUE_UID%",
+    "White": "%WHITE_UID%",
+    "Striped": "%STRIPED_UID%",
+}
+
 def displayMissingConfigMessage_():
   displayExitMessage_("Please launch the 'Config' app first to set the device to use!")
 
 
-def setDevice(id, token = None):
-  getDevice_(id = id, token = token)
+def setDevice(*, device = None, id = None, token = None):
+  if device != None:
+    global device_
+    if id or token:
+      raise Exception("'device' can not be given together with 'id' or 'token'!")
+    device_ = device
+  else:    
+    getDevice_(id = id, token = token)
 
 
 INFO_SCRIPT_ = """
@@ -96,13 +111,29 @@ def getKitId(infos):
     return KITS_[label]
   else:
     return K_UNKNOWN
+  
 
+def ignitionCallback(data, success):
+  data["success"] = success
+  data["lock"].release()
+  
 
 async def ATKConnectAwait(dom, body, *, device = None):
   await dom.inner("", "<h3>Connecting…</h3>")
   
-  infos = await getInfosAwait(device)
+  if device or CONFIG:
+    await dom.inner("", "<h3>Connecting…</h3>")
+    infos = await getInfosAwait(device)
+  else:
+    device = await findDeviceAwait(dom)
 
+    if not device:
+      await dom.inner("", "<h3>ERROR: unable to connect to a device…</h3>")
+      raise Exception("Unable to connect to a device!")
+    else:
+      setDevice(device = device)
+      infos = await getInfosAwait(device)
+  
   await dom.inner("", ATK_BODY.format(getKitLabel(infos)))
 
   await dom.inner("ucuq_body", body)
