@@ -56,7 +56,7 @@ def getMacAddress_():
     wifi.active(True) # Otherwise the MAC address is NUL.
   return binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
 
-
+# NOTA: also used in the script for 'getInfos()'… 
 def getSelectorId_(selector):
   if isinstance(selector[1], str):
     return selector[1]

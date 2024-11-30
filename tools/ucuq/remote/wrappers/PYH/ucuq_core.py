@@ -186,70 +186,27 @@ def commit(expression=""):
 def sleep(secs):
   return getDevice_().sleep(secs)
 
-def getTokenAndDeviceId():
-  return getDevice_().getTokenAndDeviceId()
-
-def getToken():
-  return getDevice_().getToken()
-
-def getDeviceId():
-  return getDevice_().getDeviceId()
-
-CONFIG_DEVICE_ENTRY = "Device"
-CONFIG_DEVICE_TOKEN_ENTRY = "Token"
-CONFIG_DEVICE_ID_ENTRY = "Id"
-
 def displayExitMessage_(Message):
   raise Error(Message)
 
 
-def handlingConfig_(token, id):
-  if CONFIG_DEVICE_ENTRY not in CONFIG:
-    displayMissingConfigMessage_()
-
-  device = CONFIG[CONFIG_DEVICE_ENTRY]
-
-  if token == None:
-    if CONFIG_DEVICE_TOKEN_ENTRY not in device:
-      displayMissingConfigMessage_()
-
-    token = device[CONFIG_DEVICE_TOKEN_ENTRY]
-
-  if id == None:
-    if CONFIG_DEVICE_ID_ENTRY not in device:
-      displayMissingConfigMessage_()
-
-    id = device[CONFIG_DEVICE_ID_ENTRY]
-
-  return token, id
-
-
 class Device_:
-  def __init__(self, *, id = None, token = None, now = True):
+  def __init__(self, *, id = None, token = None):
     self.socket_ = None
 
-    if now:
+    if id or token:
       self.connect(id, token)
 
   def connect(self, id = None, token = None, errorAsException = True):
     if token == None and id == None:
       token, id = handlingConfig_(token, id)
 
-    self.token = token if token else ""
+    self.token = token if token else "%DEFAULT_VTOKEN%"
     self.id = id if id else ""
 
     self.socket_ = connect_(self.token, self.id, errorAsException = errorAsException)
 
     return self.socket_ != None
-
-  def getTokenAndDeviceId(self):
-    return self.token, self.id
-
-  def getToken(self):
-    return self.getTokenAndDeviceId()[0]
-
-  def getDeviceId(self):
-    return self.getTokenAndDeviceId()[1]
 
   def upload(self, modules):
     writeString_(self.socket_, R_UPLOAD_)
@@ -347,12 +304,12 @@ class Device(Device_):
     
 
 def findDevice(dom):
-  for deviceId in DEVICES:
+  for deviceId in VTOKENS:
     dom.inner("", f"<h3>Connecting to '{deviceId}'…</h3>")
 
     device = Device(now = False)
 
-    if device.connect(token = DEVICES[deviceId], id=deviceId, errorAsException = False):
+    if device.connect(token = VTOKENS[deviceId], id=deviceId, errorAsException = False):
       return device
   
   return None   

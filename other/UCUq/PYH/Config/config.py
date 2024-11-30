@@ -13,14 +13,40 @@ def isDev():
 
 CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if isDev() else "../" ) + "ucuq.json"
 
-DEVICE_LABEL = "Device"
-DEVICE_TOKEN_LABEL = "Token"
-DEVICE_ID_LABEL = "Id"
-PROXY_LABEL = "Proxy"
-PROXY_HOST_LABEL = "Host"
-PROXY_PORT_LABEL = "Port"
+# Keys
+K_DEVICE = "Device"
+K_DEVICE_TOKEN = "Token"
+K_DEVICE_ID = "Id"
+K_PROXY = "Proxy"
+K_PROXY_HOST = "Host"
+K_PROXY_PORT = "Port"
 
-config = {}
+# Widgets
+W_TOKEN = "Token"
+W_ID = "Id"
+W_HOST = "Host"
+W_PORT = "Port"
+W_OUTPUT = "Output"
+
+
+def getConfig():
+  if os.path.isfile(CONFIG_FILE):
+    with open(CONFIG_FILE, "r") as file:
+      return json.load(file)
+  else:
+    return {
+      K_DEVICE: {},
+      K_PROXY: {}
+    }
+
+
+def getConfigDevice():
+  return getConfig()[K_DEVICE]
+
+
+def getConfigProxy():
+  return getConfig()[K_PROXY]
+
 
 def setAsHidden(dom, id):
   dom.setAttribute(id, "placeholder", "<hidden>")
@@ -29,26 +55,30 @@ def setAsHidden(dom, id):
 def updateUI(dom):
   values = {}
 
-  if PROXY_HOST_LABEL in proxy:
-    values[PROXY_HOST_LABEL] = proxy[PROXY_HOST_LABEL]
+  proxy = getConfigProxy()
+
+  if K_PROXY_HOST in proxy:
+    values[W_HOST] = proxy[K_PROXY_HOST]
   else:
-    setAsHidden(dom, PROXY_HOST_LABEL)
+    setAsHidden(dom, W_HOST)
 
-  if PROXY_PORT_LABEL in proxy:
-    values[PROXY_PORT_LABEL] = proxy[PROXY_PORT_LABEL]
+  if K_PROXY_PORT in proxy:
+    values[W_PORT] = proxy[K_PROXY_PORT]
   else:
-    setAsHidden(dom, PROXY_PORT_LABEL)
+    setAsHidden(dom, W_PORT)
 
-  if DEVICE_TOKEN_LABEL in device:
-    setAsHidden(dom, DEVICE_TOKEN_LABEL)
+  device = getConfigDevice()
 
-  if DEVICE_ID_LABEL in device:
-    values[DEVICE_ID_LABEL] = device[DEVICE_ID_LABEL]
+  if K_DEVICE_TOKEN in device:
+    setAsHidden(dom, W_TOKEN)
+
+  if K_DEVICE_ID in device:
+    values[W_ID] = device[K_DEVICE_ID]
 
   if values:
     dom.setValues(values)
 
-  dom.focus(DEVICE_TOKEN_LABEL if not DEVICE_TOKEN_LABEL in device else DEVICE_ID_LABEL)
+  dom.focus(W_TOKEN if not K_DEVICE_TOKEN in device else W_ID)
 
 
 def acConnect(dom):
@@ -58,47 +88,51 @@ def acConnect(dom):
 
 
 def acSave(dom):
-  global proxy, device
+  host, port, token, id = (value.strip() for value in dom.getValues([W_HOST, W_PORT, W_TOKEN, W_ID]).values())
 
-  host, port, token, id = (value.strip() for value in dom.getValues([PROXY_HOST_LABEL, PROXY_PORT_LABEL, DEVICE_TOKEN_LABEL, DEVICE_ID_LABEL]).values())
+  device = getConfigDevice()
 
-  if not token and DEVICE_TOKEN_LABEL not in device:
+  if not token and K_DEVICE_TOKEN not in device:
     dom.alert("Please enter a token value!")
-    dom.focus(DEVICE_TOKEN_LABEL)
+    dom.focus(W_TOKEN)
     return
 
   if token:
-    device[DEVICE_TOKEN_LABEL] = token
+    device[K_DEVICE_TOKEN] = token
 
   if id:
-    device[DEVICE_ID_LABEL] = id
+    device[K_DEVICE_ID] = id
+
+  proxy = getConfigProxy()
 
   if not host and not port:
     proxy = None
   elif host:
     if not port:
       dom.alert("Please enter a port!")
-      dom.focus(PROXY_PORT_LABEL)
+      dom.focus(W_PORT)
       return
 
-    proxy[PROXY_HOST_LABEL] = host
+    proxy[K_PROXY_HOST] = host
   elif port:
     if not host:
       dom.alert("Please enter a host!")
-      dom.focus(PROXY_HOST_LABEL)
+      dom.focus(W_HOST)
       return
+    
+  config = getConfig()
 
-  config[DEVICE_LABEL] = device
+  config[K_DEVICE] = device
 
   if proxy:
-    config[PROXY_LABEL] = proxy
+    config[K_PROXY] = proxy
   else:
-    del config[PROXY_LABEL]
+    del config[K_PROXY]
 
   with open(CONFIG_FILE, "w") as file:
-    json.dump(config,file, indent=2)
+    json.dump(config, file, indent=2)
 
-  dom.setValue("Output", "Config file updated!")
+  dom.setValue(W_OUTPUT, "Config file updated!")
 
 
 def acDelete(dom):
@@ -107,15 +141,6 @@ def acDelete(dom):
   elif dom.confirm("Are you sur you want to delete config file ?"):
     os.remove(CONFIG_FILE)
 
-if os.path.isfile(CONFIG_FILE):
-  with open(CONFIG_FILE, "r") as file:
-    config = json.load(file)
-else:
-  config[DEVICE_LABEL] = {}
-  config[PROXY_LABEL] = {}
-
-device = config[DEVICE_LABEL]
-proxy = config[PROXY_LABEL]
 
 CALLBACKS = {
   "": acConnect,
@@ -130,11 +155,11 @@ BODY = """
     <fieldset>
       <legend>Proxy</legend>
       <label style="display: flex; justify-content: space-between; margin: 5px;">
-        <span>Host:</span>
+        <span>Host:&nbsp;</span>
         <input id="Host">
       </label>
       <label style="display: flex; justify-content: space-between; margin: 5px;">
-        <span>Port:</span>
+        <span>Port:&nbsp;</span>
         <input id="Port">
       </label>
     </fieldset>
@@ -142,11 +167,11 @@ BODY = """
   <fieldset>
     <legend>Device</legend>
     <label style="display: flex; justify-content: space-between; margin: 5px;">
-      <span>Token:</span>
+      <span>Token:&nbsp;</span>
       <input id="Token">
     </label>
     <label style="display: flex; justify-content: space-between; margin: 5px;">
-      <span>Id:</span>
+      <span>Id:&nbsp;</span>
       <input id="Id">
     </label>
   </fieldset>

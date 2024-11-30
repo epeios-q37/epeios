@@ -99,11 +99,9 @@ def updateFileList(dom):
 
 
 def acConnect(dom):
-  ucuq.ATKConnect(dom, BODY)
+  infos = ucuq.ATKConnect(dom, BODY)
 
-  print("Av.")
-  createServos()
-  print("Ap.")
+  createServos(getDeviceId(infos))
 
   displayMacros(dom)
   updateFileList(dom)
@@ -475,10 +473,10 @@ def getServosSetups(target):
 
   return setups
 
-def createServos():
+def createServos(deviceId):
   global servos, pca
 
-  setups = getServosSetups(target := ucuq.getDeviceId())
+  setups = getServosSetups(deviceId)
 
   for setup in setups:
     servo = setups[setup]

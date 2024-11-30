@@ -8,9 +8,6 @@ javascript.import_js("ucuq.js", "ucuqjs")
 LIB_VERSION = "0.0.1"
 
 CONFIG_ITEM = "ucuq-config"
-CONFIG_DEVICE_ENTRY = "Device"
-CONFIG_DEVICE_TOKEN_ENTRY = "Token"
-CONFIG_DEVICE_ID_ENTRY = "Id"
 
 ITEMS_ = "i_"
 
@@ -92,43 +89,22 @@ def displayExitMessage_(message):
   console.error = javascript.UNDEFINED  # To avoid the displaying of an alert by below 'exit()'.
   sys.exit()
 
-def handlingConfig_(token, id):
-  if not CONFIG:
-    displayMissingConfigMessage_()
-
-  if CONFIG_DEVICE_ENTRY not in CONFIG:
-    displayMissingConfigMessage_()
-
-  device = CONFIG[CONFIG_DEVICE_ENTRY]
-
-  if token == None:
-    if CONFIG_DEVICE_TOKEN_ENTRY not in device:
-      displayMissingConfigMessage_()
-
-    token = device[CONFIG_DEVICE_TOKEN_ENTRY]
-
-  if id == None:
-    if CONFIG_DEVICE_ID_ENTRY not in device:
-      displayMissingConfigMessage_()
-
-    id = device[CONFIG_DEVICE_ID_ENTRY]
-
-  return token, id
-
 
 class Device:
-  def __init__(self, *, id = None, token = None, now = True, callback = None):
-    if now:
-      self.connect(id, token = token, callback = callback)
+  def __init__(self, *, id = None, token = None, callback = None):
+    if id or token or callback:
+      self.connect(id = id, token = token, callback = callback)
 
   def __del__(self):
     self.commit()
 
-  def connect(self, id, *, token = None, callback = None):
-    if token == None and id == None:
+  def connect(self, *, id = None, token = None, callback = None):
+    if not token and not id:
+      if callback:
+        raise Exception("'callback' can not be given without 'id' or 'token'!")
       token, id = handlingConfig_(token, id)
 
-    self.device_ = ucuqjs.launch(token if token else "", id if id else "", LIB_VERSION, callback if callback else lambda *args: None) # 'None' for callback is not converted in 'undefined' in JS.
+    self.device_ = ucuqjs.launch(token if token else "%DEFAULT_VTOKEN%", id if id else "", LIB_VERSION, callback if callback else lambda *args: None) # 'None' is NOT converted in 'undefined' in JS.
 
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
@@ -216,10 +192,10 @@ async def findDeviceAwait(dom):
 
   await data["lock"].acquireAwait()
 
-  for deviceId in DEVICES:
+  for deviceId in VTOKENS:
     await dom.inner("", f"<h3>Connecting to '{deviceId}'…</h3>")
 
-    device = Device(token = DEVICES[deviceId], callback = lambda success: ignitionCallback(data, success))
+    device = Device(token = VTOKENS[deviceId], callback = lambda success: ignitionCallback(data, success))
 
     await data["lock"].acquireAwait()
 

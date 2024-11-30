@@ -1,14 +1,44 @@
-DEVICES = {
-    "Yellow": "%YELLOW_UID%",
-    "Black": "%BLACK_UID%",
-    "Red": "%RED_UID%",
-    "Blue": "%BLUE_UID%",
-    "White": "%WHITE_UID%",
-    "Striped": "%STRIPED_UID%",
+# Keys
+K_DEVICE = "Device"
+K_DEVICE_TOKEN = "Token"
+K_DEVICE_ID = "Id"
+
+VTOKENS = {
+    "Yellow": "%YELLOW_VTOKEN%",
+    "Black": "%BLACK_VTOKEN%",
+    "Red": "%RED_VTOKEN%",
+    "Blue": "%BLUE_VTOKEN%",
+    "White": "%WHITE_VTOKEN%",
+    "Striped": "%STRIPED_VTOKEN%",
 }
+
 
 def displayMissingConfigMessage_():
   displayExitMessage_("Please launch the 'Config' app first to set the device to use!")
+
+
+def handlingConfig_(token, id):
+  if not CONFIG:
+    displayMissingConfigMessage_()
+
+  if K_DEVICE not in CONFIG:
+    displayMissingConfigMessage_()
+
+  device = CONFIG[K_DEVICE]
+
+  if not token:
+    if K_DEVICE_TOKEN not in device:
+      displayMissingConfigMessage_()
+
+    token = device[K_DEVICE_TOKEN]
+
+  if not id:
+    if K_DEVICE_ID not in device:
+      displayMissingConfigMessage_()
+
+    id = device[K_DEVICE_ID]
+
+  return token, id
 
 
 def setDevice(*, device = None, id = None, token = None):
@@ -21,9 +51,21 @@ def setDevice(*, device = None, id = None, token = None):
     getDevice_(id = id, token = token)
 
 
-INFO_SCRIPT_ = """
+# Infos keys and subkeys
+I_KIT_KEY = "Kit"
+I_DEVICE_KEY = "Device"
+I_DEVICE_ID_KEY = "Id"
+I_DEVICE_UNAME_KEY = "uname"
+I_KIT_BRAND_KEY = "brand"
+I_KIT_MODEL_KEY = "model"
+I_KIT_VARIANT_KEY = "variant"
+I_KIT_LABEL_KEY = "label"
+I_UNAME_KEY = "uname"
+
+
+INFO_SCRIPT_ = f"""
 def ucuqGetKit(): 
-  kit = CONFIG_["Kit"]
+  kit = CONFIG_["{I_KIT_KEY}"]
 
   id = getSelectorId_(SELECTOR_)
 
@@ -33,13 +75,16 @@ def ucuqGetKit():
     return kit["None"]
 
 def ucuqStructToDict(obj):
-    return {attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}
+    return {{attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}}
 
 def ucuqGetInfos():
-  return {
-    "Kit": ucuqGetKit(),
-    "uname": ucuqStructToDict(uos.uname())
-  }
+  return {{
+    "{I_DEVICE_KEY}" : {{
+      "{I_DEVICE_ID_KEY}": getSelectorId_(),
+      "{I_DEVICE_UNAME_KEY}": ucuqStructToDict(uos.uname())
+    }}
+    "{I_KIT_KEY}": ucuqGetKit(),
+  }}
 """
 
 ATK_STYLE = """
@@ -70,19 +115,11 @@ ATK_BODY = """
 </div>
 """
 
+# Handled kits.
 K_UNKNOWN = 0
 K_BIPEDAL = 1
 K_DOG = 2
 K_DIY = 3
-
-# Infos keys and subkeys
-
-I_KIT_KEY = "Kit"
-I_KIT_BRAND_KEY = "brand"
-I_KIT_MODEL_KEY = "model"
-I_KIT_VARIANT_KEY = "variant"
-I_KIT_LABEL_KEY = "label"
-I_UNAME_KEY = "uname"
 
 KITS_ = {
   "Freenove/Bipedal/RPiPicoW": K_BIPEDAL,
@@ -111,6 +148,10 @@ def getKitId(infos):
     return KITS_[label]
   else:
     return K_UNKNOWN
+  
+
+def getDeviceId(infos):
+  return infos[I_DEVICE_KEY][I_DEVICE_ID_KEY]
   
 
 def ignitionCallback(data, success):
@@ -151,7 +192,7 @@ async def ATKConnectAwait(dom, body, *, device = None):
 
 def getDevice_(device = None, *, id = None, token = None):
 
-  if device  and ( token or id):
+  if device and ( token or id):
     displayExitMessage_("'device' can not be given together with 'token' or 'id'!")
 
   if device == None:
