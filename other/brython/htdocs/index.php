@@ -6,6 +6,7 @@ $code = $_REQUEST["code"];
 $cursor = $_REQUEST["cursor"];
 $id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "_BrythonIdNotSet_"; // For the Zelbinium sandboxes.
 $go = isset($_REQUEST["go"]) ? "true" : "false";
+$collapse = ( $go == "false" or strtolower($_REQUEST["go"]) == "collapse" ) ? "true" : "false";
 
 echo <<<BODY
 <html>
@@ -20,15 +21,20 @@ echo <<<BODY
     <script type="text/javascript">
       var old = '';
       var editor = undefined;
+      var run = $go;
+      var collapse = $collapse;
 
       function go() {
-        document.getElementById("Source").parentNode.previousElementSibling.removeAttribute("open");
+      if (collapse)
+          document.getElementById("Source").parentNode.previousElementSibling.removeAttribute("open");
         document.getElementById("Brython").style["display"] = "";
         document.getElementById("Code").value = editor.getValue();
         document.forms['Brython'].submit();
+        run = false;
       }
 
       function getSourceCode(demo) {
+      collapse = true;
         document.getElementById("Brython").style["display"] = "none";
         fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/' + demo + '.py').then(function (response) {
           return response.text();
@@ -36,7 +42,7 @@ echo <<<BODY
           editor.session.setValue(data)
           old = data;
           document.getElementById("Source").parentNode.previousElementSibling.setAttribute("open", 'true');
-          if ($go)
+          if (run)
             go();
         }).catch(function (err) {
           console.warn('Something went wrong.', err);
@@ -83,14 +89,14 @@ echo <<<BODY
               editor.focus();
             }
 
-            if ($go)
+            if (run)
               go();
           } else if ( "{$demo}" !== "" ) {
             select.value = "{$demo}";
             select.dispatchEvent(new Event('change'));
           } else if ( localStorage.getItem("brython-buffer" ) != null ) {
             editor.setValue(localStorage.getItem("brython-buffer"));
-            if ($go)
+            if (run)
               go();
           }
         }).catch(function (err) {

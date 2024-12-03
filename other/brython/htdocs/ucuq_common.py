@@ -4,13 +4,15 @@ K_DEVICE_TOKEN = "Token"
 K_DEVICE_ID = "Id"
 
 VTOKENS = {
-    "Yellow": "%YELLOW_VTOKEN%",
     "Black": "%BLACK_VTOKEN%",
+    "White": "%WHITE_VTOKEN%",
+    "Yellow": "%YELLOW_VTOKEN%",
     "Red": "%RED_VTOKEN%",
     "Blue": "%BLUE_VTOKEN%",
-    "White": "%WHITE_VTOKEN%",
     "Striped": "%STRIPED_VTOKEN%",
 }
+
+ALL_DEVICES_VTOKEN = "%ALL_DEVICES_VTOKEN%"
 
 
 def displayMissingConfigMessage_():
@@ -41,7 +43,7 @@ def handlingConfig_(token, id):
   return token, id
 
 
-def setDevice(*, device = None, id = None, token = None):
+def setDevice(id = None, *, device = None, token = None):
   if device != None:
     global device_
     if id or token:
@@ -80,9 +82,9 @@ def ucuqStructToDict(obj):
 def ucuqGetInfos():
   return {{
     "{I_DEVICE_KEY}" : {{
-      "{I_DEVICE_ID_KEY}": getSelectorId_(),
+      "{I_DEVICE_ID_KEY}": getSelectorId_(SELECTOR_),
       "{I_DEVICE_UNAME_KEY}": ucuqStructToDict(uos.uname())
-    }}
+    }},
     "{I_KIT_KEY}": ucuqGetKit(),
   }}
 """
@@ -154,11 +156,6 @@ def getDeviceId(infos):
   return infos[I_DEVICE_KEY][I_DEVICE_ID_KEY]
   
 
-def ignitionCallback(data, success):
-  data["success"] = success
-  data["lock"].release()
-  
-
 async def ATKConnectAwait(dom, body, *, device = None):
   await dom.inner("", "<h3>Connecting…</h3>")
   
@@ -191,7 +188,6 @@ async def ATKConnectAwait(dom, body, *, device = None):
 
 
 def getDevice_(device = None, *, id = None, token = None):
-
   if device and ( token or id):
     displayExitMessage_("'device' can not be given together with 'token' or 'id'!")
 
@@ -206,6 +202,7 @@ def getDevice_(device = None, *, id = None, token = None):
     return device_
   else:
     return device
+
 
 def addCommand(command, /,device = None):
   getDevice_(device).addCommand(command)

@@ -58,19 +58,14 @@ class Lock_:
 
 def uploadCallback_(code, result):
   if code != 0:
-    print("Upload callback")
     raise Exception(result)
 
 
 def executeCallback_(data, code, result):
-  print(0)
   if code != 0:
-    print(1)
     if not data:
-      print(2)  
       raise Exception(result)
     else:
-      print(3)
       jsonResult = result
   else:
     try:
@@ -104,7 +99,7 @@ class Device:
         raise Exception("'callback' can not be given without 'id' or 'token'!")
       token, id = handlingConfig_(token, id)
 
-    self.device_ = ucuqjs.launch(token if token else "%DEFAULT_VTOKEN%", id if id else "", LIB_VERSION, callback if callback else lambda *args: None) # 'None' is NOT converted in 'undefined' in JS.
+    self.device_ = ucuqjs.launch(token if token else ALL_DEVICES_VTOKEN, id if id else "", LIB_VERSION, callback if callback else lambda answer: answer.replace(ALL_DEVICES_VTOKEN, "<demo token>")) # 'None' is NOT converted in 'undefined' in JS.
 
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
@@ -127,7 +122,6 @@ class Device:
     await lock.acquireAwait()
 
     if data["code"]:
-      print("Yo!")
       raise Exception(data["result"])
     
     return data["result"]
@@ -185,6 +179,15 @@ def toASCII(text):
   return ucuqjs.toASCII(text)
 
 
+def ignitionCallback(data, answer, errorMessage):
+  success = not(len(answer))
+
+  data["success"] = success
+  data["lock"].release()
+
+  return "" if success else errorMessage
+
+
 async def findDeviceAwait(dom):
   data = {
     "lock": Lock_()
@@ -195,7 +198,9 @@ async def findDeviceAwait(dom):
   for deviceId in VTOKENS:
     await dom.inner("", f"<h3>Connecting to '{deviceId}'…</h3>")
 
-    device = Device(token = VTOKENS[deviceId], callback = lambda success: ignitionCallback(data, success))
+    lastKey = list(VTOKENS.keys())[-1]
+
+    device = Device(token = VTOKENS[deviceId], callback = lambda answer: ignitionCallback(data, answer, "Unable to connect to a device!" if deviceId == lastKey else ""))
 
     await data["lock"].acquireAwait()
 

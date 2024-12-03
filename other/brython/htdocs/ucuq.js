@@ -94,12 +94,12 @@ function ignition(handler) {
         return false;
         break;
       case i.REPORT:
-        if ( handler.callback ) {
-          handler.callback(handler.getString().length == 0);
-          handler.callback = undefined;
-        } else if (handler.getString().length) {
-          exit_(handler.getString());
-        }
+        answer = handler.callback(handler.getString());
+
+        if ( answer.length )
+          exit_(answer);
+
+        handler.callback = undefined;
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         break;
@@ -217,7 +217,6 @@ function blob2Buffer(blob, cb) {
 function launch_(deviceToken, deviceId, libraryVersion, callback) {
   let handler = proto.getHandler();
 
-  handler.deviceId = deviceId;
   handler.callback = callback;
   handler.phase = p.HANDSHAKES;
   handler.funcStack = [];
