@@ -27,6 +27,7 @@
 namespace ucumng {
   qENUM(Request) {
     rClose_1,
+    rCloseAll_1,
     rExecute_1,
     rCreateVToken_1,
     rDeleteVToken_1,

@@ -65,6 +65,10 @@ with open("ucuq.json", "w") as outFile:
         <Translation language="fr">Déconnecte le(s) dispositifs</Translation>
         <Translation language="en">Closes device(s)</Translation>
       </Translations>
+      <Translations text="CloseAllCommandDescription">
+        <Translation language="fr">Déconnecte le(s) dispositifs et efface tous les afférents</Translation>
+        <Translation language="en">Closes device(s) and corresponding virtual tokens</Translation>
+      </Translations>
       <Translations text="ExecuteCommandDescription">
         <Translation language="fr">Exécute un script sur un dispositif</Translation>
         <Translation language="en">Executes a script on device</Translation>
@@ -170,6 +174,7 @@ with open("ucuq.json", "w") as outFile:
       <xpp:expand select="CLI_Arguments"/>
       <!-- Commands -->
       <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage=""/>
+      <Argument id="CloseAll" Description="CloseAllCommandDescription" long="close-all" Value="CloseAll" Usage=""/>
       <Argument id="Execute" Description="ExecuteCommandDescription" long="execute" Value="Execute" Usage="[%ExpressionOption%] [%InArg%]"/>
       <Argument id="FetchConfig" Description="FetchConfigCommandDescription" long="fetch-config" Value="FetchConfig" Usage=""/>
       <Argument id="SetProxy" Description="SetProxyCommandDescription" long="set-proxy" Value="SetProxy" Usage="%NewProxyArg%"/>
@@ -188,6 +193,8 @@ with open("ucuq.json", "w") as outFile:
       <Argument id="NewTokenArg" Label="NewTokenArgLabel" Description="NewTokenArgDescription" Path="NewToken"/>
       <Layouts>
         <Layout command="Close">
+        </Layout>
+        <Layout command="CloseAll">
         </Layout>
         <Layout command="FetchConfig">
         </Layout>

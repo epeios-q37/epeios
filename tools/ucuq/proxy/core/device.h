@@ -100,13 +100,24 @@ namespace device {
   common::rCaller *Hire(
     const dSelector &Selector,
     const void *User);
-  void Withdraw(sRow Row);  // Make unavailable and delete if applied.
+  void _Withdraw_NotUsed(sRow Row);  // Make unavailable and delete if applied.
   void Withdraw(const dSelector &Selector);
-  void Withdraw(const str::dString &Token);
+  void WithdrawToken(const str::dString &Token); // Withdraw cotresponding real token or virtual token.
+  void WithdrawVTokens(const str::dString &RToken); // Withdraw all virtual tokens linked to real token 'RToken'.
   bso::sBool CreateVToken(
-    const str::dString &Token,
-    const str::dString &VToken, const str::dString & TrueId);
+    const str::dString &VToken,
+    const str::dString &RToken,
+    const str::dString &Id);
   bso::sBool DeleteVToken(const str::dString &Token);
+  bso::sBool IsReal(const str::dString &Token);
+  bso::sBool IsVirtual(const str::dString &Token);
+  void GetRTokenFeatures(
+    str::dStrings &Ids,
+    str::dStrings &VTokens
+  );
+  void GetVTokenFeatures(
+    str::dStrings &RToken,
+    str::dStrings &Id);
 }
 
 #endif

@@ -5,7 +5,7 @@ sys.path.extend(("../..","../../atlastk.zip"))
 
 import atlastk, ucuq
 RB_MAX = 30
-RB_DELAY = .04
+RB_DELAY = .05
 
 ws2812 = None
 onDuty = False
@@ -17,29 +17,27 @@ P_BIPEDAL = "Bipedal"
 P_DOG = "Dog"
 P_DIY = "DIY"
 
-
 SPOKEN_COLORS =  {
-  "rouge": [30, 0, 0],
-  "vert": [0, 30, 0],
-  "bleu": [0, 0, 30],
-  "jaune": [30, 30, 0],
-  "cyan": [0, 30, 30],
-  "magenta": [30, 0, 30],
-  "orange": [30, 15, 0],
-  "violet": [15, 0, 30],
-  "rose": [30, 15, 15],
-  "gris": [15, 15, 15],
+  "rouge": [255, 0, 0],
+  "vert": [0, 255, 0],
+  "bleu": [0, 0, 255],
+  "jaune": [255, 255, 0],
+  "cyan": [0, 255, 255],
+  "magenta": [255, 0, 255],
+  "orange": [255, 127, 0],
+  "violet": [127, 0, 255],
+  "rose": [255, 127, 127],
+  "gris": [127, 127, 127],
   "noir": [0, 0, 0],
-  "blanc": [30, 30, 30],
-  "marron": [15, 7, 0],
-  "turquoise": [0, 15, 15],
-  "beige": [30, 25, 20]
+  "blanc": [255, 255, 255],
+  "marron": [127, 59, 0],
+  "turquoise": [0, 127, 127],
+  "beige": [255, 212, 170]
 }
-
 
 def rainbow():
   v =  random.randint(0, 5)
-  for i in range(RB_MAX * 7):
+  for i in range(0, RB_MAX * 7, 1+int(RB_MAX/20)):
     ws2812.fill(ucuq.rbShadeFade(v, i, RB_MAX)).write()
     ucuq.sleep(RB_DELAY)
   ws2812.fill([0]*3).write()
@@ -168,36 +166,35 @@ def acSwitch(dom, id):
 
 def acSelect(dom):
   if onDuty:
-    r, g, b = (dom.getValues(["rgb-r", "rgb-g", "rgb-b"])).values()
-    dom.setValues(getAllValues_(r, g, b))
-    update_(r, g, b)
+    R, G, B = (dom.getValues(["rgb-r", "rgb-g", "rgb-b"])).values()
+    dom.setValues(getAllValues_(R, G, B))
+    update_(R, G, B)
   else:
     dom.executeVoid(f"colorWheel.rgb = [0,0,0]")  
 
 def acSlide(dom):
-  (r,g,b) = (dom.getValues(["SR", "SG", "SB"])).values()
-  dom.setValues(getNValues_(r, g, b))
-  dom.executeVoid(f"colorWheel.rgb = [{r},{g},{b}]")
-  update_(r, g, b)
+  (R,G,B) = (dom.getValues(["SR", "SG", "SB"])).values()
+  dom.setValues(getNValues_(R, G, B))
+  dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
+  update_(R, G, B)
 
 def acAdjust(dom):
-  (r,g,b) = (dom.getValues(["NR", "NG", "NB"])).values()
-  dom.setValues(getSValues_(r, g, b))
-  dom.executeVoid(f"colorWheel.rgb = [{r},{g},{b}]")
-  update_(r, g, b)
+  (R,G,B) = (dom.getValues(["NR", "NG", "NB"])).values()
+  dom.setValues(getSValues_(R, G, B))
+  dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
+  update_(R, G, B)
 
 
 def acListen(dom):
   dom.executeVoid("launch()")
-
-
+  
 def acDisplay(dom):
   colors = json.loads(dom.getValue("Color"))
 
   for color in colors:
     color = color.lower()
     if color in SPOKEN_COLORS:
-      r, g, b = SPOKEN_COLORS[color]
+      r, g, b = [int(RB_MAX * c / 255) for c in SPOKEN_COLORS[color]]
       dom.setValues(getAllValues_(r, g, b))
       dom.executeVoid(f"colorWheel.rgb = [{r},{g},{b}]")
       update_(r, g, b)
@@ -206,14 +203,12 @@ def acDisplay(dom):
         ucuq.commit()
       break;
 
-
 def acRainbow(dom):
   reset(dom)
   rainbow()
 
 def acReset(dom):
   reset(dom)
-
 
 CALLBACKS = {
   "": acConnect,
@@ -227,7 +222,6 @@ CALLBACKS = {
   "Rainbow": acRainbow,
   "Reset": acReset
 }
-
 
 with open('Body.html', 'r') as file:
   BODY = file.read()

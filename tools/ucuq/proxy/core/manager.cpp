@@ -41,12 +41,27 @@ namespace {
     ucucmn::Get(Manager, Token);
     ucucmn::Dismiss(Manager);
 
-    device::Withdraw(Token);
+    device::WithdrawToken(Token);
   qRR;
   qRT;
   qRE;
   }
 
+  void CloseAll_(flw::rRWFlow &Manager)
+  {
+  qRH;
+    str::string Token;
+  qRB;
+    Token.Init();
+    ucucmn::Get(Manager, Token);
+    ucucmn::Dismiss(Manager);
+
+    device::WithdrawToken(Token);
+    device::WithdrawVTokens(Token);
+  qRR;
+  qRT;
+  qRE;
+  }
 
  void Execute_(
     flw::rRWFlow &Manager,
@@ -134,18 +149,18 @@ namespace {
  qRH;
    str::wString
      VToken,
-     Token,
+     RToken,
      Id;
  qRB;
-   tol::Init(VToken, Token, Id);
+   tol::Init(VToken, RToken, Id);
 
    ucucmn::Get(Manager, VToken);
-   ucucmn::Get(Manager, Token);
+   ucucmn::Get(Manager, RToken);
    ucucmn::Get(Manager, Id);
 
    ucucmn::Dismiss(Manager);
 
-   device::CreateVToken(VToken, Token, Id);
+   device::CreateVToken(VToken, RToken, Id);
 
    ucucmn::Put(ucumng::aOK, Manager);
    ucucmn::Put(str::Empty, Manager);
@@ -193,6 +208,9 @@ qRB;
   switch ( ucumng::GetRequest(RawRequest) ) {
   case ucumng::rClose_1:
     Close_(Flow);
+    break;
+  case ucumng::rCloseAll_1:
+    CloseAll_(Flow);
     break;
   case ucumng::rExecute_1:
     Execute_(Flow, Driver);

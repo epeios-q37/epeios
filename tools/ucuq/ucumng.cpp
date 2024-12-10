@@ -29,6 +29,7 @@ const char *ucumng::GetLabel(eRequest Request)
 {
   switch ( Request ) {
     C(Close_1);
+    C(CloseAll_1);
     C(Execute_1);
     C(CreateVToken_1);
     C(DeleteVToken_1);

@@ -289,6 +289,25 @@ namespace {
 	qRE;
 	}
 
+	void CloseAll_( void )
+	{
+	qRH;
+		csdbnc::rRWFlow Flow;
+		str::wString Token;
+	qRB;
+		InitAndConnect_(Flow);
+
+		ucucmn::Put(ucumng::GetLabel(ucumng::rCloseAll_1), Flow);
+
+		Token.Init();
+		ucucmn::Put(sclm::MGetValue(registry::parameter::Token, Token), Flow);
+
+		ucucmn::Commit(Flow);
+	qRR;
+	qRT;
+	qRE;
+	}
+
 	void Execute_(void)
 	{
 	qRH;
@@ -414,6 +433,7 @@ qRB;
 	else if ( Command == "License" )
 		epsmsc::PrintLicense( NAME_MC );
 	C(Close);
+	C(CloseAll);
 	C(Execute);
 	C(FetchConfig);
 	C(SetProxy);

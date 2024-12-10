@@ -34,14 +34,14 @@ async def acConnect(dom):
 
   device = getConfigDevice()
 
-  if "Token" in device:
+  if K_DEVICE_TOKEN in device:
     await dom.setAttribute(W_TOKEN, "placeholder", "<hidden>")
     await dom.focus(W_ID)
   else:
     await dom.focus(W_TOKEN)
 
-  if "Id" in device:
-    await dom.setValue(W_ID, device[K_DEVICE])
+  if K_DEVICE_ID in device:
+    await dom.setValue(W_ID, device[K_DEVICE_ID])
 
 
 async def acSave(dom):

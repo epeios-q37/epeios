@@ -66,15 +66,11 @@ I_UNAME_KEY = "uname"
 
 
 INFO_SCRIPT_ = f"""
-def ucuqGetKit(): 
-  kit = CONFIG_["{I_KIT_KEY}"]
-
-  id = getSelectorId_(SELECTOR_)
-
-  if id in kit:
-    return kit[id]
-  else:
-    return kit["None"]
+def ucuqGetKit():
+  try:
+    return CONFIG_["{I_KIT_KEY}"][getIdentificationId_(IDENTIFICATION_)]
+  except:
+    return None
 
 def ucuqStructToDict(obj):
     return {{attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}}
@@ -82,7 +78,7 @@ def ucuqStructToDict(obj):
 def ucuqGetInfos():
   return {{
     "{I_DEVICE_KEY}" : {{
-      "{I_DEVICE_ID_KEY}": getSelectorId_(SELECTOR_),
+      "{I_DEVICE_ID_KEY}": getIdentificationId_(IDENTIFICATION_),
       "{I_DEVICE_UNAME_KEY}": ucuqStructToDict(uos.uname())
     }},
     "{I_KIT_KEY}": ucuqGetKit(),
@@ -140,7 +136,10 @@ async def getInfosAwait(device = None):
 def getKitLabel(infos):
   kit = infos[I_KIT_KEY]
 
-  return f"{kit[I_KIT_BRAND_KEY]}/{kit[I_KIT_MODEL_KEY]}/{kit[I_KIT_VARIANT_KEY]}"
+  if kit:
+    return f"{kit[I_KIT_BRAND_KEY]}/{kit[I_KIT_MODEL_KEY]}/{kit[I_KIT_VARIANT_KEY]}"
+  else:
+    return "Undefined"
 
 
 def getKitId(infos):
@@ -161,16 +160,16 @@ async def ATKConnectAwait(dom, body, *, device = None):
   
   if device or CONFIG:
     await dom.inner("", "<h3>Connecting…</h3>")
-    infos = await getInfosAwait(device)
+    device = getDevice_(device)
   else:
     device = await findDeviceAwait(dom)
 
-    if not device:
-      await dom.inner("", "<h3>ERROR: unable to connect to a device…</h3>")
-      raise Exception("Unable to connect to a device!")
-    else:
-      setDevice(device = device)
-      infos = await getInfosAwait(device)
+  if not device:
+    await dom.inner("", "<h3>ERROR: Please launch the 'Config' application!</h3>")
+    raise SystemExit("Unable to connect to a device!")
+  else:
+    setDevice(device = device)
+    infos = await getInfosAwait(device)
   
   await dom.inner("", ATK_BODY.format(getKitLabel(infos)))
 
@@ -198,6 +197,7 @@ def getDevice_(device = None, *, id = None, token = None):
       device_ = Device(id = id, token = token)
     elif device_ == None:
       device_ = Device()
+      device_.connect()
     
     return device_
   else:
@@ -255,9 +255,9 @@ class GPIO(Core_):
     super().__init__(device)
 
     if pin:
-      self.init(pin)
+      self.init(pin, device)
 
-  def init(self, pin, device):
+  def init(self, pin, device = None):
     self.pin = f'"{pin}"' if isinstance(pin,str) else pin
 
     super().init("GPIO-1", f"GPIO({self.pin})", device)
@@ -378,7 +378,7 @@ class PWM(Core_):
 
 
   def setU16(self, u16):
-    self.addMethods(f"duty_u16({u16})")
+    return self.addMethods(f"duty_u16({u16})")
 
 
   async def getNSAwait(self):
@@ -386,7 +386,7 @@ class PWM(Core_):
 
 
   def setNS(self, ns):
-    self.addMethods(f"duty_ns({ns})")
+    return self.addMethods(f"duty_ns({ns})")
 
 
   async def getFreqAwait(self):
@@ -394,11 +394,11 @@ class PWM(Core_):
 
 
   def setFreq(self, freq):
-    self.addMethods(f"freq({freq})")
+    return self.addMethods(f"freq({freq})")
 
 
   def deinit(self):
-    self.addMethods(f"deinit()")
+    return self.addMethods(f"deinit()")
 
 
 class PCA9685(Core_):

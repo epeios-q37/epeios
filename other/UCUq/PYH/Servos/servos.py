@@ -101,7 +101,7 @@ def updateFileList(dom):
 def acConnect(dom):
   infos = ucuq.ATKConnect(dom, BODY)
 
-  createServos(getDeviceId(infos))
+  createServos(ucuq.getDeviceId(infos))
 
   displayMacros(dom)
   updateFileList(dom)

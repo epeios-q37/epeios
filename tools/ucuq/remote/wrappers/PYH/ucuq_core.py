@@ -264,12 +264,12 @@ class Device_:
 
 
 class Device(Device_):
-  def __init__(self, *, id = None, token = None, now = True):
+  def __init__(self, *, id = None, token = None):
     self.pendingModules = ["Init-1"]
     self.handledModules = []
     self.commands = []
 
-    super().__init__(id = id, token = token, now = now)
+    super().__init__(id = id, token = token)
 
   def addModule(self, module):
     if not module in self.pendingModules and not module in self.handledModules:
@@ -307,7 +307,7 @@ def findDevice(dom):
   for deviceId in VTOKENS:
     dom.inner("", f"<h3>Connecting to '{deviceId}'…</h3>")
 
-    device = Device(now = False)
+    device = Device()
 
     if device.connect(token = VTOKENS[deviceId], id=deviceId, errorAsException = False):
       return device

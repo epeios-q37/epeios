@@ -1,17 +1,16 @@
-# MicroController Remove Server (runs on the µcontroller)
+# MicroController Remote Server (runs on the µcontroller)
 
 import socket, sys, uos, time, network, json, binascii, io
 from machine import Pin
 
-
-WLAN = "" # Search for one of the WLAN defined in 'wireless.py' and connect to it if available.
-# WLAN = "<name>" # Connects to the WLAN <name> as defined in 'wireless.py'.
+WLAN = "" # Connect to one of the WLAN defined in 'ucuq.json'.
+# WLAN = "<name>" # Connects to the WLAN <name> as defined in 'ucuq.json'.
 # WLAN = ("<ssid>","<key>") # Connects to WLAN <ssid> using <key>.
 
 with open("ucuq.json", "r") as config:
   CONFIG_ = json.load(config)
 
-SELECTOR_ = CONFIG_["Selector"]
+IDENTIFICATION_ = CONFIG_["Identification"]
 
 UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
 UCUQ_DEFAULT_PORT_ = "53800"
@@ -57,19 +56,19 @@ def getMacAddress_():
   return binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
 
 # NOTA: also used in the script for 'getInfos()'… 
-def getSelectorId_(selector):
-  if isinstance(selector[1], str):
-    return selector[1]
+def getIdentificationId_(identification):
+  if isinstance(identification[1], str):
+    return identification[1]
   else:
     mac = getMacAddress_()
 
-    if mac in selector[1]:
-      return selector[1][mac]
+    if mac in identification[1]:
+      return identification[1][mac]
     else:
       raise Exception("Unable to get an id for this device.")
 
     
-WLANS_ = CONFIG_["WLAN"]["Known"]
+WLANS_ = CONFIG_["WLAN"]
 
 def wlanIsShortcut_(wlan):
   if isinstance(wlan, str):
@@ -237,7 +236,7 @@ def getDeviceLabel_():
   if "Kits" in CONFIG_:
     kit = CONFIG_["Kit"]
 
-    id = getSelectorId_(SELECTOR_)
+    id = getIdentificationId_(IDENTIFICATION_)
 
     if id in kit:
       return kit[id]
@@ -263,8 +262,8 @@ def handshake_():
 
 
 def ignition_():
-  writeString_(SELECTOR_[0])
-  writeString_(getSelectorId_(SELECTOR_))
+  writeString_(IDENTIFICATION_[0])
+  writeString_(getIdentificationId_(IDENTIFICATION_))
 
   error = readString_()
 
@@ -275,10 +274,7 @@ def serve_():
   while True:
     request = readUInt_()
 
-    if request == R_PING_:
-      writeUInt_(A_OK_)
-      writeString_(getDeviceLabel_())
-    elif request == R_EXECUTE_:
+    if request == R_EXECUTE_:
       script = readString_()
       expression = readString_()
       returned = ""
@@ -344,7 +340,7 @@ def ledCallback_(status, tries, pin, onValue):
   elif status == S_FAILURE_:
     handleLed_(pin, True, onValue)
   elif status == S_DECONNECTION_:
-    handleLed_(pin, True), onValue
+    handleLed_(pin, True, onValue)
   elif status == S_SUCCESS_:
     ledBlink_(pin, 3, onValue)
   return defaultCallback_(status, tries) and not ( ( status == S_UCUQ_) and ( tries > 5 ) )
@@ -354,10 +350,16 @@ def getCallback_():
   if "OnBoardLed" in CONFIG_:
     onBoardLed = CONFIG_["OnBoardLed"]
 
-    selector = getSelectorId_(SELECTOR_)
+    if isinstance(onBoardLed, dict):
+      id = getIdentificationId_(IDENTIFICATION_)
 
-    if selector in onBoardLed:
-      return lambda status, tries: ledCallback_(status, tries, onBoardLed[selector][0], onBoardLed[selector][1])
+      if id in onBoardLed:
+        onBoardLed = onBoardLed[id]
+      else:
+        onBoardLed = None
+
+    if onBoardLed:
+      return lambda status, tries: ledCallback_(status, tries, onBoardLed[0], onBoardLed[1])
     
   return defaultCallback_
 

@@ -200,7 +200,7 @@ async def findDeviceAwait(dom):
 
     lastKey = list(VTOKENS.keys())[-1]
 
-    device = Device(token = VTOKENS[deviceId], callback = lambda answer: ignitionCallback(data, answer, "Unable to connect to a device!" if deviceId == lastKey else ""))
+    device = Device(token = VTOKENS[deviceId], callback = lambda answer: ignitionCallback(data, answer, "Please launch the 'Config' application!" if deviceId == lastKey else ""))
 
     await data["lock"].acquireAwait()
 
