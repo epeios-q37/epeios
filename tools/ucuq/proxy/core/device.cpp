@@ -151,7 +151,7 @@ qRB;
   Row = Rows.First();
 
   while ( Row != qNIL ) {
-    seeker::Delete(Rows(Row));
+    Withdraw_(Rows(Row));
 
     Row = Rows.Next(Row);
   }
