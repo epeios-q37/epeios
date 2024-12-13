@@ -41,7 +41,7 @@ namespace {
     ucucmn::Get(Manager, Token);
     ucucmn::Dismiss(Manager);
 
-    device::WithdrawToken(Token);
+    device::WithdrawRTokens(Token);
   qRR;
   qRT;
   qRE;
@@ -56,8 +56,8 @@ namespace {
     ucucmn::Get(Manager, Token);
     ucucmn::Dismiss(Manager);
 
-    device::WithdrawToken(Token);
-    device::WithdrawVTokens(Token);
+    device::WithdrawRTokens(Token);
+    device::DeleteVTokens(Token);
   qRR;
   qRT;
   qRE;
@@ -69,25 +69,25 @@ namespace {
   {
   qRH;
     flw::rDressedRWFlow<> Device;
-    device::wSelector Selector;
+    str::wString RToken, Id;
     str::wString Script, Expression, Message, Response;
     common::rCaller *Caller = NULL;
     bso::sBool Cont = true;
     common::gTracker Tracker;
   qRB;
-    tol::Init(Selector, Script, Expression);
+    tol::Init(RToken, Id, Script, Expression);
 
-    common::Get(Manager, Selector.Token);
-    common::Get(Manager, Selector.Id);
+    common::Get(Manager, RToken);
+    common::Get(Manager, Id);
     common::Get(Manager, Script);
     common::Get(Manager, Expression);
 
-    Caller = device::Hire(Selector, &Driver);
+    Caller = device::Hire(RToken, Id, &Driver);
 
     if ( Caller == NULL ) {
       Message.Init();
 
-      messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, Selector.Token, Selector.Id);
+      messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, RToken, Id);
 
       common::Put(ucumng::aError, Manager);
       common::Put(Message, Manager);

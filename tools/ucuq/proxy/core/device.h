@@ -47,46 +47,6 @@ namespace device {
     flw::rRFlow &Flow,
     const common::gTracker *Tracker);
 
-  qROW( Row );
-
-  struct dSelector {
-  public:
-    struct s {
-      str::dString::s
-        Token,
-        Id;
-    };
-    str::dString
-      Token,
-      Id;
-    dSelector(s &S)
-    : Token(S.Token),
-      Id(S.Id)
-    {}
-    void reset(bso::sBool P = true)
-    {
-      tol::reset(P, Token, Id);
-    }
-    void plug(qASd *AS)
-    {
-      Token.plug(AS);
-      Id.plug(AS);
-    }
-    dSelector &operator =(const dSelector &S)
-    {
-      Token = S.Token;
-      Id = S.Id;
-
-      return *this;
-    }
-    void Init(void)
-    {
-      tol::Init(Token, Id);
-    }
-  };
-
-  qW(Selector);
-
   qENUM(State) { // State of the connection.
     sConnected,
     sClosePending,
@@ -94,30 +54,40 @@ namespace device {
     s_Undefined
   };
 
-  sRow New(
-    const dSelector &Selector,
-    sck::rRWDriver *Driver);
+  bso::sBool New(
+    const str::dString &RToken,
+    const str::dString &Id,
+    sck::rRWDriver *Driver,
+    qRPD);
   common::rCaller *Hire(
-    const dSelector &Selector,
+    const str::dString &RToken,
+    const str::dString &Id,
     const void *User);
-  void _Withdraw_NotUsed(sRow Row);  // Make unavailable and delete if applied.
-  void Withdraw(const dSelector &Selector);
-  void WithdrawToken(const str::dString &Token); // Withdraw cotresponding real token or virtual token.
-  void WithdrawVTokens(const str::dString &RToken); // Withdraw all virtual tokens linked to real token 'RToken'.
+  void Withdraw(
+    const str::dString &RToken,
+    const str::dString &Id );
+  void WithdrawRTokens(const str::dString &RToken);
+  void DeleteVTokens(const str::dString &RToken);
   bso::sBool CreateVToken(
     const str::dString &VToken,
     const str::dString &RToken,
-    const str::dString &Id);
+    const str::dString &Id,
+    qRPD);
   bso::sBool DeleteVToken(const str::dString &Token);
-  bso::sBool IsReal(const str::dString &Token);
-  bso::sBool IsVirtual(const str::dString &Token);
+  void GetRTokenIds(const str::dString &RToken, str::dStrings & Ids,
+    bso::sBool Lock = true);
+  void GetRTokenVTokens(
+    const str::dString &RToken,
+    str::dStrings & VTokens,
+    bso::sBool Lock = true);
   void GetRTokenFeatures(
+    const str::dString &RToken,
     str::dStrings &Ids,
-    str::dStrings &VTokens
-  );
-  void GetVTokenFeatures(
-    str::dStrings &RToken,
-    str::dStrings &Id);
+    str::dStrings &VTokens);
+  bso::sBool GetVTokenFeatures(
+    const str::dString &VToken,
+    str::dString &RToken,
+    str::dString &Id);
 }
 
 #endif

@@ -50,6 +50,7 @@
     <Module>modules</Module>
     <Module>registry</Module>
     <Module>remote</Module>
+    <Module>seeker</Module>
     <Module>switcher</Module>
   </Modules>
   <SourceDirs>

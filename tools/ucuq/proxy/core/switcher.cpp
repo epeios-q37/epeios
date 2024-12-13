@@ -122,24 +122,24 @@ namespace {
 	};
 
 	namespace {
-		const device::dSelector &GetSelector_(
+		void Get_(
 			fdr::rRWDriver &Driver,
-			device::dSelector &Selector)
+			str::dString &RToken,
+			str::dString &Id)
 		{
 		qRH;
 			flw::rDressedRWFlow<> Flow;
 		qRB;
 			Flow.Init(Driver);
 
-			common::Get(Flow, Selector.Token);
-			common::Get(Flow, Selector.Id);
+			common::Get(Flow, RToken);
+			common::Get(Flow, Id);
 
 			common::Put("", Flow);
 			Flow.Commit();
 		qRR;
 		qRT;
 		qRE;
-			return Selector;
 		}
 	}
 
@@ -153,7 +153,7 @@ namespace {
 		sdr::tRow Row = qNIL;
 		rFeatures_ Features;
 		common::eCaller Caller = common::c_Undefined;
-		device::wSelector Selector;
+		str::wString RToken, Id;
 	qRB;
 		Socket = Data.Socket;
 
@@ -170,10 +170,11 @@ namespace {
 
 		switch ( Caller = Handshake_(*Driver, Features) ) {
 		case common::cDevice:
-			Selector.Init();
+			tol::Init(RToken, Id);
 
-			if ( device::New(GetSelector_(*Driver, Selector), Driver) == qNIL )
-				qRUnx();
+			Get_(*Driver, RToken, Id);
+
+			device::New(RToken, Id, Driver);
 				
 			Driver = NULL;	// To avoid deleting when exiting this method.
 			break;

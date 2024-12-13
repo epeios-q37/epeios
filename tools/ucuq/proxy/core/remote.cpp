@@ -265,24 +265,24 @@ qRH;
   flw::rDressedRWFlow<> Device;
   flw::rDressedRWFlow<> Remote;
   str::wString Message, Command;
-  device::wSelector Selector;
+  str::wString RToken, Id;
   common::rCaller *Caller = NULL;
   bso::sBool Cont = true;
   common::gTracker Tracker;
 qRB;
   Remote.Init(Driver);
 
-  Selector.Init();
-  common::Get(Remote, Selector.Token);
-  common::Get(Remote, Selector.Id);
+  tol::Init(RToken, Id);
+  common::Get(Remote, RToken);
+  common::Get(Remote, Id);
 
-  Caller = device::Hire(Selector, &Driver);
+  Caller = device::Hire(RToken, Id, &Driver);
 
   Remote.Init(Driver);
 
   if ( Caller == NULL ) {
     Message.Init();
-    messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, Selector.Token, Selector.Id);
+    messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, RToken, Id);
     common::Put(Message, Remote);
     common::Commit(Remote);
   } else {
