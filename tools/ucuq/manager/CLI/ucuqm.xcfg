@@ -26,8 +26,8 @@ import json
 with open("ucuq.json", "r") as inFile:
   config = json.load(inFile)
   
-for name in config["WLAN"]["Known"]:
-  config["WLAN"]["Known"][name] = {}
+for name in config["WLAN"]:
+  config["WLAN"][name] = {}
 ]]>
         </Script>
         <Script Label="SetProxy">
@@ -50,7 +50,7 @@ import json
 with open("ucuq.json", "r") as inFile:
   config = json.load(inFile)
   
-config["Selector"][0] = "%NewToken%"
+config["Indentification"][0] = "%NewToken%"
 
 with open("ucuq.json", "w") as outFile:
   json.dump(config, outFile)
@@ -64,10 +64,6 @@ with open("ucuq.json", "w") as outFile:
       <Translations text="CloseCommandDescription">
         <Translation language="fr">Déconnecte le(s) dispositifs</Translation>
         <Translation language="en">Closes device(s)</Translation>
-      </Translations>
-      <Translations text="CloseAllCommandDescription">
-        <Translation language="fr">Déconnecte le(s) dispositifs et efface tous les afférents</Translation>
-        <Translation language="en">Closes device(s) and corresponding virtual tokens</Translation>
       </Translations>
       <Translations text="ExecuteCommandDescription">
         <Translation language="fr">Exécute un script sur un dispositif</Translation>
@@ -83,15 +79,15 @@ with open("ucuq.json", "w") as outFile:
       </Translations>
       <Translations text="SetTokenCommandDescription">
         <Translation language="fr">Affecte un nouveau jeton au dispositif</Translation>
-        <Translation language="en">Sets device's proxy</Translation>
+        <Translation language="en">Sets device's token</Translation>
       </Translations>
-      <Translations text="CreateVirtualTokenCommandDescription">
+      <Translations text="CreateCommandDescription">
         <Translation language="fr">Crée un jeton virtuel</Translation>
         <Translation language="en">Creates a virtual token</Translation>
       </Translations>
-      <Translations text="DeleteVirtualTokenCommandDescription">
-        <Translation language="fr">Suppression d'un jeton virtuel</Translation>
-        <Translation language="en">Deletes a virtual token</Translation>
+      <Translations text="DeleteCommandDescription">
+        <Translation language="fr">Suppression de jeton(s) virtuel(s)</Translation>
+        <Translation language="en">Deletes virtual(s) token(s)</Translation>
       </Translations>
       <!-- Options -->
       <Translations text="TokenOptionLabel">
@@ -99,16 +95,8 @@ with open("ucuq.json", "w") as outFile:
         <Translation language="en">token</Translation>
       </Translations>
       <Translations text="TokenOptionDescription">
-        <Translation language="fr">jeton correspondant à un groupe de dispositifs</Translation>
-        <Translation language="en">token of a group of devices</Translation>
-      </Translations>
-      <Translations text="DeviceIdOptionLabel">
-        <Translation language="fr">id</Translation>
-        <Translation language="en">id</Translation>
-      </Translations>
-      <Translations text="DeviceIdOptionDescription">
-        <Translation language="fr">identifiant de dispositif ; si absent, tous les dispositifs correspondants au jeton donné sont concernés</Translation>
-        <Translation language="en">device identifier; if absent, all devices corresponding to given token are involved</Translation>
+        <Translation language="fr">Jeton correspondant à un groupe de dispositifs</Translation>
+        <Translation language="en">Token of a group of devices</Translation>
       </Translations>
       <Translations text="ExpressionOptionLabel">
         <Translation language="fr">expr</Translation>
@@ -127,21 +115,21 @@ with open("ucuq.json", "w") as outFile:
         <Translation language="fr">Nom du fichier d'entrée (utilisation de l'entrée standard si absent)</Translation>
         <Translation language="en">Input file name (use of standard input if missing)</Translation>
       </Translations>
-      <Translations text="VirtualTokenArgLabel">
+      <Translations text="VTokenArgLabel">
         <Translation language="fr">vtoken</Translation>
         <Translation language="en">vtoken</Translation>
       </Translations>
-      <Translations text="VirtualTokenArgDescription">
+      <Translations text="VTokenArgDescription">
         <Translation language="fr">Jeton virtuel</Translation>
         <Translation language="en">Virtual token</Translation>
       </Translations>
-      <Translations text="VirtualTokenIdArgLabel">
-        <Translation language="fr">vtoken-id</Translation>
-        <Translation language="en">vtoken-id</Translation>
+      <Translations text="IdArgLabel">
+        <Translation language="fr">id</Translation>
+        <Translation language="en">id</Translation>
       </Translations>
-      <Translations text="VirtualTokenIdArgDescription">
-        <Translation language="fr">Éventuel identifiant de dispositk pour le jeton virtuel</Translation>
-        <Translation language="en">Possible device identifier for virtual token</Translation>
+      <Translations text="IdArgDescription">
+        <Translation language="fr">Identifiant de dispositif ; si absent et pertinent, tous les dispositifs correspondants au jeton donné sont concernés</Translation>
+        <Translation language="en">Device identifier; if absent and pertinent, all devices corresponding to given token are involved</Translation>
       </Translations>
       <Translations text="NewTokenArgLabel">
         <Translation language="fr">new-token</Translation>
@@ -173,45 +161,45 @@ with open("ucuq.json", "w") as outFile:
     <Arguments>
       <xpp:expand select="CLI_Arguments"/>
       <!-- Commands -->
-      <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage=""/>
-      <Argument id="CloseAll" Description="CloseAllCommandDescription" long="close-all" Value="CloseAll" Usage=""/>
-      <Argument id="Execute" Description="ExecuteCommandDescription" long="execute" Value="Execute" Usage="[%ExpressionOption%] [%InArg%]"/>
-      <Argument id="FetchConfig" Description="FetchConfigCommandDescription" long="fetch-config" Value="FetchConfig" Usage=""/>
-      <Argument id="SetProxy" Description="SetProxyCommandDescription" long="set-proxy" Value="SetProxy" Usage="%NewProxyArg%"/>
-      <Argument id="SetToken" Description="SetTokenCommandDescription" long="set-token" Value="SetToken" Usage="%NewTokenArg% "/>
-      <Argument id="CreateVirtualToken" Description="CreateVirtualTokenCommandDescription" long="create-vtoken" Value="CreateVToken" Usage="%VirtualTokenArg% [%VirtualTokenIdArg%]"/>
-      <Argument id="DeleteVirtualToken" Description="DeleteVirtualTokenCommandDescription" long="delete-vtoken" Value="DeleteVToken" Usage="%VirtualTokenArg%"/>
+      <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage="[%IdArg%]"/>
+      <Argument id="Execute" Description="ExecuteCommandDescription" long="execute" Value="Execute" Usage="[%ExpressionOption%] %IdArg% [%InArg%]"/>
+      <Argument id="FetchConfig" Description="FetchConfigCommandDescription" long="fetch-config" Value="FetchConfig" Usage="%IdArg%"/>
+      <Argument id="SetProxy" Description="SetProxyCommandDescription" long="set-proxy" Value="SetProxy" Usage="%IdArg% %NewProxyArg%"/>
+      <Argument id="SetToken" Description="SetTokenCommandDescription" long="set-token" Value="SetToken" Usage="%IdArg% %NewTokenArg% "/>
+      <Argument id="Create" Description="CreateCommandDescription" long="" Value="Create" Usage="%VTokenArg% [%IdArg%]"/>
+      <Argument id="Delete" Description="DeleteCommandDescription" long="delete" Value="Delete" Usage="[%VTokenArg%]"/>
       <!-- Options -->
       <Argument id="TokenOption" Label="TokenOptionLabel" short="t" long="token" Description="TokenOptionDescription" Path="Token"/>
-      <Argument id="DeviceIdOption" Label="DeviceIdOptionLabel" short="i" long="id" Description="DeviceIdOptionDescription" Path="Id"/>
       <Argument id="ExpressionOption" Label="ExpressionOptionLabel" short="e" long="expr" Description="ExpressionOptionDescription" Path="Expression"/>
       <!-- Args -->
       <Argument id="InArg" Label="InArgLabel" Description="InArgDescription" Path="In"/>
       <Argument id="NewProxyArg" Label="NewProxyArgLabel" Description="NewProxyArgDescription" Path="NewProxy"/>
-      <Argument id="VirtualTokenArg" Label="VirtualTokenArgLabel" Description="VirtualTokenArgDescription" Path="VirtualToken"/>
-      <Argument id="VirtualTokenIdArg" Label="VirtualTokenIdArgLabel" Description="VirtualTokenIdArgDescription" Path="VirtualTokenId"/>
+      <Argument id="VTokenArg" Label="VTokenArgLabel" Description="VTokenArgDescription" Path="VToken"/>
+      <Argument id="IdArg" Label="IdArgLabel" Description="IdArgDescription" Path="Id"/>
       <Argument id="NewTokenArg" Label="NewTokenArgLabel" Description="NewTokenArgDescription" Path="NewToken"/>
       <Layouts>
         <Layout command="Close">
-        </Layout>
-        <Layout command="CloseAll">
+          <Link index="0" Target="IdArg"/>
         </Layout>
         <Layout command="FetchConfig">
         </Layout>
         <Layout command="Execute">
-          <Link index="0" Target="InArg"/>
+          <Link index="0" Target="IdArg"/>
+          <Link index="1" Target="InArg"/>
         </Layout>
         <Layout command="SetProxy">
-          <Link index="0" Target="NewProxyArg"/>
+          <Link index="0" Target="IdArg"/>
+          <Link index="1" Target="NewProxyArg"/>
         </Layout>
         <Layout command="SetToken">
-          <Link index="0" Target="NewTokenArg"/>
+          <Link index="0" Target="IdArg"/>
+          <Link index="1" Target="NewTokenArg"/>
         </Layout>
-        <Layout command="CreateVToken">
+        <Layout command="Create">
           <Link index="0" Target="VirtualTokenArg"/>
           <Link index="1" Target="VirtualTokenIdArg"/>
         </Layout>
-        <Layout command="DeleteVToken">
+        <Layout command="Delete">
           <Link index="0" Target="VirtualTokenArg"/>
         </Layout>
       </Layouts>

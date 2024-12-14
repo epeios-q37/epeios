@@ -35,35 +35,23 @@ namespace {
   void Close_(flw::rRWFlow &Manager)
   {
   qRH;
-    str::string Token;
+    str::string Token, Id;
   qRB;
-    Token.Init();
+  tol::Init(Token, Id);
     ucucmn::Get(Manager, Token);
+    ucucmn::Get(Manager, Id);
     ucucmn::Dismiss(Manager);
 
-    device::WithdrawRTokens(Token);
+    if ( Id.Amount() )
+      device::WithdrawDevice(Token, Id);
+    else
+      device::WithdrawDevices(Token);
   qRR;
   qRT;
   qRE;
   }
 
-  void CloseAll_(flw::rRWFlow &Manager)
-  {
-  qRH;
-    str::string Token;
-  qRB;
-    Token.Init();
-    ucucmn::Get(Manager, Token);
-    ucucmn::Dismiss(Manager);
-
-    device::WithdrawRTokens(Token);
-    device::DeleteVTokens(Token);
-  qRR;
-  qRT;
-  qRE;
-  }
-
- void Execute_(
+  void Execute_(
     flw::rRWFlow &Manager,
     const fdr::rRWDriver &Driver)
   {
@@ -144,50 +132,54 @@ namespace {
   qRE;
   }
 
- void CreateVToken_(flw::rRWFlow &Manager)
- {
- qRH;
-   str::wString
-     VToken,
-     RToken,
-     Id;
- qRB;
-   tol::Init(VToken, RToken, Id);
+  void Create_(flw::rRWFlow &Manager)
+  {
+  qRH;
+    str::wString
+      VToken,
+      RToken,
+      Id;  // Can be empty.
+  qRB;
+    tol::Init(VToken, RToken, Id);
 
-   ucucmn::Get(Manager, VToken);
-   ucucmn::Get(Manager, RToken);
-   ucucmn::Get(Manager, Id);
+    ucucmn::Get(Manager, VToken);
+    ucucmn::Get(Manager, RToken);
+    ucucmn::Get(Manager, Id);
 
-   ucucmn::Dismiss(Manager);
+    ucucmn::Dismiss(Manager);
 
-   device::CreateVToken(VToken, RToken, Id);
+    device::CreateVToken(VToken, RToken, Id);
 
-   ucucmn::Put(ucumng::aOK, Manager);
-   ucucmn::Put(str::Empty, Manager);
+    ucucmn::Put(ucumng::aOK, Manager);
+    ucucmn::Put(str::Empty, Manager);
 
-   ucucmn::Commit(Manager);
+    ucucmn::Commit(Manager);
  qRR;
  qRT;
  qRE;
  }
 
- void DeleteVToken_(flw::rRWFlow &Manager)
- {
- qRH;
-   str::wString Token;
- qRB;
-   tol::Init(Token);
+void Delete_(flw::rRWFlow &Manager)
+{
+qRH;
+  str::wString RToken, VToken;
+qRB;
+  tol::Init(RToken, VToken);
 
-   ucucmn::Get(Manager, Token);
+  ucucmn::Get(Manager, RToken);
+  ucucmn::Get(Manager, VToken);
 
-   ucucmn::Dismiss(Manager);
+  ucucmn::Dismiss(Manager);
 
-   device::DeleteVToken(Token);
+  if ( VToken.Amount() )
+    device::DeleteVToken(RToken, VToken);
+  else
+    device::DeleteVTokens(RToken);
 
-   ucucmn::Put(ucumng::aOK, Manager);
-   ucucmn::Put(str::Empty, Manager);
+  ucucmn::Put(ucumng::aOK, Manager);
+  ucucmn::Put(str::Empty, Manager);
 
-   ucucmn::Commit(Manager);
+  ucucmn::Commit(Manager);
  qRR;
  qRT;
  qRE;
@@ -209,17 +201,14 @@ qRB;
   case ucumng::rClose_1:
     Close_(Flow);
     break;
-  case ucumng::rCloseAll_1:
-    CloseAll_(Flow);
-    break;
   case ucumng::rExecute_1:
     Execute_(Flow, Driver);
     break;
-  case ucumng::rCreateVToken_1:
-    CreateVToken_(Flow);
+  case ucumng::rCreate_1:
+    Create_(Flow);
     break;
-  case ucumng::rDeleteVToken_1:
-    DeleteVToken_(Flow);
+  case ucumng::rDelete_1:
+    Delete_(Flow);
     break;
   default:
     qRGnr();

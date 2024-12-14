@@ -82,7 +82,9 @@ namespace seeker {
     const str::dString &RToken,
     dRows &Rows);
 
-  sRow GetVToken(const str::dString &VToken);
+  sRow GetVToken(
+    const str::dString &RToken,
+    const str::dString &VToken);
 
   const dRows &GetVTokens(
     const str::dString &RToken,

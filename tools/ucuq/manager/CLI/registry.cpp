@@ -33,8 +33,7 @@ D(In);
 D(Expression);
 D(NewProxy);
 D(NewToken);
-D(VirtualToken);
-D(VirtualTokenId);
+D(VToken);
 
 #undef D
 

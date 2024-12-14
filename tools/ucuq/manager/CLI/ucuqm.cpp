@@ -289,25 +289,6 @@ namespace {
 	qRE;
 	}
 
-	void CloseAll_( void )
-	{
-	qRH;
-		csdbnc::rRWFlow Flow;
-		str::wString Token;
-	qRB;
-		InitAndConnect_(Flow);
-
-		ucucmn::Put(ucumng::GetLabel(ucumng::rCloseAll_1), Flow);
-
-		Token.Init();
-		ucucmn::Put(sclm::MGetValue(registry::parameter::Token, Token), Flow);
-
-		ucucmn::Commit(Flow);
-	qRR;
-	qRT;
-	qRE;
-	}
-
 	void Execute_(void)
 	{
 	qRH;
@@ -363,25 +344,25 @@ namespace {
 	qRE;
 	}
 
-	void CreateVToken_(void)
+	void Create_(void)
 	{
 	qRH;
-		str::wString VToken, Token, VTokenId;
+		str::wString VToken, Token, DeviceId;
 		csdbnc::rRWFlow Flow;
 		ucumng::eAnswer Answer = ucumng::a_Undefined;
 	qRB;
-		tol::Init(VToken, Token, VTokenId);
+		tol::Init(VToken, Token, DeviceId);
 
-		sclm::MGetValue(registry::parameter::VirtualToken, VToken);
+		sclm::MGetValue(registry::parameter::VToken, VToken);
 		sclm::MGetValue(registry::parameter::Token, Token);
-		sclm::OGetValue(registry::parameter::VirtualTokenId, VTokenId);
+		sclm::OGetValue(registry::parameter::Id, DeviceId);
 
 		InitAndConnect_(Flow);
 
-		ucucmn::Put(ucumng::GetLabel(ucumng::rCreateVToken_1), Flow);
+		ucucmn::Put(ucumng::GetLabel(ucumng::rCreate_1), Flow);
 		ucucmn::Put(VToken, Flow);
 		ucucmn::Put(Token, Flow);
-		ucucmn::Put(VTokenId, Flow);
+		ucucmn::Put(DeviceId, Flow);
 
 		ucucmn::Commit(Flow);
 
@@ -391,20 +372,22 @@ namespace {
 	qRE;
 	}
 
-	void DeleteVToken_(void)
+	void Delete_(void)
 	{
 	qRH;
-		str::wString VToken;
+		str::wString RToken, VToken;
 		csdbnc::rRWFlow Flow;
 		ucumng::eAnswer Answer = ucumng::a_Undefined;
 	qRB;
-	VToken.Init();
+		tol::Init(RToken, VToken);
 
-		sclm::MGetValue(registry::parameter::VirtualToken, VToken);
+		sclm::MGetValue(registry::parameter::Token, RToken);
+		sclm::OGetValue(registry::parameter::VToken, VToken);
 
 		InitAndConnect_(Flow);
 
-		ucucmn::Put(ucumng::GetLabel(ucumng::rDeleteVToken_1), Flow);
+		ucucmn::Put(ucumng::GetLabel(ucumng::rDelete_1), Flow);
+		ucucmn::Put(RToken, Flow);
 		ucucmn::Put(VToken, Flow);
 
 		ucucmn::Commit(Flow);
@@ -433,13 +416,12 @@ qRB;
 	else if ( Command == "License" )
 		epsmsc::PrintLicense( NAME_MC );
 	C(Close);
-	C(CloseAll);
 	C(Execute);
 	C(FetchConfig);
 	C(SetProxy);
 	C(SetToken);
-	C(CreateVToken);
-	C(DeleteVToken);
+	C(Create);
+	C(Delete);
 	else
 		qRGnr();
 

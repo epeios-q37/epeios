@@ -35,8 +35,7 @@ namespace registry {
     extern rEntry In;
     extern rEntry Expression;
     extern rEntry NewProxy;
-    extern rEntry VirtualToken;
-    extern rEntry VirtualTokenId;
+    extern rEntry VToken;
     extern rEntry NewToken;
   }
 

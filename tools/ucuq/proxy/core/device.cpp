@@ -74,7 +74,7 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Row = seeker::GetVToken(RToken);  // If != 'qNIL', 'RToken' exists as virtual.
+  Row = seeker::GetVToken(str::Empty, RToken);  // If != 'qNIL', 'RToken' exists as virtual.
 
   if ( Row == qNIL ) {
     Row = seeker::GetRToken(RToken, Id);
@@ -116,7 +116,7 @@ qRE;
   return Caller;
 }
 
-void device::Withdraw(
+void device::WithdrawDevice(
   const str::dString &RToken,
   const str::dString &Id)
 {
@@ -135,7 +135,7 @@ qRT;
 qRE;
 }
 
-void device::WithdrawRTokens(const str::dString &RToken)
+void device::WithdrawDevices(const str::dString &RToken)
 {
 qRH;
   mtx::rHandle Locker;
@@ -207,7 +207,9 @@ qRE;
   return Row != qNIL;
 }
 
-bso::sBool device::DeleteVToken(const str::dString &VToken)
+bso::sBool device::DeleteVToken(
+  const str::dString &RToken,
+  const str::dString &VToken)
 {
   sSRow_ Row = qNIL;
 qRH;
@@ -215,9 +217,9 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Row = seeker::GetVToken(VToken);
+  Row = seeker::GetVToken(RToken, VToken);
 
-  if ( Row != qNIL )
+  if ( Row != qNIL ) 
     seeker::Delete(Row);
 qRR;
 qRT;
@@ -319,9 +321,9 @@ qRB;
 qRE;
 }
 
-bso::sBool device::GetVTokenFeatures(
-  const str::dString &VToken, 
-  str::dString &RToken, 
+bso::sBool device::GetVTokenId(
+  const str::dString &RToken,
+  const str::dString &VToken,
   str::dString &Id)
 {
   sSRow_ Row = qNIL;
@@ -331,7 +333,7 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Row = seeker::GetVToken(VToken);
+  Row = seeker::GetVToken(RToken, VToken);
 
   if ( Row != qNIL ) {
     Set.Init();
@@ -339,12 +341,10 @@ qRB;
     seeker::Get(Row, Set);
 
     if ( Set.ROrV != VToken )
-      qRGnr();
+      qRUnx();
 
-    if ( !Set.VOrR.Amount() )
-      qRGnr();
-
-    RToken = Set.VOrR;
+    if ( Set.VOrR != RToken )
+      qRUnx();
 
     if ( Set.IdOrR.Amount() )
       Id = Set.IdOrR;

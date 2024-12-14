@@ -354,7 +354,9 @@ qRE;
   return Tie.Caller;
 }
 
-sRow seeker::GetVToken(const str::dString &VToken)
+sRow seeker::GetVToken(
+  const str::dString &RToken,
+  const str::dString &VToken)
 {
   sRow Row = qNIL;
 qRH;
@@ -364,10 +366,9 @@ qRB;
 
   Row = index_::Search(VToken, str::Empty, str::Empty);
 
-  if ( Row != qNIL ) {
-    if ( !Ties_(Row).IsV() )
+  if ( Row != qNIL )
+    if ( !Ties_(Row).IsV() || ( RToken.Amount() && ( GetVOrR_(Row) != RToken ) ) )
       Row = qNIL;
-  }
 qRR;
 qRT;
 qRE;

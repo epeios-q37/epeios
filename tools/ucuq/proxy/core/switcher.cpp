@@ -152,7 +152,6 @@ namespace {
 		sck::rRWDriver *Driver = NULL;
 		sdr::tRow Row = qNIL;
 		rFeatures_ Features;
-		common::eCaller Caller = common::c_Undefined;
 		str::wString RToken, Id;
 	qRB;
 		Socket = Data.Socket;
@@ -168,7 +167,7 @@ namespace {
 
 		Features.Init();
 
-		switch ( Caller = Handshake_(*Driver, Features) ) {
+		switch ( Handshake_(*Driver, Features) ) {
 		case common::cDevice:
 			tol::Init(RToken, Id);
 

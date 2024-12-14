@@ -63,17 +63,19 @@ namespace device {
     const str::dString &RToken,
     const str::dString &Id,
     const void *User);
-  void Withdraw(
+  void WithdrawDevice(
     const str::dString &RToken,
     const str::dString &Id );
-  void WithdrawRTokens(const str::dString &RToken);
+  void WithdrawDevices(const str::dString &RToken);
   void DeleteVTokens(const str::dString &RToken);
   bso::sBool CreateVToken(
     const str::dString &VToken,
     const str::dString &RToken,
     const str::dString &Id,
     qRPD);
-  bso::sBool DeleteVToken(const str::dString &Token);
+  bso::sBool DeleteVToken(
+    const str::dString &RToken,
+    const str::dString &VToken);
   void GetRTokenIds(const str::dString &RToken, str::dStrings & Ids,
     bso::sBool Lock = true);
   void GetRTokenVTokens(
@@ -84,9 +86,9 @@ namespace device {
     const str::dString &RToken,
     str::dStrings &Ids,
     str::dStrings &VTokens);
-  bso::sBool GetVTokenFeatures(
+  bso::sBool GetVTokenId(
+    const str::dString & RToken,
     const str::dString &VToken,
-    str::dString &RToken,
     str::dString &Id);
 }
 
