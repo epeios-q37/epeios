@@ -61,23 +61,23 @@ namespace {
       Caller = qNIL;
     }
 #define T_(R) int(R != qNIL)
-#define F_(R,P) (T_(R) << P)
-#define M_ (F_(ROrV,2) & F_(IdOrR, 1) & T_(VOrR))
+#define F_(R,P) ( ( T_(R) & 1 ) << P)
+#define M_ (F_(ROrV,2) | F_(IdOrR, 1) | T_(VOrR))
     bso::sBool IsRToV(void) const
     {
-      return M_ & 3;
+      return M_ == 3;
     }
     bso::sBool IsVToR(void) const
     {
-      return M_ & 5;
+      return M_ == 5;
     }
     bso::sBool IsD(void) const
     {
-      return M_ & 6;
+      return M_ == 6;
     }
     bso::sBool IsVToD(void) const
     {
-      return M_ & 7;
+      return M_ == 7;
     }
     bso::sBool IsV(void) const
     {
@@ -92,30 +92,42 @@ namespace {
 
   str::wLStrings<sSRow_> Strings_;
 
+  typedef crt::qCMITEMs(str::dString, sSRow_) gStrItm_;
+
   namespace {
     namespace {
-      const str::dString &Get_(sSRow_ Row)
+      const str::dString &Get_(
+        sSRow_ Row,
+        gStrItm_ &Item)
       {
         if ( Row == qNIL )
           return str::Empty;
-        else
-          return Strings_(Row);
+        else {
+          Item.Init(Strings_);
+          return Item(Row);
+        }
       }
     }
   
-    const str::dString &GetROrV_(sRow Row)
+    const str::dString &GetROrV_(
+      sRow Row,
+      gStrItm_ &Item)
     {
-      return Get_(Ties_(Row).ROrV);
+      return Get_(Ties_(Row).ROrV, Item);
     }
 
-    const str::dString &GetIdOrR_(sRow Row)
+    const str::dString &GetIdOrR_(
+      sRow Row,
+      gStrItm_ &Item)
     {
-      return Get_(Ties_(Row).IdOrR);
+      return Get_(Ties_(Row).IdOrR, Item);
     }
 
-    const str::dString &GetVOrR_(sRow Row)
+    const str::dString &GetVOrR_(
+      sRow Row,
+      gStrItm_ &Item)
     {
-      return Get_(Ties_(Row).VOrR);
+      return Get_(Ties_(Row).VOrR, Item);
     }
   }
 
@@ -129,14 +141,15 @@ namespace {
         const str::dString &VOrR,
         sRow Row)
       {
-        bso::sSign Sign = str::Compare(ROrV, GetROrV_(Row));
+        gStrItm_ Item;
+        bso::sSign Sign = str::Compare(ROrV, GetROrV_(Row, Item));
 
         if ( Sign == 0 )
-          Sign = str::Compare(IdOrR, GetIdOrR_(Row));
+          Sign = str::Compare(IdOrR, GetIdOrR_(Row, Item));
 
         if ( Sign == 0 )
           if ( VOrR.Amount() )
-            Sign = str::Compare(VOrR, GetVOrR_(Row));
+            Sign = str::Compare(VOrR, GetVOrR_(Row, Item));
           else
             qRGnr();
 
@@ -149,13 +162,14 @@ namespace {
         const str::dString &VOrR,
         sRow Row)
       {
-        bso::sSign Sign = str::Compare(ROrV, GetROrV_(Row));
+        gStrItm_ Item;
+        bso::sSign Sign = str::Compare(ROrV, GetROrV_(Row, Item));
 
         if ( ( Sign == 0 ) && IdOrR.Amount() )
-          Sign = str::Compare(IdOrR, GetIdOrR_(Row));
+          Sign = str::Compare(IdOrR, GetIdOrR_(Row, Item));
 
         if ( ( Sign == 0 ) && VOrR.Amount() )
-          Sign = str::Compare(VOrR, GetVOrR_(Row));
+          Sign = str::Compare(VOrR, GetVOrR_(Row, Item));
 
         return Sign;
       }
@@ -243,17 +257,20 @@ namespace {
 
     void Remove(sRow Row)
     {
-      Root_ = Core_.Balance(Core_.Delete(Row, Root_));
+      Root_ = Core_.Delete(Row, Root_);
+
+      if ( Root_ != qNIL )
+        Root_ = Core_.Balance(Root_);
     }
 
     sRow GetLesser(sRow Row)
     {
-      return Core_.GetLesser(Row);
+      return Core_.Previous(Row);
     }
 
     sRow GetGreater(sRow Row)
     {
-      return Core_.GetGreater(Row);
+      return Core_.Next(Row);
     }
   }
 
@@ -311,23 +328,32 @@ qRT;
 qRE;
 }
 
+namespace {
+  const dSet &Get_(
+    sRow Row,
+    dSet &Set)
+  {
+    gStrItm_ Item;
+    sTie_ Tie = Ties_(Row);
+
+    Set.ROrV = Get_(Tie.ROrV, Item);
+    Set.IdOrR = Get_(Tie.IdOrR, Item);
+    Set.VOrR = Get_(Tie.VOrR, Item);
+
+    return Set;
+  }
+}
+
 const dSet &seeker::Get(
   sRow Row,
   dSet &Set)
 {
 qRH;
   mtx::rHandle Locker;
-  sTie_ Tie;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Tie.Init();
-
-  Tie = Ties_(Row);
-
-  Set.ROrV = Get_(Tie.ROrV);
-  Set.IdOrR = Get_(Tie.IdOrR);
-  Set.VOrR = Get_(Tie.VOrR);
+  Get_(Row, Set);
 qRR;
 qRT;
 qRE;
@@ -361,13 +387,14 @@ sRow seeker::GetVToken(
   sRow Row = qNIL;
 qRH;
   mtx::rHandle Locker;
+  gStrItm_ Item;
 qRB;
   Locker.InitAndLock(Mutex_);
 
   Row = index_::Search(VToken, str::Empty, str::Empty);
 
   if ( Row != qNIL )
-    if ( !Ties_(Row).IsV() || ( RToken.Amount() && ( GetVOrR_(Row) != RToken ) ) )
+    if ( !Ties_(Row).IsV() || ( RToken.Amount() && ( GetVOrR_(Row, Item) != RToken ) ) )
       Row = qNIL;
 qRR;
 qRT;
@@ -405,19 +432,20 @@ qRH;
   sRow
     PrevRow = qNIL,
     Row = qNIL;
+  gStrItm_ Item;
 qRB;
   Locker.InitAndLock(Mutex_);
 
   Row = index_::Search(RToken, str::Empty, str::Empty);
 
-  while ( ( Row != qNIL ) && ( GetROrV_(Row) == RToken ) ) {
+  while ( ( Row != qNIL ) && ( GetROrV_(Row, Item) == RToken ) ) {
     PrevRow = Row;
     Row = index_::GetLesser(Row);
   }
 
   Row = PrevRow;
 
-  while ( ( Row != qNIL ) && ( GetROrV_(Row) == RToken ) ) {
+  while ( ( Row != qNIL ) && ( GetROrV_(Row, Item) == RToken ) ) {
     if ( Ties_(Row).IsD() )
       Rows.Append(Row);
 
@@ -438,21 +466,22 @@ qRH;
   sRow
     PrevRow = qNIL,
     Row = qNIL;
+  gStrItm_ Item;
  qRB;
   Locker.InitAndLock(Mutex_);
 
   Row = index_::Search(str::Empty, RToken, str::Empty);
 
-  while ( ( Row != qNIL ) && ( GetIdOrR_(Row) == RToken ) ) {
+  while ( ( Row != qNIL ) && ( GetIdOrR_(Row, Item) == RToken ) ) {
     PrevRow = Row;
     Row = index_::GetLesser(Row);
   }
 
   Row = PrevRow;
 
-  while ( ( Row != qNIL ) && ( GetIdOrR_(Row) == RToken ) ) {
+  while ( ( Row != qNIL ) && ( GetIdOrR_(Row, Item) == RToken ) ) {
     if ( Ties_(Row).IsRToV() )
-      Rows.Append(index_::Search(Get_(Ties_(Row).VOrR), str::Empty, str::Empty));
+      Rows.Append(index_::Search(Get_(Ties_(Row).VOrR, Item), str::Empty, str::Empty));
 
     Row = index_::GetGreater(Row);
   }
@@ -579,7 +608,7 @@ qRB;
   if ( Ties_(Row).IsV() ) {
     Set.Init();
 
-    Get(Row, Set);
+    Get_(Row, Set);
 
     Delete_(index_::Search(str::Empty, Set.IdOrR, Set.VOrR));
   }

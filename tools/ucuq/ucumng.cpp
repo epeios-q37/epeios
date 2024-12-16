@@ -32,6 +32,7 @@ const char *ucumng::GetLabel(eRequest Request)
     C(Execute_1);
     C(Create_1);
     C(Delete_1);
+    C(Fetch_1);
   default:
     qRFwk();
     break;

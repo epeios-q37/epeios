@@ -80,6 +80,20 @@ namespace ucucmn {
     return csdcmn::Put(String, Flow);
   }
 
+  inline void Put(
+    const str::dStrings &Strings,
+    flw::rWFlow &Flow)
+  {
+    return csdcmn::Put(Strings, Flow);
+  }
+
+  inline void Put(
+    const str::wStrings &Strings,
+    flw::rWFlow &Flow)
+  {
+    return csdcmn::Put(Strings, Flow);
+  }
+
   template <typename integer> void Put(
     integer Integer,
     flw::rWFlow &Flow)

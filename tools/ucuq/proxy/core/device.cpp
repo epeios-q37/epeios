@@ -233,7 +233,7 @@ void device::GetRTokenIds(
   str::dStrings &Ids,
   bso::sBool Lock)
 {
-  qRH;
+ qRH;
   mtx::rHandle Locker;
   wSRows_ Rows;
   sdr::sRow Row = qNIL;
@@ -260,6 +260,8 @@ qRB;
       qRGnr();
 
     Ids.Append(Set.IdOrR);
+
+    Row = Rows.Next(Row);
   }
   qRR;
 qRT;
@@ -271,7 +273,7 @@ void device::GetRTokenVTokens(
   str::dStrings &VTokens,
   bso::sBool Lock)
 {
-  qRH;
+ qRH;
   mtx::rHandle Locker;
   wSRows_ Rows;
   sdr::sRow Row = qNIL;
@@ -291,47 +293,31 @@ qRB;
 
     seeker::Get(Rows(Row), Set);
 
-    if ( Set.IdOrR != RToken )
+    if ( Set.VOrR != RToken )
       qRGnr();
 
-    if ( Set.ROrV.Amount() )
-      qRGnr();
+    VTokens.Append(Set.ROrV);
 
-    VTokens.Append(Set.VOrR);
+    Row = Rows.Next(Row);
   }
   qRR;
 qRT;
 qRE;
 }
 
-void device::GetRTokenFeatures(
-  const str::dString &RToken,
-  str::dStrings &Ids,
-  str::dStrings &VTokens)
-{
-qRH;
-  mtx::rHandle Locker;
-qRB;
-  Locker.InitAndLock(Mutex_);
-
-  GetRTokenIds(RToken, Ids, false);
-  GetRTokenVTokens(RToken, VTokens, false);
-  qRR;
-  qRT;
-qRE;
-}
-
 bso::sBool device::GetVTokenId(
   const str::dString &RToken,
   const str::dString &VToken,
-  str::dString &Id)
+  str::dString &Id,
+  bso::sBool Lock)
 {
   sSRow_ Row = qNIL;
 qRH;
   mtx::rHandle Locker;
   seeker::wSet Set;
 qRB;
-  Locker.InitAndLock(Mutex_);
+  if ( Lock )
+    Locker.InitAndLock(Mutex_);
 
   Row = seeker::GetVToken(RToken, VToken);
 
@@ -353,6 +339,39 @@ qRR;
 qRT;
 qRE;
   return Row != qNIL;
+}
+
+void device::GetTokensFeatures(
+  const str::dString &RToken,
+  str::dStrings &Ids,
+  str::dStrings &VTokens,
+  str::dStrings &VTokenIds)
+{
+qRH;
+  mtx::rHandle Locker;
+  sdr::sRow Row = qNIL;
+  str::wString Id;
+qRB;
+  Locker.InitAndLock(Mutex_);
+
+  Row = VTokens.Last();
+
+  GetRTokenIds(RToken, Ids, false);
+  GetRTokenVTokens(RToken, VTokens, false);
+
+  Row = VTokens.Next(Row);
+
+  while ( Row != qNIL ) {
+    Id.Init();
+    GetVTokenId(RToken, VTokens(Row), Id, false);
+
+    VTokenIds.Append(Id);
+
+    Row = VTokens.Next(Row);
+  }
+qRR;
+qRT;
+qRE;
 }
 
 qGCTOR(device)

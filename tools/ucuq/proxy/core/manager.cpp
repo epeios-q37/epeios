@@ -37,7 +37,7 @@ namespace {
   qRH;
     str::string Token, Id;
   qRB;
-  tol::Init(Token, Id);
+    tol::Init(Token, Id);
     ucucmn::Get(Manager, Token);
     ucucmn::Get(Manager, Id);
     ucucmn::Dismiss(Manager);
@@ -154,36 +154,63 @@ namespace {
     ucucmn::Put(str::Empty, Manager);
 
     ucucmn::Commit(Manager);
- qRR;
- qRT;
- qRE;
- }
+  qRR;
+  qRT;
+  qRE;
+  }
 
-void Delete_(flw::rRWFlow &Manager)
-{
-qRH;
-  str::wString RToken, VToken;
-qRB;
-  tol::Init(RToken, VToken);
+  void Delete_(flw::rRWFlow &Manager)
+  {
+  qRH;
+    str::wString RToken, VToken;
+  qRB;
+    tol::Init(RToken, VToken);
 
-  ucucmn::Get(Manager, RToken);
-  ucucmn::Get(Manager, VToken);
+    ucucmn::Get(Manager, RToken);
+    ucucmn::Get(Manager, VToken);
 
-  ucucmn::Dismiss(Manager);
+    ucucmn::Dismiss(Manager);
 
-  if ( VToken.Amount() )
-    device::DeleteVToken(RToken, VToken);
-  else
-    device::DeleteVTokens(RToken);
+    if ( VToken.Amount() )
+      device::DeleteVToken(RToken, VToken);
+    else
+      device::DeleteVTokens(RToken);
 
-  ucucmn::Put(ucumng::aOK, Manager);
-  ucucmn::Put(str::Empty, Manager);
+    ucucmn::Put(ucumng::aOK, Manager);
+    ucucmn::Put(str::Empty, Manager);
 
-  ucucmn::Commit(Manager);
- qRR;
- qRT;
- qRE;
- }
+    ucucmn::Commit(Manager);
+  qRR;
+  qRT;
+  qRE;
+  }
+
+  void Fetch_(flw::rRWFlow &Manager)
+  {
+  qRH;
+    str::wString RToken;
+    str::wStrings RTokenIds, VTokens, VTokenIds;
+  qRB;
+    RToken.Init();  
+
+    ucucmn::Get(Manager, RToken);
+
+    ucucmn::Dismiss(Manager);
+
+    tol::Init(RTokenIds, VTokens, VTokenIds);
+    device::GetTokensFeatures(RToken, RTokenIds, VTokens, VTokenIds);
+
+    ucucmn::Put(ucumng::aOK, Manager);
+    ucucmn::Put(str::Empty, Manager);
+    ucucmn::Put(RTokenIds, Manager);
+    ucucmn::Put(VTokens, Manager);
+    ucucmn::Put(VTokenIds, Manager);
+
+    ucucmn::Commit(Manager);
+  qRR;
+  qRT;
+  qRE;
+  }
 }
 
 void manager::Process(fdr::rRWDriver &Driver)
@@ -209,6 +236,9 @@ qRB;
     break;
   case ucumng::rDelete_1:
     Delete_(Flow);
+    break;
+  case ucumng::rFetch_1:
+    Fetch_(Flow);
     break;
   default:
     qRGnr();

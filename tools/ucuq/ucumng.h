@@ -30,6 +30,7 @@ namespace ucumng {
     rExecute_1,
     rCreate_1,
     rDelete_1,
+    rFetch_1,
     r_amount,
     r_Undefined
   };

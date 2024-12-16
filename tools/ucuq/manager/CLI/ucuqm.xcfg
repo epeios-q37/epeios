@@ -13,13 +13,13 @@
       <xpp:define name="Dev">
         <HostService>192.168.1.87:53800</HostService>
       </xpp:define>
-      <xpp:expand select="Prod"/>
-      <Command>FetchConfig</Command>
+      <xpp:expand select="Dev"/>
+      <Command>Config</Command>
     </Parameters>
     <xpp:expand href="../../../../../q37/epeios/tools/ucuq/manager/token.xcfg"/>
     <Definitions>
       <Scripts>
-        <Script Label="FetchConfig" Expression="config">
+        <Script Label="Config" Expression="config">
           <![CDATA[
 import json
 
@@ -69,7 +69,7 @@ with open("ucuq.json", "w") as outFile:
         <Translation language="fr">Exécute un script sur un dispositif</Translation>
         <Translation language="en">Executes a script on device</Translation>
       </Translations>
-      <Translations text="FetchConfigCommandDescription">
+      <Translations text="ConfigCommandDescription">
         <Translation language="fr">Récupère la configuration de dispositif</Translation>
         <Translation language="en">Gets device config</Translation>
       </Translations>
@@ -88,6 +88,10 @@ with open("ucuq.json", "w") as outFile:
       <Translations text="DeleteCommandDescription">
         <Translation language="fr">Suppression de jeton(s) virtuel(s)</Translation>
         <Translation language="en">Deletes virtual(s) token(s)</Translation>
+      </Translations>
+      <Translations text="FetchCommandDescription">
+        <Translation language="fr">Affiche les jetons virutels et les identifiants</Translation>
+        <Translation language="en">Displays virtual tokens and ids of a token</Translation>
       </Translations>
       <!-- Options -->
       <Translations text="TokenOptionLabel">
@@ -163,11 +167,12 @@ with open("ucuq.json", "w") as outFile:
       <!-- Commands -->
       <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage="[%IdArg%]"/>
       <Argument id="Execute" Description="ExecuteCommandDescription" long="execute" Value="Execute" Usage="[%ExpressionOption%] %IdArg% [%InArg%]"/>
-      <Argument id="FetchConfig" Description="FetchConfigCommandDescription" long="fetch-config" Value="FetchConfig" Usage="%IdArg%"/>
+      <Argument id="Config" Description="ConfigCommandDescription" long="config" Value="Config" Usage="%IdArg%"/>
       <Argument id="SetProxy" Description="SetProxyCommandDescription" long="set-proxy" Value="SetProxy" Usage="%IdArg% %NewProxyArg%"/>
       <Argument id="SetToken" Description="SetTokenCommandDescription" long="set-token" Value="SetToken" Usage="%IdArg% %NewTokenArg% "/>
-      <Argument id="Create" Description="CreateCommandDescription" long="" Value="Create" Usage="%VTokenArg% [%IdArg%]"/>
+      <Argument id="Create" Description="CreateCommandDescription" long="create" Value="Create" Usage="%VTokenArg% [%IdArg%]"/>
       <Argument id="Delete" Description="DeleteCommandDescription" long="delete" Value="Delete" Usage="[%VTokenArg%]"/>
+      <Argument id="Fetch" Description="FetchCommandDescription" long="fetch" Value="Fetch" Usage=""/>
       <!-- Options -->
       <Argument id="TokenOption" Label="TokenOptionLabel" short="t" long="token" Description="TokenOptionDescription" Path="Token"/>
       <Argument id="ExpressionOption" Label="ExpressionOptionLabel" short="e" long="expr" Description="ExpressionOptionDescription" Path="Expression"/>
@@ -181,7 +186,8 @@ with open("ucuq.json", "w") as outFile:
         <Layout command="Close">
           <Link index="0" Target="IdArg"/>
         </Layout>
-        <Layout command="FetchConfig">
+        <Layout command="Config">
+          <Link index="0" Target="IdArg"/>
         </Layout>
         <Layout command="Execute">
           <Link index="0" Target="IdArg"/>
@@ -196,11 +202,13 @@ with open("ucuq.json", "w") as outFile:
           <Link index="1" Target="NewTokenArg"/>
         </Layout>
         <Layout command="Create">
-          <Link index="0" Target="VirtualTokenArg"/>
-          <Link index="1" Target="VirtualTokenIdArg"/>
+          <Link index="0" Target="VTokenArg"/>
+          <Link index="1" Target="IdArg"/>
         </Layout>
         <Layout command="Delete">
           <Link index="0" Target="VirtualTokenArg"/>
+        </Layout>
+        <Layout command="Fetch">
         </Layout>
       </Layouts>
     </Arguments>

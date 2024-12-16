@@ -274,14 +274,18 @@ namespace {
 	{
 	qRH;
 		csdbnc::rRWFlow Flow;
-		str::wString Token;
+		str::wString Token, Id;
 	qRB;
+		tol::Init(Token, Id);
+
+		sclm::MGetValue(registry::parameter::Token, Token);
+		sclm::OGetValue(registry::parameter::Id, Id);
+	
 		InitAndConnect_(Flow);
 
 		ucucmn::Put(ucumng::GetLabel(ucumng::rClose_1), Flow);
-
-		Token.Init();
-		ucucmn::Put(sclm::MGetValue(registry::parameter::Token, Token), Flow);
+		ucucmn::Put(Token, Flow);
+		ucucmn::Put(Id, Flow);
 
 		ucucmn::Commit(Flow);
 	qRR;
@@ -309,9 +313,9 @@ namespace {
 	qRE;
 	}
 
-	void FetchConfig_(void)
+	void Config_(void)
 	{
-		ExecuteScript_("FetchConfig");
+		ExecuteScript_("Config");
 	}
 
 	void SetProxy_(void)
@@ -397,7 +401,80 @@ namespace {
 	qRT;
 	qRE;
 	}
+	
+	void Fetch_(void)
+	{
+	qRH;
+		str::wString RToken;
+		csdbnc::rRWFlow Flow;
+		ucumng::eAnswer Answer = ucumng::a_Undefined;
+		str::wStrings RTokenIds, VTokens, VTokenIds;
+		sdr::sRow Row = qNIL;
+	qRB;
+		RToken.Init();
+
+		sclm::MGetValue(registry::parameter::Token, RToken);
+
+		InitAndConnect_(Flow);
+
+		ucucmn::Put(ucumng::GetLabel(ucumng::rFetch_1), Flow);
+		ucucmn::Put(RToken, Flow);
+
+		ucucmn::Commit(Flow);
+
+		HandleAnswer_(Flow);
+
+		tol::Init(RTokenIds, VTokens, VTokenIds);
+		ucucmn::Get(Flow, RTokenIds);
+		ucucmn::Get(Flow, VTokens);
+		ucucmn::Get(Flow, VTokenIds);
+
+		ucucmn::Dismiss(Flow);
+
+		if ( VTokens.Amount() != VTokenIds.Amount() )
+			qRGnr();
+
+		cio::COut << "{\"Ids\":[";
+
+		Row = RTokenIds.First();
+
+		while ( Row != qNIL ) {
+			cio::COut << '"' << RTokenIds(Row) << '"';
+
+			Row = RTokenIds.Next(Row);
+
+			if ( Row != qNIL )
+				cio::COut << ",";
+		}
+
+		cio::COut << "],";
+
+		cio::COut << "\"VTokens\":[";
+
+		Row = VTokens.First();
+
+		while ( Row != qNIL ) {
+			if ( VTokenIds(Row).Amount() )
+				cio::COut << "[";
+
+			cio::COut << '"' << VTokens(Row) << '"';
+
+			if ( VTokenIds(Row).Amount() )
+				cio::COut << ",\"" << VTokenIds(Row) << "\"]";
+
+			Row = VTokens.Next(Row);
+
+			if ( Row != qNIL )
+				cio::COut << ',';
+		}
+
+		cio::COut << "]}\n";
+	qRR;
+	qRT;
+	qRE;
+	}
 }
+
 
 
 #define C( name )\
@@ -417,11 +494,12 @@ qRB;
 		epsmsc::PrintLicense( NAME_MC );
 	C(Close);
 	C(Execute);
-	C(FetchConfig);
+	C(Config);
 	C(SetProxy);
 	C(SetToken);
 	C(Create);
 	C(Delete);
+	C(Fetch);
 	else
 		qRGnr();
 
