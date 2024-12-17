@@ -13,7 +13,7 @@
       <xpp:define name="Dev">
         <HostService>192.168.1.87:53800</HostService>
       </xpp:define>
-      <xpp:expand select="Dev"/>
+      <xpp:expand select="Prod"/>
       <Command>Config</Command>
     </Parameters>
     <xpp:expand href="../../../../../q37/epeios/tools/ucuq/manager/token.xcfg"/>
@@ -93,6 +93,11 @@ with open("ucuq.json", "w") as outFile:
         <Translation language="fr">Affiche les jetons virutels et les identifiants</Translation>
         <Translation language="en">Displays virtual tokens and ids of a token</Translation>
       </Translations>
+      <!-- Flags-->
+      <Translations text="JSONFlagDescription">
+        <Translation language="fr">formatage de la sortie en JSON</Translation>
+        <Translation language="en">JSON output formating</Translation>
+      </Translations>
       <!-- Options -->
       <Translations text="TokenOptionLabel">
         <Translation language="fr">jeton</Translation>
@@ -118,6 +123,14 @@ with open("ucuq.json", "w") as outFile:
       <Translations text="InArgDescription">
         <Translation language="fr">Nom du fichier d'entrée (utilisation de l'entrée standard si absent)</Translation>
         <Translation language="en">Input file name (use of standard input if missing)</Translation>
+      </Translations>
+      <Translations text="OutArgLabel">
+        <Translation language="fr">out</Translation>
+        <Translation language="en">out</Translation>
+      </Translations>
+      <Translations text="OutArgDescription">
+        <Translation language="fr">Nom du fichier de sortie (utilisation de la sortie standard si absent)</Translation>
+        <Translation language="en">Output file name (use of standard output if missing)</Translation>
       </Translations>
       <Translations text="VTokenArgLabel">
         <Translation language="fr">vtoken</Translation>
@@ -167,17 +180,20 @@ with open("ucuq.json", "w") as outFile:
       <!-- Commands -->
       <Argument id="Close" Description="CloseCommandDescription" long="close" Value="Close" Usage="[%IdArg%]"/>
       <Argument id="Execute" Description="ExecuteCommandDescription" long="execute" Value="Execute" Usage="[%ExpressionOption%] %IdArg% [%InArg%]"/>
-      <Argument id="Config" Description="ConfigCommandDescription" long="config" Value="Config" Usage="%IdArg%"/>
+      <Argument id="Config" Description="ConfigCommandDescription" long="config" Value="Config" Usage="%IdArg% [%OutArg%]"/>
       <Argument id="SetProxy" Description="SetProxyCommandDescription" long="set-proxy" Value="SetProxy" Usage="%IdArg% %NewProxyArg%"/>
       <Argument id="SetToken" Description="SetTokenCommandDescription" long="set-token" Value="SetToken" Usage="%IdArg% %NewTokenArg% "/>
       <Argument id="Create" Description="CreateCommandDescription" long="create" Value="Create" Usage="%VTokenArg% [%IdArg%]"/>
       <Argument id="Delete" Description="DeleteCommandDescription" long="delete" Value="Delete" Usage="[%VTokenArg%]"/>
-      <Argument id="Fetch" Description="FetchCommandDescription" long="fetch" Value="Fetch" Usage=""/>
+      <Argument id="Fetch" Description="FetchCommandDescription" long="fetch" Value="Fetch" Usage="[%JSONFlag%] [%OutArg%]"/>
+      <!-- Flags -->
+      <Argument id="JSONFlag" long="json" Description="JSONFlagDescription" Path="JSON" Value="True"/>
       <!-- Options -->
       <Argument id="TokenOption" Label="TokenOptionLabel" short="t" long="token" Description="TokenOptionDescription" Path="Token"/>
       <Argument id="ExpressionOption" Label="ExpressionOptionLabel" short="e" long="expr" Description="ExpressionOptionDescription" Path="Expression"/>
       <!-- Args -->
       <Argument id="InArg" Label="InArgLabel" Description="InArgDescription" Path="In"/>
+      <Argument id="OutArg" Label="OutArgLabel" Description="OutArgDescription" Path="Out"/>
       <Argument id="NewProxyArg" Label="NewProxyArgLabel" Description="NewProxyArgDescription" Path="NewProxy"/>
       <Argument id="VTokenArg" Label="VTokenArgLabel" Description="VTokenArgDescription" Path="VToken"/>
       <Argument id="IdArg" Label="IdArgLabel" Description="IdArgDescription" Path="Id"/>
@@ -188,6 +204,7 @@ with open("ucuq.json", "w") as outFile:
         </Layout>
         <Layout command="Config">
           <Link index="0" Target="IdArg"/>
+          <Link index="1" Target="OutArg"/>
         </Layout>
         <Layout command="Execute">
           <Link index="0" Target="IdArg"/>
@@ -206,9 +223,10 @@ with open("ucuq.json", "w") as outFile:
           <Link index="1" Target="IdArg"/>
         </Layout>
         <Layout command="Delete">
-          <Link index="0" Target="VirtualTokenArg"/>
+          <Link index="0" Target="VTokenArg"/>
         </Layout>
         <Layout command="Fetch">
+          <Link index="0" Target="OutArg"/>
         </Layout>
       </Layouts>
     </Arguments>

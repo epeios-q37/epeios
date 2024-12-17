@@ -610,7 +610,7 @@ qRB;
 
     Get_(Row, Set);
 
-    Delete_(index_::Search(str::Empty, Set.IdOrR, Set.VOrR));
+    Delete_(index_::Search(str::Empty, Set.VOrR, Set.ROrV));
   }
 
   Delete_(Row);

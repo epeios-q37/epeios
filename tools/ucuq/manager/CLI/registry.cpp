@@ -26,10 +26,12 @@ using namespace registry;
 
 #define D(name)  rEntry registry::parameter::name(#name, sclr::Parameters)
 
+D(JSON);
 D(HostService);
 D(Token);
 D(Id);
 D(In);
+D(Out);
 D(Expression);
 D(NewProxy);
 D(NewToken);

@@ -401,6 +401,97 @@ namespace {
 	qRT;
 	qRE;
 	}
+
+	namespace fetch_ {
+		void JSON(
+			const str::dStrings &RTokenIds,
+			const str::dStrings &VTokens,
+			const str::dStrings &VTokenIds,
+			txf::sWFlow &Flow)
+		{
+			sdr::sRow Row = qNIL;
+
+			Flow << "{\"Ids\":[";
+
+			Row = RTokenIds.First();
+
+			while ( Row != qNIL ) {
+				Flow << '"' << RTokenIds(Row) << '"';
+
+				Row = RTokenIds.Next(Row);
+
+				if ( Row != qNIL )
+					Flow << ",";
+			}
+
+			Flow << "],";
+
+			Flow << "\"VTokens\":[";
+
+			Row = VTokens.First();
+
+			while ( Row != qNIL ) {
+				if ( VTokenIds(Row).Amount() )
+					Flow << "[";
+
+				Flow << '"' << VTokens(Row) << '"';
+
+				if ( VTokenIds(Row).Amount() )
+					Flow << ",\"" << VTokenIds(Row) << "\"]";
+
+				Row = VTokens.Next(Row);
+
+				if ( Row != qNIL )
+					Flow << ',';
+			}
+
+			Flow << "]}\n";
+		}
+
+		void XML(
+			const str::dStrings &RTokenIds,
+			const str::dStrings &VTokens,
+			const str::dStrings &VTokenIds,
+			txf::sWFlow &Flow)
+		{
+		qRH;
+			sdr::sRow Row = qNIL;
+			xml::rWriter Writer;
+		qRB;
+			Writer.Init(Flow, xml::oIndent);
+			Writer.PushTag("UCUq");
+			Writer.PushTag("Ids");
+
+			Row = RTokenIds.First();
+
+			while ( Row != qNIL ) {
+				Writer.PutValue(RTokenIds(Row), "Id");
+
+				Row = RTokenIds.Next(Row);
+			}
+
+			Writer.PopTag();
+
+			Writer.PushTag("VTokens");
+
+			Row = VTokens.First();
+
+			while ( Row != qNIL ) {
+				Writer.PushTag("VToken");
+				Writer.PutAttribute("value", VTokens(Row));
+
+				if ( VTokenIds(Row).Amount() )
+					Writer.PutAttribute("Id", VTokenIds(Row));
+
+				Writer.PopTag();
+
+				Row = VTokens.Next(Row);
+			}
+		qRR;
+		qRT;
+		qRE;
+		}
+	}
 	
 	void Fetch_(void)
 	{
@@ -409,7 +500,8 @@ namespace {
 		csdbnc::rRWFlow Flow;
 		ucumng::eAnswer Answer = ucumng::a_Undefined;
 		str::wStrings RTokenIds, VTokens, VTokenIds;
-		sdr::sRow Row = qNIL;
+		sclm::rTWFlowRack Rack;
+		str::wString OutFileName;
 	qRB;
 		RToken.Init();
 
@@ -434,42 +526,15 @@ namespace {
 		if ( VTokens.Amount() != VTokenIds.Amount() )
 			qRGnr();
 
-		cio::COut << "{\"Ids\":[";
+		OutFileName.Init();
 
-		Row = RTokenIds.First();
-
-		while ( Row != qNIL ) {
-			cio::COut << '"' << RTokenIds(Row) << '"';
-
-			Row = RTokenIds.Next(Row);
-
-			if ( Row != qNIL )
-				cio::COut << ",";
-		}
-
-		cio::COut << "],";
-
-		cio::COut << "\"VTokens\":[";
-
-		Row = VTokens.First();
-
-		while ( Row != qNIL ) {
-			if ( VTokenIds(Row).Amount() )
-				cio::COut << "[";
-
-			cio::COut << '"' << VTokens(Row) << '"';
-
-			if ( VTokenIds(Row).Amount() )
-				cio::COut << ",\"" << VTokenIds(Row) << "\"]";
-
-			Row = VTokens.Next(Row);
-
-			if ( Row != qNIL )
-				cio::COut << ',';
-		}
-
-		cio::COut << "]}\n";
+		sclm::OGetValue(registry::parameter::Out, OutFileName);
+		if ( sclm::OGetBoolean(registry::parameter::JSON, false) )
+			fetch_::JSON(RTokenIds, VTokens, VTokenIds, Rack.Init(OutFileName));
+		else
+			fetch_::XML(RTokenIds, VTokens, VTokenIds, Rack.Init(OutFileName));
 	qRR;
+		Rack.HandleError();
 	qRT;
 	qRE;
 	}

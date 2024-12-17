@@ -16,7 +16,7 @@
       <xpp:bloc>/home/csimon/hg</xpp:bloc>
     </xpp:define>
     <ModulesFileName>
-      <xpp:expand select="WindowsHGRoot"/>
+      <xpp:expand select="LinuxHGRoot"/>
       <xpp:bloc>/q37/epeios/tools/ucuq/proxy/core/Modules.xml</xpp:bloc>
     </ModulesFileName>
   </Parameters>

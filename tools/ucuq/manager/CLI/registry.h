@@ -29,10 +29,12 @@ namespace registry {
 	namespace parameter {
 		using namespace sclr::parameter;
 
+    extern rEntry JSON;
     extern rEntry HostService;
     extern rEntry Token;
     extern rEntry Id;
     extern rEntry In;
+    extern rEntry Out;
     extern rEntry Expression;
     extern rEntry NewProxy;
     extern rEntry VToken;
