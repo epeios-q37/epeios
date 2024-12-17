@@ -95,7 +95,7 @@ qRE;
 }
 
 common::rCaller *device::Hire(
-  const str::dString &RToken,
+  const str::dString &Token,
   const str::dString &Id,
   const void *UserDiscriminator)
 {
@@ -106,7 +106,7 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Row = seeker::GetRToken(RToken, Id);
+  Row = seeker::GuessRToken(Token, Id);
 
   if ( Row != qNIL )
     Caller = Callers_.Hire(seeker::GetCaller(Row), UserDiscriminator);
@@ -196,6 +196,11 @@ qRH;
   mtx::rHandle Locker;
 qRB;
   Locker.InitAndLock(Mutex_);
+
+  Row = seeker::GetVToken(RToken, VToken);
+
+  if ( Row != qNIL )
+    seeker::Delete(Row);
 
   Row = seeker::Create(VToken, RToken, Id);
 

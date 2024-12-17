@@ -55,7 +55,7 @@ namespace device {
   };
 
   bso::sBool New(
-    const str::dString &RToken,
+    const str::dString &Token,
     const str::dString &Id,
     sck::rRWDriver *Driver,
     qRPD);

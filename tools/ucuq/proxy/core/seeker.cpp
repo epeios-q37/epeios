@@ -402,6 +402,21 @@ qRE;
   return Row;
 }
 
+namespace {
+  sRow GetRToken_(
+    const str::dString &RToken,
+    const str::dString &Id)
+  {
+    sRow Row = index_::Search(RToken, Id, str::Empty);
+
+    if ( Row != qNIL )
+      if ( !Ties_(Row).IsD() )
+        Row = qNIL;
+
+    return Row;
+  }
+}
+
 sRow seeker::GetRToken(
   const str::dString &RToken,
   const str::dString &Id)
@@ -412,11 +427,41 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Row = index_::Search(RToken, Id, str::Empty);
+  Row = GetRToken_(RToken, Id);
+qRR;
+qRT;
+qRE;
+  return Row;
+}
+
+namespace {
+  sRow GetVTokenRToken_(
+    sRow VTokenRow,
+    const str::dString &IdCandidate)
+  {
+    gStrItm_ RTokenItem, IdItem;
+
+    const str::dString &Id = GetIdOrR_(VTokenRow, IdItem);
+
+    return GetRToken_(GetVOrR_(VTokenRow, RTokenItem), Id.Amount() ? Id : IdCandidate);
+  }
+}
+
+sRow seeker::GuessRToken(
+  const str::dString &Token,
+  const str::dString &Id)
+{
+  sRow Row = qNIL;
+qRH;
+  mtx::rHandle Locker;
+qRB;
+  Locker.InitAndLock(Mutex_);
+
+  Row = index_::Search(Token, str::Empty, str::Empty);
 
   if ( Row != qNIL )
-    if ( !Ties_(Row).IsD() )
-      Row = qNIL;
+    if ( Ties_(Row).IsV() )
+      Row = GetVTokenRToken_(Row, Id);
 qRR;
 qRT;
 qRE;

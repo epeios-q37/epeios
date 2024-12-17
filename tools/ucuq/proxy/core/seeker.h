@@ -78,6 +78,10 @@ namespace seeker {
     const str::dString &RToken,
     const str::dString &Id);
 
+  sRow GuessRToken(
+    const str::dString &Token,
+    const str::dString &Id);
+
   const dRows &GetRTokens(
     const str::dString &RToken,
     dRows &Rows);

@@ -426,18 +426,12 @@ namespace {
 
 			Flow << "],";
 
-			Flow << "\"VTokens\":[";
+			Flow << "\"VTokens\":{";
 
 			Row = VTokens.First();
 
 			while ( Row != qNIL ) {
-				if ( VTokenIds(Row).Amount() )
-					Flow << "[";
-
-				Flow << '"' << VTokens(Row) << '"';
-
-				if ( VTokenIds(Row).Amount() )
-					Flow << ",\"" << VTokenIds(Row) << "\"]";
+				Flow << '"' << VTokens(Row) << "\": \"" << VTokenIds(Row) << '"';
 
 				Row = VTokens.Next(Row);
 
@@ -445,7 +439,7 @@ namespace {
 					Flow << ',';
 			}
 
-			Flow << "]}\n";
+			Flow << "}}\n";
 		}
 
 		void XML(
