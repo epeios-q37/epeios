@@ -130,10 +130,9 @@ qRB
 //#ifdef CPE_F_CONSOLE
 #if 0
 				qRH
-					cio::cerr___ cerr;
 					tol::buffer__ Buffer;
 				qRB
-					cerr << tol::DateAndTime( Buffer ) << " (" << __FILE__ << ", " << (bso::ulong__)__LINE__  << ") : ("  << (bso::ulong__)Error << ") " << sck::ErrorDescription( Error ) << txf::nl << txf::commit;
+					cio::CErr << tol::DateAndTime( Buffer ) << " (" << __FILE__ << ", " << (bso::sUInt)__LINE__  << ") : ("  << (bso::sUInt)Error << ") " << sck::ErrorDescription( Error ) << txf::nl << txf::commit;
 				qRR
 				qRT
 				qRE
@@ -454,7 +453,7 @@ Q37_GCTOR( csdbns )
 	RepoMutex_ = mtx::Create();
 	N2AMutex_ = mtx::Create();
 #endif
-#if 0 // Back in the days when we were using 'inet_ntop()' instead of 'inet_ntoa()'…
+#if 0 // Back in the days when we were using 'inet_ntop()' instead of 'inet_ntoa()'ï¿½
   if ( sizeof( tIP ) < INET6_ADDRSTRLEN )
     qRChk();
 #endif

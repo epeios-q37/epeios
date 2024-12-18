@@ -16,6 +16,8 @@ P_DIY = "DIY"
 SPOKEN_COLORS =  {
   "rouge": [255, 0, 0],
   "vert": [0, 255, 0],
+  "verre": [0, 255, 0],
+  "verte": [0, 255, 0],
   "bleu": [0, 0, 255],
   "jaune": [255, 255, 0],
   "cyan": [0, 255, 255],
@@ -31,6 +33,7 @@ SPOKEN_COLORS =  {
   "beige": [255, 212, 170]
 }
 
+
 def rainbow():
   v =  random.randint(0, 5)
   for i in range(0, RB_MAX * 7, 1+int(RB_MAX/20)):
@@ -43,6 +46,7 @@ def rainbow():
 def convert_(hex):
   return int(int(hex,16) * 100 / 256)
 
+
 def getValues_(target, R, G, B):
   return {
     target + "R": R,
@@ -50,14 +54,18 @@ def getValues_(target, R, G, B):
     target + "B": B
   }
 
+
 def getNValues_(R, G, B):
   return getValues_("N", R, G, B)
+
 
 def getSValues_(R, G, B):
   return getValues_("S", R, G, B)
 
+
 def getAllValues_(R, G, B):
   return getNValues_(R, G, B) | getSValues_(R, G, B)
+
 
 def update_(r, g, b):
   if ws2812:
@@ -65,6 +73,7 @@ def update_(r, g, b):
     if oledDIY:
       oledDIY.fill(0).text(f"R: {r}", 0, 5).text(f"G: {g}", 0, 20).text(f"B: {b}", 0, 35).show()
     ucuq.commit()
+
 
 async def launchAwait(dom, pin, count):
   global ws2812, onDuty
@@ -117,6 +126,7 @@ async def updateUIAwait(dom, onDuty):
     elif preset != P_USER:
       raise Exception("Unknown preset!")
 
+
 async def acConnect(dom):
   global oledDIY
   id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
@@ -134,6 +144,7 @@ async def acConnect(dom):
       await dom.setValue("Preset", P_DIY)
 
   await updateUIAwait(dom, False)
+
 
 async def acPreset(dom):
   await updateUIAwait(dom, onDuty)
@@ -168,11 +179,13 @@ async def acSelect(dom):
   else:
     await dom.executeVoid(f"colorWheel.rgb = [0,0,0]")  
 
+
 async def acSlide(dom):
   (R,G,B) = (await dom.getValues(["SR", "SG", "SB"])).values()
   await dom.setValues(getNValues_(R, G, B))
   await dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
   update_(R, G, B)
+
 
 async def acAdjust(dom):
   (R,G,B) = (await dom.getValues(["NR", "NG", "NB"])).values()
@@ -183,6 +196,7 @@ async def acAdjust(dom):
 
 async def acListen(dom):
   await dom.executeVoid("launch()")
+
   
 async def acDisplay(dom):
   colors = json.loads(await dom.getValue("Color"))
@@ -199,12 +213,15 @@ async def acDisplay(dom):
         ucuq.commit()
       break;
 
+
 async def acRainbow(dom):
   await resetAwait(dom)
   rainbow()
 
+
 async def acReset(dom):
   await resetAwait(dom)
+
 
 CALLBACKS = {
   "": acConnect,
@@ -218,7 +235,6 @@ CALLBACKS = {
   "Rainbow": acRainbow,
   "Reset": acReset
 }
-
 
 HEAD = """
 <script type="text/javascript">

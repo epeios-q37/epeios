@@ -130,10 +130,9 @@ qRB
 //#ifdef CPE_F_CONSOLE
 #if 0
 				qRH
-					cio::cerr___ cerr;
 					tol::buffer__ Buffer;
 				qRB
-					cerr << tol::DateAndTime( Buffer ) << " (" << __FILE__ << ", " << (bso::ulong__)__LINE__  << ") : ("  << (bso::ulong__)Error << ") " << sck::ErrorDescription( Error ) << txf::nl << txf::commit;
+					cio::CErr << tol::DateAndTime( Buffer ) << " (" << __FILE__ << ", " << (bso::sUInt)__LINE__  << ") : ("  << (bso::sUInt)Error << ") " << sck::ErrorDescription( Error ) << txf::nl << txf::commit;
 				qRR
 				qRT
 				qRE
