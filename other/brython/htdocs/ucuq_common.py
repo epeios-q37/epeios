@@ -54,6 +54,7 @@ def setDevice(id = None, *, device = None, token = None):
 
 
 # Infos keys and subkeys
+I_KITS_KEY = "Kits"
 I_KIT_KEY = "Kit"
 I_DEVICE_KEY = "Device"
 I_DEVICE_ID_KEY = "Id"
@@ -68,9 +69,12 @@ I_UNAME_KEY = "uname"
 INFO_SCRIPT_ = f"""
 def ucuqGetKit():
   try:
-    return CONFIG_["{I_KIT_KEY}"][getIdentificationId_(IDENTIFICATION_)]
+    return CONFIG_["{I_KIT_KEY}"]
   except:
-    return None
+    try:
+      return CONFIG_["{I_KITS_KEY}"][getIdentificationId_(IDENTIFICATION_)]
+    except:
+      return None
 
 def ucuqStructToDict(obj):
     return {{attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}}
@@ -118,11 +122,13 @@ K_UNKNOWN = 0
 K_BIPEDAL = 1
 K_DOG = 2
 K_DIY = 3
+K_WOKWI = 4
 
 KITS_ = {
   "Freenove/Bipedal/RPiPicoW": K_BIPEDAL,
   "Freenove/Dog/ESP32": K_DOG,
-  "q37.info/ESP32-C3FH4/1": K_DIY
+  "q37.info/ESP32-C3FH4/1": K_DIY,
+  "q37.info/Wokwi/1": K_WOKWI,
 }
 
 async def getInfosAwait(device = None):
@@ -360,17 +366,23 @@ class HT16K33(Core_):
     return self.addMethods(f"render()")
 
 
+def getParam(label, value):
+  if value:
+    return f", {label} = {value}"
+  else:
+    return ""
+
 
 class PWM(Core_):
-  def __init__(self, pin = None, device = None):
+  def __init__(self, pin = None, *, freq = None, ns = None, u16 = None, device = None):
     super().__init__(device)
 
     if pin != None:
-      self.init(pin, device)
+      self.init(pin, device = device)
 
 
-  def init(self, pin, device = None):
-    super().init("PWM-1", f"machine.PWM(machine.Pin({pin}))", device)
+  def init(self, pin, *, freq = None, u16 = None, ns = None, device = None):
+    super().init("PWM-1", f"machine.PWM(machine.Pin({pin}){getParam('freq', freq)}{getParam('duty_u16', u16)}{getParam('duty_ns', ns)})", device)
 
 
   async def getU16Await(self):

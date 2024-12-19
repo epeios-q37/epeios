@@ -1,45 +1,54 @@
+LISTEN = False
+
 import atlastk, ucuq, json, math, random
 
 ucuq.setDevice(id="Yellow")
 
 RGB = ucuq.WS2812(3, 8)
-BUZZER = ucuq.PWM(21)
 OLED = ucuq.SSD1306_I2C(128, 64, ucuq.SoftI2C(0, 1))
+BUZZER = ucuq.PWM(21)
+BUZZER.setFreq(50).setNS(0)
+ucuq.commit()
 
 DIGITS = [
-  0x75557,
-  0x11111,
-  0x71747,
-  0x71317,
-  0x55711,
-  0x74717,
-  0x74757,
-  0x71111,
-  0x75757,
-  0x75717
+  0x3a33ae62e,
+  0x11842108e, 
+  0x3a213221f,
+  0x7c223062e,
+  0x8ca97c42,
+  0x7e1e0862e,
+  0x3a30f462e,
+  0x7c2222108,
+  0x3a317462e,
+  0x3a317862e,
 ]
 
-COEFF = 12
+COEFF = 8
+
+seq = ""
+userSeq = ""
 
 def digit(n,off):
   pattern = DIGITS[n]
 
-  for x in range(4):
-    for y in range(5):
-      OLED.rect(off+x*COEFF,y*COEFF,COEFF,COEFF,1 if pattern & (1 << ((3 - x ) + (4 - y) * 4)) else 0)
+  for x in range(5):
+    for y in range(7):
+      OLED.rect(off+x*COEFF,y*COEFF,COEFF,COEFF,1 if pattern & (1 << ((4 - x ) + (6 - y) * 5)) else 0)
   
   OLED.show()
 
 def number(n):
-  if n > 9:
-    digit(n // 10,0)
-  digit(n % 10,60)
+  try:
+    digit(n // 10, 12)
+    digit(n % 10, 76)
+  except:
+    OLED.fill(0).show()
 
 BUTTONS = {
-  "R": [[30, 0, 0], 5, 5],
-  "B": [[0, 0, 30], 7, 9],
-  "Y": [[30, 30, 0], 1, 12],
-  "G": [[0, 30, 0], 3, 17]
+  "R": [[30, 0, 0], 5, 9],
+  "B": [[0, 0, 30], 7, 12],
+  "Y": [[30, 30, 0], 1, 17],
+  "G": [[0, 30, 0], 3, 5]
 }
 
 SPOKEN_COLORS = {
@@ -51,22 +60,28 @@ SPOKEN_COLORS = {
   "verte": "G"
 }
 
+pitches = []
 
-NOTES = []
+for i in range(24):
+  pitches.append(int(220*math.pow(math.pow(2,1.0/12), i)))
 
-jingle = [
-    3, 10,  # C, G (Introduction)  
-    0, 8, 7, 5,  # A, F, E, D (Thème principal)  
-    3, 7, 10,  # C, E, G  
-    8, 5, 3   # F, C (Conclusion)  
+LAUNCH_JINGLE = [
+  3, 10,
+  0, 8, 7, 5,
+  3, 7, 10,
+  8, 5, 3
+]
+
+SUCCESS_JINGLE = [
+  7, 10, 19, 15, 17, 22
+]
+
+FAIL_JINGLE = [
+  7, 10, 19, 15, 17, 22
 ]
 
 
-for i in range(24):
-  NOTES.append(int(220*math.pow(math.pow(2,1.0/12), i)))
-
-
-def lightUp(button):
+def flash(button):
   RGB.fill([0,0,0])
   if button in BUTTONS:
     for i in range(3):
@@ -74,33 +89,37 @@ def lightUp(button):
   RGB.write()
 
 
-def play(note, delay = 0.29, sleep = 0.01):
-  BUZZER.setFreq(NOTES[note]).setU16(30000)
+def beep(note, delay = 0.29, sleep = 0.01):
+  BUZZER.setFreq(pitches[note]).setU16(30000)
   ucuq.sleep(delay)
   BUZZER.setU16(0)
   if sleep:
     ucuq.sleep(sleep)
 
 
-async def acConnect(dom):
+def playJingle(jingle):
   prevButton = ""
   prevPrevButton = ""
-  await dom.inner("", BODY)
+  number(None)
+  ucuq.commit()
   for n in jingle:
     while True:
       button = random.choice(list(BUTTONS.keys())) 
-
       if ( button != prevButton ) and ( button != prevPrevButton ):
-        break;
+        break
     prevPrevButton = prevButton
-    lightUp(prevButton := button)
-    play(n, 0.2, 0)
-  lightUp("")
+    flash(prevButton := button)
+    beep(n, 0.15, 0)
+  flash("")
   ucuq.commit()
-  for n in range(0, 100, 3):
-    number(n)
-    ucuq.sleep(0.3)
-    ucuq.commit()
+
+
+async def acConnect(dom):
+  await dom.inner("", BODY)
+  if not LISTEN:
+    await dom.setAttribute("Listen","style", "display: none;")
+  number(None)
+  ucuq.commit()
 
 
 async def acListen(dom):
@@ -108,9 +127,21 @@ async def acListen(dom):
 
 
 def display(button):
-  lightUp(button)
-  play(BUTTONS[button][2])
-  lightUp("")
+  RGB.fill([0,0,0])
+  if button in BUTTONS:
+    for i in range(3):
+      RGB.setValue((BUTTONS[button][1] + i) % 8,BUTTONS[button][0])
+  RGB.write()
+  BUZZER.setFreq(pitches[BUTTONS[button][2]]).setU16(30000)
+  ucuq.sleep(0.29)
+  BUZZER.setU16(0)
+  RGB.fill([0,0,0]).write()
+  ucuq.sleep(0.01)
+
+
+def play(sequence):
+  for s in sequence:
+    display(s)
   ucuq.commit()
 
   
@@ -120,17 +151,57 @@ async def acDisplay(dom):
   for color in colors:
     color = color.lower()
     if color in SPOKEN_COLORS:
+      ucuq.sleep(.25)
       display(SPOKEN_COLORS[color])
+      ucuq.commit()
+
+    
+
+
+async def acNew():
+  global seq
+
+  playJingle(LAUNCH_JINGLE)
+
+  seq = random.choice("RGBY")
+  number(len(seq))
+  play(seq)
 
 
 async def acClick(dom, id):
+  global seq, userSeq
+
+  if not seq:
+    return
+  
+  userSeq += id
+  number(len(seq)-len(userSeq))
   display(id)
+
+  if seq.startswith(userSeq):
+    if len(seq) <= len(userSeq):
+      playJingle(SUCCESS_JINGLE)
+      userSeq = ""
+      seq += random.choice("RGBY")
+      number(len(seq))
+      play(seq)
+  else:
+    number(len(seq)-1)
+    BUZZER.setFreq(30).setU16(50000)
+    ucuq.sleep(1)
+    BUZZER.setU16(0)
+    ucuq.commit()
+    userSeq = ""
+    seq = ""
+
+  ucuq.commit()
 
 
 CALLBACKS = {
   "": acConnect,
   "Listen": acListen,
   "Display": acDisplay,
+  "New": acNew,
   "Click": acClick,
 }
 
@@ -179,9 +250,8 @@ HEAD = """
   recognition.onerror = function(event) {
     console.err('Error occurred in recognition: ' + event.error);
   };
-  </script>
-  <style>
-
+</script>
+<style>
 #outer-circle {
   background: #385a94;
   border-radius: 50%;
@@ -283,18 +353,26 @@ HEAD = """
   -webkit-box-sizing: border-box;
 }
 
-  </style>
+button {
+  font-size: xx-large;
+}
+</style>
 """
 
 BODY = """
-<button xdh:onevent="Listen">Listen</button>
 <input id="Color" type="hidden">
 <div id="outer-circle">
   <div id="G" xdh:onevent="Click"></div>
   <div id="R" xdh:onevent="Click"></div>
   <div id="Y" xdh:onevent="Click"></div>
   <div id="B" xdh:onevent="Click"></div>
-  <div id="inner-circle">
+  <div id="inner-circle" style="display: flex;justify-content: center;align-items: center; flex-direction: column;">
+    <div>
+      <button xdh:onevent="New">New</button>
+    </div>
+    <div>
+      <button id="Listen" xdh:onevent="Listen">Listen</button>
+    </div>
   </div>
 </div>
 """

@@ -233,14 +233,6 @@ def init_(host, port, callback):
   
 
 def getDeviceLabel_():
-  if "Kits" in CONFIG_:
-    kit = CONFIG_["Kit"]
-
-    id = getIdentificationId_(IDENTIFICATION_)
-
-    if id in kit:
-      return kit[id]
-    
   return uos.uname().sysname
 
 
