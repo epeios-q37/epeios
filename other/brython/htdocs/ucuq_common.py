@@ -310,28 +310,32 @@ class WS2812(Core_):
     self.addMethods(f"write()")
 
 class I2C_Core_(Core_):
-  def __init__(self, sda = None, scl = None, device = None):
+  def __init__(self, sda = None, scl = None, *, device = None, soft = None):
     super().__init__(device)
 
     if sda == None != scl == None:
       raise Exception("None or both of sda/scl must be given!")
     elif sda != None:
-      self.init(sda, scl, device)
+      self.init(sda, scl, device = device, soft = soft)
 
   async def scanAwait(self):
     return (await commitAwait(f"{self.getObject()}.scan()"))
 
 
 class I2C(I2C_Core_):
-  def init(self, sda, scl, device = None):
-    super().init("I2C-1", f"machine.I2C(0, sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device)
+  def init(self, sda, scl, *, device = None, soft = False):
+    if soft == None:
+      soft = False
 
+    super().init("I2C-1", f"machine.{'Soft' if soft else ''}I2C({'0,' if not soft else ''} sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device = device)
 
-class SoftI2C(I2C_Core_):
-  def init(self, sda, scl, device = None):
-    super().init("I2C-1", f"machine.SoftI2C(sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device)
+class SoftI2C(I2C):
+  def init(self, sda, scl, *, device = None, soft = True):
+    if soft == None:
+      soft = True
+
+    super().init(sda, scl, device = device, soft = soft)
   
-
 class HT16K33(Core_):
   def __init__(self, i2c = None, /, addr = None):
     super().__init__()
