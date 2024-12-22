@@ -2,6 +2,7 @@ LISTEN = False
 
 import atlastk, ucuq, json, math, random
 
+onDuty = False
 cRing = None
 cOLED = None
 cBuzzer = None
@@ -20,60 +21,90 @@ DIGITS = [
   0x3a317862e,
 ]
 
-COEFF_DISPLAY = 8
-coeffRing = 1
-countButton = 0
-countRing = 0
+OLED_COEFF = 8
+ringCoeff = 1
+ringCount = 0
+ringOffset = 0  # LED at north position
 
 # Presets
 P_USER = "User"
 P_DIY = "DIY"
-P_SIMULATION = "Simulation"
+P_WOKWI = "Wokwi"
 
 # Widgets
-W_PRESET = "Preset"
-W_RING_PIN = "Ring_Pin"
-W_RING_COUNT = "Ring_Count"
-W_BUZZER_PIN = "Buzzer_Pin"
-W_OLED_SOFT = "OLED_Soft"
-W_OLED_SDA = "OLED_SDA"
-W_OLED_SCL = "OLED_SCL"
-W_LCD_SOFT = "LCD_Soft"
-W_LCD_SDA = "LCD_SDA"
-W_LCD_SCL = "LCD_SCL"
+# Hardware widgets
+W_HARDWARE = "Hardware"
+W_H_SWITCH = "Switch"
+W_H_PRESET = "Preset"
+W_H_RING_PIN = "Ring_Pin"
+W_H_RING_COUNT = "Ring_Count"
+W_H_RING_OFFSET = "Ring_Offset"
+W_H_BUZZER_ON = "Buzzer_On"
+W_H_BUZZER_PIN = "Buzzer_Pin"
+W_H_OLED_SOFT = "OLED_Soft"
+W_H_OLED_SDA = "OLED_SDA"
+W_H_OLED_SCL = "OLED_SCL"
+W_H_LCD_SOFT = "LCD_Soft"
+W_H_LCD_SDA = "LCD_SDA"
+W_H_LCD_SCL = "LCD_SCL"
+# Board widgets
+W_BOARD = "Board"
+W_B_R = "R"
+W_B_G = "G"
+W_B_B = "B"
+W_B_Y = "Y"
+W_B_NEW = "New"
+W_B_LISTEN = "Listen"
+
+def getValuesOfVarsBeginningWith(prefix):
+  return [value for var, value in globals().items() if var.startswith(prefix)]
+
+def remove(source, items):
+  return [item for item in source if item not in items]
+
+
+HARDWARE_WIDGETS = getValuesOfVarsBeginningWith("W_H_")
+HARDWARE_WIDGETS_WITHOUT_SWITCH = remove(HARDWARE_WIDGETS, [W_H_SWITCH])
+BOARD_WIDGETS = getValuesOfVarsBeginningWith("W_B_")
+
+print(HARDWARE_WIDGETS_WITHOUT_SWITCH, BOARD_WIDGETS)
 
 # Default hardware settings
 SETTINGS = {
   P_USER: {
   },
   P_DIY: {
-    W_RING_PIN: "0",
-    W_RING_COUNT: "8",
-    W_BUZZER_PIN: "5",
-    W_OLED_SOFT: "false",
-    W_OLED_SDA: "8",
-    W_OLED_SCL: "9",
-    W_LCD_SOFT: "true",
-    W_LCD_SDA: "6",
-    W_LCD_SCL: "7"
+    W_H_RING_PIN: "0",
+    W_H_RING_COUNT: "8",
+    W_H_RING_OFFSET: "-1",
+    W_H_BUZZER_ON: "true",
+    W_H_BUZZER_PIN: "5",
+    W_H_OLED_SOFT: "false",
+    W_H_OLED_SDA: "8",
+    W_H_OLED_SCL: "9",
+    W_H_LCD_SOFT: "true",
+    W_H_LCD_SDA: "6",
+    W_H_LCD_SCL: "7"
   },
-  P_SIMULATION: {
-    W_RING_PIN: "15",
-    W_RING_COUNT: "16",
-    W_BUZZER_PIN: "32",
-    W_OLED_SOFT: "false",
-    W_OLED_SDA: "21",
-    W_OLED_SCL: "22",
-    W_LCD_SOFT: "true",
-    W_LCD_SDA: "25",
-    W_LCD_SCL: "26",
+  P_WOKWI: {
+    W_H_RING_PIN: "15",
+    W_H_RING_COUNT: "16",
+    W_H_RING_OFFSET: "1",
+    W_H_BUZZER_ON: "true",
+    W_H_BUZZER_PIN: "32",
+    W_H_OLED_SOFT: "false",
+    W_H_OLED_SDA: "21",
+    W_H_OLED_SCL: "22",
+    W_H_LCD_SOFT: "true",
+    W_H_LCD_SDA: "25",
+    W_H_LCD_SCL: "26",
   }
 }
 
 PRESETS = {
   ucuq.K_UNKNOWN: P_USER,
-  ucuq.K_DIY: P_DIY,
-  ucuq.K_WOKWI: P_SIMULATION
+  ucuq.K_DIY_DISPLAYS: P_DIY,
+  ucuq.K_WOKWI_DISPLAYS: P_WOKWI
 }
 
 seq = ""
@@ -84,7 +115,7 @@ def digit(n,off):
 
   for x in range(5):
     for y in range(7):
-      cOLED.rect(off+x*COEFF_DISPLAY,y*COEFF_DISPLAY,COEFF_DISPLAY,COEFF_DISPLAY,1 if pattern & (1 << ((4 - x ) + (6 - y) * 5)) else 0)
+      cOLED.rect(off+x*OLED_COEFF,y*OLED_COEFF,OLED_COEFF,OLED_COEFF,1 if pattern & (1 << ((4 - x ) + (6 - y) * 5)) else 0)
   
   cOLED.show()
 
@@ -134,33 +165,33 @@ FAIL_JINGLE = [
 
 def convert(value, converter):
   try:
-    value = converter(value)
+    return converter(value)
   except:
-    return None
-  else:
-    return value
+    raise Exception("Bad or missing value!")
 
 
 async def getInputs(dom):
-  values = await dom.getValues([W_RING_PIN, W_RING_COUNT, W_BUZZER_PIN, W_OLED_SOFT, W_OLED_SDA, W_OLED_SCL, W_LCD_SOFT, W_LCD_SDA, W_LCD_SCL])
+  values = await dom.getValues([W_H_RING_PIN, W_H_RING_COUNT, W_H_RING_OFFSET, W_H_BUZZER_ON, W_H_BUZZER_PIN, W_H_OLED_SOFT, W_H_OLED_SDA, W_H_OLED_SCL, W_H_LCD_SOFT, W_H_LCD_SDA, W_H_LCD_SCL])
 
   return {
-    W_RING_PIN: convert(values[W_RING_PIN], int),
-    W_RING_COUNT: convert(values[W_RING_COUNT], int),
-    W_BUZZER_PIN: convert(values[W_BUZZER_PIN], int),
-    W_OLED_SOFT: True if values[W_OLED_SOFT] == "true" else False,
-    W_OLED_SDA: convert(values[W_OLED_SDA], int),
-    W_OLED_SCL: convert(values[W_OLED_SCL], int),
-    W_LCD_SOFT: True if values[W_LCD_SOFT] == "true" else False,
-    W_LCD_SDA: convert(values[W_LCD_SDA], int),
-    W_LCD_SCL: convert(values[W_LCD_SCL], int),
+    W_H_RING_PIN: convert(values[W_H_RING_PIN], int),
+    W_H_RING_COUNT: convert(values[W_H_RING_COUNT], int),
+    W_H_RING_OFFSET: convert(values[W_H_RING_OFFSET], int),
+    W_H_BUZZER_ON: True if values[W_H_BUZZER_ON] == "true" else False,
+    W_H_BUZZER_PIN: convert(values[W_H_BUZZER_PIN], int),
+    W_H_OLED_SOFT: True if values[W_H_OLED_SOFT] == "true" else False,
+    W_H_OLED_SDA: convert(values[W_H_OLED_SDA], int),
+    W_H_OLED_SCL: convert(values[W_H_OLED_SCL], int),
+    W_H_LCD_SOFT: True if values[W_H_LCD_SOFT] == "true" else False,
+    W_H_LCD_SDA: convert(values[W_H_LCD_SDA], int),
+    W_H_LCD_SCL: convert(values[W_H_LCD_SCL], int),
   }
 
 def flash(button):
   cRing.fill([0,0,0])
   if button in BUTTONS:
-    for i in range(1 + countRing // 4):
-      cRing.setValue((list(BUTTONS.keys()).index(button) * countRing // 4 + 1 + i) % countRing,[coeffRing * item for item in BUTTONS[button][0]])
+    for i in range(1 + ringCount // 4):
+      cRing.setValue((list(BUTTONS.keys()).index(button) * ringCount // 4 + i + ringOffset) % ringCount,[ringCoeff * item for item in BUTTONS[button][0]])
   cRing.write()
 
 
@@ -190,17 +221,17 @@ def playJingle(jingle):
 
 
 async def updateHardwareUI(dom):
-  await dom.setValues(SETTINGS[await dom.getValue(W_PRESET)])
+  await dom.setValues(SETTINGS[await dom.getValue(W_H_PRESET)])
 
 
 async def acConnect(dom):
   preset = PRESETS[ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))]
 
-  await dom.setValue(W_PRESET, preset)
+  await dom.setValue(W_H_PRESET, preset)
 
-  if preset == P_SIMULATION:
-    global coeffRing
-    coeffRing = 8
+  if preset == P_WOKWI:
+    global ringCoeff
+    ringCoeff = 8
 
   await updateHardwareUI(dom)
 
@@ -212,22 +243,40 @@ async def acPreset(dom):
   await updateHardwareUI(dom)
 
 
-async def acSwitch(dom):
-  global cRing, cOLED, cBuzzer, cLCD, countRing
+async def acSwitch(dom, id):
+  global onDuty, cRing, cOLED, cBuzzer, cLCD, ringCount, ringOffset
 
-  inputs = await getInputs(dom)
+  if await dom.getValue(id) == "true":
+    try:
+      inputs = await getInputs(dom)
+    except Exception as exc:
+      await dom.setValue(W_H_SWITCH, "false")
+      await dom.alert(exc)
+      return
 
-  countRing = inputs[W_RING_COUNT]
+    ringCount = inputs[W_H_RING_COUNT]
+    ringOffset = inputs[W_H_RING_OFFSET]
 
+    print(ringOffset)
 
-  cRing = ucuq.WS2812(inputs[W_RING_PIN], inputs[W_RING_COUNT])
-  cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(inputs[W_OLED_SDA], inputs[W_OLED_SCL], soft = inputs[W_OLED_SOFT]))
-  cLCD = ucuq.LCD_PCF8574(ucuq.I2C(inputs[W_LCD_SDA], inputs[W_LCD_SCL], soft = inputs[W_LCD_SOFT]), 2, 16)
-  cBuzzer = ucuq.PWM(inputs[W_BUZZER_PIN])
-  cBuzzer.setFreq(50).setNS(0)
-  number(None)
-  cLCD.backlightOff()
-  ucuq.commit()
+    cRing = ucuq.WS2812(inputs[W_H_RING_PIN], inputs[W_H_RING_COUNT])
+    cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(inputs[W_H_OLED_SDA], inputs[W_H_OLED_SCL], soft = inputs[W_H_OLED_SOFT]))
+    cLCD = ucuq.LCD_PCF8574(ucuq.I2C(inputs[W_H_LCD_SDA], inputs[W_H_LCD_SCL], soft = inputs[W_H_LCD_SOFT]), 2, 16)
+    if inputs[W_H_BUZZER_ON]:
+      cBuzzer = ucuq.PWM(inputs[W_H_BUZZER_PIN])
+    else:
+      cBuzzer = ucuq.Nothing()
+    cBuzzer.setFreq(50).setNS(0)
+    number(None)
+    cLCD.backlightOff()
+    ucuq.commit()
+    await dom.enableElements(BOARD_WIDGETS)
+    await dom.disableElements(HARDWARE_WIDGETS_WITHOUT_SWITCH)
+    onDuty = True
+  else:
+    onDuty = False
+    await dom.disableElements(BOARD_WIDGETS)
+    await dom.enableElements(HARDWARE_WIDGETS_WITHOUT_SWITCH)
 
 
 async def acListen(dom):
@@ -237,8 +286,8 @@ async def acListen(dom):
 def display(button):
   cRing.fill([0,0,0])
   if button in BUTTONS:
-    for i in range(1 + countRing // 4):
-      cRing.setValue((list(BUTTONS.keys()).index(button) * countRing // 4 + 1 + i) % countRing,[coeffRing * item for item in BUTTONS[button][0]])
+    for i in range(1 + ringCount // 4):
+      cRing.setValue((list(BUTTONS.keys()).index(button) * ringCount // 4 + i + ringOffset) % ringCount,[ringCoeff * item for item in BUTTONS[button][0]])
   cRing.write()
   cBuzzer.setFreq(pitches[BUTTONS[button][2]]).setU16(30000)
   ucuq.sleep(0.29)
@@ -253,7 +302,6 @@ def play(sequence):
   for s in sequence:
     display(s)
     seq += s
-  ucuq.commit()
 
   
 async def acDisplay(dom):
@@ -270,17 +318,20 @@ async def acDisplay(dom):
 async def acNew():
   global seq
 
-  cLCD.backlightOn()\
+  cLCD.clear()\
+  .backlightOn()\
   .moveTo(0,0)\
   .putString("Welcome to")\
   .moveTo(0,1)\
   .putString("Simon's game!")
 
   playJingle(LAUNCH_JINGLE)
+  cLCD.backlightOff().clear()
 
   seq = random.choice("RGBY")
   number(len(seq))
   play(seq)
+  ucuq.commit()
 
 
 async def acClick(dom, id):
@@ -291,18 +342,21 @@ async def acClick(dom, id):
   
   userSeq += id
   cLCD.clear().backlightOn().moveTo(0,0).putString(userSeq)
-  ucuq.commit()
   number(len(seq)-len(userSeq))
   display(id)
 
   if seq.startswith(userSeq):
     if len(seq) <= len(userSeq):
+      cLCD.moveTo(0,0).putString("Well done!")
       playJingle(SUCCESS_JINGLE)
+      cLCD.clear()
       userSeq = ""
       seq += random.choice("RGBY")
       number(len(seq))
       play(seq)
+    cLCD.backlightOff()
   else:
+    cLCD.moveTo(0,0).putString("Game over! Click").moveTo(0,1).putString("New to restart!")
     number(len(seq))
     cBuzzer.setFreq(30).setU16(50000)
     ucuq.sleep(1)
@@ -311,7 +365,6 @@ async def acClick(dom, id):
     userSeq = ""
     seq = ""
 
-  cLCD.backlightOff()
   ucuq.commit()
 
 
@@ -381,7 +434,6 @@ HEAD = """
   border-style: solid;
   border-width: 10px;
   margin: auto;
-  margin-top: 60px;
   box-shadow: 8px 8px 15px 5px #888888;
 }
 
@@ -560,32 +612,33 @@ input:checked + .slider:before {
 
 BODY = """
 <fieldset style="display: flex;">
-  <fieldset>
+  <fieldset id="Hardware">
     <legend>Preset</legend>
-  <select xdh:onevent="Preset" id="Preset">
-    <option value="User">User</option>
-    <optgroup label="q37.info">
+    <select xdh:onevent="Preset" id="Preset">
+      <option value="User">User</option>
       <option value="DIY">DIY</option>
-    </optgroup>
-    <optgroup label="Wokwi">
-      <option value="Simulation">Simulation</option>
-    </optgroup>
-  </select>
-        <span class="switch-container">
-          <label class="switch">
-            <input id="Switch"  type="checkbox" xdh:onevent="Switch">
-            <span class="slider round"></span>
-          </label>
-        </span>        
+      <option value="Wokwi">Wokwi</option>
+    </select>
+    <span class="switch-container">
+      <label class="switch">
+        <input id="Switch" type="checkbox" xdh:onevent="Switch">
+        <span class="slider round"></span>
+      </label>
+    </span>
   </fieldset>
   <fieldset style="display: flex; flex-direction: column">
     <legend>Ring</legend>
-      <input id="Ring_Pin" min="0" max="99" type="number" placeholder="Pin">
-      <input id="Ring_Count" min="0" max="999" type="number" placeholder="Count">
+    <input id="Ring_Pin" min="0" max="99" type="number" placeholder="Pin">
+    <input id="Ring_Count" min="0" max="999" type="number" placeholder="Count">
+    <input id="Ring_Offset" min="-999" max="999" type="number" placeholder="Offs.">
     </label>
   </fieldset>
-  <fieldset>
+  <fieldset style="display: flex; flex-direction: column">
     <legend>Buzzer</legend>
+    <label>
+      <input id="Buzzer_On" type="checkbox" />
+      <span>On</span>
+    </label>
     <input id="Buzzer_Pin" min="0" max="99" type="number" placeholder="Pin">
   </fieldset>
   <fieldset style="display: flex; flex-direction: column">
@@ -607,23 +660,23 @@ BODY = """
     <input id="LCD_SCL" type="number" min="0" max="99" placeholder="SCL">
   </fieldset>
 </fieldset>
-<fieldset>
-<input id="Color" type="hidden">
-<div id="outer-circle">
-  <div id="G" xdh:onevent="Click"></div>
-  <div id="R" xdh:onevent="Click"></div>
-  <div id="Y" xdh:onevent="Click"></div>
-  <div id="B" xdh:onevent="Click"></div>
-  <div id="inner-circle" style="display: flex;justify-content: center;align-items: center; flex-direction: column;">
-    <div>
-      <button xdh:onevent="New">New</button>
-    </div>
-    <div>
-      <button id="Listen" xdh:onevent="Listen">Listen</button>
+<fieldset id="Board">
+  <input id="Color" type="hidden">
+  <div id="outer-circle">
+    <div id="G" xdh:onevent="Click"></div>
+    <div id="R" xdh:onevent="Click"></div>
+    <div id="Y" xdh:onevent="Click"></div>
+    <div id="B" xdh:onevent="Click"></div>
+    <div id="inner-circle" style="display: flex;justify-content: center;align-items: center; flex-direction: column;">
+      <div>
+        <button id="New" xdh:onevent="New">New</button>
+      </div>
+      <div>
+        <button id="Listen" xdh:onevent="Listen">Listen</button>
+      </div>
     </div>
   </div>
-</div>
-  </fieldset>
+</fieldset>
 """
 
 atlastk.launch(CALLBACKS, headContent = HEAD)

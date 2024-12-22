@@ -121,14 +121,18 @@ ATK_BODY = """
 K_UNKNOWN = 0
 K_BIPEDAL = 1
 K_DOG = 2
-K_DIY = 3
-K_WOKWI = 4
+K_DIY_DISPLAYS = 3
+K_DIY_SERVOS = 4
+K_WOKWI_DISPLAYS = 5
+K_WOKWI_SERVOS = 6
 
 KITS_ = {
   "Freenove/Bipedal/RPiPicoW": K_BIPEDAL,
   "Freenove/Dog/ESP32": K_DOG,
-  "q37.info/ESP32-C3FH4/1": K_DIY,
-  "q37.info/Wokwi/1": K_WOKWI,
+  "q37.info/DIY/Displays": K_DIY_DISPLAYS,
+  "q37.info/DIY/Servos": K_DIY_SERVOS,
+  "q37.info/Wokwi/Displays": K_WOKWI_DISPLAYS,
+  "q37.info/Wokwi/Servos": K_WOKWI_SERVOS,
 }
 
 async def getInfosAwait(device = None):
@@ -212,6 +216,14 @@ def getDevice_(device = None, *, id = None, token = None):
 
 def addCommand(command, /,device = None):
   getDevice_(device).addCommand(command)
+
+
+# does absolutely nothing whichever method is called.
+class Nothing:
+  def __getattr__(self, name):
+    def doNothing(*args, **kwargs):
+      return self
+    return doNothing
 
 
 class Core_:

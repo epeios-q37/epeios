@@ -10,8 +10,7 @@
         "u16_max": 8192,
         "range": 180
       },
-      "Tweak":
-      {
+      "Tweak": {
         "angle": 90,
         "offset": 0,
         "invert": false
@@ -57,8 +56,7 @@
         "u16_max": 8192,
         "range": 180
       },
-      "Tweak":
-      {
+      "Tweak": {
         "angle": 90,
         "offset": 0,
         "invert": false
@@ -70,7 +68,7 @@
           "pin": 10
         },
         "Tweak": {
-        "offset": 85
+          "offset": 85
         }
       },
       "l": {
@@ -221,7 +219,7 @@
           "channel": 0
         },
         "Tweak": {
-          "offset": -8 
+          "offset": -8
         }
       },
       "b": {
@@ -237,7 +235,7 @@
           "channel": 2
         },
         "Tweak": {
-          "offset": 136 
+          "offset": 136
         }
       },
       "d": {
@@ -245,7 +243,47 @@
           "channel": 3
         },
         "Tweak": {
-          "offset": -56 
+          "offset": -56
+        }
+      }
+    }
+  },
+  "Red": {
+    "Preset": {
+      "Hardware": {
+        "mode": "Straight"
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1639,
+        "u16_max": 8192,
+        "range": 180
+      },
+      "Tweak": {
+        "angle": 90,
+        "offset": 0,
+        "invert": false
+      }
+    },
+    "Motors": {
+      "L": {
+        "Hardware": {
+          "pin": 27
+        }
+      },
+      "l": {
+        "Hardware": {
+          "pin": 12
+        }
+      },
+      "R": {
+        "Hardware": {
+          "pin": 13
+        }
+      },
+      "r": {
+        "Hardware": {
+          "pin": 26
         }
       }
     }

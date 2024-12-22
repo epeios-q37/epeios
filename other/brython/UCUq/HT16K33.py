@@ -254,7 +254,7 @@ async def acMirror(dom, id):
 
   if state:
     if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.SoftI2C(0, 1, ucuq.Device(id="Yellow")))
+      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9, device = ucuq.Device(id="Yellow")))
     else:
       await dom.setValue(id, "false")
   else:
