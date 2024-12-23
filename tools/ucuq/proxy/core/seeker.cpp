@@ -38,7 +38,7 @@ namespace {
   |------|-------|------|------|-------|------|
   | ==   | !=    | !=   | /    | R     | V    | Link R to V
   | !=   | ==    | !=   | V    | /     | R    | Link V to R
-  | !=   | !=    | ==   | R    | Id    | /    | A device
+  | !=   | !=    | ==   | R    | Id    | /    | Device
   | !=   | !=    | !=   | V    | Id    | R    | Link V to a device
   */
   struct sTie_
@@ -249,7 +249,7 @@ namespace {
           break;
         }
 
-        Cont &= Cont && ( Row != qNIL );
+        Cont = Cont && ( Row != qNIL );
       }
 
       return Row;
@@ -457,11 +457,22 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Row = index_::Search(Token, str::Empty, str::Empty);
+  Row = index_::Search(Token, Id, str::Empty);
+
+  if ( Row == qNIL ) {
+    Row = index_::Search(Token, str::Empty, str::Empty);
+
+    if ( Row != qNIL )
+      if ( Ties_(Row).IsV() )
+        Row = GetVTokenRToken_(Row, Id);
+      else
+        Row = qNIL;
+  } else if ( !Ties_(Row).IsD() )
+    Row = GetVTokenRToken_(Row, Id);
 
   if ( Row != qNIL )
-    if ( Ties_(Row).IsV() )
-      Row = GetVTokenRToken_(Row, Id);
+    if ( !Ties_(Row).IsD() )
+      qRGnr();
 qRR;
 qRT;
 qRE;

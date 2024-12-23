@@ -217,7 +217,6 @@ def playJingle(jingle):
     flash(prevButton := button)
     beep(n, 0.15, 0)
   flash("")
-  ucuq.commit()
 
 
 async def updateHardwareUI(dom):
@@ -326,6 +325,7 @@ async def acNew():
   .putString("Simon's game!")
 
   playJingle(LAUNCH_JINGLE)
+  ucuq.sleep(0.5)
   cLCD.backlightOff().clear()
 
   seq = random.choice("RGBY")
@@ -341,7 +341,7 @@ async def acClick(dom, id):
     return
   
   userSeq += id
-  cLCD.clear().backlightOn().moveTo(0,0).putString(userSeq)
+  cLCD.clear().moveTo(0,0).putString(userSeq).backlightOn()
   number(len(seq)-len(userSeq))
   display(id)
 
@@ -349,6 +349,7 @@ async def acClick(dom, id):
     if len(seq) <= len(userSeq):
       cLCD.moveTo(0,0).putString("Well done!")
       playJingle(SUCCESS_JINGLE)
+      ucuq.sleep(0.5)
       cLCD.clear()
       userSeq = ""
       seq += random.choice("RGBY")
@@ -669,10 +670,10 @@ BODY = """
     <div id="B" xdh:onevent="Click"></div>
     <div id="inner-circle" style="display: flex;justify-content: center;align-items: center; flex-direction: column;">
       <div>
-        <button id="New" xdh:onevent="New">New</button>
+        <button id="New" xdh:onevent="New" disabled="disabled">New</button>
       </div>
       <div>
-        <button id="Listen" xdh:onevent="Listen">Listen</button>
+        <button id="Listen" xdh:onevent="Listen" disabled="disabled">Listen</button>
       </div>
     </div>
   </div>

@@ -248,7 +248,7 @@
       }
     }
   },
-  "Red": {
+  "Striped": {
     "Preset": {
       "Hardware": {
         "mode": "Straight"
@@ -262,28 +262,28 @@
       "Tweak": {
         "angle": 90,
         "offset": 0,
-        "invert": false
+        "invert": true
       }
     },
     "Motors": {
       "L": {
         "Hardware": {
-          "pin": 27
+          "pin": 12
         }
       },
       "l": {
         "Hardware": {
-          "pin": 12
+          "pin": 13
         }
       },
       "R": {
         "Hardware": {
-          "pin": 13
+          "pin": 14
         }
       },
       "r": {
         "Hardware": {
-          "pin": 26
+          "pin": 15
         }
       }
     }
