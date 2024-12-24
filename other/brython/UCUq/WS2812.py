@@ -1,9 +1,9 @@
 import atlastk, ucuq, random, json
 
-RB_MAX = 30
 RB_DELAY = .05
 
 ws2812 = None
+ws2812Limiter = 0
 onDuty = False
 oledDIY = None
 
@@ -12,6 +12,7 @@ P_USER = "User"
 P_BIPEDAL = "Bipedal"
 P_DOG = "Dog"
 P_DIY = "DIY"
+P_WOKWI = "Wokwi"
 
 SPOKEN_COLORS =  {
   "rouge": [255, 0, 0],
@@ -36,9 +37,11 @@ SPOKEN_COLORS =  {
 
 def rainbow():
   v =  random.randint(0, 5)
-  for i in range(0, RB_MAX * 7, 1+int(RB_MAX/20)):
-    ws2812.fill(ucuq.rbShadeFade(v, i, RB_MAX)).write()
+  i = 0
+  while i < 7 * ws2812Limiter:
+    ws2812.fill(ucuq.rbShadeFade(v, int(i), ws2812Limiter)).write()
     ucuq.sleep(RB_DELAY)
+    i += ws2812Limiter / 20
   ws2812.fill([0]*3).write()
   ucuq.commit() 
 
@@ -99,30 +102,43 @@ async def updateUIAwait(dom, onDuty):
 
   if onDuty:
     await dom.enableElements(ids)
-    await dom.disableElement("HardwareBox")
+    await dom.disableElements(["HardwareBox", "Preset"])
     await dom.setValue("Switch", "true")
   else:
     await dom.disableElements(ids)
-    await dom.enableElement("HardwareBox")
+    await dom.enableElements(["HardwareBox", "Preset"])
     await dom.setValue("Switch", "false")
 
     preset = await dom.getValue("Preset")
 
     if preset == P_BIPEDAL:
       await dom.setValues({
-        "Pin": 16,
-        "Count": 4
+        "Pin": ucuq.H_BIPEDAL["RGB"]["Pin"],
+        "Count": ucuq.H_BIPEDAL["RGB"]["Count"],
+        "Offset": ucuq.H_["RGB"]["Offset"],
+        "Limiter": ucuq.H_["RGB"]["Limiter"],
       })
     elif preset == P_DOG:
-        await dom.setValues({
-          "Pin": 0,
-          "Count": 4
-        })
+      await dom.setValues({
+        "Pin": ucuq.H_DOG["RGB"]["Pin"],
+        "Count": ucuq.H_DOG["RGB"]["Count"],
+        "Offset": ucuq.H_DOG["RGB"]["Offset"],
+        "Limiter": ucuq.H_DOG["RGB"]["Limiter"],
+      })
     elif preset == P_DIY:
-        await dom.setValues({
-          "Pin": 3,
-          "Count": 8
-        })
+      await dom.setValues({
+        "Pin": ucuq.H_DIY_DISPLAYS["Ring"]["Pin"],
+        "Count": ucuq.H_DIY_DISPLAYS["Ring"]["Count"],
+        "Offset": ucuq.H_DIY_DISPLAYS["Ring"]["Offset"],
+        "Limiter": ucuq.H_DIY_DISPLAYS["Ring"]["Limiter"],
+      })
+    elif preset == P_WOKWI:
+      await dom.setValues({
+        "Pin": ucuq.H_WOKWI_DISPLAYS["Ring"]["Pin"],
+        "Count": ucuq.H_WOKWI_DISPLAYS["Ring"]["Count"],
+        "Offset": ucuq.H_WOKWI_DISPLAYS["Ring"]["Offset"],
+        "Limiter": ucuq.H_WOKWI_DISPLAYS["Ring"]["Limiter"],
+      })
     elif preset != P_USER:
       raise Exception("Unknown preset!")
 
@@ -139,9 +155,12 @@ async def acConnect(dom):
       await dom.setValue("Preset", P_BIPEDAL)
     elif id == ucuq.K_DOG:
       await dom.setValue("Preset", P_DOG)
-    elif id == ucuq.K_DIY:
-      oledDIY = ucuq.SSD1306_I2C(128, 64, ucuq.SoftI2C(0, 1))
+    elif id == ucuq.K_DIY_DISPLAYS:
+      oledDIY = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(ucuq.H_DIY_DISPLAYS["OLED"]["SDA"], ucuq.H_DIY_DISPLAYS["OLED"]["SCL"], soft = ucuq.H_DIY_DISPLAYS["OLED"]["Soft"]))
       await dom.setValue("Preset", P_DIY)
+    elif id == ucuq.K_WOKWI_DISPLAYS:
+      oledDIY = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(ucuq.H_WOKWI_DISPLAYS["OLED"]["SDA"], ucuq.H_WOKWI_DISPLAYS["OLED"]["SCL"], soft = ucuq.H_WOKWI_DISPLAYS["OLED"]["Soft"]))
+      await dom.setValue("Preset", P_WOKWI)
 
   await updateUIAwait(dom, False)
 
@@ -151,7 +170,7 @@ async def acPreset(dom):
 
 
 async def acSwitch(dom, id):
-  global onDuty
+  global onDuty, ws2812Limiter
 
   state = (await dom.getValue(id)) == "true"
 
@@ -159,7 +178,7 @@ async def acSwitch(dom, id):
     await updateUIAwait(dom, state)
 
     try:
-      pin, count = (int(value.strip()) for value in (await dom.getValues(["Pin", "Count"])).values())
+      pin, count, ws2812Limiter = (int(value.strip()) for value in (await dom.getValues(["Pin", "Count", "Limiter"])).values())
     except:
       await dom.alert("No or bad value for Pin/Count!")
       await updateUIAwait(dom, False)
@@ -204,7 +223,7 @@ async def acDisplay(dom):
   for color in colors:
     color = color.lower()
     if color in SPOKEN_COLORS:
-      r, g, b = [int(RB_MAX * c / 255) for c in SPOKEN_COLORS[color]]
+      r, g, b = [ws2812Limiter * c // 255 for c in SPOKEN_COLORS[color]]
       await dom.setValues(getAllValues_(r, g, b))
       await dom.executeVoid(f"colorWheel.rgb = [{r},{g},{b}]")
       update_(r, g, b)
@@ -279,10 +298,10 @@ HEAD = """
 </script>
 <link rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/reinvented-color-wheel@0.4.0/css/reinvented-color-wheel.min.css">
-<script src="https://cdn.jsdelivr.net/npm/reinvented-color-wheel@0.4.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/reinvented-color-wheel@0.4.0">
+</script>
 <style>
   .switch-container {
-    margin: auto;
     display: flex;
   }
 
@@ -410,75 +429,86 @@ BODY = """
 </div>
 <fieldset>
   <legend>WS2012</legend>
-  <fieldset style="display: flex;">
-    <fieldset id="HardwareBox" style="display: flex; flex-direction: column; justify-content: center;">
-      <div style="display: flex; justify-content: center;">
-      <select id="Preset" xdh:onevent="Preset">
-        <option value="User">User defined</option>
-        <optgroup label="Freenove">
-          <option value="Bipedal">Bipedal</option>
-          <option value="Dog">Dog (ESP32)</option>
-        </optgroup>
-        <optgroup label="q37.info">
+  <fieldset>
+    <fieldset style="display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-evenly; margin-bottom: 5px;">
+        <select id="Preset" xdh:onevent="Preset">
+          <option value="User">User</option>
+          <optgroup label="Freenove">
+            <option value="Bipedal">Bipedal</option>
+            <option value="Dog">Dog (ESP32)</option>
+          </optgroup>
           <option value="DIY">DIY</option>
-        </optgroup>
-      </select>
-        </div>
-      <div style="margin: 10px">
-      <label>
-        <span>Pin:</span>
-        <input id="Pin" style="width: 4ch" type="number">
-      </label>
-      <label>
-        <span>Count:</span>
-        <input id="Count" style="width: 5ch" type="number">
-      </label>
-        </div>
-    </fieldset>
-    <span class="switch-container">
-      <label class="switch">
-        <input id="Switch" type="checkbox" xdh:onevent="Switch">
-        <span class="slider round"></span>
-      </label>
-    </span>
-  </fieldset>
-  <fieldset id="SlidersBox" style="display: flex; flex-direction: column; align-content: space-between">
-    <div>
-      <label style="display: flex; align-items: center;">
-        <span>R:&nbsp;</span>
-        <input id="SR" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
-        <span>&nbsp;</span>
-        <input id="NR" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch"">
-      </label>
-      <label style="display: flex; align-items: center;">
-        <span>V:&nbsp;</span>
-        <input id="SG" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
-        <span>&nbsp;</span>
-        <input id="NG" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
-      </label>
-      <label style="display: flex; align-items: center;">
-        <span>B:&nbsp;</span>
-        <input id="SB" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
-        <span>&nbsp;</span>
-        <input id="NB" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
-      </label>
-      <div style="display: flex; justify-content: space-evenly;">
-        <button xdh:onevent="Listen">Listen</button>
-        <button xdh:onevent="Rainbow">Rainbow</button>
-        <button xdh:onevent="Reset">Reset</button>
+          <option value="Wokwi">Wokwi</option>
+        </select>
+        <span class="switch-container">
+          <label class="switch">
+            <input id="Switch" type="checkbox" xdh:onevent="Switch">
+            <span class="slider round"></span>
+          </label>
+        </span>
       </div>
-    </div>
+      <fieldset id="HardwareBox" style="display: flex; flex-direction: row; justify-content: space-around">
+        <div style="display: flex; flex-direction: column; justify-content: space-between">
+          <label style="display: flex; justify-content: space-between">
+            <span>Pin:&nbsp;</span>
+            <input id="Pin" min="0" max="99" type="number">
+          </label>
+          <label style="display: flex; justify-content: space-between">
+            <span>Count:&nbsp;</span>
+            <input id="Count" min="0" max="999" type="number">
+          </label>
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: space-between">
+          <label style="display: flex; justify-content: space-between">
+            <span>Offset:&nbsp;</span>
+            <input id="Offset" min="-999" max="999" type="number">
+          </label>
+          <label style="display: flex; justify-content: space-between">
+            <span>Limiter:&nbsp;</span>
+            <input id="Limiter" min="0" max="255" type="number">
+          </label>
+        </div>
+      </fieldset>
+    </fieldset>
+    <fieldset id="SlidersBox" style="display: flex; flex-direction: column; align-content: space-between">
+      <div>
+        <label style="display: flex; align-items: center;">
+          <span>R:&nbsp;</span>
+          <input id="SR" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
+          <span>&nbsp;</span>
+          <input id="NR" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
+        </label>
+        <label style="display: flex; align-items: center;">
+          <span>V:&nbsp;</span>
+          <input id="SG" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
+          <span>&nbsp;</span>
+          <input id="NG" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
+        </label>
+        <label style="display: flex; align-items: center;">
+          <span>B:&nbsp;</span>
+          <input id="SB" style="width: 100%" type="range" min="0" max="255" step="1" xdh:onevent="Slide" value="0">
+          <span>&nbsp;</span>
+          <input id="NB" xdh:onevent="Adjust" type="number" min="0" max="255" step="5" value="0" style="width: 5ch">
+        </label>
+        <div style="display: flex; justify-content: space-evenly;">
+          <button xdh:onevent="Listen">Listen</button>
+          <button xdh:onevent="Rainbow">Rainbow</button>
+          <button xdh:onevent="Reset">Reset</button>
+        </div>
+      </div>
+    </fieldset>
+    </span>
+    <fieldset id="PickerBox" style="display: flex; justify-content: center; flex-direction: column">
+      <div id="color-wheel-container" xdh:onevent="Select"></div>
+      <label class="label-checkbox" style="display: flex; justify-content: center;">
+        <input type="checkbox" checked
+          onchange="colorWheel.wheelReflectsSaturation = this.checked; colorWheel.redraw()">
+        <span>wheel reflects saturation</span>
+      </label>
+    </fieldset>
   </fieldset>
-  </span>
-  <fieldset id="PickerBox" style="display: flex; justify-content: center; flex-direction: column">
-    <div id="color-wheel-container" xdh:onevent="Select"></div>
-    <label class="label-checkbox" style="display: flex; justify-content: center;">
-      <input type="checkbox" checked onchange="colorWheel.wheelReflectsSaturation = this.checked; colorWheel.redraw()">
-      <span>wheel reflects saturation</span>
-    </label>
-  </fieldset>
-</fieldset>
-<input id="Color" type="hidden">
-"""
+  <input id="Color" type="hidden">
+  """
 
 atlastk.launch(CALLBACKS, headContent=HEAD)

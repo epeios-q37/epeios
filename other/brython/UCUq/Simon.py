@@ -22,9 +22,9 @@ DIGITS = [
 ]
 
 OLED_COEFF = 8
-ringCoeff = 1
 ringCount = 0
-ringOffset = 0  # LED at north position
+ringOffset = 0
+ringLimiter = 0
 
 # Presets
 P_USER = "User"
@@ -39,6 +39,7 @@ W_H_PRESET = "Preset"
 W_H_RING_PIN = "Ring_Pin"
 W_H_RING_COUNT = "Ring_Count"
 W_H_RING_OFFSET = "Ring_Offset"
+W_H_RING_LIMITER = "Ring_Limiter"
 W_H_BUZZER_ON = "Buzzer_On"
 W_H_BUZZER_PIN = "Buzzer_Pin"
 W_H_OLED_SOFT = "OLED_Soft"
@@ -74,30 +75,32 @@ SETTINGS = {
   P_USER: {
   },
   P_DIY: {
-    W_H_RING_PIN: "0",
-    W_H_RING_COUNT: "8",
-    W_H_RING_OFFSET: "-1",
+    W_H_RING_PIN: ucuq.H_DIY_DISPLAYS["Ring"]["Pin"],
+    W_H_RING_COUNT: ucuq.H_DIY_DISPLAYS["Ring"]["Count"],
+    W_H_RING_OFFSET: ucuq.H_DIY_DISPLAYS["Ring"]["Offset"],
+    W_H_RING_LIMITER:ucuq.H_DIY_DISPLAYS["Ring"]["Limiter"],
     W_H_BUZZER_ON: "true",
-    W_H_BUZZER_PIN: "5",
-    W_H_OLED_SOFT: "false",
-    W_H_OLED_SDA: "8",
-    W_H_OLED_SCL: "9",
-    W_H_LCD_SOFT: "true",
-    W_H_LCD_SDA: "6",
-    W_H_LCD_SCL: "7"
+    W_H_BUZZER_PIN: ucuq.H_DIY_DISPLAYS["Buzzer"]["Pin"],
+    W_H_OLED_SOFT: ucuq.H_DIY_DISPLAYS["OLED"]["Soft"],
+    W_H_OLED_SDA: ucuq.H_DIY_DISPLAYS["OLED"]["SDA"],
+    W_H_OLED_SCL: ucuq.H_DIY_DISPLAYS["OLED"]["SCL"],
+    W_H_LCD_SOFT: ucuq.H_DIY_DISPLAYS["LCD"]["Soft"],
+    W_H_LCD_SDA: ucuq.H_DIY_DISPLAYS["LCD"]["SDA"],
+    W_H_LCD_SCL: ucuq.H_DIY_DISPLAYS["LCD"]["SCL"],
   },
   P_WOKWI: {
-    W_H_RING_PIN: "15",
-    W_H_RING_COUNT: "16",
-    W_H_RING_OFFSET: "1",
+    W_H_RING_PIN: ucuq.H_WOKWI_DISPLAYS["Ring"]["Pin"],
+    W_H_RING_COUNT: ucuq.H_WOKWI_DISPLAYS["Ring"]["Count"],
+    W_H_RING_OFFSET: ucuq.H_WOKWI_DISPLAYS["Ring"]["Offset"],
+    W_H_RING_LIMITER:ucuq.H_WOKWI_DISPLAYS["Ring"]["Limiter"],
     W_H_BUZZER_ON: "true",
-    W_H_BUZZER_PIN: "32",
-    W_H_OLED_SOFT: "false",
-    W_H_OLED_SDA: "21",
-    W_H_OLED_SCL: "22",
-    W_H_LCD_SOFT: "true",
-    W_H_LCD_SDA: "25",
-    W_H_LCD_SCL: "26",
+    W_H_BUZZER_PIN: ucuq.H_WOKWI_DISPLAYS["Buzzer"]["Pin"],
+    W_H_OLED_SOFT: ucuq.H_WOKWI_DISPLAYS["OLED"]["Soft"],
+    W_H_OLED_SDA: ucuq.H_WOKWI_DISPLAYS["OLED"]["SDA"],
+    W_H_OLED_SCL: ucuq.H_WOKWI_DISPLAYS["OLED"]["SCL"],
+    W_H_LCD_SOFT: ucuq.H_WOKWI_DISPLAYS["LCD"]["Soft"],
+    W_H_LCD_SDA: ucuq.H_WOKWI_DISPLAYS["LCD"]["SDA"],
+    W_H_LCD_SCL: ucuq.H_WOKWI_DISPLAYS["LCD"]["SCL"],
   }
 }
 
@@ -127,10 +130,10 @@ def number(n):
     cOLED.fill(0).show()
 
 BUTTONS = {
-  "Y": [[30, 30, 0], 1, 17],
-  "G": [[0, 30, 0], 3, 5],
-  "R": [[30, 0, 0], 5, 9],
-  "B": [[0, 0, 30], 7, 12],
+  "R": [[255, 0, 0], 5, 9],
+  "B": [[0, 0, 255], 7, 12],
+  "Y": [[255, 255, 0], 1, 17],
+  "G": [[0, 255, 0], 3, 5],
 }
 
 SPOKEN_COLORS = {
@@ -171,12 +174,17 @@ def convert(value, converter):
 
 
 async def getInputs(dom):
-  values = await dom.getValues([W_H_RING_PIN, W_H_RING_COUNT, W_H_RING_OFFSET, W_H_BUZZER_ON, W_H_BUZZER_PIN, W_H_OLED_SOFT, W_H_OLED_SDA, W_H_OLED_SCL, W_H_LCD_SOFT, W_H_LCD_SDA, W_H_LCD_SCL])
+  values = await dom.getValues([
+      W_H_RING_PIN, W_H_RING_COUNT, W_H_RING_OFFSET, W_H_RING_LIMITER,
+      W_H_BUZZER_ON, W_H_BUZZER_PIN,
+      W_H_OLED_SOFT, W_H_OLED_SDA, W_H_OLED_SCL,
+      W_H_LCD_SOFT, W_H_LCD_SDA, W_H_LCD_SCL])
 
   return {
     W_H_RING_PIN: convert(values[W_H_RING_PIN], int),
     W_H_RING_COUNT: convert(values[W_H_RING_COUNT], int),
     W_H_RING_OFFSET: convert(values[W_H_RING_OFFSET], int),
+    W_H_RING_LIMITER: convert(values[W_H_RING_LIMITER], int),
     W_H_BUZZER_ON: True if values[W_H_BUZZER_ON] == "true" else False,
     W_H_BUZZER_PIN: convert(values[W_H_BUZZER_PIN], int),
     W_H_OLED_SOFT: True if values[W_H_OLED_SOFT] == "true" else False,
@@ -191,7 +199,7 @@ def flash(button):
   cRing.fill([0,0,0])
   if button in BUTTONS:
     for i in range(1 + ringCount // 4):
-      cRing.setValue((list(BUTTONS.keys()).index(button) * ringCount // 4 + i + ringOffset) % ringCount,[ringCoeff * item for item in BUTTONS[button][0]])
+      cRing.setValue((list(BUTTONS.keys()).index(button) * ringCount // 4 + i + ringOffset) % ringCount,[ringLimiter * item // 255 for item in BUTTONS[button][0]])
   cRing.write()
 
 
@@ -228,10 +236,6 @@ async def acConnect(dom):
 
   await dom.setValue(W_H_PRESET, preset)
 
-  if preset == P_WOKWI:
-    global ringCoeff
-    ringCoeff = 8
-
   await updateHardwareUI(dom)
 
   if not LISTEN:
@@ -243,7 +247,7 @@ async def acPreset(dom):
 
 
 async def acSwitch(dom, id):
-  global onDuty, cRing, cOLED, cBuzzer, cLCD, ringCount, ringOffset
+  global onDuty, cRing, cOLED, cBuzzer, cLCD, ringCount, ringOffset, ringLimiter
 
   if await dom.getValue(id) == "true":
     try:
@@ -255,12 +259,13 @@ async def acSwitch(dom, id):
 
     ringCount = inputs[W_H_RING_COUNT]
     ringOffset = inputs[W_H_RING_OFFSET]
+    ringLimiter = inputs[W_H_RING_LIMITER]
 
     print(ringOffset)
 
     cRing = ucuq.WS2812(inputs[W_H_RING_PIN], inputs[W_H_RING_COUNT])
     cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(inputs[W_H_OLED_SDA], inputs[W_H_OLED_SCL], soft = inputs[W_H_OLED_SOFT]))
-    cLCD = ucuq.LCD_PCF8574(ucuq.I2C(inputs[W_H_LCD_SDA], inputs[W_H_LCD_SCL], soft = inputs[W_H_LCD_SOFT]), 2, 16)
+    cLCD = ucuq.LCD_PCF8574(ucuq.I2C(inputs[W_H_LCD_SDA], inputs[W_H_LCD_SCL], soft = inputs[W_H_LCD_SOFT]), 2, 16).backlightOff()
     if inputs[W_H_BUZZER_ON]:
       cBuzzer = ucuq.PWM(inputs[W_H_BUZZER_PIN])
     else:
@@ -286,7 +291,7 @@ def display(button):
   cRing.fill([0,0,0])
   if button in BUTTONS:
     for i in range(1 + ringCount // 4):
-      cRing.setValue((list(BUTTONS.keys()).index(button) * ringCount // 4 + i + ringOffset) % ringCount,[ringCoeff * item for item in BUTTONS[button][0]])
+      cRing.setValue((list(BUTTONS.keys()).index(button) * ringCount // 4 + i + ringOffset) % ringCount,[ringLimiter * item // 255 for item in BUTTONS[button][0]])
   cRing.write()
   cBuzzer.setFreq(pitches[BUTTONS[button][2]]).setU16(30000)
   ucuq.sleep(0.29)
@@ -296,7 +301,6 @@ def display(button):
 
 
 def play(sequence):
-  cLCD.backlightOff()
   seq=""
   for s in sequence:
     display(s)
@@ -326,10 +330,12 @@ async def acNew():
 
   playJingle(LAUNCH_JINGLE)
   ucuq.sleep(0.5)
-  cLCD.backlightOff().clear()
+  cLCD.clear()
 
   seq = random.choice("RGBY")
+  cLCD.clear().moveTo(0,0).putString("Reproduce the").moveTo(0,1).putString("sequence")
   number(len(seq))
+  ucuq.sleep(.75)
   play(seq)
   ucuq.commit()
 
@@ -353,9 +359,12 @@ async def acClick(dom, id):
       cLCD.clear()
       userSeq = ""
       seq += random.choice("RGBY")
+      cLCD.clear().moveTo(0,0).putString("Reproduce the").moveTo(0,1).putString("sequence")
       number(len(seq))
+      ucuq.sleep(.75)
       play(seq)
-    cLCD.backlightOff()
+    else:
+      cLCD.backlightOff()
   else:
     cLCD.moveTo(0,0).putString("Game over! Click").moveTo(0,1).putString("New to restart!")
     number(len(seq))
@@ -529,10 +538,10 @@ HEAD = """
 button {
   font-size: xx-large;
 }
+
 /* Switch begin */
 .switch-container {
   display: flex;
-  margin-top: 10px;
 }
 
 .switch {
@@ -606,15 +615,12 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 /* Switch end */
-
-</style>
 </style>
 """
 
 BODY = """
-<fieldset style="display: flex;">
-  <fieldset id="Hardware">
-    <legend>Preset</legend>
+<fieldset style="display: flex; flex-direction: column">
+  <div style="display: flex; justify-content: space-evenly;">
     <select xdh:onevent="Preset" id="Preset">
       <option value="User">User</option>
       <option value="DIY">DIY</option>
@@ -626,41 +632,47 @@ BODY = """
         <span class="slider round"></span>
       </label>
     </span>
-  </fieldset>
-  <fieldset style="display: flex; flex-direction: column">
-    <legend>Ring</legend>
-    <input id="Ring_Pin" min="0" max="99" type="number" placeholder="Pin">
-    <input id="Ring_Count" min="0" max="999" type="number" placeholder="Count">
-    <input id="Ring_Offset" min="-999" max="999" type="number" placeholder="Offs.">
-    </label>
-  </fieldset>
-  <fieldset style="display: flex; flex-direction: column">
-    <legend>Buzzer</legend>
-    <label>
-      <input id="Buzzer_On" type="checkbox" />
-      <span>On</span>
-    </label>
-    <input id="Buzzer_Pin" min="0" max="99" type="number" placeholder="Pin">
-  </fieldset>
-  <fieldset style="display: flex; flex-direction: column">
-    <legend>OLED</legend>
-    <label>
-      <input id="OLED_Soft" type="checkbox">
-      <span>Soft</span>
-    </label>
-    <input id="OLED_SDA" type="number" min="0" max="99" placeholder="SDA">
-    <input id="OLED_SCL" type="number" min="0" max="99" placeholder="SCL">
-  </fieldset>
-  <fieldset style="display: flex; flex-direction: column">
-    <legend>LCD</legend>
-    <label>
-      <input id="LCD_Soft" type="checkbox">
-      <span>Soft</span>
-    </label>
-    <input id="LCD_SDA" type="number" min="0" max="99" placeholder="SDA">
-    <input id="LCD_SCL" type="number" min="0" max="99" placeholder="SCL">
-  </fieldset>
+  </div>
+  <div id="Hardware" style="display: flex;">
+    <fieldset style="display: flex; flex-direction: column; justify-content: space-around;">
+      <legend>Ring</legend>
+      <div style="display: flex; justify-content: space-between">
+        <input id="Ring_Pin" min="0" max="99" type="number" placeholder="Pin">
+        <input id="Ring_Count" min="0" max="999" type="number" placeholder="Count">
+      </div>
+      <div style="display: flex; justify-content: space-between">
+        <input id="Ring_Offset" min="-999" max="999" type="number" placeholder="Offset">
+        <input id="Ring_Limiter" min="0" max="255" type="number" placeholder="Limiter">
+      </div>
+    </fieldset>
+    <fieldset style="display: flex; flex-direction: column; justify-content: space-around;">
+      <legend>Buzzer</legend>
+      <label>
+        <input id="Buzzer_On" type="checkbox" />
+        <span>On</span>
+      </label>
+      <input id="Buzzer_Pin" min="0" max="99" type="number" placeholder="Pin">
+    </fieldset>
+    <fieldset style="display: flex; flex-direction: column; justify-content: space-around;">
+      <legend>OLED</legend>
+      <label>
+        <input id="OLED_Soft" type="checkbox">
+        <span>Soft</span>
+      </label>
+      <input id="OLED_SDA" type="number" min="0" max="99" placeholder="SDA">
+      <input id="OLED_SCL" type="number" min="0" max="99" placeholder="SCL">
+    </fieldset>
+    <fieldset style="display: flex; flex-direction: column; justify-content: space-around;">
+      <legend>LCD</legend>
+      <label>
+        <input id="LCD_Soft" type="checkbox">
+        <span>Soft</span>
+      </label>
+      <input id="LCD_SDA" type="number" min="0" max="99" placeholder="SDA">
+      <input id="LCD_SCL" type="number" min="0" max="99" placeholder="SCL">
+    </fieldset>
 </fieldset>
+</div>
 <fieldset id="Board">
   <input id="Color" type="hidden">
   <div id="outer-circle">

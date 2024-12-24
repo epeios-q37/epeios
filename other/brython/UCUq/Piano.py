@@ -13,7 +13,7 @@ P_DIY = "DIY"
 PINS = {
   P_BUZZER: 2,
   P_LOUDSPEAKER: 6,
-  P_DIY: 21
+  P_DIY: 5
 }
 
 # Widgets
@@ -40,7 +40,7 @@ async def acConnect(dom):
 
   if id == ucuq.K_BIPEDAL:
     preset = P_BUZZER
-  elif id == ucuq.K_DIY:
+  elif id == ucuq.K_DIY_DISPLAYS:
     preset = P_DIY
   else:
     preset = P_USER

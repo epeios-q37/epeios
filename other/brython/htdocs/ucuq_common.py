@@ -135,6 +135,68 @@ KITS_ = {
   "q37.info/Wokwi/Servos": K_WOKWI_SERVOS,
 }
 
+# Hardware kits
+
+H_BIPEDAL = {
+  "RGB": {
+    "Pin": 0,
+    "Count": 4,
+    "Limiter": 30,
+  }
+}
+
+H_DOG = {
+  "RGB": {
+    "Pin": 16,
+    "Count": 4,
+    "Limiter": 30,
+  }
+}
+
+H_DIY_DISPLAYS = {
+  "Ring": {
+    "Pin": 2,
+    "Count": 8,
+    "Offset": 3,
+    "Limiter": 30,
+  },
+  "OLED": {
+    "Soft": False,
+    "SDA": 8,
+    "SCL": 9,
+  },
+  "LCD": {
+    "Soft": True,
+    "SDA": 6,
+    "SCL": 7
+  },
+  "Buzzer": {
+    "Pin": 5
+  },
+}
+
+H_WOKWI_DISPLAYS = {
+  "Ring": {
+    "Pin": 15,
+    "Count": 16,
+    "Offset": -7,
+    "Limiter": 255,
+  },
+  "OLED": {
+    "Soft": False,
+    "SDA": 21,
+    "SCL": 22,
+  },
+  "LCD": {
+    "Soft": True,
+    "SDA": 25,
+    "SCL": 26
+  },
+  "Buzzer": {
+    "Pin": 32
+  },
+}
+
 async def getInfosAwait(device = None):
   device = getDevice_(device)
 
