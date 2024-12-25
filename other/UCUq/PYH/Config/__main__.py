@@ -1,1 +1,1 @@
-import config.py
+import main

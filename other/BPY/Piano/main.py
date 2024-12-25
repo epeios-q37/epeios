@@ -1,8 +1,3 @@
-import os, sys
-
-os.chdir(os.path.dirname(os.path.realpath(__file__)))
-sys.path.extend(("../..","../../atlastk.zip"))
-
 import ucuq, atlastk, math
 
 BUZZER_PIN = 2
@@ -18,7 +13,7 @@ P_DIY = "DIY"
 PINS = {
   P_BUZZER: 2,
   P_LOUDSPEAKER: 6,
-  P_DIY: 21
+  P_DIY: 5
 }
 
 # Widgets
@@ -35,27 +30,27 @@ baseFreq = 440.0*math.pow(math.pow(2,1.0/12), -16)
 ratio = 0.5
 
 
-def setPin(dom, preset):
+async def setPin(dom, preset):
   if preset != P_USER:
-    dom.setValue(W_PIN, PINS[preset])
+    await dom.setValue(W_PIN, PINS[preset])
 
 
-def acConnect(dom):
-  id = ucuq.getKitId(ucuq.ATKConnect(dom, BODY))
+async def acConnect(dom):
+  id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
   if id == ucuq.K_BIPEDAL:
     preset = P_BUZZER
-  elif id == ucuq.K_DIY:
+  elif id == ucuq.K_DIY_DISPLAYS:
     preset = P_DIY
   else:
     preset = P_USER
 
-  dom.setValue(W_PRESET, preset)
+  await dom.setValue(W_PRESET, preset)
 
-  setPin(dom, preset)  
+  await setPin(dom, preset)  
 
 
-def acPlay(dom,id):
+async def acPlay(dom,id):
   global pwm
 
   if onDuty:
@@ -67,36 +62,36 @@ def acPlay(dom,id):
     pwm.setU16(0)
     ucuq.commit()
   else:
-    dom.alert("Please switch on!")
+    await dom.alert("Please switch on!")
 
 
-def acSetRatio(dom, id):
+async def acSetRatio(dom, id):
   global ratio
 
-  ratio = float(dom.getValue(id))
+  ratio = float(await dom.getValue(id))
 
-  dom.setValue(W_RATIO_SLIDE if id == W_RATIO_VALUE else W_RATIO_SLIDE, ratio)
+  await dom.setValue(W_RATIO_SLIDE if id == W_RATIO_VALUE else W_RATIO_SLIDE, ratio)
 
 
-def acPreset(dom, id):
+async def acPreset(dom, id):
   global onDuty, pwm
 
-  setPin(dom, dom.getValue(id))
+  await setPin(dom, await dom.getValue(id))
 
 
-def acSwitch(dom, id):
+async def acSwitch(dom, id):
   global onDuty, pwm
 
-  state = dom.getValue(id) == "true"
+  state = await dom.getValue(id) == "true"
 
   if state:
-    rawPin = dom.getValue(W_PIN)
+    rawPin = await dom.getValue(W_PIN)
 
     try:
       pin = int(rawPin)
     except:
-      dom.alert("No or bad pin value!")
-      dom.setValue(id, "false")
+      await dom.alert("No or bad pin value!")
+      await dom.setValue(id, "false")
     else:
       pwm = ucuq.PWM(pin)
       ucuq.commit()
@@ -105,9 +100,9 @@ def acSwitch(dom, id):
     onDuty = False
 
   if onDuty:
-    dom.disableElement(W_PIN_BOX)
+    await dom.disableElement(W_PIN_BOX)
   else:
-    dom.enableElement(W_PIN_BOX)
+    await dom.enableElement(W_PIN_BOX)
 
 
 CALLBACKS = {
@@ -117,11 +112,3 @@ CALLBACKS = {
   "Play": acPlay,
   "SetRatio": acSetRatio
 }
-
-with open('Body.html', 'r') as file:
-  BODY = file.read()
-
-with open('Head.html', 'r') as file:
-  HEAD = file.read()
-
-atlastk.launch(CALLBACKS, headContent=HEAD)

@@ -1,8 +1,3 @@
-import os, sys
-
-os.chdir(os.path.dirname(os.path.realpath(__file__)))
-sys.path.extend(("../..","../../atlastk.zip"))
-
 import ucuq, atlastk, binascii
 
 onDuty = False
@@ -47,7 +42,7 @@ def test():
     ucuq.commit()
 
 
-def drawOnGUI(dom, motif = pattern):
+async def drawOnGUIAwait(dom, motif = pattern):
   html = ""
 
   for i, c in enumerate(motif.ljust(32,"0")):
@@ -55,7 +50,7 @@ def drawOnGUI(dom, motif = pattern):
       on = int(c, 16) & (1 << (3 - o)) != 0
       html += f"<div class='led{ '' if on else ' off'}' xdh:onevent='Toggle' data-state='{'on' if on else 'off'}' xdh:mark='{(i % 4) * 4 + o} {i >> 2}'></div>"
 
-  dom.inner("Matrix", html)
+  await dom.inner("Matrix", html)
 
 
 def drawLittleMatrix(motif):
@@ -69,7 +64,7 @@ def drawLittleMatrix(motif):
   return html
 
 
-def drawLittleMatrices(dom, matrices):
+async def drawLittleMatricesAwait(dom, matrices):
   html = ""
 
   for i, matrix in enumerate(matrices):
@@ -77,11 +72,11 @@ def drawLittleMatrices(dom, matrices):
       + drawLittleMatrix(matrix)\
       +"</fieldset>"
 
-  dom.inner("MatricesBox", html)
+  await dom.inner("MatricesBox", html)
 
 
-def setHexa(dom, motif = pattern):
-  dom.setValue("Hexa", motif)
+async def setHexaAwait(dom, motif = pattern):
+  await dom.setValue("Hexa", motif)
 
 
 def drawOnMatrix(motif = pattern):
@@ -95,62 +90,62 @@ def drawOnMatrix(motif = pattern):
 
       mirror.getDevice().commit()
 
-def draw(dom, motif = pattern):
+async def drawAwait(dom, motif = pattern):
   global pattern
 
   pattern = motif
   
   drawOnMatrix(motif)
 
-  drawOnGUI(dom, motif)
+  await drawOnGUIAwait(dom, motif)
 
-  setHexa(dom, motif)
+  await setHexaAwait(dom, motif)
 
 
-def updateUI(dom, onDuty):
+async def updateUIAwait(dom, onDuty):
   ids = ["MatrixBox", "HexaBox", "MiscBox", "MatricesBox"]
 
   if onDuty:
-    dom.enableElements(ids)
-    dom.disableElement("HardwareBox")
-    dom.setValue("Switch", "true")
+    await dom.enableElements(ids)
+    await dom.disableElement("HardwareBox")
+    await dom.setValue("Switch", "true")
   else:
-    dom.disableElements(ids)
-    dom.enableElement("HardwareBox")
-    dom.setValue("Switch", "false")
+    await dom.disableElements(ids)
+    await dom.enableElement("HardwareBox")
+    await dom.setValue("Switch", "false")
 
-    match dom.getValue("Preset"):
+    match await dom.getValue("Preset"):
       case "User":
-        dom.enableElements(["SDA", "SCL"])
+        await dom.enableElements(["SDA", "SCL"])
       case "Bipedal":
-        dom.setValues({
+        await dom.setValues({
           "SDA": 4,
           "SCL": 5
         })
-        dom.disableElements(["SDA", "SCL"])
+        await dom.disableElements(["SDA", "SCL"])
       case _:
         raise Exception("Unknown preset!")
         
 
-def acConnect(dom):
-  id = ucuq.getKitId(ucuq.ATKConnect(dom, BODY))
+async def acConnect(dom):
+  id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
-  draw(dom, "")
+  await drawAwait(dom, "")
 
   dom.executeVoid("patchHexaInput();")
 
-  drawLittleMatrices(dom,MATRICES)
+  await drawLittleMatricesAwait(dom,MATRICES)
 
   if not onDuty:
     if id == ucuq.K_BIPEDAL:
-      dom.setValue("Preset", "Bipedal")
+      await dom.setValue("Preset", "Bipedal")
 
-  updateUI(dom, onDuty)
+  await updateUIAwait(dom, onDuty)
 
-def acPreset(dom, id):
-  match dom.getValue("Preset"):
+async def acPreset(dom, id):
+  match await dom.getValue("Preset"):
     case "User":
-      dom.setValues({
+      await dom.setValues({
         "SDA": "",
         "SCL": ""
       })
@@ -159,10 +154,10 @@ def acPreset(dom, id):
     case _:
       raise Exception("Unknown preset!")
     
-  updateUI(dom, False)
+  await updateUIAwait(dom, False)
 
 
-def launch(dom, sda, scl):
+async def launchAwait(dom, sda, scl):
   global ht16k33, onDuty
 
   try:
@@ -172,45 +167,45 @@ def launch(dom, sda, scl):
     ht16k33.setBlinkRate(0)
     ucuq.commit()
   except Exception as err:
-    dom.alert(err)
+    await dom.alert(err)
     onDuty = False
   else:
     onDuty = True
 
 
-def acSwitch(dom, id):
+async def acSwitch(dom, id):
   global onDuty
 
-  state = (dom.getValue(id)) == "true"
+  state = (await dom.getValue(id)) == "true"
 
   if state:
-    updateUI(dom, state)
+    await updateUIAwait(dom, state)
 
     try:
-      sda, scl = (int(value.strip()) for value in (dom.getValues(["SDA", "SCL"])).values())
+      sda, scl = (int(value.strip()) for value in (await dom.getValues(["SDA", "SCL"])).values())
     except:
-      dom.alert("No or bad value for SDA/SCL!")
-      updateUI(dom, False)
+      await dom.alert("No or bad value for SDA/SCL!")
+      await updateUIAwait(dom, False)
     else:
-      launch(dom, sda, scl)
+      await launchAwait(dom, sda, scl)
   else:
     onDuty = False
 
-  updateUI(dom, onDuty)
+  await updateUIAwait(dom, onDuty)
 
 
-def acTest():
+async def acTest():
   test()
 
 
-def acToggle(dom, id):
+async def acToggle(dom, id):
   if not onDuty:
     dom.alert("Please switch on!")
     return
 
   global pattern
 
-  [x, y] = list(map(lambda v: int(v), (dom.getMark(id)).split()))
+  [x, y] = list(map(lambda v: int(v), (await dom.getMark(id)).split()))
 
   pos = y * 16 + ( 4 * int(x / 4) + (3 - x % 4)) 
 
@@ -222,46 +217,46 @@ def acToggle(dom, id):
 
   pattern = (binascii.hexlify(bin[::-1]).decode()[::-1])
 
-  draw(dom, pattern)
+  await drawAwait(dom, pattern)
 
 
-def acHexa(dom):
+async def acHexa(dom):
   global pattern
 
-  drawOnMatrix(motif := dom.getValue("Hexa"))
+  drawOnMatrix(motif := await dom.getValue("Hexa"))
 
-  drawOnGUI(dom, motif)
+  await drawOnGUIAwait(dom, motif)
 
   pattern = motif
 
 
-def acAll(dom):
+async def acAll(dom):
   for matrix in MATRICES:
-    draw(dom, matrix)
-    ucuq.time.sleep(0.5)
+    await drawAwait(dom, matrix)
+    await ucuq.sleepAwait(0.5)
 
 
-def acBrightness(dom, id):
-  ht16k33.setBrightness(int(dom.getValue(id)))
+async def acBrightness(dom, id):
+  ht16k33.setBrightness(int(await dom.getValue(id)))
   ucuq.commit()
 
-def acBlinkRate(dom, id):
-  ht16k33.setBlinkRate(float(dom.getValue(id)))
+async def acBlinkRate(dom, id):
+  ht16k33.setBlinkRate(float(await dom.getValue(id)))
   ucuq.commit()
 
-def acDraw(dom, id):
-  draw(dom, MATRICES[int(dom.getMark(id))])
+async def acDraw(dom, id):
+  await drawAwait(dom, MATRICES[int(await dom.getMark(id))])
 
-def acMirror(dom, id):
+async def acMirror(dom, id):
   global mirror
 
-  state = (dom.getValue(id)) == "true"
+  state = (await dom.getValue(id)) == "true"
 
   if state:
-    if ( dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.SoftI2C(0, 1, ucuq.Device(id="Yellow")))
+    if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
+      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9, device = ucuq.Device(id="Yellow")))
     else:
-      dom.setValue(id, "false")
+      await dom.setValue(id, "false")
   else:
     mirror = None
   
@@ -303,10 +298,3 @@ MATRICES = (
   "00003ffc40025ffa2ff417e8081007e",
 )
 
-with open('Body.html', 'r') as file:
-  BODY = file.read()
-
-with open('Head.html', 'r') as file:
-  HEAD = file.read()
-
-atlastk.launch(CALLBACKS, headContent=HEAD)

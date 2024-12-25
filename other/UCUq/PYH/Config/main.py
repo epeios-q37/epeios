@@ -45,7 +45,12 @@ def getConfigDevice():
 
 
 def getConfigProxy():
-  return getConfig()[K_PROXY]
+  config = getConfig()
+
+  if K_PROXY in config:
+    return config[K_PROXY]
+  else:
+    return {}
 
 
 def setAsHidden(dom, id):
