@@ -188,25 +188,20 @@ def ignitionCallback(data, answer, errorMessage):
   return "" if success else errorMessage
 
 
-async def findDeviceAwait(dom):
+async def getDemoDeviceAwait():
   data = {
     "lock": Lock_()
   }
 
   await data["lock"].acquireAwait()
 
-  for deviceId in VTOKENS:
-    await dom.inner("", f"<h3>Connecting to '{deviceId}'…</h3>")
+  device = Device(token = ONE_DEVICE_VTOKEN, callback = lambda answer: ignitionCallback(data, answer, "Please launch the 'Config' application!"))
 
-    lastKey = list(VTOKENS.keys())[-1]
+  await data["lock"].acquireAwait()
 
-    device = Device(token = VTOKENS[deviceId], callback = lambda answer: ignitionCallback(data, answer, "Please launch the 'Config' application!" if deviceId == lastKey else ""))
-
-    await data["lock"].acquireAwait()
-
-    if data["success"]:
-      return device
-  
-  return None
+  if data["success"]:
+    return device
+  else:
+    return None
 
 

@@ -201,7 +201,7 @@ class Device_:
     if token == None and id == None:
       token, id = handlingConfig_(token, id)
 
-    self.token = token if token else "%DEFAULT_VTOKEN%"
+    self.token = token if token else ALL_DEVICE_VTOKEN
     self.id = id if id else ""
 
     self.socket_ = connect_(self.token, self.id, errorAsException = errorAsException)
@@ -303,14 +303,11 @@ class Device(Device_):
     self.addCommand(f"time.sleep({secs})")
     
 
-def findDevice(dom):
-  for deviceId in VTOKENS:
-    dom.inner("", f"<h3>Connecting to '{deviceId}'…</h3>")
+def getDemoDevice():
+  device = Device()
 
-    device = Device()
-
-    if device.connect(token = VTOKENS[deviceId], id=deviceId, errorAsException = False):
-      return device
-  
-  return None   
+  if device.connect(token = ONE_DEVICE_VTOKEN, errorAsException = False):
+    return device
+  else:
+    return None   
 

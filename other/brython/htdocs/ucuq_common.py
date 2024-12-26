@@ -3,17 +3,8 @@ K_DEVICE = "Device"
 K_DEVICE_TOKEN = "Token"
 K_DEVICE_ID = "Id"
 
-VTOKENS = {
-    "Black": "%BLACK_VTOKEN%",
-    "White": "%WHITE_VTOKEN%",
-    "Yellow": "%YELLOW_VTOKEN%",
-    "Red": "%RED_VTOKEN%",
-    "Blue": "%BLUE_VTOKEN%",
-    "Striped": "%STRIPED_VTOKEN%",
-}
-
+ONE_DEVICE_VTOKEN = "%ONE_DEVICE_VTOKEN%"
 ALL_DEVICES_VTOKEN = "%ALL_DEVICES_VTOKEN%"
-
 
 def displayMissingConfigMessage_():
   displayExitMessage_("Please launch the 'Config' app first to set the device to use!")
@@ -111,7 +102,7 @@ ATK_STYLE = """
 
 ATK_BODY = """
 <div style="display: flex; justify-content: center;" class="ucuq">
-  <h3>'{}'</h3>
+  <h3>'{}' (<em>{}</em>)</h3>
 </div>
 <div id="ucuq_body">
 </div>
@@ -139,17 +130,19 @@ KITS_ = {
 
 H_BIPEDAL = {
   "RGB": {
-    "Pin": 0,
+    "Pin": 16,
     "Count": 4,
     "Limiter": 30,
+    "Offset": 0,
   }
 }
 
 H_DOG = {
   "RGB": {
-    "Pin": 16,
+    "Pin": 0,
     "Count": 4,
     "Limiter": 30,
+    "Offset": 0,
   }
 }
 
@@ -231,10 +224,9 @@ async def ATKConnectAwait(dom, body, *, device = None):
   await dom.inner("", "<h3>Connecting…</h3>")
   
   if device or CONFIG:
-    await dom.inner("", "<h3>Connecting…</h3>")
     device = getDevice_(device)
   else:
-    device = await findDeviceAwait(dom)
+    device = await getDemoDeviceAwait()
 
   if not device:
     await dom.inner("", "<h3>ERROR: Please launch the 'Config' application!</h3>")
@@ -243,7 +235,7 @@ async def ATKConnectAwait(dom, body, *, device = None):
     setDevice(device = device)
     infos = await getInfosAwait(device)
   
-  await dom.inner("", ATK_BODY.format(getKitLabel(infos)))
+  await dom.inner("", ATK_BODY.format(getKitLabel(infos), getDeviceId(infos)))
 
   await dom.inner("ucuq_body", body)
 

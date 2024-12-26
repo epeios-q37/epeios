@@ -115,8 +115,8 @@ async def updateUIAwait(dom, onDuty):
       await dom.setValues({
         "Pin": ucuq.H_BIPEDAL["RGB"]["Pin"],
         "Count": ucuq.H_BIPEDAL["RGB"]["Count"],
-        "Offset": ucuq.H_["RGB"]["Offset"],
-        "Limiter": ucuq.H_["RGB"]["Limiter"],
+        "Offset": ucuq.H_BIPEDAL["RGB"]["Offset"],
+        "Limiter": ucuq.H_BIPEDAL["RGB"]["Limiter"],
       })
     elif preset == P_DOG:
       await dom.setValues({
