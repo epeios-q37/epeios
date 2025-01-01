@@ -215,7 +215,6 @@ def playJingle(jingle):
   prevButton = ""
   prevPrevButton = ""
   number(None)
-  ucuq.commit()
   for n in jingle:
     while True:
       button = random.choice(list(BUTTONS.keys())) 
@@ -357,6 +356,7 @@ async def acClick(dom, id):
       playJingle(SUCCESS_JINGLE)
       ucuq.sleep(0.5)
       cLCD.clear()
+      ucuq.commit()
       userSeq = ""
       seq += random.choice("RGBY")
       cLCD.clear().moveTo(0,0).putString("Reproduce the").moveTo(0,1).putString("sequence...")
