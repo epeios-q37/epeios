@@ -4,7 +4,7 @@ Concerne le code *Python* <u>et</u> natif.
 
 > Le répertoire `Examples/AlSweigart` est indépendant et contient son propre `NOTES.md` !
 
-## Exemple de description en anglais (obsolete):
+## Exemple de description en anglais (obsolete)
 
 > Lightweight and dependency-free module to easily add a GUI to Python programs. Requires only basic knowledge of web technologies (no JavaScript knowledge required). CLI and GUI can easily coexist in the same program, so the user can choose the interface s/he wants to use.
 
@@ -143,7 +143,7 @@ Ces projets embarquent le *toolkit* *Atlas*, généralement pour en simplifier l
 ### 0.13.3
 
 - https://github.com/epeios-q37/AlSweigartTheBigBookPython (mettre à jour manuellement après avoir utilisé `ATKAtlasPack` pour générer `atlastk.zip`) ;
- 
+
 ### 0.13.2
 
 ### 0.13.1

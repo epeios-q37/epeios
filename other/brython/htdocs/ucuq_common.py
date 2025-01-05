@@ -168,6 +168,13 @@ H_DIY_DISPLAYS = {
   },
 }
 
+H_DIY_SERVOS = {
+  "Servos": {
+    "Mode": "Straight",
+    "Pins": [12, 13, 14, 15]
+  }
+}
+
 H_WOKWI_DISPLAYS = {
   "Ring": {
     "Pin": 15,

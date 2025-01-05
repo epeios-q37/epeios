@@ -2,9 +2,35 @@ import javascript, inspect
 from collections import OrderedDict
 from browser import aio
 
-LIB_VERSION = "0.14.0"
+LIB_VERSION = "0.14.1"
 
 javascript.import_js("atlastk.js", "atlastkjs")
+
+# Options entries
+O_CALLBACKS_PREFIX_ = "CallbacksPrefix"
+O_CONNECT_ACTION_NAME_ = "ConnectActionName"
+O_CALLBACKS_DICT_NAME_ = "CallbacksDictName"
+O_PREPROCESS_ACTION_NAME_ = "PreprocessActionName"
+O_POSTPROCESS_ACTION_NAME_ = "PostprocessActionName"
+
+DEFAULT_CALLBACK_PREFIX = "atk"
+
+options_ = {
+  # Prefix of the name of a callback corresponding to an action
+  # if absent from callbacks dict.
+  # If 'None' or '', callbacks for the actions must be in callbacks dict.
+  O_CALLBACKS_PREFIX_: DEFAULT_CALLBACK_PREFIX,
+  # The name for the connect action.
+  O_CONNECT_ACTION_NAME_: "Connect",
+  # Name of the callbacks dict.
+  O_CALLBACKS_DICT_NAME_: DEFAULT_CALLBACK_PREFIX.upper() + "_CALLBACKS",
+  # NOTA: there is no default callback name for below 2 actions.
+  # They must be specifically defined in the callbacks dict.
+  # Name of the preprocessing action.
+  O_PREPROCESS_ACTION_NAME_: "_Preprocess",
+  # Name of the postprocessing action.
+  O_POSTPROCESS_ACTION_NAME_: "_Postprocess"
+}
 
 _VOID = 0
 _STRING = 1
@@ -444,25 +470,51 @@ def buildArgs(callback, bundle):
 
   return args
 
-async def handleCallbackBundle(userCallbacks, bundle):
+async def callCallback_(callback, bundle):
+  return await callback(*buildArgs(callback, bundle))
+
+async def handleCallbackBundle(userCallbacks, callingGlobals, bundle):
   action = bundle.action
 
-  if action in userCallbacks:
-    callback = userCallbacks[action]
-    await callback(*buildArgs(callback, bundle))
-    atlastkjs.standBy(bundle.instance)
-  else:
-    await bundle.instance.alert(("\tDEV ERROR: missing callback for '" + action + "' action!"))
+  if action == ""\
+    or not options_[O_PREPROCESS_ACTION_NAME_] in userCallbacks\
+    or await callCallback_(userCallbacks[options_[O_PREPROCESS_ACTION_NAME_]], bundle) in [None, True]:
 
-async def handleCallbackBundles(userCallbacks):
+    callback = None
+
+    if action in userCallbacks:
+      callback = userCallbacks[action]
+    elif options_[O_CALLBACKS_PREFIX_]:
+      callbackName = options_[O_CALLBACKS_PREFIX_] + ( options_[O_CONNECT_ACTION_NAME_] if action == "" else action )
+
+      if callbackName in callingGlobals:
+        callback = callingGlobals[callbackName]
+
+    if callback:
+      bundle.instance.callbackReturnValue = await callCallback_(callback, bundle)
+
+      if options_[O_POSTPROCESS_ACTION_NAME_] in userCallbacks:
+        await callCallback_(userCallbacks[options_[O_POSTPROCESS_ACTION_NAME_]],bundle)
+
+      atlastkjs.standBy(bundle.instance)
+    else:
+      await bundle.instance.alert(("\tDEV ERROR: missing callback for '" + action + "' action!"))
+
+async def handleCallbackBundles(userCallbacks, callingGlobals):
+  if callingGlobals == None:
+    callingGlobals = {}
+
+  if userCallbacks == None:
+    userCallbacks = callingGlobals[options_[O_CALLBACKS_DICT_NAME_]] if options_[O_CALLBACKS_DICT_NAME_] in callingGlobals else {}
+
   while True:
     bundle = await atlastkjs.getCallbackBundle()
-    aio.run(handleCallbackBundle(userCallbacks,bundle))
+    aio.run(handleCallbackBundle(userCallbacks,callingGlobals, bundle))
 
-def launch(callbacks, userCallback = lambda : None, headContent = ""):
+def launch(callbacks = None, *, userCallback = lambda : None, globals = None, headContent = ""):
   atlastkjs.launch(lambda : _callback(userCallback), headContent.replace("_BrythonWorkaroundForClosingScriptTag_","</script>"), LIB_VERSION)
 
-  aio.run(handleCallbackBundles(callbacks))
+  aio.run(handleCallbackBundles(callbacks, globals))
 
 class XML:
   def _write(self,value):
@@ -519,5 +571,16 @@ async def sleep(time):
   await atlastkjs.sleep(time, lambda : None)
 
 def getAppURL(id=""):
-  return atlastkjs.getAppURL() + ("&_id=" + str(id) if id else "") 
+  return atlastkjs.getAppURL() + ("&_id=" + str(id) if id else "")
 
+def options(options = None):
+  if options != None:
+    global options_
+
+    for key in options:
+      if not key in options_:
+        raise Exception(f"Unknown option '{key}'!")
+      else:
+        options_[key] = options[key]
+
+  return options_
