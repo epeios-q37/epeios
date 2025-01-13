@@ -324,6 +324,10 @@ function toASCII_(text) {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+function myFunction_() {
+  console.log("Hello from myFunction!");
+}
+
 
 // ATTENTION: si modification, mettre script 'Build' à jour !!!
 module.exports.sleep = sleep_;
@@ -331,4 +335,5 @@ module.exports.launch = launch_;
 module.exports.upload = upload_;
 module.exports.execute = execute_;
 module.exports.toASCII = toASCII_;
+module.exports.myFunction = myFunction_;
 
