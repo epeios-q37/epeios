@@ -1,29 +1,23 @@
 Blockly.defineBlocksWithJsonArray([
   {
-    "type": "gpio_init",
+    "type": "ucuq_connect",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "GPIO init %1 %2 %3 pin %4",
+    "message0": "Preset %1 Id %2 Token %3",
     "args0": [
       {
         "type": "input_dummy",
         "name": ""
       },
       {
-        "type": "field_input",
-        "name": "LABEL",
-        "text": "GPIO"
-      },
-      {
-        "type": "input_dummy",
-        "name": "",
-        "align": "CENTRE"
+        "type": "input_value",
+        "name": "ID",
+        "align": "RIGHT"
       },
       {
         "type": "input_value",
-        "name": "PIN",
-        "align": "RIGHT",
-        "check": "String"
+        "name": "TOKEN",
+        "align": "RIGHT"
       }
     ],
     "colour": 225,
@@ -31,14 +25,25 @@ Blockly.defineBlocksWithJsonArray([
     "nextStatement": null,
   },
   {
-    "type": "gpio_init_pin",
+    "type": "ucuq_connect_id",
     "message0": "%1",
     "args0": [
       {
         "type": "field_input",
-        "name": "PIN"
+        "name": "ID"
       }
     ],
     "output": null
   },
-])  
+  {
+    "type": "ucuq_connect_token",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_input",
+        "name": "TOKEN"
+      }
+    ],
+    "output": null
+  }
+]);

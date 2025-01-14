@@ -7,8 +7,7 @@ Blockly.defineBlocksWithJsonArray([
     "args0": [
       {
         "type": "input_dummy",
-        "name": "",
-        "align": "CENTRE"
+        "name": ""
       },
       {
         "type": "field_input",
@@ -17,7 +16,8 @@ Blockly.defineBlocksWithJsonArray([
       },
       {
         "type": "input_dummy",
-        "name": ""
+        "name": "",
+        "align": "CENTRE"
       },
       {
         "type": "input_value",

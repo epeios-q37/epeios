@@ -6,7 +6,6 @@
   <meta name="google" value="notranslate">
   <title>UCUq with Blockly</title>
   <link rel="stylesheet" href="style.css">
-  <script src="storage.js"></script>
   <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
   <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
@@ -15,24 +14,19 @@
   <!--script src="https://unpkg.com/blockly/lua_compressed.js"></script-->
   <!--script src="https://unpkg.com/blockly/dart_compressed.js"></script-->
   <script src="code.js"></script>
-  <script src="blocks/my_blocks.js"></script>
-  <script src="blocks/preset_c.js"></script>
-  <script src="blocks/preset_d.js"></script>
-  <script src="blocks/gpio/init_c.js"></script>
-  <script src="blocks/gpio/init_d.js"></script>
-  <script src="blocks/gpio/high_c.js"></script>
-  <script src="blocks/gpio/high_d.js"></script>
-  <script src="blocks/gpio/low_c.js"></script>
-  <script src="blocks/gpio/low_d.js"></script>
+  <script src="tools.js"></script>
+  <script src="ucuq.js"></script>
   <script type="text/javascript">
     function launchCode(code) {
       document.getElementById("code").value=code;
       document.getElementById('brython').submit();
     }
+    ucuq = require("ucuq");
 </script>
 
 </head>
 <body onload="init()">
+  <span>%DATE%</span>
   <table width="100%" height="100%">
     <tr>
       <td>
@@ -64,10 +58,10 @@
             <td id="tab_lua" class="hide taboff tab_collapse">Lua</td>
             <td class="hide tabmin tab_collapse">&nbsp;</td>
             <td id="tab_dart" class="hide taboff tab_collapse">Dart</td>
-            <td class="hide tabmin tab_collapse">&nbsp;</td>
-            <td id="tab_xml" class="hide taboff tab_collapse">XML</td>
-            <td class="hide tabmin tab_collapse">&nbsp;</td>
-            <td id="tab_json" class="hide taboff tab_collapse">JSON</td>
+            <td class="tabmin tab_collapse">&nbsp;</td>
+            <td id="tab_xml" class="taboff tab_collapse">XML</td>
+            <td class="tabmin tab_collapse">&nbsp;</td>
+            <td id="tab_json" class="taboff tab_collapse">JSON</td>
             <td class="tabmin">&nbsp;</td>
             <td id="tab_code" class="taboff">
               <select id="code_menu"></select>
@@ -98,11 +92,9 @@
   <!--pre id="content_php" class="content prettyprint lang-php"></pre-->
   <!--pre id="content_lua" class="content prettyprint lang-lua"></pre-->
   <!--pre id="content_dart" class="content prettyprint lang-dart"></pre-->
-  <!--
   <textarea id="content_xml" class="content" wrap="off"></textarea>
   <textarea id="content_json" class="content" wrap="off"></textarea>
-  -->
-
+  
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
     <category name="%{BKY_CATLOGIC}" colour="%{BKY_LOGIC_HUE}">
       <block type="controls_if"></block>
@@ -371,25 +363,22 @@
       </block>
       <block type="lists_sort"></block>
     </category>
-      <category name="UCUq" colour="#5C81A6">
-      <!--block type="my_custom_block"></block>
-      <block type="ucuq"></block>
-      <block type="connect"></block>
-      <block type="gpio"></block-->
-      <block type="test">
-        <value name="PIXELS">
-          <shadow type="test_shadow"></shadow>
-        </value>
-      </block>
-      <block type="preset">
+    <category name="UCUq" colour="#5C81A6">
+      <block type="ucuq_connect">
         <value name="ID">
-          <shadow type="preset_id"></shadow>
+          <shadow type="ucuq_connect_id"></shadow>
         </value>
         <value name="TOKEN">
-          <shadow type="preset_token"></shadow>
+          <shadow type="ucuq_connect_token"></shadow>
         </value>
       </block>
-      <block type="gpio_init">
+      <block type="ucuq_sleep">
+        <value name="SECONDS">
+          <shadow type="ucuq_sleep_seconds"></shadow>
+        </value>
+      </category>
+      <category name="GPIO" colour="#5C81A6">
+        <block type="gpio_init">
         <value name="PIN">
           <shadow type="gpio_init_pin"></shadow>
         </value>
@@ -400,11 +389,42 @@
         </value>
       </block>
       <block type="gpio_low"></block>
-      <block type="ws2812_init"></block>
-      <block type="ws2812_fill"></block>
-      <block type="ws2812_value"></block>
+    </category>
+    <category name="WS2812" colour="#5C81A6">
+      <block type="ws2812_init">
+        <value name="PIN">
+          <shadow type="ws2812_init_pin"></shadow>
+        </value>
+        <value name="COUNT">
+          <shadow type="ws2812_init_count"></shadow>
+        </value>
+      </block>
+      <block type="ws2812_value">
+        <value name="INDEX">
+          <shadow type="ws2812_value_index"></shadow>
+        </value>
+        <value name="R">
+          <shadow type="ws2812_value_r"></shadow>
+        </value>
+        <value name="G">
+          <shadow type="ws2812_value_g"></shadow>
+        </value>
+        <value name="B">
+          <shadow type="ws2812_value_b"></shadow>
+        </value>
+      </block>
+      <block type="ws2812_fill">
+        <value name="R">
+          <shadow type="ws2812_fill_r"></shadow>
+        </value>
+        <value name="G">
+          <shadow type="ws2812_fill_g"></shadow>
+        </value>
+        <value name="B">
+          <shadow type="ws2812_fill_b"></shadow>
+        </value>
+      </block>
       <block type="ws2812_write"></block>
-      <block type="sleep_var"></block>
     </category>
   <sep></sep>
     <category name="%{BKY_CATVARIABLES}" colour="%{BKY_VARIABLES_HUE}" custom="VARIABLE"></category>

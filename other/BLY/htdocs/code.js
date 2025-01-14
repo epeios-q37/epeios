@@ -96,7 +96,7 @@ Code.getLang = function() {
   var lang = Code.getStringParamFromUrl('lang', '');
   if (Code.LANGUAGE_NAME[lang] === undefined) {
     // Default to English.
-    lang = 'en';
+    lang = 'fr';
   }
   return lang;
 };
@@ -241,7 +241,7 @@ Code.LANG = Code.getLang();
  */
 Code.TABS_ = [
 //  'blocks', 'javascript', 'php', 'python', 'dart', 'lua', 'xml', 'json'
-  'blocks', 'python', // 'xml', 'json'
+  'blocks', 'python', 'xml', 'json'
 ];
 
 /**
@@ -249,7 +249,8 @@ Code.TABS_ = [
  * @private
  */
 Code.TABS_DISPLAY_ = [
-  'Blocks', 'JavaScript', 'PHP', 'Python', 'Dart', 'Lua', 'XML', 'JSON'
+//  'Blocks', 'JavaScript', 'PHP', 'Python', 'Dart', 'Lua', 'XML', 'JSON'
+  'Blocks', 'Python', 'XML', 'JSON'
 ];
 
 Code.selected = 'blocks';
@@ -491,7 +492,7 @@ Code.init = function() {
 
   Code.bindClick('trashButton',
       function() {Code.discard(); Code.renderContent();});
-  Code.bindClick('runButton', Code.runJS);
+  Code.bindClick('runButton', Code.runPython);
   // Disable the link button if page isn't backed by App Engine storage.
   var linkButton = document.getElementById('linkButton');
   if ('BlocklyStorage' in window) {
@@ -605,6 +606,30 @@ Code.runJS = function(event) {
   }
 };
 
+Code.runPython = function(event) {
+  // Prevent code from being executed twice on touchscreens.
+  if (event.type === 'touchend') {
+    event.preventDefault();
+  }
+
+  var code = Blockly.Python.workspaceToCode(Code.workspace);
+  // Afficher le code dans la zone de sortie  
+
+  code = `
+import ucuq
+# ucuq.setDevice("Blockly", token="Wokwi")
+
+object = {
+"GPIO": {},
+"WS2812": {}
+}
+
+` + code + "\nucuq.commit()";
+  console.log(code);
+
+  launchCode(code);
+};
+
 /**
  * Discard all blocks from the workspace.
  */
@@ -625,3 +650,56 @@ document.write('<script src="msg/' + Code.LANG + '.js"></script>\n');
 document.write('<script src="blocks/msg/' + Code.LANG + '.js"></script>\n');
 
 window.addEventListener('load', Code.init);
+
+function init() {
+  const workspace = Blockly.getMainWorkspace();
+
+  console.log("WS: ", Code.workspace);
+
+  // Fonction pour gérer l'événement `block_change`
+  function onBlockCreate(event) {
+    if (event.type === Blockly.Events.BLOCK_CREATE) {
+        const blockId = event.blockId;
+        const block = workspace.getBlockById(event.blockId);
+        if (block) {
+          console.log(`Un nouveau bloc a été créé avec l'ID: ${blockId}`);
+          console.log(`Type de bloc: ${block.type}`);
+        }
+
+        if ( block.type === "gpio_high") {
+          const dropdownField = block.getField('NAME');
+          console.log(dropdownField);
+          /*
+          dropdownField.menuGenerator_ = [["a", "b"],["c", "d"]]
+          dropdownField.updateDropdown();
+          */
+        }
+    }
+  }
+
+  workspace.addChangeListener(onBlockCreate);
+
+  document.getElementById('runButton').addEventListener('_click', function(event) {
+
+    // Générer le code Python  
+    var code = Blockly.Python.workspaceToCode(workspace);
+    // Afficher le code dans la zone de sortie  
+
+    code = `
+import ucuq
+# ucuq.setDevice("Blockly", token="Wokwi")
+
+object = {
+  "GPIO": {},
+  "WS2812": {}
+}
+
+` + code + "\nucuq.commit()";
+    console.log(code);
+
+    launchCode(code);
+
+    event.preventDefault();
+  });    
+}
+

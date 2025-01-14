@@ -1,0 +1,461 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="/#1q109F:%3=:uLdU-G5">deviceIsWokwi</variable>
+    <variable id="ZhH#$aQ{V3bH=u^+vmYH">Pin</variable>
+    <variable id="H;XLhOXO([9QU_+D#cj~">Count</variable>
+    <variable id="4_hg7VKav}NEIHXNlFcX">Token</variable>
+    <variable id="OH%+33!xv~H_VE2I*IFg">Max</variable>
+    <variable id="{xln9TtWdr$$=z8u+H/a">Id</variable>
+    <variable id="qakBcuvE)(5VIJ~MxT%U">i</variable>
+  </variables>
+  <block type="variables_set" id="G;W_YZ7k3GreNo{x!1Y/" x="-187" y="-1062">
+    <field name="VAR" id="/#1q109F:%3=:uLdU-G5">deviceIsWokwi</field>
+    <value name="VALUE">
+      <block type="logic_boolean" id="@3eHB0_p)8-8|2t3B(zN">
+        <field name="BOOL">FALSE</field>
+      </block>
+    </value>
+  </block>
+  <block type="procedures_defnoreturn" id="63vynxZf~*W1RHH}#0Y@" x="-187" y="-1012">
+    <field name="NAME">main</field>
+    <comment pinned="false" h="80" w="160">Décrivez cette fonction...</comment>
+    <statement name="STACK">
+      <block type="ws2812_init" id="#kN609JE^2{s8zukVcwo">
+        <field name="LABEL">WS2812</field>
+        <value name="PIN">
+          <shadow type="ws2812_init_pin" id="pu=qxRNhL!mb7F9KMNUU">
+            <field name="PIN">15</field>
+          </shadow>
+          <block type="variables_get" id="C9SL0=~PGFC@3%_#jspY">
+            <field name="VAR" id="ZhH#$aQ{V3bH=u^+vmYH">Pin</field>
+          </block>
+        </value>
+        <value name="COUNT">
+          <shadow type="ws2812_init_count" id="/h^5![tKd/}/1)sdH{U@">
+            <field name="COUNT">1</field>
+          </shadow>
+          <block type="variables_get" id="2uG6kS:3o#LX4AzmwfA-">
+            <field name="VAR" id="H;XLhOXO([9QU_+D#cj~">Count</field>
+          </block>
+        </value>
+        <next>
+          <block type="ws2812_fill" id="w]34B!vqH!VuX(jiWL/h">
+            <field name="LABEL">WS2812</field>
+            <value name="R">
+              <shadow type="ws2812_fill_r" id="H`wZb}3NZ|dT+-5CN$L_">
+                <field name="R">0</field>
+              </shadow>
+              <block type="variables_get" id="a-u9J*^ig]Fp)dBmI4R5">
+                <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
+              </block>
+            </value>
+            <value name="G">
+              <shadow type="ws2812_fill_g" id="/+.!N}*A_:$#~M4[f,A~">
+                <field name="G">0</field>
+              </shadow>
+            </value>
+            <value name="B">
+              <shadow type="ws2812_fill_b" id="3`X^Ybl004qjddwY.iw_">
+                <field name="B">0</field>
+              </shadow>
+            </value>
+            <next>
+              <block type="ws2812_write" id="mH|n4Lu6S9v.;W9VGL-4">
+                <field name="LABEL">WS2812</field>
+                <next>
+                  <block type="ucuq_sleep" id="4D{8zV_#Pj,kr0Bao1,p">
+                    <value name="SECONDS">
+                      <shadow type="ucuq_sleep_seconds" id="%aVhfAVRp1CDsmmy4g(d">
+                        <field name="SECONDS">1</field>
+                      </shadow>
+                    </value>
+                    <next>
+                      <block type="ws2812_fill" id="93bMWWET=7R|v1{TwTnF">
+                        <field name="LABEL">WS2812</field>
+                        <value name="R">
+                          <shadow type="ws2812_fill_r" id="H`wZb}3NZ|dT+-5CN$L_">
+                            <field name="R">0</field>
+                          </shadow>
+                        </value>
+                        <value name="G">
+                          <shadow type="ws2812_fill_g" id="0y-_3Z2iA=OLuTO~7lH1">
+                            <field name="G">0</field>
+                          </shadow>
+                          <block type="variables_get" id="_wc!_;FJ=NDBnzyJNlal">
+                            <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <shadow type="ws2812_fill_b" id="D}S.k*q/h?Ts5QY{Y0e_">
+                            <field name="B">0</field>
+                          </shadow>
+                        </value>
+                        <next>
+                          <block type="ws2812_write" id="xibEkJ-%Idq0s%^AWtbK">
+                            <field name="LABEL">WS2812</field>
+                            <next>
+                              <block type="ucuq_sleep" id="+t4o,U-@Ab.:+/C~|JF8">
+                                <value name="SECONDS">
+                                  <shadow type="ucuq_sleep_seconds" id="g(G_f)Z7c~StVt#?L,G1">
+                                    <field name="SECONDS">1</field>
+                                  </shadow>
+                                </value>
+                                <next>
+                                  <block type="ws2812_fill" id="3fe,.%@Lp[~+%O([/ur-">
+                                    <field name="LABEL">WS2812</field>
+                                    <value name="R">
+                                      <shadow type="ws2812_fill_r" id="M.DS.6M;b5A}u/b+p!Wp">
+                                        <field name="R">0</field>
+                                      </shadow>
+                                    </value>
+                                    <value name="G">
+                                      <shadow type="ws2812_fill_g" id=",0-0f3^xEcov-.;pd*|[">
+                                        <field name="G">0</field>
+                                      </shadow>
+                                    </value>
+                                    <value name="B">
+                                      <shadow type="ws2812_fill_b" id="E8AJzY%{eH]s`%Dlh!-f">
+                                        <field name="B">0</field>
+                                      </shadow>
+                                      <block type="variables_get" id="a.)tNW5z?,S~(Nj#FI--">
+                                        <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <block type="ws2812_write" id="G3A/{PK$+aGEHT$ew$=1">
+                                        <field name="LABEL">WS2812</field>
+                                        <next>
+                                          <block type="ucuq_sleep" id="zS!/rxg1z#BOuBpQG@OC">
+                                            <value name="SECONDS">
+                                              <shadow type="ucuq_sleep_seconds" id="m`^SmU%.wEJn8mqCDo[m">
+                                                <field name="SECONDS">1</field>
+                                              </shadow>
+                                            </value>
+                                            <next>
+                                              <block type="controls_repeat_ext" id="Yc2wo%8ixGJ!u2b9JPAQ">
+                                                <value name="TIMES">
+                                                  <shadow type="math_number" id="mWZO2)L:M`Wa@j/nk@,V">
+                                                    <field name="NUM">10</field>
+                                                  </shadow>
+                                                </value>
+                                                <statement name="DO">
+                                                  <block type="controls_for" id="nOw51?F7z-[V*PQlFV51">
+                                                    <field name="VAR" id="qakBcuvE)(5VIJ~MxT%U">i</field>
+                                                    <value name="FROM">
+                                                      <shadow type="math_number" id="u$cn99-J7Fto?Kos+O}m">
+                                                        <field name="NUM">0</field>
+                                                      </shadow>
+                                                    </value>
+                                                    <value name="TO">
+                                                      <shadow type="math_number" id=".aR{y=n[.C`z.HDqZNth">
+                                                        <field name="NUM">10</field>
+                                                      </shadow>
+                                                      <block type="math_arithmetic" id="rE3o.XE?KkTygK+FfLt^">
+                                                        <field name="OP">MINUS</field>
+                                                        <value name="A">
+                                                          <shadow type="math_number" id="g(=D.Uz*m%A,hZTC5sQz">
+                                                            <field name="NUM">1</field>
+                                                          </shadow>
+                                                          <block type="variables_get" id="I]+ZI?L]ex[,,|18/qpg">
+                                                            <field name="VAR" id="H;XLhOXO([9QU_+D#cj~">Count</field>
+                                                          </block>
+                                                        </value>
+                                                        <value name="B">
+                                                          <shadow type="math_number" id="?d^zJ)Gw3=3,KmKJXJaY">
+                                                            <field name="NUM">1</field>
+                                                          </shadow>
+                                                        </value>
+                                                      </block>
+                                                    </value>
+                                                    <value name="BY">
+                                                      <shadow type="math_number" id="uCOH?2c#[N5~Ll5r%nl#">
+                                                        <field name="NUM">1</field>
+                                                      </shadow>
+                                                    </value>
+                                                    <statement name="DO">
+                                                      <block type="ws2812_value" id="Bwt,{q){Eyme2OTg|$b%">
+                                                        <field name="LABEL">WS2812</field>
+                                                        <value name="INDEX">
+                                                          <shadow type="ws2812_value_index" id="3Iqj+ExM=18)eGl@)bl.">
+                                                            <field name="INDEX">0</field>
+                                                          </shadow>
+                                                          <block type="variables_get" id=";Krqo!8:XI45;:8*-mI%">
+                                                            <field name="VAR" id="qakBcuvE)(5VIJ~MxT%U">i</field>
+                                                          </block>
+                                                        </value>
+                                                        <value name="R">
+                                                          <shadow type="ws2812_value_r" id="5px,c{G%]}HvAjt}Hx?T">
+                                                            <field name="R">0</field>
+                                                          </shadow>
+                                                          <block type="math_random_int" id="(GjJS_HfHS`iFjAL7fa}">
+                                                            <value name="FROM">
+                                                              <shadow type="math_number" id="Ok/o7L~WX#Spul3=gX#u">
+                                                                <field name="NUM">1</field>
+                                                              </shadow>
+                                                            </value>
+                                                            <value name="TO">
+                                                              <shadow type="math_number" id="/:CQ=-bF[4)e)95PMmCh">
+                                                                <field name="NUM">0</field>
+                                                              </shadow>
+                                                              <block type="variables_get" id="#!i{-pXZpYGu=@_C1kVt">
+                                                                <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
+                                                              </block>
+                                                            </value>
+                                                          </block>
+                                                        </value>
+                                                        <value name="G">
+                                                          <shadow type="ws2812_value_g" id="jP//{PerUi*QGYvwSHdx">
+                                                            <field name="G">0</field>
+                                                          </shadow>
+                                                          <block type="math_random_int" id="/L=f-PHB3c~*Fr/D@Fp^">
+                                                            <value name="FROM">
+                                                              <shadow type="math_number" id=".@KJz*0}CtRF9HKiF4Z;">
+                                                                <field name="NUM">0</field>
+                                                              </shadow>
+                                                            </value>
+                                                            <value name="TO">
+                                                              <shadow type="math_number" id="NJ$m*UN6)jJi|$5D~MKW">
+                                                                <field name="NUM">0</field>
+                                                              </shadow>
+                                                              <block type="variables_get" id="@^u:@VGnm4h(GPMf/Bly">
+                                                                <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
+                                                              </block>
+                                                            </value>
+                                                          </block>
+                                                        </value>
+                                                        <value name="B">
+                                                          <shadow type="ws2812_value_b" id="A,Y4_Q;hYdKJ1{=u%0f9">
+                                                            <field name="B">0</field>
+                                                          </shadow>
+                                                          <block type="math_random_int" id="C@7_5K-qe+j[:l?)DdJV">
+                                                            <value name="FROM">
+                                                              <shadow type="math_number" id="rv#dcl}~#a#!Bm})=71u">
+                                                                <field name="NUM">0</field>
+                                                              </shadow>
+                                                            </value>
+                                                            <value name="TO">
+                                                              <shadow type="math_number" id="([$H:Y5`UynRyY=LDXxM">
+                                                                <field name="NUM">0</field>
+                                                              </shadow>
+                                                              <block type="variables_get" id="1IH1X/T$;a8{As)yCUN0">
+                                                                <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
+                                                              </block>
+                                                            </value>
+                                                          </block>
+                                                        </value>
+                                                        <next>
+                                                          <block type="ws2812_write" id="]Ivl_VI0oVzLr=A%G*)/">
+                                                            <field name="LABEL">WS2812</field>
+                                                            <next>
+                                                              <block type="ucuq_sleep" id="8X#F1HV^(aPtG1e9HVlr">
+                                                                <value name="SECONDS">
+                                                                  <shadow type="ucuq_sleep_seconds" id="%S/#vE!#Jb%rc8.]r@/_">
+                                                                    <field name="SECONDS">0.075</field>
+                                                                  </shadow>
+                                                                </value>
+                                                              </block>
+                                                            </next>
+                                                          </block>
+                                                        </next>
+                                                      </block>
+                                                    </statement>
+                                                  </block>
+                                                </statement>
+                                                <next>
+                                                  <block type="ucuq_sleep" id="$YT$}g@?Vc:|.:t-a0Fh">
+                                                    <value name="SECONDS">
+                                                      <shadow type="ucuq_sleep_seconds" id="U8OolWf%;2SAx:r4cu6T">
+                                                        <field name="SECONDS">2</field>
+                                                      </shadow>
+                                                    </value>
+                                                    <next>
+                                                      <block type="ws2812_fill" id="soxToT!qy#gm=;5f%;U]">
+                                                        <field name="LABEL">WS2812</field>
+                                                        <value name="R">
+                                                          <shadow type="ws2812_fill_r" id="t{R@+TOyT$TR~svV^Yn6">
+                                                            <field name="R">0</field>
+                                                          </shadow>
+                                                        </value>
+                                                        <value name="G">
+                                                          <shadow type="ws2812_fill_g" id="uzGPZ.xK:lj.H~{C}?z(">
+                                                            <field name="G">0</field>
+                                                          </shadow>
+                                                        </value>
+                                                        <value name="B">
+                                                          <shadow type="ws2812_fill_b" id="f,AHH`-Qqz=fpf7Ne%QT">
+                                                            <field name="B">0</field>
+                                                          </shadow>
+                                                        </value>
+                                                        <next>
+                                                          <block type="ws2812_write" id="AiE8|S_]`#*`{)D|,Tll">
+                                                            <field name="LABEL">WS2812</field>
+                                                          </block>
+                                                        </next>
+                                                      </block>
+                                                    </next>
+                                                  </block>
+                                                </next>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="procedures_defnoreturn" id="h=^w:Bq2ici]Z9P4l(,5" x="-187" y="513">
+    <field name="NAME">init</field>
+    <comment pinned="false" h="80" w="160">Décrivez cette fonction...</comment>
+    <statement name="STACK">
+      <block type="controls_if" id="i(./P,vzsth6M1=|*}RY">
+        <mutation else="1"></mutation>
+        <value name="IF0">
+          <block type="variables_get" id="@3hEpEI]#x,60T!z6|pa">
+            <field name="VAR" id="/#1q109F:%3=:uLdU-G5">deviceIsWokwi</field>
+          </block>
+        </value>
+        <statement name="DO0">
+          <block type="variables_set" id="zfEj,I_d!x3d_KIDnWU9">
+            <field name="VAR" id="4_hg7VKav}NEIHXNlFcX">Token</field>
+            <value name="VALUE">
+              <block type="text" id="Ab9tF}[b(d0#~e|:fR0r">
+                <field name="TEXT">Wokwi</field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set" id="gF?)N%HAHP%4*xUN71#+">
+                <field name="VAR" id="{xln9TtWdr$$=z8u+H/a">Id</field>
+                <value name="VALUE">
+                  <block type="text" id="D_sz[3!X[IXs[wU9nag-">
+                    <field name="TEXT">Blockly</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="variables_set" id="JWa-wpdKf(57*K8q^a5d">
+                    <field name="VAR" id="ZhH#$aQ{V3bH=u^+vmYH">Pin</field>
+                    <value name="VALUE">
+                      <block type="math_number" id="(4BqFl94/CETI-E2?KC(">
+                        <field name="NUM">15</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="variables_set" id="ib?f-E?]iL~US}1nqOc8">
+                        <field name="VAR" id="H;XLhOXO([9QU_+D#cj~">Count</field>
+                        <value name="VALUE">
+                          <block type="math_number" id="$M6T{zD@esZNu6l~hLL[">
+                            <field name="NUM">16</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="variables_set" id="wYKNY@1dvvS;Wkqb@#2`">
+                            <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
+                            <value name="VALUE">
+                              <block type="math_number" id="vO=IC=!O`@|snA=vg]ev">
+                                <field name="NUM">255</field>
+                              </block>
+                            </value>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </statement>
+        <statement name="ELSE">
+          <block type="variables_set" id="Wr|3w:!WOrZdTfHni$x5">
+            <field name="VAR" id="4_hg7VKav}NEIHXNlFcX">Token</field>
+            <value name="VALUE">
+              <block type="text" id="Oar:LY+w_SkPkf9/%ne-">
+                <field name="TEXT"></field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set" id="CC:c~j`?4FExjKlPhq@G">
+                <field name="VAR" id="{xln9TtWdr$$=z8u+H/a">Id</field>
+                <value name="VALUE">
+                  <block type="text" id="73@V4#lCmTNUz8~Xv3#m">
+                    <field name="TEXT">Yellow</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="variables_set" id=");Wa;)/Kz^V1UJw[]k20">
+                    <field name="VAR" id="ZhH#$aQ{V3bH=u^+vmYH">Pin</field>
+                    <value name="VALUE">
+                      <block type="math_number" id="BJlmXCA){+/3mpd.i[-Z">
+                        <field name="NUM">2</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="variables_set" id="v5IoS0TL,^,{FC%T`*^}">
+                        <field name="VAR" id="H;XLhOXO([9QU_+D#cj~">Count</field>
+                        <value name="VALUE">
+                          <block type="math_number" id="~b0K[_Yh^7i|J$a)?VLa">
+                            <field name="NUM">8</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="variables_set" id="0IDKu1B8DUE.VyTnI_$$">
+                            <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
+                            <value name="VALUE">
+                              <block type="math_number" id="vm@axOU/dkKm:#*hB4Yf">
+                                <field name="NUM">10</field>
+                              </block>
+                            </value>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </statement>
+        <next>
+          <block type="ucuq_connect" id="%5NDk]XT=Ka%B3D:7=|T">
+            <value name="ID">
+              <shadow type="ucuq_connect_id" id="?y.Hqx/JN`FVOF/W4u$8">
+                <field name="ID"></field>
+              </shadow>
+              <block type="variables_get" id="_2~[PMBfNMGjpvchtdXH">
+                <field name="VAR" id="{xln9TtWdr$$=z8u+H/a">Id</field>
+              </block>
+            </value>
+            <value name="TOKEN">
+              <shadow type="ucuq_connect_token" id="agsB~Fm]N}H|Vh4;ImHw">
+                <field name="TOKEN"></field>
+              </shadow>
+              <block type="variables_get" id="y7ZhX`^|MELRO=#UTo(@">
+                <field name="VAR" id="4_hg7VKav}NEIHXNlFcX">Token</field>
+              </block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="-187" y="1038">
+    <mutation name="init"></mutation>
+  </block>
+  <block type="procedures_callnoreturn" id="+?(Gu}UnYuM37)J9,B8Q" x="-187" y="1113">
+    <mutation name="main"></mutation>
+  </block>
+</xml>

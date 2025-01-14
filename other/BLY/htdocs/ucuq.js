@@ -1,0 +1,1 @@
+require("./blocks/all.js")

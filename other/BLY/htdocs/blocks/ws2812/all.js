@@ -1,0 +1,8 @@
+require("./init_d.js")
+require("./init_c.js")
+require("./value_d.js")
+require("./value_c.js")
+require("./fill_d.js")
+require("./fill_c.js")
+require("./write_d.js")
+require("./write_c.js")

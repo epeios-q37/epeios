@@ -2,7 +2,7 @@ python.pythonGenerator.forBlock['gpio_high'] = function (block, generator) {
   const text_label = block.getFieldValue('LABEL');
   const state_pin = generator.valueToCode(block, 'STATE', python.Order.ATOMIC);
 
-  const code = `object["GPIO"]["${text_label}"].high(${state_pin})\n`;
+  const code = `${string2Id(text_label)}.high(${state_pin})\n`;
   return code;
 }
 

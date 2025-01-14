@@ -1,9 +1,9 @@
 Blockly.defineBlocksWithJsonArray([
   {
-    "type": "gpio_low",
+    "type": "ws2812_write",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "GPIO low %1 %2 %3",
+    "message0": "WS2812 write %1 %2",
     "args0": [
       {
         "type": "input_dummy",
@@ -12,16 +12,11 @@ Blockly.defineBlocksWithJsonArray([
       {
         "type": "field_input",
         "name": "LABEL",
-        "text": "GPIO"
+        "text": "WS2812"
       },
-      {
-        "type": "input_dummy",
-        "name": "",
-        "align": "CENTRE"
-      }
     ],
-    "colour": 225,
     "previousStatement": null,
     "nextStatement": null,
+    "colour": 225
   },
 ])  
