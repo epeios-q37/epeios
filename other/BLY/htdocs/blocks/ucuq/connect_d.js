@@ -3,7 +3,7 @@ Blockly.defineBlocksWithJsonArray([
     "type": "ucuq_connect",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "Preset %1 Id %2 Token %3",
+    "message0": "UCUq connect %1 Id %2 Token %3",
     "args0": [
       {
         "type": "input_dummy",

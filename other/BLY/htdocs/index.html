@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,13 +19,14 @@
   <script src="ucuq.js"></script>
   <script type="text/javascript">
     function launchCode(code) {
-      document.getElementById("code").value=code;
+      document.getElementById("code").value = code;
       document.getElementById('brython').submit();
     }
     ucuq = require("ucuq");
-</script>
+  </script>
 
 </head>
+
 <body onload="init()">
   <span>%DATE%</span>
   <table width="100%" height="100%">
@@ -94,7 +96,7 @@
   <!--pre id="content_dart" class="content prettyprint lang-dart"></pre-->
   <textarea id="content_xml" class="content" wrap="off"></textarea>
   <textarea id="content_json" class="content" wrap="off"></textarea>
-  
+
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
     <category name="%{BKY_CATLOGIC}" colour="%{BKY_LOGIC_HUE}">
       <block type="controls_if"></block>
@@ -376,9 +378,9 @@
         <value name="SECONDS">
           <shadow type="ucuq_sleep_seconds"></shadow>
         </value>
-      </category>
-      <category name="GPIO" colour="#5C81A6">
-        <block type="gpio_init">
+    </category>
+    <category name="GPIO" colour="#5C81A6">
+      <block type="gpio_init">
         <value name="PIN">
           <shadow type="gpio_init_pin"></shadow>
         </value>
@@ -399,18 +401,18 @@
           <shadow type="ws2812_init_count"></shadow>
         </value>
       </block>
-      <block type="ws2812_value">
+      <block type="ws2812_setValue">
         <value name="INDEX">
-          <shadow type="ws2812_value_index"></shadow>
+          <shadow type="ws2812_setValue_index"></shadow>
         </value>
         <value name="R">
-          <shadow type="ws2812_value_r"></shadow>
+          <shadow type="ws2812_setValue_r"></shadow>
         </value>
         <value name="G">
-          <shadow type="ws2812_value_g"></shadow>
+          <shadow type="ws2812_setValue_g"></shadow>
         </value>
         <value name="B">
-          <shadow type="ws2812_value_b"></shadow>
+          <shadow type="ws2812_setValue_b"></shadow>
         </value>
       </block>
       <block type="ws2812_fill">
@@ -426,7 +428,40 @@
       </block>
       <block type="ws2812_write"></block>
     </category>
-  <sep></sep>
+    <category name="LCD" colour="#5C81A6">
+      <block type="lcd_init">
+        <value name="SOFT">
+          <shadow type="lcd_init_soft"></shadow>
+        </value>
+        <value name="SDA">
+          <shadow type="lcd_init_sda"></shadow>
+        </value>
+        <value name="SCL">
+          <shadow type="lcd_init_scl"></shadow>
+        </value>
+        <value name="COLS">
+          <shadow type="lcd_init_cols"></shadow>
+        </value>
+        <value name="ROWS">
+          <shadow type="lcd_init_rows"></shadow>
+        </value>
+      </block>
+      <block type="lcd_moveTo">
+        <value name="X">
+          <shadow type="lcd_moveTo_x"></shadow>
+        </value>
+        <value name="Y">
+          <shadow type="lcd_moveTo_y"></shadow>
+        </value>
+      </block>
+      <block type="lcd_putString">
+        <value name="STRING">
+          <shadow type="lcd_putString_string"></shadow>
+        </value>
+      </block>
+      <block type="lcd_clear"></block>
+    </category>
+    <sep></sep>
     <category name="%{BKY_CATVARIABLES}" colour="%{BKY_VARIABLES_HUE}" custom="VARIABLE"></category>
     <category name="%{BKY_CATFUNCTIONS}" colour="%{BKY_PROCEDURES_HUE}" custom="PROCEDURE"></category>
   </xml>
@@ -436,4 +471,5 @@
   </form>
   <iframe name="brython_result"></iframe>
 </body>
+
 </html>

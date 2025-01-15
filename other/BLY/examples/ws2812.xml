@@ -173,10 +173,10 @@
                                                       </shadow>
                                                     </value>
                                                     <statement name="DO">
-                                                      <block type="ws2812_value" id="Bwt,{q){Eyme2OTg|$b%">
+                                                      <block type="ws2812_setValue" id="Bwt,{q){Eyme2OTg|$b%">
                                                         <field name="LABEL">WS2812</field>
                                                         <value name="INDEX">
-                                                          <shadow type="ws2812_value_index" id="3Iqj+ExM=18)eGl@)bl.">
+                                                          <shadow type="ws2812_setValue_index" id="3Iqj+ExM=18)eGl@)bl.">
                                                             <field name="INDEX">0</field>
                                                           </shadow>
                                                           <block type="variables_get" id=";Krqo!8:XI45;:8*-mI%">
@@ -184,7 +184,7 @@
                                                           </block>
                                                         </value>
                                                         <value name="R">
-                                                          <shadow type="ws2812_value_r" id="5px,c{G%]}HvAjt}Hx?T">
+                                                          <shadow type="ws2812_setValue_r" id="5px,c{G%]}HvAjt}Hx?T">
                                                             <field name="R">0</field>
                                                           </shadow>
                                                           <block type="math_random_int" id="(GjJS_HfHS`iFjAL7fa}">
@@ -204,7 +204,7 @@
                                                           </block>
                                                         </value>
                                                         <value name="G">
-                                                          <shadow type="ws2812_value_g" id="jP//{PerUi*QGYvwSHdx">
+                                                          <shadow type="ws2812_setValue_g" id="jP//{PerUi*QGYvwSHdx">
                                                             <field name="G">0</field>
                                                           </shadow>
                                                           <block type="math_random_int" id="/L=f-PHB3c~*Fr/D@Fp^">
@@ -224,7 +224,7 @@
                                                           </block>
                                                         </value>
                                                         <value name="B">
-                                                          <shadow type="ws2812_value_b" id="A,Y4_Q;hYdKJ1{=u%0f9">
+                                                          <shadow type="ws2812_setValue_b" id="A,Y4_Q;hYdKJ1{=u%0f9">
                                                             <field name="B">0</field>
                                                           </shadow>
                                                           <block type="math_random_int" id="C@7_5K-qe+j[:l?)DdJV">

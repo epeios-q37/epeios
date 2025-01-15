@@ -1,4 +1,4 @@
-python.pythonGenerator.forBlock['ws2812_value'] = function (block, generator) {
+python.pythonGenerator.forBlock['ws2812_setValue'] = function (block, generator) {
   const text_label = block.getFieldValue('LABEL');
   const value_index = generator.valueToCode(block, 'INDEX', python.Order.ATOMIC);
   const value_r = generator.valueToCode(block, 'R', python.Order.ATOMIC);
@@ -9,7 +9,7 @@ python.pythonGenerator.forBlock['ws2812_value'] = function (block, generator) {
   return code;
 }
 
-python.pythonGenerator.forBlock['ws2812_value_index'] = function (block) {
+python.pythonGenerator.forBlock['ws2812_setValue_index'] = function (block) {
   const value_index = block.getFieldValue('INDEX');
 
   const code = `${value_index}`;
@@ -17,7 +17,7 @@ python.pythonGenerator.forBlock['ws2812_value_index'] = function (block) {
   return [code, javascript.Order.ATOMIC];
 }
 
-python.pythonGenerator.forBlock['ws2812_value_r'] = function (block) {
+python.pythonGenerator.forBlock['ws2812_setValue_r'] = function (block) {
   const value_r = block.getFieldValue('R');
 
   const code = `${value_r}`;
@@ -25,7 +25,7 @@ python.pythonGenerator.forBlock['ws2812_value_r'] = function (block) {
   return [code, javascript.Order.ATOMIC];
 }
 
-python.pythonGenerator.forBlock['ws2812_value_g'] = function (block) {
+python.pythonGenerator.forBlock['ws2812_setValue_g'] = function (block) {
   const value_g = block.getFieldValue('G');
 
   const code = `${value_g}`;
@@ -33,7 +33,7 @@ python.pythonGenerator.forBlock['ws2812_value_g'] = function (block) {
   return [code, javascript.Order.ATOMIC];
 }
 
-python.pythonGenerator.forBlock['ws2812_value_b'] = function (block) {
+python.pythonGenerator.forBlock['ws2812_setValue_b'] = function (block) {
   const value_b = block.getFieldValue('B');
 
   const code = `${value_b}`;

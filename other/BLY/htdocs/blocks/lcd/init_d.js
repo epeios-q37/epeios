@@ -1,9 +1,9 @@
 Blockly.defineBlocksWithJsonArray([
   {
-    "type": "ws2812_value",
+    "type": "lcd_init",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "WS2812 value %1 %2 %3 Index %4 R %5 G %6 B %7",
+    "message0": "LCD init %1 %2 %3 Soft %4 SDA %5 SCL %6 Cols %7 Rows %8",
     "args0": [
       {
         "type": "input_dummy",
@@ -12,7 +12,7 @@ Blockly.defineBlocksWithJsonArray([
       {
         "type": "field_input",
         "name": "LABEL",
-        "text": "WS2812"
+        "text": "LCD"
       },
       {
         "type": "input_dummy",
@@ -21,25 +21,31 @@ Blockly.defineBlocksWithJsonArray([
       },
       {
         "type": "input_value",
-        "name": "INDEX",
+        "name": "SOFT",
+        "align": "RIGHT",
+        "check": "Boolean"
+      },
+      {
+        "type": "input_value",
+        "name": "SDA",
         "align": "RIGHT",
         "check": "Number"
       },
       {
         "type": "input_value",
-        "name": "R",
+        "name": "SCL",
         "align": "RIGHT",
         "check": "Number"
       },
       {
         "type": "input_value",
-        "name": "G",
+        "name": "COLS",
         "align": "RIGHT",
         "check": "Number"
       },
       {
         "type": "input_value",
-        "name": "B",
+        "name": "ROWS",
         "align": "RIGHT",
         "check": "Number"
       }
@@ -49,56 +55,60 @@ Blockly.defineBlocksWithJsonArray([
     "colour": 225
   },
   {
-    "type": "ws2812_value_index",
+    "type": "lcd_init_soft",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_checkbox",
+        "name": "SOFT"
+      }
+    ],
+    "output": null
+  },
+  {
+    "type": "lcd_init_sda",
     "message0": "%1",
     "args0": [
       {
         "type": "field_number",
-        "name": "INDEX",
-        "value": 0,
+        "name": "SDA",
         "min": 0
       }
     ],
     "output": null
   },
   {
-    "type": "ws2812_value_r",
+    "type": "lcd_init_scl",
     "message0": "%1",
     "args0": [
       {
         "type": "field_number",
-        "name": "R",
-        "value": 0,
-        "min": 0,
-        "max": 255
+        "name": "SCL",
+        "min": 0
       }
     ],
     "output": null
   },
   {
-    "type": "ws2812_value_g",
+    "type": "lcd_init_cols",
     "message0": "%1",
     "args0": [
       {
         "type": "field_number",
-        "name": "G",
-        "value": 0,
-        "min": 0,
-        "max": 255
+        "name": "COLS",
+        "min": 16
       }
     ],
     "output": null
   },
   {
-    "type": "ws2812_value_b",
+    "type": "lcd_init_rows",
     "message0": "%1",
     "args0": [
       {
         "type": "field_number",
-        "name": "B",
-        "value": 0,
-        "min": 0,
-        "max": 255
+        "name": "ROWS",
+        "min": 2
       }
     ],
     "output": null

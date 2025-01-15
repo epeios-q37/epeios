@@ -8,9 +8,9 @@ python.pythonGenerator.forBlock['gpio_high'] = function (block, generator) {
 
 
 python.pythonGenerator.forBlock['gpio_high_state'] = function (block) {
-  const state_pin = block.getFieldValue('STATE');
+  const value_state = block.getFieldValue('STATE');
 
-  const code = `${state_pin == "TRUE" ? "True" : "False"}`;
+  const code = `${value_state == "TRUE" ? "True" : "False"}`;
 
   return [code, javascript.Order.ATOMIC];
 }
