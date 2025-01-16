@@ -101,6 +101,10 @@ Code.getLang = function() {
   return lang;
 };
 
+Code.getDemo = function() {
+  return Code.getStringParamFromUrl('demo', '');
+};
+
 /**
  * Is the current language (Code.LANG) an RTL language?
  * @return {boolean} True if RTL, false if LTR.
@@ -234,6 +238,8 @@ Code.getBBox_ = function(element) {
  * @type {string}
  */
 Code.LANG = Code.getLang();
+
+Code.DEMO = Code.getDemo();
 
 /**
  * List of tab names.
@@ -413,6 +419,33 @@ Code.checkAllGeneratorFunctionsDefined = function(generator) {
   return valid;
 };
 
+function getGithubDemo(demo, callback) {
+  let url = `https://raw.githubusercontent.com/epeios-q37/epeios/refs/heads/master/other/BLY/examples/${demo}.xml`
+
+  fetch(url)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Erreur lors de la récupération du fichier');
+    }
+    return response.text();
+  })
+  .then(content => {
+    callback(content);
+  })  
+}
+
+function fillWorkspace(xmlString) {
+  console.log("XML: ", xmlString)
+
+  Code.workspace.clear();
+
+  var parser = new DOMParser();
+  var xmlDoc = parser.parseFromString(xmlString, "text/xml");
+  var xml = xmlDoc.documentElement;
+
+  Blockly.Xml.domToWorkspace(xml, Code.workspace);
+}
+
 /**
  * Initialize Blockly.  Called on page load.
  */
@@ -440,7 +473,14 @@ Code.init = function() {
           (Code.workspace.getToolbox().width - 38) + 'px';
           // Account for the 19 pixel margin and on each side.
     }
+
+    console.log("Code: ", Code.DEMO);
+
+    if ( Code.DEMO !== "" ) {
+      getGithubDemo(Code.DEMO, fillWorkspace);
+    }
   };
+
   window.addEventListener('resize', onresize, false);
 
   // The toolbox XML specifies each category name using Blockly's messaging
@@ -687,12 +727,6 @@ function init() {
 
     code = `
 import ucuq
-# ucuq.setDevice("Blockly", token="Wokwi")
-
-object = {
-  "GPIO": {},
-  "WS2812": {}
-}
 
 ` + code + "\nucuq.commit()";
     console.log(code);
