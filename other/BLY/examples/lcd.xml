@@ -10,6 +10,7 @@
     <variable id="Y)Mc:KXD3,mxdyRX.xNV">Message</variable>
     <variable id="{xln9TtWdr$$=z8u+H/a">Id</variable>
     <variable id="8!0pa[Oc~za|8TKPF|{n">j</variable>
+    <variable id="HOaXZA:Qn4+rp4WvXUls">Delay</variable>
   </variables>
   <block type="variables_set" id="Gh-S_%L57-///qxB(lj8" x="13" y="13">
     <field name="VAR" id="ms/6($YO*/BKvA:[N7LH">Line1</field>
@@ -286,8 +287,11 @@
                                   <block type="ucuq_sleep" id="SP`?4}@ygZez3b#%@Djm">
                                     <value name="SECONDS">
                                       <shadow type="ucuq_sleep_seconds" id="keoza!{:s]%y99o6EF!q">
-                                        <field name="SECONDS">0.3</field>
+                                        <field name="SECONDS">0.1</field>
                                       </shadow>
+                                      <block type="variables_get" id="=ueSpP(k$7B@F9X~`1_W">
+                                        <field name="VAR" id="HOaXZA:Qn4+rp4WvXUls">Delay</field>
+                                      </block>
                                     </value>
                                   </block>
                                 </next>
@@ -377,6 +381,16 @@
                             <field name="NUM">26</field>
                           </block>
                         </value>
+                        <next>
+                          <block type="variables_set" id="YzX3U|{C23aeRJM^E_C,">
+                            <field name="VAR" id="HOaXZA:Qn4+rp4WvXUls">Delay</field>
+                            <value name="VALUE">
+                              <block type="math_number" id="xdp.@4`[[}(ZO9$c9%6B">
+                                <field name="NUM">0.1</field>
+                              </block>
+                            </value>
+                          </block>
+                        </next>
                       </block>
                     </next>
                   </block>
@@ -417,6 +431,16 @@
                             <field name="NUM">7</field>
                           </block>
                         </value>
+                        <next>
+                          <block type="variables_set" id="5qA8R~U,F5RVhq%4GtvH">
+                            <field name="VAR" id="HOaXZA:Qn4+rp4WvXUls">Delay</field>
+                            <value name="VALUE">
+                              <block type="math_number" id="o~}p}Fd^Ot[|7VS)dzlQ">
+                                <field name="NUM">0.3</field>
+                              </block>
+                            </value>
+                          </block>
+                        </next>
                       </block>
                     </next>
                   </block>
@@ -448,10 +472,10 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="13" y="1813">
+  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="13" y="1863">
     <mutation name="init"></mutation>
   </block>
-  <block type="procedures_callnoreturn" id="$7k6}Q3Z){|+By:c0L+A" x="13" y="1863">
+  <block type="procedures_callnoreturn" id="$7k6}Q3Z){|+By:c0L+A" x="13" y="1913">
     <mutation name="main"></mutation>
   </block>
 </xml>
