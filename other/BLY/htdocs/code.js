@@ -105,6 +105,10 @@ Code.getDemo = function() {
   return Code.getStringParamFromUrl('demo', '');
 };
 
+Code.getURL = function() {
+  return Code.getStringParamFromUrl('url', '');
+};
+
 /**
  * Is the current language (Code.LANG) an RTL language?
  * @return {boolean} True if RTL, false if LTR.
@@ -240,6 +244,8 @@ Code.getBBox_ = function(element) {
 Code.LANG = Code.getLang();
 
 Code.DEMO = Code.getDemo();
+
+Code.URL = Code.getURL();
 
 /**
  * List of tab names.
@@ -419,9 +425,7 @@ Code.checkAllGeneratorFunctionsDefined = function(generator) {
   return valid;
 };
 
-function getGithubDemo(demo, callback) {
-  let url = `https://raw.githubusercontent.com/epeios-q37/epeios/refs/heads/master/other/BLY/examples/${demo}.xml`
-
+function getDemo(url, callback) {
   fetch(url)
   .then(response => {
     if (!response.ok) {
@@ -432,6 +436,10 @@ function getGithubDemo(demo, callback) {
   .then(content => {
     callback(content);
   })  
+}
+
+function getGithubDemo(demo, callback) {
+  return getDemo(`https://raw.githubusercontent.com/epeios-q37/epeios/refs/heads/master/other/BLY/examples/${demo}.xml`, callback);
 }
 
 function fillWorkspace(xmlString) {
@@ -478,6 +486,8 @@ Code.init = function() {
 
     if ( Code.DEMO !== "" ) {
       getGithubDemo(Code.DEMO, fillWorkspace);
+    } else if ( Code.URL !== "" ) {
+      getDemo(Code.URL, fillWorkspace);
     }
   };
 
@@ -657,14 +667,9 @@ Code.runPython = function(event) {
 
   code = `
 import ucuq
-# ucuq.setDevice("Blockly", token="Wokwi")
-
-object = {
-"GPIO": {},
-"WS2812": {}
-}
 
 ` + code + "\nucuq.commit()";
+
   console.log(code);
 
   launchCode(code);

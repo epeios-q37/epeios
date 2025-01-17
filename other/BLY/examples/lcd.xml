@@ -1,23 +1,43 @@
 <xml xmlns="https://developers.google.com/blockly/xml">
   <variables>
+    <variable id="ms/6($YO*/BKvA:[N7LH">Line1</variable>
     <variable id="/#1q109F:%3=:uLdU-G5">deviceIsWokwi</variable>
-    <variable id="4_hg7VKav}NEIHXNlFcX">Token</variable>
+    <variable id="C2.i$o:.CGmHAK~=6@Hp">Line2</variable>
     <variable id="ZhH#$aQ{V3bH=u^+vmYH">SDA</variable>
     <variable id="H;XLhOXO([9QU_+D#cj~">SCL</variable>
-    <variable id="qQ9%Yg*VhY6?7}iqprBV">Prénom</variable>
-    <variable id="{xln9TtWdr$$=z8u+H/a">Id</variable>
+    <variable id="qQ9%Yg*VhY6?7}iqprBV">Name</variable>
+    <variable id="4_hg7VKav}NEIHXNlFcX">Token</variable>
     <variable id="Y)Mc:KXD3,mxdyRX.xNV">Message</variable>
+    <variable id="{xln9TtWdr$$=z8u+H/a">Id</variable>
     <variable id="8!0pa[Oc~za|8TKPF|{n">j</variable>
   </variables>
-  <block type="variables_set" id="G;W_YZ7k3GreNo{x!1Y/" x="-562" y="-662">
+  <block type="variables_set" id="Gh-S_%L57-///qxB(lj8" x="13" y="13">
+    <field name="VAR" id="ms/6($YO*/BKvA:[N7LH">Line1</field>
+    <value name="VALUE">
+      <block type="text" id="Dv0k~b;T_7rnP;|G%EVG">
+        <field name="TEXT">Nice to meet you</field>
+      </block>
+    </value>
+    <next>
+      <block type="variables_set" id="$49UN|U9Ub}Zf]b[6Yi3">
+        <field name="VAR" id="C2.i$o:.CGmHAK~=6@Hp">Line2</field>
+        <value name="VALUE">
+          <block type="text" id="qt|*I5%J)i@t{!xC|xbt">
+            <field name="TEXT">How are you?</field>
+          </block>
+        </value>
+      </block>
+    </next>
+  </block>
+  <block type="variables_set" id="G;W_YZ7k3GreNo{x!1Y/" x="13" y="113">
     <field name="VAR" id="/#1q109F:%3=:uLdU-G5">deviceIsWokwi</field>
     <value name="VALUE">
       <block type="logic_boolean" id="@3eHB0_p)8-8|2t3B(zN">
-        <field name="BOOL">FALSE</field>
+        <field name="BOOL">TRUE</field>
       </block>
     </value>
   </block>
-  <block type="procedures_defnoreturn" id="(VS)iHoT-3bf|:1An6_P" x="-562" y="-612">
+  <block type="procedures_defnoreturn" id="(VS)iHoT-3bf|:1An6_P" x="13" y="163">
     <field name="NAME">main</field>
     <comment pinned="false" h="80" w="160">Décrivez cette fonction...</comment>
     <statement name="STACK">
@@ -56,7 +76,7 @@
         </value>
         <next>
           <block type="variables_set" id="S*fPbjRuQD}MX28tnE%m">
-            <field name="VAR" id="qQ9%Yg*VhY6?7}iqprBV">Prénom</field>
+            <field name="VAR" id="qQ9%Yg*VhY6?7}iqprBV">Name</field>
             <value name="VALUE">
               <block type="text_trim" id="bT%qj`Kf;6e!0(mMrdHx">
                 <field name="MODE">BOTH</field>
@@ -69,7 +89,7 @@
                     <field name="TYPE">TEXT</field>
                     <value name="TEXT">
                       <shadow type="text" id="Y^@~+G9#rkcQo)o+q{/o">
-                        <field name="TEXT">Prénom ?</field>
+                        <field name="TEXT">Name?</field>
                       </shadow>
                     </value>
                   </block>
@@ -81,23 +101,33 @@
                 <field name="VAR" id="Y)Mc:KXD3,mxdyRX.xNV">Message</field>
                 <value name="VALUE">
                   <block type="text_join" id="W^HeO{]g2]w^BHFRp@QD">
-                    <mutation items="4"></mutation>
+                    <mutation items="6"></mutation>
                     <value name="ADD0">
                       <block type="text" id="booA}fV}3X!T~l|,U#qu">
-                        <field name="TEXT">                Bien le bonjour, </field>
+                        <field name="TEXT">                </field>
                       </block>
                     </value>
                     <value name="ADD1">
-                      <block type="variables_get" id="^=LLUVH_ni!*^E1e}FkV">
-                        <field name="VAR" id="qQ9%Yg*VhY6?7}iqprBV">Prénom</field>
+                      <block type="variables_get" id=".*ykE~B!c$U-2I}~}2+]">
+                        <field name="VAR" id="ms/6($YO*/BKvA:[N7LH">Line1</field>
                       </block>
                     </value>
                     <value name="ADD2">
+                      <block type="text" id="KdajUCv=3!~_N0fkksik">
+                        <field name="TEXT">, </field>
+                      </block>
+                    </value>
+                    <value name="ADD3">
+                      <block type="variables_get" id="^=LLUVH_ni!*^E1e}FkV">
+                        <field name="VAR" id="qQ9%Yg*VhY6?7}iqprBV">Name</field>
+                      </block>
+                    </value>
+                    <value name="ADD4">
                       <block type="text" id="y1bao)N13OzZ+u{.0+QG">
                         <field name="TEXT">,</field>
                       </block>
                     </value>
-                    <value name="ADD3">
+                    <value name="ADD5">
                       <block type="text_getSubstring" id=".}g-GxSo|mugLfa174N~">
                         <mutation at1="true" at2="true"></mutation>
                         <field name="WHERE1">FROM_START</field>
@@ -130,7 +160,7 @@
                                     <field name="TEXT">abc</field>
                                   </shadow>
                                   <block type="variables_get" id="yrXC38Om)FPX(~!*RPU;">
-                                    <field name="VAR" id="qQ9%Yg*VhY6?7}iqprBV">Prénom</field>
+                                    <field name="VAR" id="qQ9%Yg*VhY6?7}iqprBV">Name</field>
                                   </block>
                                 </value>
                               </block>
@@ -283,8 +313,11 @@
                                 <field name="LABEL">LCD</field>
                                 <value name="STRING">
                                   <shadow type="lcd_putString_string" id="5[Bu#jdmg/|_(OLYy2:|">
-                                    <field name="STRING">bienvenue !</field>
+                                    <field name="STRING"></field>
                                   </shadow>
+                                  <block type="variables_get" id="LnS5e-[pM$i:y_jN|M3E">
+                                    <field name="VAR" id="C2.i$o:.CGmHAK~=6@Hp">Line2</field>
+                                  </block>
                                 </value>
                               </block>
                             </next>
@@ -301,7 +334,7 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_defnoreturn" id="h=^w:Bq2ici]Z9P4l(,5" x="-537" y="463">
+  <block type="procedures_defnoreturn" id="h=^w:Bq2ici]Z9P4l(,5" x="13" y="1338">
     <field name="NAME">init</field>
     <comment pinned="false" h="80" w="160">Décrivez cette fonction...</comment>
     <statement name="STACK">
@@ -415,10 +448,10 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="-490" y="931">
+  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="13" y="1813">
     <mutation name="init"></mutation>
   </block>
-  <block type="procedures_callnoreturn" id="$7k6}Q3Z){|+By:c0L+A" x="-487" y="963">
+  <block type="procedures_callnoreturn" id="$7k6}Q3Z){|+By:c0L+A" x="13" y="1863">
     <mutation name="main"></mutation>
   </block>
 </xml>

@@ -8,15 +8,15 @@
     <variable id="{xln9TtWdr$$=z8u+H/a">Id</variable>
     <variable id="qakBcuvE)(5VIJ~MxT%U">i</variable>
   </variables>
-  <block type="variables_set" id="G;W_YZ7k3GreNo{x!1Y/" x="-187" y="-1062">
+  <block type="variables_set" id="G;W_YZ7k3GreNo{x!1Y/" x="13" y="13">
     <field name="VAR" id="/#1q109F:%3=:uLdU-G5">deviceIsWokwi</field>
     <value name="VALUE">
       <block type="logic_boolean" id="@3eHB0_p)8-8|2t3B(zN">
-        <field name="BOOL">FALSE</field>
+        <field name="BOOL">TRUE</field>
       </block>
     </value>
   </block>
-  <block type="procedures_defnoreturn" id="63vynxZf~*W1RHH}#0Y@" x="-187" y="-1012">
+  <block type="procedures_defnoreturn" id="63vynxZf~*W1RHH}#0Y@" x="13" y="63">
     <field name="NAME">main</field>
     <comment pinned="false" h="80" w="160">Décrivez cette fonction...</comment>
     <statement name="STACK">
@@ -318,7 +318,7 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_defnoreturn" id="h=^w:Bq2ici]Z9P4l(,5" x="-187" y="513">
+  <block type="procedures_defnoreturn" id="h=^w:Bq2ici]Z9P4l(,5" x="13" y="1838">
     <field name="NAME">init</field>
     <comment pinned="false" h="80" w="160">Décrivez cette fonction...</comment>
     <statement name="STACK">
@@ -452,10 +452,10 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="-187" y="1038">
+  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="13" y="2363">
     <mutation name="init"></mutation>
   </block>
-  <block type="procedures_callnoreturn" id="+?(Gu}UnYuM37)J9,B8Q" x="-187" y="1113">
+  <block type="procedures_callnoreturn" id="+?(Gu}UnYuM37)J9,B8Q" x="13" y="2413">
     <mutation name="main"></mutation>
   </block>
 </xml>
