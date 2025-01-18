@@ -12,7 +12,7 @@ Blockly.defineBlocksWithJsonArray([
       {
         "type": "field_input",
         "name": "LABEL",
-        "text": "WS2812"
+        "text": "RGBs"
       },
       {
         "type": "input_dummy",

@@ -1,4 +1,4 @@
-python.pythonGenerator.forBlock['lcd_moveTo'] = function (block, generator) {
+python.pythonGenerator.forBlock['hd44780_moveTo'] = function (block, generator) {
   const text_label = block.getFieldValue('LABEL');
   const value_x = generator.valueToCode(block, 'X', python.Order.ATOMIC);
   const value_y = generator.valueToCode(block, 'Y', python.Order.ATOMIC);
@@ -8,7 +8,7 @@ python.pythonGenerator.forBlock['lcd_moveTo'] = function (block, generator) {
   return code;
 }
 
-python.pythonGenerator.forBlock['lcd_moveTo_x'] = function (block) {
+python.pythonGenerator.forBlock['hd44780_moveTo_x'] = function (block) {
   const value_x = block.getFieldValue('X');
 
   const code = `${value_x}`;
@@ -16,7 +16,7 @@ python.pythonGenerator.forBlock['lcd_moveTo_x'] = function (block) {
   return [code, javascript.Order.ATOMIC];
 }
 
-python.pythonGenerator.forBlock['lcd_moveTo_y'] = function (block) {
+python.pythonGenerator.forBlock['hd44780_moveTo_y'] = function (block) {
   const value_y = block.getFieldValue('Y');
 
   const code = `${value_y}`;

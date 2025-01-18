@@ -1,4 +1,4 @@
-python.pythonGenerator.forBlock['lcd_putString'] = function (block, generator) {
+python.pythonGenerator.forBlock['hd44780_putString'] = function (block, generator) {
   const text_label = block.getFieldValue('LABEL');
   const value_string = generator.valueToCode(block, 'STRING', python.Order.ATOMIC);
 
@@ -7,7 +7,7 @@ python.pythonGenerator.forBlock['lcd_putString'] = function (block, generator) {
   return code;
 }
 
-python.pythonGenerator.forBlock['lcd_putString_string'] = function (block) {
+python.pythonGenerator.forBlock['hd44780_putString_string'] = function (block) {
   const value_string = block.getFieldValue('STRING');
 
   const code = `"${value_string.replace('"','\\"')}"`;

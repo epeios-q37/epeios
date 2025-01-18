@@ -39,7 +39,7 @@ FR = {
   6: "pour rejouer !",
 }
 
-STRINGS = FR
+STRINGS = EN
 
 OLED_COEFF = 8
 ringCount = 0
@@ -281,7 +281,7 @@ async def atkSwitch(dom, id):
 
     cRing = ucuq.WS2812(inputs[W_H_RING_PIN], inputs[W_H_RING_COUNT])
     cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(inputs[W_H_OLED_SDA], inputs[W_H_OLED_SCL], soft = inputs[W_H_OLED_SOFT]))
-    cLCD = ucuq.LCD_PCF8574(ucuq.I2C(inputs[W_H_LCD_SDA], inputs[W_H_LCD_SCL], soft = inputs[W_H_LCD_SOFT]), 2, 16).backlightOff()
+    cLCD = ucuq.HD44780_I2C(ucuq.I2C(inputs[W_H_LCD_SDA], inputs[W_H_LCD_SCL], soft = inputs[W_H_LCD_SOFT]), 2, 16).backlightOff()
     if inputs[W_H_BUZZER_ON]:
       cBuzzer = ucuq.PWM(inputs[W_H_BUZZER_PIN])
     else:

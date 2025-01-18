@@ -1,9 +1,9 @@
 Blockly.defineBlocksWithJsonArray([
   {
-    "type": "lcd_init",
+    "type": "hd44780_init",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "LCD init %1 %2 %3 Soft %4 SDA %5 SCL %6 Cols %7 Rows %8",
+    "message0": "HD44780 init %1 %2 %3 Soft %4 SDA %5 SCL %6 Cols %7 Rows %8",
     "args0": [
       {
         "type": "input_dummy",
@@ -55,7 +55,7 @@ Blockly.defineBlocksWithJsonArray([
     "colour": 225
   },
   {
-    "type": "lcd_init_soft",
+    "type": "hd44780_init_soft",
     "message0": "%1",
     "args0": [
       {
@@ -66,7 +66,7 @@ Blockly.defineBlocksWithJsonArray([
     "output": null
   },
   {
-    "type": "lcd_init_sda",
+    "type": "hd44780_init_sda",
     "message0": "%1",
     "args0": [
       {
@@ -78,7 +78,7 @@ Blockly.defineBlocksWithJsonArray([
     "output": null
   },
   {
-    "type": "lcd_init_scl",
+    "type": "hd44780_init_scl",
     "message0": "%1",
     "args0": [
       {
@@ -90,7 +90,7 @@ Blockly.defineBlocksWithJsonArray([
     "output": null
   },
   {
-    "type": "lcd_init_cols",
+    "type": "hd44780_init_cols",
     "message0": "%1",
     "args0": [
       {
@@ -102,7 +102,7 @@ Blockly.defineBlocksWithJsonArray([
     "output": null
   },
   {
-    "type": "lcd_init_rows",
+    "type": "hd44780_init_rows",
     "message0": "%1",
     "args0": [
       {

@@ -3,7 +3,7 @@ Blockly.defineBlocksWithJsonArray([
     "type": "ws2812_write",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "WS2812 write %1 %2",
+    "message0": "WS2812 write %1 %2 %3",
     "args0": [
       {
         "type": "input_dummy",
@@ -12,7 +12,12 @@ Blockly.defineBlocksWithJsonArray([
       {
         "type": "field_input",
         "name": "LABEL",
-        "text": "WS2812"
+        "text": "RGBs"
+      },
+      {
+        "type": "input_dummy",
+        "name": "",
+        "align": "CENTRE"
       },
     ],
     "previousStatement": null,

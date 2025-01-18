@@ -24,9 +24,7 @@
     }
     ucuq = require("ucuq");
   </script>
-
 </head>
-
 <body onload="init()">
   <span>%DATE%</span>
   <table width="100%" height="100%">
@@ -392,7 +390,7 @@
       </block>
       <block type="gpio_low"></block>
     </category>
-    <category name="WS2812" colour="#5C81A6">
+    <category name="WS2812 (RGBs)" colour="#5C81A6">
       <block type="ws2812_init">
         <value name="PIN">
           <shadow type="ws2812_init_pin"></shadow>
@@ -428,38 +426,38 @@
       </block>
       <block type="ws2812_write"></block>
     </category>
-    <category name="LCD" colour="#5C81A6">
-      <block type="lcd_init">
+    <category name="HD44780 (LCD)" colour="#5C81A6">
+      <block type="hd44780_init">
         <value name="SOFT">
-          <shadow type="lcd_init_soft"></shadow>
+          <shadow type="hd44780_init_soft"></shadow>
         </value>
         <value name="SDA">
-          <shadow type="lcd_init_sda"></shadow>
+          <shadow type="hd44780_init_sda"></shadow>
         </value>
         <value name="SCL">
-          <shadow type="lcd_init_scl"></shadow>
+          <shadow type="hd44780_init_scl"></shadow>
         </value>
         <value name="COLS">
-          <shadow type="lcd_init_cols"></shadow>
+          <shadow type="hd44780_init_cols"></shadow>
         </value>
         <value name="ROWS">
-          <shadow type="lcd_init_rows"></shadow>
+          <shadow type="hd44780_init_rows"></shadow>
         </value>
       </block>
-      <block type="lcd_moveTo">
+      <block type="hd44780_moveTo">
         <value name="X">
-          <shadow type="lcd_moveTo_x"></shadow>
+          <shadow type="hd44780_moveTo_x"></shadow>
         </value>
         <value name="Y">
-          <shadow type="lcd_moveTo_y"></shadow>
+          <shadow type="hd44780_moveTo_y"></shadow>
         </value>
       </block>
-      <block type="lcd_putString">
+      <block type="hd44780_putString">
         <value name="STRING">
-          <shadow type="lcd_putString_string"></shadow>
+          <shadow type="hd44780_putString_string"></shadow>
         </value>
       </block>
-      <block type="lcd_clear"></block>
+      <block type="hd44780_clear"></block>
     </category>
     <sep></sep>
     <category name="%{BKY_CATVARIABLES}" colour="%{BKY_VARIABLES_HUE}" custom="VARIABLE"></category>

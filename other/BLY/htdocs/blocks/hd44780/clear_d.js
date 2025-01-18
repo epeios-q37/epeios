@@ -1,9 +1,9 @@
 Blockly.defineBlocksWithJsonArray([
   {
-    "type": "lcd_clear",
+    "type": "hd44780_clear",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "LCD clear %1 %2 %3",
+    "message0": "HD44780 clear %1 %2 %3",
     "args0": [
       {
         "type": "input_dummy",

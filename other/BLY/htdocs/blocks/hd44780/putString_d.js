@@ -1,9 +1,9 @@
 Blockly.defineBlocksWithJsonArray([
   {
-    "type": "lcd_putString",
+    "type": "hd44780_putString",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "LCD putString %1 %2 %3 String %4",
+    "message0": "HD44780 putString %1 %2 %3 String %4",
     "args0": [
       {
         "type": "input_dummy",
@@ -31,7 +31,7 @@ Blockly.defineBlocksWithJsonArray([
     "colour": 225
   },
   {
-    "type": "lcd_putString_string",
+    "type": "hd44780_putString_string",
     "message0": "%1",
     "args0": [
       {

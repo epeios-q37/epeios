@@ -21,7 +21,7 @@
     <comment pinned="false" h="80" w="160">Décrivez cette fonction...</comment>
     <statement name="STACK">
       <block type="ws2812_init" id="#kN609JE^2{s8zukVcwo">
-        <field name="LABEL">WS2812</field>
+        <field name="LABEL">RGBs</field>
         <value name="PIN">
           <shadow type="ws2812_init_pin" id="pu=qxRNhL!mb7F9KMNUU">
             <field name="PIN">15</field>
@@ -40,7 +40,7 @@
         </value>
         <next>
           <block type="ws2812_fill" id="w]34B!vqH!VuX(jiWL/h">
-            <field name="LABEL">WS2812</field>
+            <field name="LABEL">RGBs</field>
             <value name="R">
               <shadow type="ws2812_fill_r" id="H`wZb}3NZ|dT+-5CN$L_">
                 <field name="R">0</field>
@@ -61,7 +61,7 @@
             </value>
             <next>
               <block type="ws2812_write" id="mH|n4Lu6S9v.;W9VGL-4">
-                <field name="LABEL">WS2812</field>
+                <field name="LABEL">RGBs</field>
                 <next>
                   <block type="ucuq_sleep" id="4D{8zV_#Pj,kr0Bao1,p">
                     <value name="SECONDS">
@@ -71,7 +71,7 @@
                     </value>
                     <next>
                       <block type="ws2812_fill" id="93bMWWET=7R|v1{TwTnF">
-                        <field name="LABEL">WS2812</field>
+                        <field name="LABEL">RGBs</field>
                         <value name="R">
                           <shadow type="ws2812_fill_r" id="H`wZb}3NZ|dT+-5CN$L_">
                             <field name="R">0</field>
@@ -92,7 +92,7 @@
                         </value>
                         <next>
                           <block type="ws2812_write" id="xibEkJ-%Idq0s%^AWtbK">
-                            <field name="LABEL">WS2812</field>
+                            <field name="LABEL">RGBs</field>
                             <next>
                               <block type="ucuq_sleep" id="+t4o,U-@Ab.:+/C~|JF8">
                                 <value name="SECONDS">
@@ -102,7 +102,7 @@
                                 </value>
                                 <next>
                                   <block type="ws2812_fill" id="3fe,.%@Lp[~+%O([/ur-">
-                                    <field name="LABEL">WS2812</field>
+                                    <field name="LABEL">RGBs</field>
                                     <value name="R">
                                       <shadow type="ws2812_fill_r" id="M.DS.6M;b5A}u/b+p!Wp">
                                         <field name="R">0</field>
@@ -123,7 +123,7 @@
                                     </value>
                                     <next>
                                       <block type="ws2812_write" id="G3A/{PK$+aGEHT$ew$=1">
-                                        <field name="LABEL">WS2812</field>
+                                        <field name="LABEL">RGBs</field>
                                         <next>
                                           <block type="ucuq_sleep" id="zS!/rxg1z#BOuBpQG@OC">
                                             <value name="SECONDS">
@@ -174,7 +174,7 @@
                                                     </value>
                                                     <statement name="DO">
                                                       <block type="ws2812_setValue" id="Bwt,{q){Eyme2OTg|$b%">
-                                                        <field name="LABEL">WS2812</field>
+                                                        <field name="LABEL">RGBs</field>
                                                         <value name="INDEX">
                                                           <shadow type="ws2812_setValue_index" id="3Iqj+ExM=18)eGl@)bl.">
                                                             <field name="INDEX">0</field>
@@ -245,7 +245,7 @@
                                                         </value>
                                                         <next>
                                                           <block type="ws2812_write" id="]Ivl_VI0oVzLr=A%G*)/">
-                                                            <field name="LABEL">WS2812</field>
+                                                            <field name="LABEL">RGBs</field>
                                                             <next>
                                                               <block type="ucuq_sleep" id="8X#F1HV^(aPtG1e9HVlr">
                                                                 <value name="SECONDS">
@@ -270,7 +270,7 @@
                                                     </value>
                                                     <next>
                                                       <block type="ws2812_fill" id="soxToT!qy#gm=;5f%;U]">
-                                                        <field name="LABEL">WS2812</field>
+                                                        <field name="LABEL">RGBs</field>
                                                         <value name="R">
                                                           <shadow type="ws2812_fill_r" id="t{R@+TOyT$TR~svV^Yn6">
                                                             <field name="R">0</field>
@@ -288,7 +288,7 @@
                                                         </value>
                                                         <next>
                                                           <block type="ws2812_write" id="AiE8|S_]`#*`{)D|,Tll">
-                                                            <field name="LABEL">WS2812</field>
+                                                            <field name="LABEL">RGBs</field>
                                                           </block>
                                                         </next>
                                                       </block>
@@ -330,49 +330,29 @@
           </block>
         </value>
         <statement name="DO0">
-          <block type="variables_set" id="zfEj,I_d!x3d_KIDnWU9">
-            <field name="VAR" id="4_hg7VKav}NEIHXNlFcX">Token</field>
+          <block type="variables_set" id="JWa-wpdKf(57*K8q^a5d">
+            <field name="VAR" id="ZhH#$aQ{V3bH=u^+vmYH">Pin</field>
             <value name="VALUE">
-              <block type="text" id="Ab9tF}[b(d0#~e|:fR0r">
-                <field name="TEXT">Wokwi</field>
+              <block type="math_number" id="(4BqFl94/CETI-E2?KC(">
+                <field name="NUM">15</field>
               </block>
             </value>
             <next>
-              <block type="variables_set" id="gF?)N%HAHP%4*xUN71#+">
-                <field name="VAR" id="{xln9TtWdr$$=z8u+H/a">Id</field>
+              <block type="variables_set" id="ib?f-E?]iL~US}1nqOc8">
+                <field name="VAR" id="H;XLhOXO([9QU_+D#cj~">Count</field>
                 <value name="VALUE">
-                  <block type="text" id="D_sz[3!X[IXs[wU9nag-">
-                    <field name="TEXT">Blockly</field>
+                  <block type="math_number" id="$M6T{zD@esZNu6l~hLL[">
+                    <field name="NUM">16</field>
                   </block>
                 </value>
                 <next>
-                  <block type="variables_set" id="JWa-wpdKf(57*K8q^a5d">
-                    <field name="VAR" id="ZhH#$aQ{V3bH=u^+vmYH">Pin</field>
+                  <block type="variables_set" id="wYKNY@1dvvS;Wkqb@#2`">
+                    <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
                     <value name="VALUE">
-                      <block type="math_number" id="(4BqFl94/CETI-E2?KC(">
-                        <field name="NUM">15</field>
+                      <block type="math_number" id="vO=IC=!O`@|snA=vg]ev">
+                        <field name="NUM">255</field>
                       </block>
                     </value>
-                    <next>
-                      <block type="variables_set" id="ib?f-E?]iL~US}1nqOc8">
-                        <field name="VAR" id="H;XLhOXO([9QU_+D#cj~">Count</field>
-                        <value name="VALUE">
-                          <block type="math_number" id="$M6T{zD@esZNu6l~hLL[">
-                            <field name="NUM">16</field>
-                          </block>
-                        </value>
-                        <next>
-                          <block type="variables_set" id="wYKNY@1dvvS;Wkqb@#2`">
-                            <field name="VAR" id="OH%+33!xv~H_VE2I*IFg">Max</field>
-                            <value name="VALUE">
-                              <block type="math_number" id="vO=IC=!O`@|snA=vg]ev">
-                                <field name="NUM">255</field>
-                              </block>
-                            </value>
-                          </block>
-                        </next>
-                      </block>
-                    </next>
                   </block>
                 </next>
               </block>
@@ -452,10 +432,10 @@
       </block>
     </statement>
   </block>
-  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="13" y="2363">
+  <block type="procedures_callnoreturn" id="/RnfAOAODBEAV0?6Tu6J" x="13" y="2313">
     <mutation name="init"></mutation>
   </block>
-  <block type="procedures_callnoreturn" id="+?(Gu}UnYuM37)J9,B8Q" x="13" y="2413">
+  <block type="procedures_callnoreturn" id="+?(Gu}UnYuM37)J9,B8Q" x="13" y="2363">
     <mutation name="main"></mutation>
   </block>
 </xml>

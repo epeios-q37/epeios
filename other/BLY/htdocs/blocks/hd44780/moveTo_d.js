@@ -1,9 +1,9 @@
 Blockly.defineBlocksWithJsonArray([
   {
-    "type": "lcd_moveTo",
+    "type": "hd44780_moveTo",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "LCD moveTo %1 %2 %3 X %4 Y %5",
+    "message0": "HD44780 moveTo %1 %2 %3 X %4 Y %5",
     "args0": [
       {
         "type": "input_dummy",
@@ -37,7 +37,7 @@ Blockly.defineBlocksWithJsonArray([
     "colour": 225
   },
   {
-    "type": "lcd_moveTo_x",
+    "type": "hd44780_moveTo_x",
     "message0": "%1",
     "args0": [
       {
@@ -49,7 +49,7 @@ Blockly.defineBlocksWithJsonArray([
     "output": null
   },
   {
-    "type": "lcd_moveTo_y",
+    "type": "hd44780_moveTo_y",
     "message0": "%1",
     "args0": [
       {
