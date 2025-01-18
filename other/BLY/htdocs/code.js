@@ -443,8 +443,6 @@ function getGithubDemo(demo, callback) {
 }
 
 function fillWorkspace(xmlString) {
-  console.log("XML: ", xmlString)
-
   Code.workspace.clear();
 
   var parser = new DOMParser();
@@ -481,8 +479,6 @@ Code.init = function() {
           (Code.workspace.getToolbox().width - 38) + 'px';
           // Account for the 19 pixel margin and on each side.
     }
-
-    console.log("Code: ", Code.DEMO);
 
     if ( Code.DEMO !== "" ) {
       getGithubDemo(Code.DEMO, fillWorkspace);
@@ -663,14 +659,7 @@ Code.runPython = function(event) {
   }
 
   var code = Blockly.Python.workspaceToCode(Code.workspace);
-  // Afficher le code dans la zone de sortie  
-
-  code = `
-import ucuq
-
-` + code + "\nucuq.commit()";
-
-  console.log(code);
+  // Afficher le code dans la zone de sortie
 
   launchCode(code);
 };
@@ -699,7 +688,14 @@ window.addEventListener('load', Code.init);
 function init() {
   const workspace = Blockly.getMainWorkspace();
 
-  console.log("WS: ", Code.workspace);
+  python.pythonGenerator.ucuqOriginalFinish = python.pythonGenerator.finish;
+
+  python.pythonGenerator.finish = function (code) {
+    // const ws =  Blockly.getMainWorkspace();
+    code = python.pythonGenerator.ucuqOriginalFinish(code);
+
+    return "import ucuq\n\n" + code + "\nucuq.commit()\n";
+  }
 
   // Fonction pour gérer l'événement `block_change`
   function onBlockCreate(event) {
@@ -723,22 +719,5 @@ function init() {
   }
 
   workspace.addChangeListener(onBlockCreate);
-
-  document.getElementById('runButton').addEventListener('_click', function(event) {
-
-    // Générer le code Python  
-    var code = Blockly.Python.workspaceToCode(workspace);
-    // Afficher le code dans la zone de sortie  
-
-    code = `
-import ucuq
-
-` + code + "\nucuq.commit()";
-    console.log(code);
-
-    launchCode(code);
-
-    event.preventDefault();
-  });    
 }
 
