@@ -15,7 +15,7 @@ class Lock:
     self.locked_ = False
 
 async def get_github_file_content(file_path):
-  url = f'https://raw.githubusercontent.com/epeios-q37/ucuq/refs/heads/main/{file_path}'
+  url = f'https://raw.githubusercontent.com/epeios-q37/ucuq-python/refs/heads/main/{file_path}'
 
   lock = Lock()
   result = ""
