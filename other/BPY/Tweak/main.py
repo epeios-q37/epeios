@@ -69,7 +69,7 @@ SETTINGS = {
   P_DIY: {
     W_MODE: M_STRAIGHT,
     W_SOFT: "false",
-    W_PIN: "34",
+    W_PIN: "12",
     W_WIDTH: "1.5"
   }
 }
