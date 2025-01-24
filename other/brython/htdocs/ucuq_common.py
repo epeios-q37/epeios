@@ -129,6 +129,7 @@ KITS_ = {
 # Hardware kits
 
 H_BIPEDAL = {
+  "OnBoardLed": ["LED", True],
   "RGB": {
     "Pin": 16,
     "Count": 4,
@@ -138,6 +139,7 @@ H_BIPEDAL = {
 }
 
 H_DOG = {
+  "OnBoardLed":[2, False],
   "RGB": {
     "Pin": 0,
     "Count": 4,
@@ -147,6 +149,7 @@ H_DOG = {
 }
 
 H_DIY_DISPLAYS = {
+  "OnBoardLed": [8, False],
   "Ring": {
     "Pin": 2,
     "Count": 8,
@@ -169,6 +172,7 @@ H_DIY_DISPLAYS = {
 }
 
 H_DIY_SERVOS = {
+  "OnBoardLed":  [2, False],
   "Servos": {
     "Mode": "Straight",
     "Pins": [12, 13, 14, 15]
@@ -176,6 +180,7 @@ H_DIY_SERVOS = {
 }
 
 H_WOKWI_DISPLAYS = {
+  "OnBoardLed": [2, True],
   "Ring": {
     "Pin": 15,
     "Count": 16,
