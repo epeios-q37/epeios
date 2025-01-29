@@ -73,5 +73,4 @@ BODY = """
 </fieldset>
 """
 
-
-atlastk.launch(CALLBACKS, Profile, HEAD)
+atlastk.launch(CALLBACKS, userCallback=Profile, headContent=HEAD)
