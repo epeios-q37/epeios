@@ -285,7 +285,7 @@ def _serve(callback, userCallback, callbacks, callingGlobals):
 
 			_instances[id] = _Instance(lambda instance : callback(userCallback, callbacks, callingGlobals, instance), id)
 		elif id == _CLOSING_ID:	# Value instructing that a session is closed.
-			id = readSInt();
+			id = readSInt()
 
 			if not id in _instances:
 				_report("Instance of id '" + str(id) + "' not available for destruction!")
