@@ -97,7 +97,6 @@ async def reset(core,dom):
   await showWord(dom, core.secretWord, core.correctGuesses)
 
 
-
 async def atkConnect(core, dom):
   await reset(core,dom)
 
@@ -142,7 +141,6 @@ async def atkSubmit(core, dom, id):
     await reset(core, dom)
 
     chosen = ""
-
 
 
 async def atkRestart(core, dom):

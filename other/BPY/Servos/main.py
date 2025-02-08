@@ -1,5 +1,7 @@
 import os, io, json, datetime
 import ucuq, atlastk
+
+# BEGIN BRY
 from browser import ajax, aio
 
 class Lock:
@@ -40,7 +42,7 @@ async def get_github_file_content(file_path):
   await lock.acquire()
 
   return result
-
+# END BRY
 
 MACRO_MARKER_ = '$'
 
@@ -340,9 +342,11 @@ async def atkExecute(dom, id):
 
 
 async def atkSave(dom):
+# BEGIN BRY
   await dom.alert("Not implemented yet in Brython version!")
-  return
+# END BRY
 
+# BEGIN PYH
   name = await dom.getValue("Name").strip()
 
   if not ( content := await dom.getValue("Content") ):
@@ -361,7 +365,7 @@ async def atkSave(dom):
         file.write(json.dumps(macros, indent=2)) # type: ignore
 
     await displayMacros(dom)
-
+# END PYH
 
 def expand(moves):
   content = ""
@@ -423,24 +427,28 @@ async def atkHideContents(dom):
 
   
 async def atkSaveToFile(dom):
+# BEGIN BRY
   await dom.alert("Not implemented yet in Brython version!")
-  return
+# END BRY
 
+# BEGIN PYH
   with open(f"Macros/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w") as file: 
     file.write(json.dumps(macros, indent=2)) # type: ignore
   
   await updateFileList(dom)
-
+# END PYH
 
 async def atkLoadFromFile(dom):
   global macros
 
-  """
-  with open(f"Macros/{await dom.getValue('Files')}", "r") as file:
+# BEGIN PYH
+  with open(f"Macros/{await dom.getValue('Files')}.json", "r") as file:
     macros = json.load(file)
-  """
+# END PYH
 
+# BEGIN BRY
   macros = json.loads(await get_github_file_content(f"demos/Servos/Macros/{await dom.getValue('Files')}.json"))
+# END BRY
 
   print("Macros: ", macros)
 
@@ -479,12 +487,18 @@ def getServoSetup(key, subkey, preset, motor):
 async def getServosSetups(target):
   setups = {}
 
-  """
+# BEGIN PYH
+
   with open("servos.json", "r") as file:
     config = json.load(file)[target]
-  """
+
+# END PYH
+
+# BEGIN BRY
 
   config = json.loads(await get_github_file_content("demos/Servos/servos.json"))[target]
+
+# END BRY
 
   preset = config["Preset"]
   motors = config["Motors"]

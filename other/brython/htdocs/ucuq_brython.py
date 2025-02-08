@@ -142,8 +142,10 @@ class Device:
       for module in modules:
         self.addModule(module)
 
-  def addCommand(self, command):
+  def addCommand(self, command, commit = True):
     self.commands_.append(command)
+    if commit:
+      self.commit()
 
     return self
 

@@ -270,6 +270,7 @@ async def acConnect(dom):
   await updateDutyBox(dom)
   await dom.enableElement(W_HARDWARE_BOX)
 
+
 async def updateSettingsUIFollowingMode_(dom, mode):
   if mode == M_NONE:
     await dom.enableElement("HideStraight")
@@ -300,6 +301,7 @@ async def acPreset(dom, id):
 
 async def acMode(dom, id):
   await updateSettingsUIFollowingMode_(dom, await dom.getValue(id))
+  
 
 async def acSwitch(dom, id):
   global state
@@ -335,6 +337,7 @@ async def acFreq(dom, id):
       pass
     else:
       await updateDuties(dom, await setFreq(freq))
+
 
 async def acOffset(dom, id):
   if state:

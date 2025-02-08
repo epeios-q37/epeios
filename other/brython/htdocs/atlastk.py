@@ -511,7 +511,23 @@ async def handleCallbackBundles(userCallbacks, callingGlobals):
     bundle = await atlastkjs.getCallbackBundle()
     aio.run(handleCallbackBundle(userCallbacks,callingGlobals, bundle))
 
-def launch(callbacks = None, *, userCallback = lambda : None, globals = None, headContent = ""):
+def retrieve_(var, id, globals):
+  if var != None:
+    return var
+  
+  if id in globals:
+    return globals[id]
+
+def launch(callbacks = None, *, userCallback = lambda : None, globals = None, headContent = None):
+
+  if globals != None:
+    callbacks = retrieve_(callbacks, "ATK_CALLBACKS", globals)
+    userCallback = retrieve_(userCallback, "ATK_USER", globals)
+    headContent = retrieve_(headContent, "ATK_HEAD", globals)
+
+  if headContent == None:
+    headContent = ""
+
   atlastkjs.launch(lambda : _callback(userCallback), headContent.replace("_BrythonWorkaroundForClosingScriptTag_","</script>"), LIB_VERSION)
 
   aio.run(handleCallbackBundles(callbacks, globals))

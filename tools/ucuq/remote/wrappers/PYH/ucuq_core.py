@@ -2,6 +2,7 @@ import os, json, socket, sys, threading, datetime, time
 from inspect import getframeinfo, stack
 
 CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
+DEFAULT_COMMIT = True
 
 try:
   with open(CONFIG_FILE, "r") as config:
@@ -282,8 +283,11 @@ class Device(Device_):
       for module in modules:
         self.addModule(module)
 
-  def addCommand(self, command):
+  def addCommand(self, command, commit = None):
     self.commands.append(command)
+
+    if commit == None and DEFAULT_COMMIT:
+      self.commit()
 
   def commit(self, expression = ""):
     result = ""

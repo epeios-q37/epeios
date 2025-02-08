@@ -114,11 +114,13 @@ K_BIPEDAL = 1
 K_DOG = 2
 K_DIY_DISPLAYS = 3
 K_DIY_SERVOS = 4
-K_WOKWI_DISPLAYS = 5
-K_WOKWI_SERVOS = 6
+K_DIY_FREE = 5
+K_WOKWI_DISPLAYS = 6
+K_WOKWI_SERVOS = 7
 
 KITS_ = {
   "Freenove/Bipedal/RPiPicoW": K_BIPEDAL,
+  "Freenove/Bipedal/RPiPico2W": K_BIPEDAL,
   "Freenove/Dog/ESP32": K_DOG,
   "q37.info/DIY/Displays": K_DIY_DISPLAYS,
   "q37.info/DIY/Servos": K_DIY_SERVOS,
@@ -171,11 +173,21 @@ H_DIY_DISPLAYS = {
   },
 }
 
+# NOTA : below 'Pins' (GPIO) correspond to respectively
+# physical pins 'D6' 'D7' 'D5' 'D8'.
 H_DIY_SERVOS = {
   "OnBoardLed":  [2, False],
   "Servos": {
     "Mode": "Straight",
     "Pins": [12, 13, 14, 15]
+  }
+}
+
+H_DIY_FREE = {
+  "OnBoardLed":  [8, False],
+  "Servos": {
+    "Mode": "Straight",
+    "Pins": [12, 13, 14, 27]
   }
 }
 
@@ -205,7 +217,7 @@ H_WOKWI_DISPLAYS = {
 async def getInfosAwait(device = None):
   device = getDevice_(device)
 
-  device.addCommand(INFO_SCRIPT_)
+  device.addCommand(INFO_SCRIPT_, False)
 
   return await device.commitAwait("ucuqGetInfos()")
 
@@ -464,7 +476,7 @@ class PWM(Core_):
 
 
   def init(self, pin, *, freq = None, u16 = None, ns = None, device = None):
-    super().init("PWM-1", f"machine.PWM(machine.Pin({pin}){getParam('freq', freq)}{getParam('duty_u16', u16)}{getParam('duty_ns', ns)})", device)
+    super().init("PWM-1", f"machine.PWM(machine.Pin({pin}, machine.Pin.OUT){getParam('freq', freq)}{getParam('duty_u16', u16)}{getParam('duty_ns', ns)})", device)
 
 
   async def getU16Await(self):

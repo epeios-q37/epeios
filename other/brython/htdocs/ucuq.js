@@ -261,7 +261,9 @@ function subOperate_(handler) {
       setTimeout(() => subOperate_(handler));
   } else if ( handler.funcStack.length ) {
     let item = handler.funcStack.shift();
-    handler.callback = item[2];
+    if (item[1][1] !== "")
+      handler.callback = item[2];
+    console.log("Callback:", item.callback);
     item[0](handler, ...item[1]);
     subOperate_(handler);
   }

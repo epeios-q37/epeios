@@ -97,6 +97,58 @@
       }
     }
   },
+  "Brown": {
+    "Preset": {
+      "Hardware": {
+        "mode": "Straight"
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1639,
+        "u16_max": 8192,
+        "range": 180
+      },
+      "Tweak": {
+        "angle": 90,
+        "offset": 0,
+        "invert": false
+      }
+    },
+    "Motors": {
+      "L": {
+        "Hardware": {
+          "pin": 10
+        },
+        "Tweak": {
+          "offset": 85
+        }
+      },
+      "l": {
+        "Hardware": {
+          "pin": 11
+        },
+        "Tweak": {
+          "offset": -15
+        }
+      },
+      "R": {
+        "Hardware": {
+          "pin": 12
+        },
+        "Tweak": {
+          "offset": 225
+        }
+      },
+      "r": {
+        "Hardware": {
+          "pin": 13
+        },
+        "Tweak": {
+          "offset": 35
+        }
+      }
+    }
+  },
   "Blue": {
     "_comment": "F: Front; B: Back; L: Left; R: Right; a, b, c the motors from the body to the extremity.",
     "Preset": {
@@ -284,6 +336,46 @@
       "r": {
         "Hardware": {
           "pin": 15
+        }
+      }
+    }
+  },
+  "Red": {
+    "Preset": {
+      "Hardware": {
+        "mode": "Straight"
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1639,
+        "u16_max": 8192,
+        "range": 180
+      },
+      "Tweak": {
+        "angle": 90,
+        "offset": 0,
+        "invert": true
+      }
+    },
+    "Motors": {
+      "L": {
+        "Hardware": {
+          "pin": 15
+        }
+      },
+      "l": {
+        "Hardware": {
+          "pin": 16
+        }
+      },
+      "R": {
+        "Hardware": {
+          "pin": 2
+        }
+      },
+      "r": {
+        "Hardware": {
+          "pin": 4
         }
       }
     }
