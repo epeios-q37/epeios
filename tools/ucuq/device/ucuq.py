@@ -133,6 +133,10 @@ def wlanConnect_(wlan, callback):
 
     wifi.active(True)
 
+    # Without below, an EXP32-C3 supermini does not connect to WiFi when plugged in a breadboard.
+    # See https://www.reddit.com/r/arduino/comments/1dl6atc/esp32c3_boards_cant_connect_to_wifi_when_plugged/
+    wifi.config(txpower=8.5)
+
     wifi.connect(wlan[0], wlan[1])
 
     while not wifi.isconnected():
@@ -280,8 +284,9 @@ def serve_():
           writeUInt_(A_ERROR_)
           writeString_(stream.getvalue())
       else:
-        writeUInt_(A_OK_)
-        writeString_(returned)
+        if expression:
+          writeUInt_(A_OK_)
+          writeString_(returned)
     else:
       writeUInt_(A_PUZZLED_)
       writeString_("")  # For future use

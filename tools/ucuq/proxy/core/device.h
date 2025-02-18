@@ -35,7 +35,8 @@ namespace device {
   };
 
   qENUM(Answer) {
-    aOK,
+    aResult,
+    aSensor,
     aError,
     aPuzzled,
     aDisconnected,

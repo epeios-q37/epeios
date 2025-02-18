@@ -225,6 +225,7 @@ def _launch(callbacks, callingGlobals, userCallback, headContent):
 		XDHq.launch(_callback, userCallback, callbacks, callingGlobals, headContent)
 	except socket.timeout:
 		pass
+	
 
 def launch(callbacks, *, globals = None,  userCallback = None, headContent = None):
 	if _is_jupyter():

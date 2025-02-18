@@ -91,37 +91,41 @@ namespace {
       common::Put(Expression, Device, &Tracker);
       common::Commit(Device, &Tracker);
 
-      switch ( device::GetAnswer(Device, &Tracker) ) {
-      case device::aOK:
-        Response.Init();
+      if ( Expression.Amount() )
+        switch ( device::GetAnswer(Device, &Tracker) ) {
+        case device::aResult:
+          Response.Init();
 
-        common::Get(Device, Response, &Tracker);
-        common::Dismiss(Device, &Tracker);
+          common::Get(Device, Response, &Tracker);
+          common::Dismiss(Device, &Tracker);
 
-        common::Put(ucumng::aOK, Manager);
-        common::Put(Response, Manager);
+          common::Put(ucumng::aOK, Manager);
+          common::Put(Response, Manager);
 
-        common::Commit(Manager);
-        break;
-      case device::aError:
-      case device::aPuzzled:
-        Response.Init();
+          common::Commit(Manager);
+          break;
+        case device::aSensor:
+          qRUnx();
+          break;
+        case device::aError:
+        case device::aPuzzled:
+          Response.Init();
 
-        common::Get(Device, Response, &Tracker);
-        common::Dismiss(Device, &Tracker);
+          common::Get(Device, Response, &Tracker);
+          common::Dismiss(Device, &Tracker);
 
-        common::Put(ucumng::aError, Manager);
-        common::Put(Response, Manager);
+          common::Put(ucumng::aError, Manager);
+          common::Put(Response, Manager);
 
-        common::Commit(Manager);
-        break;
-      case device::aDisconnected:
-        common::Dismiss(Device, &Tracker);
-        break;
-      default:
-        qRGnr();
-        break;
-      }
+          common::Commit(Manager);
+          break;
+        case device::aDisconnected:
+          common::Dismiss(Device, &Tracker);
+          break;
+        default:
+          qRGnr();
+          break;
+        }
     }
   qRR;
   qRT;

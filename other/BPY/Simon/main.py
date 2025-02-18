@@ -234,7 +234,7 @@ def beep(note, delay = 0.29, sleep = 0.01):
 def playJingle(jingle):
   prevButton = ""
   prevPrevButton = ""
-  number(None)
+#  number(None)
   for n in jingle:
     while True:
       button = random.choice(list(BUTTONS.keys())) 
@@ -337,6 +337,8 @@ async def atkDisplay(dom):
 
 async def atkNew():
   global seq
+  
+  number(None)
 
   cLCD.clear()\
   .backlightOn()\
@@ -371,6 +373,8 @@ async def atkClick(dom, id):
   if seq.startswith(userSeq):
     if len(seq) <= len(userSeq):
       cLCD.moveTo(0,0).putString(STRINGS[4])
+      number(None)
+      cOLED.draw("000006c006c0000000000440038", 16, mul=8).show()
       playJingle(SUCCESS_JINGLE)
       ucuq.sleep(0.5)
       cLCD.clear()
@@ -378,6 +382,7 @@ async def atkClick(dom, id):
       userSeq = ""
       seq += random.choice("RGBY")
       cLCD.clear().moveTo(0,0).putString(STRINGS[2]).moveTo(0,1).putString(STRINGS[3])
+      number(None)
       number(len(seq))
       ucuq.sleep(.75)
       play(seq)
@@ -387,6 +392,8 @@ async def atkClick(dom, id):
     cLCD.moveTo(0,0).putString(STRINGS[5]).moveTo(0,1).putString(STRINGS[6])
     number(len(seq))
     cBuzzer.setFreq(30).setU16(50000)
+    number(None)
+    cOLED.fill(0).draw("000006c006c0000000000380044", 16, mul=8).show()
     ucuq.sleep(1)
     cBuzzer.setU16(0)
     ucuq.commit()

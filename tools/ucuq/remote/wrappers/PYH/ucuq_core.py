@@ -2,7 +2,7 @@ import os, json, socket, sys, threading, datetime, time
 from inspect import getframeinfo, stack
 
 CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
-DEFAULT_COMMIT = True
+DEFAULT_COMMIT = False
 
 try:
   with open(CONFIG_FILE, "r") as config:
@@ -213,38 +213,9 @@ class Device_:
     writeString_(self.socket_, R_UPLOAD_)
     writeStrings_(self.socket_, modules)
 
-    if ( answer := readUInt_(self.socket_) ) == A_OK_:
-      readString_(self.socket_) # For future use
-    elif answer == A_ERROR_:
-      result = readString_(self.socket_)
-      print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
-      print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
-      caller = getframeinfo(stack()[1][0])
-      print(f"Caller: {caller.filename}:{caller.lineno}")
-      print(f">>>>>>>>>> ERROR FROM DEVICE CONTENT <<<<<<<<<<")
-      print(result)
-      print(f">>>>>>>>>> END ERROR FROM DEVICE END <<<<<<<<<<")
-      sys.exit(0)
-    elif answer == A_PUZZLED_:
-      readString_(self.socket_) # For future use
-      raise Error("Puzzled!")
-    elif answer == A_DISCONNECTED:
-        raise Error("Disconnected from device!")
-    else:
-      raise Error("Unknown answer from device!")
-
-
-  def execute_(self, script, expression = ""):
-    if self.socket_:
-      writeString_(self.socket_, R_EXECUTE_)
-      writeString_(self.socket_, script)
-      writeString_(self.socket_, expression)
-
+    if False:
       if ( answer := readUInt_(self.socket_) ) == A_OK_:
-        if result := readString_(self.socket_):
-          return json.loads(result)
-        else:
-          return None
+        readString_(self.socket_) # For future use
       elif answer == A_ERROR_:
         result = readString_(self.socket_)
         print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
@@ -262,6 +233,37 @@ class Device_:
           raise Error("Disconnected from device!")
       else:
         raise Error("Unknown answer from device!")
+
+
+  def execute_(self, script, expression = ""):
+    if self.socket_:
+      writeString_(self.socket_, R_EXECUTE_)
+      writeString_(self.socket_, script)
+      writeString_(self.socket_, expression)
+
+      if expression:
+        if ( answer := readUInt_(self.socket_) ) == A_OK_:
+          if result := readString_(self.socket_):
+            return json.loads(result)
+          else:
+            return None
+        elif answer == A_ERROR_:
+          result = readString_(self.socket_)
+          print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
+          print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
+          caller = getframeinfo(stack()[1][0])
+          print(f"Caller: {caller.filename}:{caller.lineno}")
+          print(f">>>>>>>>>> ERROR FROM DEVICE CONTENT <<<<<<<<<<")
+          print(result)
+          print(f">>>>>>>>>> END ERROR FROM DEVICE END <<<<<<<<<<")
+          sys.exit(0)
+        elif answer == A_PUZZLED_:
+          readString_(self.socket_) # For future use
+          raise Error("Puzzled!")
+        elif answer == A_DISCONNECTED:
+            raise Error("Disconnected from device!")
+        else:
+          raise Error("Unknown answer from device!")
 
 
 class Device(Device_):
@@ -315,3 +317,7 @@ def getDemoDevice():
   else:
     return None   
 
+def setDefaultCommit(value=True):
+  global DEFAULT_COMMIT
+  
+  DEFAULT_COMMIT = value

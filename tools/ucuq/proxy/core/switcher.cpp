@@ -103,6 +103,7 @@ namespace {
 		common::Put(Notification, Flow);
 
 		Flow.Commit();
+		Flow.Dismiss();
 	qRR;
 	qRT;
 	qRE;
