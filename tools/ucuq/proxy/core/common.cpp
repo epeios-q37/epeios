@@ -95,7 +95,7 @@ qRB;
 		CallerLocker.reset(false);	// The corresponding mutes will be destroyed.
 		qDELETE(Caller);
 	} else
-			Caller->IsAlive_ = false;
+		Caller->IsAlive_ = false;
 qRR;
 qRT;
 qRE;

@@ -14,7 +14,14 @@
 - [trvl]: trivial modifications;
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
-- 
+
+## 2025-02-19
+
+- CSDBNS: [adpt];
+- SCK:
+    - the functions with 'timeout' parameter now correctly return 0 when timeout expires,
+    - adding break flag on timeout;
+
 ## 2024-10-07
 - RGSTRY: [stdz];
 - CSDCMN: `Get(…)` functions on strings now return the strings;

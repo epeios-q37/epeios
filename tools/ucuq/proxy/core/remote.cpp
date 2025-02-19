@@ -328,7 +328,7 @@ namespace routine_ {
   }
 }
 
-void remote::Process(fdr::rRWDriver &Driver)
+void remote::Process(sck::rRWDriver &RemoteDriver)
 {
 qRH;
   flw::rDressedRWFlow<> Device;
@@ -341,15 +341,15 @@ qRH;
   routine_::data::gRemoteToDevice RemoteToDeviceData;
   routine_::data::gDeviceToRemote DeviceToRemoteData;
 qRB;
-  Remote.Init(Driver);
+  Remote.Init(RemoteDriver);
 
   tol::Init(RToken, Id);
   common::Get(Remote, RToken);
   common::Get(Remote, Id);
 
-  Caller = device::Hire(RToken, Id, &Driver);
+  Caller = device::Hire(RToken, Id, (const void *) &RemoteDriver);  // '&RemoteDriver' serves only as discriminator.
 
-  Remote.Init(Driver);
+  Remote.Init(RemoteDriver);
 
   if ( Caller == NULL ) {
     Message.Init();
@@ -360,7 +360,7 @@ qRB;
     common::Put("", Remote);
     common::Commit(Remote);
 
-    Tracker.Candidate = &Driver;
+    Tracker.Candidate = &RemoteDriver;
     Tracker.Caller = Caller;
 
     common::Dismiss(Remote, &Tracker);
@@ -384,7 +384,7 @@ qRB;
   }
 qRR;
 qRT;
-  if ( (Caller != NULL) && Caller->ShouldIDestroy(&Driver) ) {
+  if ( (Caller != NULL) && Caller->ShouldIDestroy(&RemoteDriver) ) {
     Device.reset(false); // To avoid action on underlying driver which will be destroyed.
     qDELETE(Caller);
   }

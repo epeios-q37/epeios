@@ -99,10 +99,10 @@ namespace sck {
 	using flw::byte__;
 #ifdef SCK__WIN
 	typedef SOCKET socket__;
-	typedef char *	cast__;
+	typedef char *cast__;
 #elif defined( SCK__POSIX )
 	typedef int	socket__;
-	typedef void * cast__;
+	typedef void *cast__;
 #else
 #	error
 #endif
@@ -112,7 +112,7 @@ namespace sck {
 
 	typedef bso::u16__	duration__;
 
-	qCDEF( duration__, NoTimeout, SCK_INFINITE );
+	qCDEF(duration__, NoTimeout, SCK_INFINITE);
 
 	/* NOTA: Les deux dclarations ci-dessous ont t mise en place pour simplifier
 	l'usage des sockets sous Windows. En effet, ce dernier, et lui seul, ne ralise
@@ -123,8 +123,26 @@ namespace sck {
 	grant respectivement les fonctionnalits de serveur et de client, permettront
 	 l'utilisateur de faire abstraction de la contrainte impose par Windows. */
 
-	// Vrai si l'initialisation de la couche rseau a t faite, faux sinon.
+	 // Vrai si l'initialisation de la couche rseau a t faite, faux sinon.
 	extern bool Ready_;
+}
+
+/**************/
+/**** NEW *****/
+/**************/
+
+namespace sck {
+	typedef duration__ sTimeout;
+	typedef socket__ sSocket;
+
+	qCDEF(sSocket, Undefined, SCK_INVALID_SOCKET);
+}
+
+/**************/
+/**** OLD *****/
+/**************/
+
+namespace sck {
 
 	//f Initialize TCP/IP layer.
 	inline void Initialize( void )
@@ -257,26 +275,52 @@ namespace sck {
 	: public _ioflow_driver___
 	{
 	private:
-		socket__ _Socket;
-		duration__ _Timeout;	// En secondes.
-		bso::bool__ _Error;
+		socket__ Socket_;
+		duration__ Timeout_;	// En secondes.
+		bso::bool__ IsAlive_;	// Still at true after reading or writing returning 0 when break occurs.
 		bso::sBool Owner_;
-		time_t _EpochTimeStamp;	// Horodatage de la dernire activit (lecture ou criture);
+		time_t EpochTimeStamp_;	// Horodatage de la dernire activit (lecture ou criture);
+		const bso::sBool *BreakOnTimeout_;
 		void _Touch( void )
 		{
-			_EpochTimeStamp = tol::EpochTime( false );
+			EpochTimeStamp_ = tol::EpochTime( false );
+		}
+		inline bso::sBool Break_(void) const
+		{
+			if ( Timeout_ == NoTimeout )
+				qRUnx();
+
+			if ( BreakOnTimeout_ == NULL )
+				qRUnx();
+
+			if ( *BreakOnTimeout_ )
+				return true;
+
+			return false;
 		}
 	protected:
 		virtual fdr::size__ FDRRead(
 			fdr::size__ Maximum,
 			fdr::byte__ *Buffer ) override
 		{
-			if ( ( Maximum = sck::Read( _Socket, ( Maximum ), Buffer, _Timeout ) ) == (fdr::sSize)SCK_DISCONNECTED )
-				Maximum = 0;
-			else
-				_Touch();
+			fdr::sSize Red = 0;
 
-			return Maximum;
+			if ( !IsAlive_ )
+				qRFwk();
+
+			do {
+				if ( ( Red = sck::Read(Socket_, ( Maximum ), Buffer, Timeout_) ) == (fdr::sSize)SCK_DISCONNECTED ) {
+					Red = 0;
+					IsAlive_ = false;
+					break;
+				}  else if ( Red == 0 ) {
+					if ( Break_() )
+						break;
+				} else
+					_Touch();
+			} while ( Red == 0 );
+
+			return Red;
 		}
 		virtual bso::sBool FDRDismiss(
 			bso::sBool Unlock,
@@ -292,17 +336,24 @@ namespace sck {
 			const fdr::byte__ *Buffer,
 			fdr::size__ Maximum ) override
 		{
-			if ( _Error )
+			fdr::sSize Written = 0;
+
+			if ( !IsAlive_ )
 				qRFwk();
 
-			if ( ( Maximum = sck::Write( _Socket, Buffer, Maximum, _Timeout ) ) == (fdr::sSize)SCK_DISCONNECTED ) {
-				_Socket = SCK_INVALID_SOCKET;
-				_Error = true;
-				Maximum = 0;
-			} else
-				_Touch();
+			do {
+				if ( ( Written = sck::Write(Socket_, Buffer, Maximum, Timeout_) ) == (fdr::sSize)SCK_DISCONNECTED ) {
+					Socket_ = SCK_INVALID_SOCKET;
+					IsAlive_ = false;
+					Written = 0;
+				} else if ( Written == 0 ) {
+					if ( Break_() )
+						break;
+				} else
+					_Touch();
+			} while ( Written == 0 );
 
-			return Maximum;
+			return Written;
 		}
 		virtual bso::sBool FDRCommit(
 			bso::sBool Unlock,
@@ -320,17 +371,18 @@ namespace sck {
 			_ioflow_driver___::reset( P );
 
 			if ( P ) {
-				if ( _Socket != SCK_INVALID_SOCKET ) {
+				if ( Socket_ != Undefined ) {
 					if ( Owner_ )
-						Close( _Socket, qRPU );
+						Close( Socket_, qRPU );
 				}
 			}
 
-			_Socket = SCK_INVALID_SOCKET;
-			_Timeout = SCK_INFINITE;
-			_Error = false;
-			_EpochTimeStamp = 0;
+			Socket_ = Undefined;
+			Timeout_ = NoTimeout;
+			IsAlive_ = false;
+			EpochTimeStamp_ = 0;
 			Owner_ = false;
+			BreakOnTimeout_ = NULL;
 		}
 		socket_ioflow_driver___( void )
 		{
@@ -344,20 +396,34 @@ namespace sck {
 		void Init(
 			socket__ Socket,
 			bso::sBool TakeOwnership,
-			fdr::thread_safety__ ThreadSafety,
-			duration__ Timeout = NoTimeout )	// En secondes.
+			fdr::thread_safety__ ThreadSafety)	// En secondes.
 		{
 			reset();
 
 			_ioflow_driver___::Init( ThreadSafety );
 
-			_Socket = Socket;
-			_Timeout = Timeout;
+			Socket_ = Socket;
 			Owner_ = TakeOwnership;
+			IsAlive_ = true;
 			_Touch();	// On suppose qu'il n'y a pas une trop longue attente entre la cration de la socket et l'appel  cette mthode ...
 		}
-		E_RODISCLOSE__( socket__, Socket )
-		E_RODISCLOSE__( time_t, EpochTimeStamp )
+		void SetBreakFlag(
+			sTimeout Timeout,	// In seconds
+			const bso::sBool *Flag)
+		{
+			if ( ( Timeout != NoTimeout ) && ( Flag == NULL ) )
+				qRFwk();
+
+			Timeout_ = Timeout;
+			BreakOnTimeout_ = Flag;
+		}
+		void EraseBreakFlag(void)
+		{
+			SetBreakFlag(NoTimeout, NULL);
+		}
+		qRODISCLOSEs(socket__, Socket);
+		qRODISCLOSEs(time_t, EpochTimeStamp);
+		qRODISCLOSEs(bso::sBool, IsAlive);
 	};
 
 	//c Socket as input/output flow driver.
@@ -365,13 +431,13 @@ namespace sck {
 	: public flw::ioflow__
 	{
 	private:
-		socket_ioflow_driver___ _Driver;
-		flw::byte__ _Cache[2 * SCK_SOCKET_FLOW_BUFFER_SIZE];
+		socket_ioflow_driver___ Driver_;
+		flw::byte__ Cache_[2 * SCK_SOCKET_FLOW_BUFFER_SIZE];
 	public:
 		void reset( bool P = true )
 		{
 			ioflow__::reset( P );
-			_Driver.reset( P );
+			Driver_.reset( P );
 		}
 		socket_ioflow___( void )
 		{
@@ -384,21 +450,34 @@ namespace sck {
 		//f Initialization with socket 'Socket' and 'Timeout' as timeout.
 		void Init(
 			socket__ Socket,
-			bso::sBool TakeOwnership,
-			duration__ Timeout = NoTimeout ) // En secondes.
+			bso::sBool TakeOwnership) // En secondes.
 		{
 			reset();
 
-			_Driver.Init( Socket, TakeOwnership, fdr::ts_Default, Timeout );
-			ioflow__::Init( _Driver, _Cache, sizeof( _Cache ) );
+			Driver_.Init(Socket, TakeOwnership, fdr::ts_Default);
+			ioflow__::Init(Driver_, Cache_, sizeof( Cache_ ));
+		}
+		void SetBreakFlag(
+			sTimeout Timeout,	// In seconds
+			const bso::sBool *Flag)
+		{
+			Driver_.SetBreakFlag(Timeout, Flag);
+		}
+		void EraseBreakFlag(void)
+		{
+			Driver_.EraseBreakFlag();
 		}
 		socket__ Socket( void ) const
 		{
-			return _Driver.Socket();
+			return Driver_.Socket();
 		}
 		time_t EpochTimeStamp( void ) const
 		{
-			return _Driver.EpochTimeStamp();
+			return Driver_.EpochTimeStamp();
+		}
+		bso::sBool IsALive(void) const
+		{
+			return Driver_.IsAlive();
 		}
 	};
 }
@@ -408,11 +487,6 @@ namespace sck {
 /**************/
 
 namespace sck {
-	typedef duration__ sTimeout;
-	typedef socket__ sSocket;
-
-	qCDEF( sSocket, Undefined, SCK_INVALID_SOCKET );
-
 	typedef socket_ioflow_driver___ rRWDriver;
 	typedef socket_ioflow___ rRWFlow;
 }

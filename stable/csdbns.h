@@ -202,7 +202,7 @@ namespace csdbns {
 			if ( Data->RWDriver == NULL )
 				qRFwk();
 
-			Data->RWDriver->Init( Socket, true, fdr::ts_Default, sck::NoTimeout );
+			Data->RWDriver->Init( Socket, true, fdr::ts_Default);
 			Data->UP = BaseCallback->PreProcess( Data->RWDriver, ntvstr::string___( IP ).Internal() );	// The 'OwnerShipTaken' concerns the 'Flow'.
 		qRR
 			if ( Data != NULL )

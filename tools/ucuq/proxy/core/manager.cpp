@@ -129,7 +129,7 @@ namespace {
     }
   qRR;
   qRT;
-    if ( (Caller != NULL) && Caller->ShouldIDestroy(&Driver) ) {
+    if ( ( Caller != NULL ) && Caller->ShouldIDestroy(&Driver) ) {
       Device.reset(false); // To avoid action on underlying driver which will be destroyed.
       qDELETE(Caller);
     }

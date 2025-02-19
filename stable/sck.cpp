@@ -78,7 +78,7 @@ flw::size__ sck::Read(
 			Result = SCK_DISCONNECTED;
 	} else if ( Result == SCK_SOCKET_ERROR )
 		qRLbr();
-	else if ( Result == 0 )
+	else if ( ( Result == 0 ) && ( Timeout == SCK_INFINITE ) )
 		qRLbr();
 	else
 		qRSys();
@@ -126,7 +126,7 @@ flw::size__ sck::Write(
 	}
 	else if ( Result == SCK_SOCKET_ERROR )
 		qRLbr();
-	else if ( Result == 0 )
+	else if ( ( Result == 0 ) && ( Timeout == SCK_INFINITE ) )
 		qRLbr();
 	else
 		qRSys();

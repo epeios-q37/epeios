@@ -27,7 +27,7 @@
 # include "sdr.h"
 
 namespace remote {
-  void Process(fdr::rRWDriver &Driver);
+  void Process(sck::rRWDriver &Driver);
 }
 
 #endif
