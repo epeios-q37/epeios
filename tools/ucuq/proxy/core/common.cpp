@@ -38,11 +38,11 @@ qRH;
 qRB;
 	Caller = qNEW(rCaller);
 
-	Caller->Init(Driver);
-
 	Locker.InitAndLock(Mutex_);
 
 	Row = List_.Add(Caller);
+
+	Caller->Init(Driver, Row);
 qRR;
 	qDELETE(Caller);
 qRT;

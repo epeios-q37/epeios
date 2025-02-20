@@ -61,7 +61,6 @@ namespace {
     str::wString Script, Expression, Message, Response;
     common::rCaller *Caller = NULL;
     bso::sBool Cont = true;
-    common::gTracker Tracker;
   qRB;
     tol::Init(RToken, Id, Script, Expression);
 
@@ -81,23 +80,21 @@ namespace {
       common::Put(Message, Manager);
       common::Commit(Manager);
     } else {
-      Tracker.Caller = Caller;
-      Tracker.Candidate = &Driver;
 
       Device.Init(*Caller->GetDriver());
 
-      common::Put(device::rExecute, Device, &Tracker);
-      common::Put(Script, Device, &Tracker);
-      common::Put(Expression, Device, &Tracker);
-      common::Commit(Device, &Tracker);
+      common::Put(device::rExecute, Device);
+      common::Put(Script, Device);
+      common::Put(Expression, Device);
+      common::Commit(Device);
 
       if ( Expression.Amount() )
-        switch ( device::GetAnswer(Device, &Tracker) ) {
+        switch ( device::GetAnswer(Device) ) {
         case device::aResult:
           Response.Init();
 
-          common::Get(Device, Response, &Tracker);
-          common::Dismiss(Device, &Tracker);
+          common::Get(Device, Response);
+          common::Dismiss(Device);
 
           common::Put(ucumng::aOK, Manager);
           common::Put(Response, Manager);
@@ -111,8 +108,8 @@ namespace {
         case device::aPuzzled:
           Response.Init();
 
-          common::Get(Device, Response, &Tracker);
-          common::Dismiss(Device, &Tracker);
+          common::Get(Device, Response);
+          common::Dismiss(Device);
 
           common::Put(ucumng::aError, Manager);
           common::Put(Response, Manager);
@@ -120,7 +117,7 @@ namespace {
           common::Commit(Manager);
           break;
         case device::aDisconnected:
-          common::Dismiss(Device, &Tracker);
+          common::Dismiss(Device);
           break;
         default:
           qRGnr();

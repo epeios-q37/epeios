@@ -360,7 +360,7 @@ qRE;
   return Set;
 }
 
-sCRow_ seeker::GetCaller(sRow Row)
+sCRow_ seeker::GetCallerRow(sRow Row)
 {
   sTie_ Tie;
 qRH;

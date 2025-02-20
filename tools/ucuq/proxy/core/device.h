@@ -44,9 +44,7 @@ namespace device {
     a_Undefined
   };
 
-  eAnswer GetAnswer(
-    flw::rRFlow &Flow,
-    const common::gTracker *Tracker);
+  eAnswer GetAnswer(flw::rRFlow &Flow);
 
   qENUM(State) { // State of the connection.
     sConnected,
@@ -64,6 +62,7 @@ namespace device {
     const str::dString &RToken,
     const str::dString &Id,
     const void *User);
+  void WithdrawDevice(common::rCaller &Caller);
   void WithdrawDevice(
     const str::dString &RToken,
     const str::dString &Id );

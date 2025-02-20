@@ -1,6 +1,7 @@
 # MicroController Remote Server (runs on the µcontroller)
+# Use of asyncio in prevision of the future handling of sensors.
 
-import socket, sys, uos, time, network, json, binascii, io
+import asyncio, sys, uos, time, network, json, binascii, io
 from machine import Pin
 
 WLAN = "" # Connect to one of the WLAN defined in 'ucuq.json'.
@@ -13,9 +14,10 @@ with open("ucuq.json", "r") as config:
 IDENTIFICATION_ = CONFIG_["Identification"]
 
 UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
-UCUQ_DEFAULT_PORT_ = "53800"
+UCUQ_DEFAULT_PORT_ = 53800
 
 UCUQ_HOST_ = CONFIG_["Proxy"]["Host"] if "Proxy" in CONFIG_ and "Host" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["Host"] else UCUQ_DEFAULT_HOST_
+UCUQ_HOST_ = "192.168.1.87"
 
 # only way to test if the entry contains a valid int.
 try:
@@ -40,11 +42,12 @@ S_DECONNECTION_ = 5
 R_PING_ = 0
 R_EXECUTE_ = 1
 
-# Answer
-A_OK_ = 0
-A_ERROR_ = 1
-A_PUZZLED_ = 2
-A_DISCONNECTED_ = 3
+# Answer; must match in device.h: device::eAnswer.
+A_RESULT_ = 0
+A_SENSOR_ = 1
+A_ERROR_ = 2
+A_PUZZLED_ = 3
+A_DISCONNECTED_ = 4
 
 wifi = None
 
@@ -147,31 +150,42 @@ def wlanConnect_(wlan, callback):
 
   return True
 
+IN_ = 0
+OUT_ = 1
 
-def recv_(size):
-  global socket_
-
-  buffer = bytes()
-  l = 0
-
-  while l != size:
-    buffer += socket_.recv(size-l)
-    l = len(buffer)
-
-  return buffer
+buffer_ = bytes()
 
 
-def send_(value):
-  global socket_
+async def recv_(size):
+  global buffer_
 
-  totalAmount = len(value)
+  while len(buffer_) < size:
+    buffer_ += await proxy_[IN_].read(4096)
+
+  result = buffer_[:size]
+
+  buffer_ = buffer_[size:]
+
+  return result
+
+
+async def send_(data):
+  totalAmount = len(data)
   amountSent = 0
 
   while amountSent < totalAmount:
-    amountSent += socket_.send(value[amountSent:])	
+    amount = totalAmount - amountSent
+
+    if amount > 4096:
+      amount = 4096
+
+    proxy_[OUT_].write(data[amountSent:amountSent + amount])	
+    await proxy_[OUT_].drain()
+
+    amountSent += amount
 
 
-def writeUInt_(value):
+async def writeUInt_(value):
   result = bytes([value & 0x7f])
   value >>= 7
 
@@ -179,35 +193,39 @@ def writeUInt_(value):
     result = bytes([(value & 0x7f) | 0x80]) + result
     value >>= 7
 
-  send_(result)
+  await send_(result)
 
 
-def writeString_(string):
+async def writeString_(string):
   bString = bytes(string, "utf-8")
-  writeUInt_(len(bString))
-  send_( bString)
+  await writeUInt_(len(bString))
+  await send_(bString)
 
 
-def readByte_():
-  return ord(recv_(1))
+def blockingWriteString_(string):
+  return asyncio.run(writeString_(string))
 
 
-def readUInt_():
-  byte = readByte_()
+async def readByte_():
+  return ord(await recv_(1))
+
+
+async def readUInt_():
+  byte = await readByte_()
   value = byte & 0x7f
 
   while byte & 0x80:
-    byte = readByte_()
+    byte = await readByte_()
     value = (value << 7) + (byte & 0x7f)
 
   return value
 
 
-def readString_():
-  size = readUInt_()
+async def readString_():
+  size = await readUInt_()
 
   if size:
-    return recv_(size).decode("utf-8")
+    return (await recv_(size)).decode("utf-8")
   else:
     return ""
   
@@ -220,16 +238,12 @@ def exit_(message=None):
 
 
 def init_(host, port, callback):
-  global socket_
-  cont = True
-  tries = 0
-
-  socket_ = socket.socket()
+  global proxy_
 
   callback(S_UCUQ_, 0)
 
   try:
-    socket_.connect(socket.getaddrinfo(host, port)[0][-1])
+    proxy_ = asyncio.run(asyncio.open_connection(host, port))
   except:
     return False
   else:
@@ -240,39 +254,43 @@ def getDeviceLabel_():
   return uos.uname().sysname
 
 
-def handshake_():
-  writeString_(PROTOCOL_LABEL_)
-  writeString_(PROTOCOL_VERSION_)
-  writeString_("Device")
-  writeString_(getDeviceLabel_())
+def blockingReadString_():
+  return asyncio.run(readString_())
 
-  error = readString_()
+
+def handshake_():
+  blockingWriteString_(PROTOCOL_LABEL_)
+  blockingWriteString_(PROTOCOL_VERSION_)
+  blockingWriteString_("Device")
+  blockingWriteString_(getDeviceLabel_())
+
+  error = blockingReadString_()
 
   if error:
     sys.exit(error)
 
-  notification = readString_()
+  notification = blockingReadString_()
 
   if notification:
     print(notification)
 
 
 def ignition_():
-  writeString_(IDENTIFICATION_[0])
-  writeString_(getIdentificationId_(IDENTIFICATION_))
+  blockingWriteString_(IDENTIFICATION_[0])
+  blockingWriteString_(getIdentificationId_(IDENTIFICATION_))
 
-  error = readString_()
+  error = blockingReadString_()
 
   if error:
     sys.exit(error)
 
-def serve_():
+async def serve_():
   while True:
-    request = readUInt_()
+    request = await readUInt_()
 
     if request == R_EXECUTE_:
-      script = readString_()
-      expression = readString_()
+      script = await readString_()
+      expression = await readString_()
       returned = ""
       try:
         exec(script)
@@ -281,11 +299,13 @@ def serve_():
       except Exception as exception:
         with io.StringIO() as stream:
           sys.print_exception(exception, stream)
+          print("Error: ", stream.getvalue())
           writeUInt_(A_ERROR_)
           writeString_(stream.getvalue())
       else:
         if expression:
-          writeUInt_(A_OK_)
+          print(expression)
+          writeUInt_(A_RESULT_)
           writeString_(returned)
     else:
       writeUInt_(A_PUZZLED_)
@@ -390,7 +410,7 @@ def main():
   ignition_()
 
   try:
-    serve_()
+    asyncio.run(serve_())
   except Exception as exception:
     try:
       writeUInt_(A_DISCONNECTED_)

@@ -72,7 +72,7 @@ namespace seeker {
     sRow Row,
     dSet &Set);
 
-  common::sRow GetCaller(sRow Row);
+  common::sRow GetCallerRow(sRow Row);
 
   sRow GetRToken(
     const str::dString &RToken,

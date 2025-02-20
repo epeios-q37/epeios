@@ -43,6 +43,7 @@ namespace common {
     const void *UserDiscriminator_;   // 'NULL' if no it in use, otherwise a pointer which value is specific to the user which uses it.
     bso::sBool IsAlive_;  // The device behind is available.
     sck::rRWDriver *Driver_;
+    sRow Row_;
   public:
     tol::sTimeStamp TimeStamp;
     void reset(bso::sBool P = true)
@@ -59,9 +60,12 @@ namespace common {
       Mutex_ = mtx::Undefined;
       UserDiscriminator_ = NULL;
       IsAlive_ = false;
+      Row_ = qNIL;
     }
     qCDTOR( rCaller );
-    void Init(sck::rRWDriver* Driver)
+    void Init(
+      sck::rRWDriver* Driver,
+      sRow Row)
     {
       reset();
 
@@ -70,6 +74,7 @@ namespace common {
       TimeStamp = tol::EpochTime(false);
       UserDiscriminator_ = NULL;
       IsAlive_ = true;
+      Row_ = Row;
     }
     fdr::rRWDriver *GetDriver(void) const
     {
@@ -84,7 +89,8 @@ namespace common {
     }
     bso::sBool ShouldIDestroy(const void *UserDiscriminator);
     friend class rCallers;
-    friend void Test_(const struct gTracker *Tracker);
+    friend void Test_(void);
+    qRODISCLOSEr(sRow, Row);
   };
 
   // TODO: Mutex to protect access of 'Callers_'.
@@ -125,106 +131,73 @@ namespace common {
     }
   };
 
-  struct gTracker {
-  public:
-    const rCaller *Caller;
-    const void *Candidate;  // Pointer which identifies the remote which originated the call.
-    void reset(bso::sBool P = true)
-    {
-      Caller = NULL;
-      Candidate = NULL;
-    }
-  };
-
-  inline void Test_(const gTracker *Tracker)
-  {
-    if ( Tracker != NULL )
-      if ( Tracker->Candidate == NULL )
-        qRGnr();
-      else if ( Tracker->Caller == NULL )
-        qRGnr();
-      else if ( !Tracker->Caller->IsAlive_ )
-        qRFree();
-      else if ( Tracker->Caller->UserDiscriminator_ == NULL )
-        qRGnr();
-      else if ( Tracker->Caller->UserDiscriminator_ != Tracker->Candidate )
-        qRFree();
-  }
+  inline void Test_(void)
+  {}  // For future use.
 
   template <typename integer> integer Get(
     flw::rRFlow &Flow,
-    integer &Integer,
-    const gTracker *Tracker = NULL)
+    integer &Integer)
   {
-    Test_(Tracker);
+    Test_();
 
     return ucucmn::Get(Flow, Integer);
   }
 
   inline const str::dString &Get(
     flw::rRFlow &Flow,
-    str::dString &String,
-    const gTracker *Tracker = NULL)
+    str::dString &String)
   {
-    Test_(Tracker);
+    Test_();
 
     return ucucmn::Get(Flow, String);
   }
 
   inline const str::dStrings &Get(
     flw::rRFlow &Flow,
-    str::dStrings &Strings,
-    const gTracker *Tracker = NULL)
+    str::dStrings &Strings)
   {
-    Test_(Tracker);
+    Test_();
 
     return ucucmn::Get(Flow, Strings);
   }
 
   inline const str::dStrings &Get(
     flw::rRFlow &Flow,
-    str::wStrings &Strings,
-    const gTracker *Tracker = NULL)
+    str::wStrings &Strings)
   {
-    Test_(Tracker);
+    Test_();
 
     return ucucmn::Get(Flow, Strings);
   }
 
   inline void Put(
     const str::dString &String,
-    flw::rWFlow &Flow,
-    const gTracker *Tracker = NULL)
+    flw::rWFlow &Flow)
   {
-    Test_(Tracker);
+    Test_();
 
     return ucucmn::Put(String, Flow);
   }
 
   template <typename integer> void Put(
     integer Integer,
-    flw::rWFlow &Flow,
-    const gTracker *Tracker = NULL)
+    flw::rWFlow &Flow)
   {
-    Test_(Tracker);
+    Test_();
 
     return ucucmn::Put(Integer, Flow);
   }
 
-  inline void Commit(
-    flw::rWFlow &Flow,
-    const gTracker *Tracker = NULL)
+  inline void Commit(flw::rWFlow &Flow)
   {
-    Test_(Tracker);
+    Test_();
 
     ucucmn::Commit(Flow);
   }
 
-  inline void Dismiss(
-    flw::rRFlow &Flow,
-    const gTracker *Tracker = NULL)
+  inline void Dismiss(flw::rRFlow &Flow)
   {
-    Test_(Tracker);
+    Test_();
 
     ucucmn::Dismiss(Flow);
   }

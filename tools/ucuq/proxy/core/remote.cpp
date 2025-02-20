@@ -93,17 +93,16 @@ namespace {
     void Execute_(
       const str::dString &Module,
       const str::dString &Expression,
-      flw::rWFlow &Device,
-      const common::gTracker *Tracker)
+      flw::rWFlow &Device)
     {
       bso::sBool Cont = true;
     qRH;
       str::wString Returned;   // Result of the JSONified evaluation the expression, or exception description if an error occured.
     qRB;
-      common::Put(device::rExecute, Device, Tracker);
-      common::Put(Module, Device, Tracker);
-      common::Put(Expression, Device, Tracker);
-      common::Commit(Device, Tracker);
+      common::Put(device::rExecute, Device);
+      common::Put(Module, Device);
+      common::Put(Expression, Device);
+      common::Commit(Device);
     qRR;
     qRT;
     qRE;
@@ -113,8 +112,7 @@ namespace {
 
   bso::sBool Execute_(
     flw::rRFlow &Remote,
-    flw::rWFlow &Device,
-    const common::gTracker *Tracker)
+    flw::rWFlow &Device)
   {
     bso::sBool Cont = true;
   qRH;
@@ -127,7 +125,7 @@ namespace {
     common::Get(Remote, Module);
     common::Get(Remote, Expression);
 
-    Execute_(Module, Expression, Device, Tracker);
+    Execute_(Module, Expression, Device);
   qRR;
   qRT;
   qRE;
@@ -176,8 +174,7 @@ namespace {
 
   bso::sBool Upload_(
     flw::rRFlow &Remote,
-    flw::rWFlow &Device,
-    const common::gTracker *Tracker)
+    flw::rWFlow &Device)
   {
     bso::sBool Cont = true;
   qRH;
@@ -186,7 +183,7 @@ namespace {
   qRB;
     ModuleNames.Init();
 
-    common::Get(Remote, ModuleNames, Tracker);
+    common::Get(Remote, ModuleNames);
 
     EleminateDuplicates_(ModuleNames);
 
@@ -194,7 +191,7 @@ namespace {
 
     GetGlobalModule_(ModuleNames, Module);
 
-    Execute_(Module, str::Empty, Device, Tracker);
+    Execute_(Module, str::Empty, Device);
   qRR;
   qRT;
   qRE;
@@ -206,17 +203,16 @@ namespace routine_ {
   namespace process_ {
     void RemoteToDevice(
       flw::rRFlow &Remote,
-      flw::rWFlow &Device,
-      const common::gTracker *Tracker)
+      flw::rWFlow &Device)
     {
       while ( !Remote.EndOfFlow() ) {
         switch ( GetRequest_(Remote) ) {
         case rExecute_1:
-          if ( !Execute_(Remote, Device, Tracker) )
+          if ( !Execute_(Remote, Device) )
             break;
           break;
         case rUpload_1:
-          if ( !Upload_(Remote, Device, Tracker) )
+          if ( !Upload_(Remote, Device) )
             break;
           break;
         default:
@@ -228,17 +224,16 @@ namespace routine_ {
     
     void DeviceToRemote(
       flw::rRFlow &Device,
-      flw::rWFlow &Remote,
-      const common::gTracker *Tracker)
+      flw::rWFlow &Remote)
     {
     qRH;
       str::wString Returned;   // Result of the JSONified evaluation the expression, or exception description if an error occured.
     qRB;
       while ( true ) {
-        switch ( device::GetAnswer(Device, Tracker) ) {
+        switch ( device::GetAnswer(Device) ) {
         case device::aResult:
           Returned.Init();
-          common::Get(Device, Returned, Tracker);
+          common::Get(Device, Returned);
           common::Put(device::aResult, Remote);
           common::Put(Returned, Remote);
           common::Commit(Remote);
@@ -248,14 +243,14 @@ namespace routine_ {
           break;
         case device::aError:
           Returned.Init();
-          common::Get(Device, Returned, Tracker);
+          common::Get(Device, Returned);
           common::Put(device::aError, Remote);
           common::Put(Returned, Remote);
           common::Commit(Remote);
           break;
         case device::aPuzzled:
           Returned.Init();
-          common::Get(Device, Returned, Tracker);
+          common::Get(Device, Returned);
           common::Put(device::aPuzzled, Remote);
           common::Put(Returned, Remote);
           break;
@@ -265,7 +260,7 @@ namespace routine_ {
           qRGnr();
           break;
         }
-        common::Dismiss(Device, Tracker);
+        common::Dismiss(Device);
       }
     qRR;
     qRT;
@@ -278,12 +273,10 @@ namespace routine_ {
     {
       flw::rRFlow *Remote;
       flw::rWFlow *Device;
-      const common::gTracker *Tracker;
       gRemoteToDevice(void)
       {
         Remote = NULL;
         Device = NULL;
-        Tracker = NULL;
       }
     };
   
@@ -291,12 +284,10 @@ namespace routine_ {
     {
       flw::rRFlow *Device;
       flw::rWFlow *Remote;
-      const common::gTracker *Tracker;
       gDeviceToRemote(void)
       {
         Device = NULL;
         Remote = NULL;
-        Tracker = NULL;
       }
     };
   }
@@ -307,11 +298,10 @@ namespace routine_ {
   {
     flw::rRFlow &Remote = *Data.Remote;
     flw::rWFlow &Device = *Data.Device;
-    const common::gTracker *Tracker = Data.Tracker;
 
     Blocker.Release();
 
-    process_::RemoteToDevice(Remote, Device, Tracker);
+    process_::RemoteToDevice(Remote, Device);
   }
 
   void DeviceToRemote(
@@ -320,11 +310,10 @@ namespace routine_ {
   {
     flw::rRFlow &Device = *Data.Device;
     flw::rWFlow &Remote = *Data.Remote;
-    const common::gTracker *Tracker = Data.Tracker;
 
     Blocker.Release();
 
-    process_::DeviceToRemote(Device, Remote, Tracker);
+    process_::DeviceToRemote(Device, Remote);
   }
 }
 
@@ -337,7 +326,6 @@ qRH;
   str::wString RToken, Id;
   common::rCaller *Caller = NULL;
   bso::sBool Cont = true;
-  common::gTracker Tracker;
   routine_::data::gRemoteToDevice RemoteToDeviceData;
   routine_::data::gDeviceToRemote DeviceToRemoteData;
 qRB;
@@ -347,7 +335,7 @@ qRB;
   common::Get(Remote, RToken);
   common::Get(Remote, Id);
 
-  Caller = device::Hire(RToken, Id, (const void *) &RemoteDriver);  // '&RemoteDriver' serves only as discriminator.
+  Caller = device::Hire(RToken, Id, (const void *)&RemoteDriver);  // '&RemoteDriver' serves only as discriminator.
 
   Remote.Init(RemoteDriver);
 
@@ -360,22 +348,17 @@ qRB;
     common::Put("", Remote);
     common::Commit(Remote);
 
-    Tracker.Candidate = &RemoteDriver;
-    Tracker.Caller = Caller;
-
-    common::Dismiss(Remote, &Tracker);
+    common::Dismiss(Remote);
 
     Device.Init(*Caller->GetDriver());
 
     RemoteToDeviceData.Remote = &Remote;
     RemoteToDeviceData.Device = &Device;
-    RemoteToDeviceData.Tracker = &Tracker;
 
     mtk::Launch<routine_::data::gRemoteToDevice>(routine_::RemoteToDevice, RemoteToDeviceData);
 
     DeviceToRemoteData.Device = &Device;
     DeviceToRemoteData.Remote = &Remote;
-    DeviceToRemoteData.Tracker = &Tracker;
 
     mtk::Launch<routine_::data::gDeviceToRemote>(routine_::DeviceToRemote, DeviceToRemoteData);
 
@@ -384,9 +367,9 @@ qRB;
   }
 qRR;
 qRT;
-  if ( (Caller != NULL) && Caller->ShouldIDestroy(&RemoteDriver) ) {
+  if ( (Caller != NULL) && Caller->ShouldIDestroy((const void *)&RemoteDriver) ) {  // 'aRemoteDriver' used as discriminator.
     Device.reset(false); // To avoid action on underlying driver which will be destroyed.
-    qDELETE(Caller);
+    device::WithdrawDevice(*Caller);
   }
 qRE;
 }

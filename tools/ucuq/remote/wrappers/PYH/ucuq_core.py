@@ -1,4 +1,4 @@
-import os, json, socket, sys, threading, datetime, time
+import os, json, socket, sys, threading, datetime, time, threading
 from inspect import getframeinfo, stack
 
 CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
@@ -35,10 +35,13 @@ R_EXECUTE_ = "Execute_1"
 R_UPLOAD_ = "Upload_1"
 
 # Answer
-A_OK_ = 0
-A_ERROR_ = 1
-A_PUZZLED_ = 2
-A_DISCONNECTED = 3
+# Answer; must match in device.h: device::eAnswer.
+A_RESULT_ = 0
+A_SENSOR_ = 1
+A_ERROR_ = 2
+A_PUZZLED_ = 3
+A_DISCONNECTED_ = 4
+
 
 def GetUUID_():
   global uuid_
@@ -191,6 +194,33 @@ def displayExitMessage_(Message):
   raise Error(Message)
 
 
+def readThread(socket, resultBegin, resultEnd):
+  while True:
+    if ( answer := readUInt_(socket) ) == A_RESULT_:
+      resultBegin.set()
+      resultEnd.wait()
+      resultEnd.clear()
+    elif answer == A_SENSOR_:
+      raise Error("Sensor handling not yet implemented!")
+    elif answer == A_ERROR_:
+      result = readString_(socket)
+      print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
+      print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
+      caller = getframeinfo(stack()[1][0])
+      print(f"Caller: {caller.filename}:{caller.lineno}")
+      print(f">>>>>>>>>> ERROR FROM DEVICE CONTENT <<<<<<<<<<")
+      print(result)
+      print(f">>>>>>>>>> END ERROR FROM DEVICE END <<<<<<<<<<")
+      sys.exit(0)
+    elif answer == A_PUZZLED_:
+      readString_(socket) # For future use
+      raise Error("Puzzled!")
+    elif answer == A_DISCONNECTED_:
+        raise Error("Disconnected from device!")
+    else:
+      raise Error("Unknown answer from device!")
+
+
 class Device_:
   def __init__(self, *, id = None, token = None):
     self.socket_ = None
@@ -207,32 +237,18 @@ class Device_:
 
     self.socket_ = connect_(self.token, self.id, errorAsException = errorAsException)
 
-    return self.socket_ != None
+    if self.socket_ != None:
+      self.resultBegin_ = threading.Event()
+      self.resultEnd_ = threading.Event()
+      threading.Thread(target = readThread, args=(self.socket_, self.resultBegin_, self.resultEnd_)).start()
+      return True
+    else:
+      return False
+    
 
   def upload(self, modules):
     writeString_(self.socket_, R_UPLOAD_)
     writeStrings_(self.socket_, modules)
-
-    if False:
-      if ( answer := readUInt_(self.socket_) ) == A_OK_:
-        readString_(self.socket_) # For future use
-      elif answer == A_ERROR_:
-        result = readString_(self.socket_)
-        print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
-        print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
-        caller = getframeinfo(stack()[1][0])
-        print(f"Caller: {caller.filename}:{caller.lineno}")
-        print(f">>>>>>>>>> ERROR FROM DEVICE CONTENT <<<<<<<<<<")
-        print(result)
-        print(f">>>>>>>>>> END ERROR FROM DEVICE END <<<<<<<<<<")
-        sys.exit(0)
-      elif answer == A_PUZZLED_:
-        readString_(self.socket_) # For future use
-        raise Error("Puzzled!")
-      elif answer == A_DISCONNECTED:
-          raise Error("Disconnected from device!")
-      else:
-        raise Error("Unknown answer from device!")
 
 
   def execute_(self, script, expression = ""):
@@ -242,28 +258,15 @@ class Device_:
       writeString_(self.socket_, expression)
 
       if expression:
-        if ( answer := readUInt_(self.socket_) ) == A_OK_:
-          if result := readString_(self.socket_):
-            return json.loads(result)
-          else:
-            return None
-        elif answer == A_ERROR_:
-          result = readString_(self.socket_)
-          print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
-          print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
-          caller = getframeinfo(stack()[1][0])
-          print(f"Caller: {caller.filename}:{caller.lineno}")
-          print(f">>>>>>>>>> ERROR FROM DEVICE CONTENT <<<<<<<<<<")
-          print(result)
-          print(f">>>>>>>>>> END ERROR FROM DEVICE END <<<<<<<<<<")
-          sys.exit(0)
-        elif answer == A_PUZZLED_:
-          readString_(self.socket_) # For future use
-          raise Error("Puzzled!")
-        elif answer == A_DISCONNECTED:
-            raise Error("Disconnected from device!")
+        self.resultBegin_.wait()
+        self.resultBegin_.clear()
+        result = readString_(self.socket_)
+        self.resultEnd_.set()
+
+        if result:
+          return json.loads(result)
         else:
-          raise Error("Unknown answer from device!")
+          return None
 
 
 class Device(Device_):

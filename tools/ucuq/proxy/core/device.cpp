@@ -33,20 +33,22 @@ using namespace device;
 
 namespace {
   typedef seeker::sRow sSRow_;
-  typedef seeker::dRows dSRows_;
-  typedef seeker::wRows wSRows_;
 
-  mtx::rMutex Mutex_ = mtx::Undefined;
+  typedef seeker::dRows dSRows_;
+  qW(SRows_);
+
+  typedef common::sRow sCRow_;
+
+  mtx::rMutex Mutex_ = mtx::Undefined;  // Protection of below two members.
   common::rCallers Callers_;
+  lstbch::qLBUNCHw(sSRow_, sCRow_) Ties_; // common::sRow -> seeker::sRow (caller row to seeker row).
 }
 
-eAnswer device::GetAnswer(
-  flw::rRFlow &Flow,
-  const common::gTracker *Tracker)
+eAnswer device::GetAnswer(flw::rRFlow &Flow)
 {
   bso::sU8 Answer = a_Undefined;
 
-  common::Get(Flow, Answer, Tracker);
+  common::Get(Flow, Answer);
 
   if ( Answer > a_amount )
     qRGnr();
@@ -57,7 +59,9 @@ eAnswer device::GetAnswer(
 namespace {
   void Withdraw_(sSRow_ Row)
   {
-    Callers_.Withdraw(seeker::GetCaller(Row));
+    sCRow_ CRow = qNIL;
+    Callers_.Withdraw(CRow = seeker::GetCallerRow(Row));
+    Ties_.Delete(CRow);
     seeker::Delete(Row);
   }
 }
@@ -68,30 +72,34 @@ bso::sBool device::New(
   sck::rRWDriver *Driver,
   qRPN)
 {
-  sSRow_ Row = qNIL;
+  sSRow_ SRow = qNIL;
 qRH;
   mtx::rHandle Locker;
+  sCRow_ CRow = qNIL;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Row = seeker::GetVToken(str::Empty, RToken);  // If != 'qNIL', 'RToken' exists as virtual.
+  SRow = seeker::GetVToken(str::Empty, RToken);  // If != 'qNIL', 'RToken' exists as virtual.
 
-  if ( Row == qNIL ) {
-    Row = seeker::GetRToken(RToken, Id);
+  if ( SRow == qNIL ) {
+    SRow = seeker::GetRToken(RToken, Id);
 
-    if ( Row != qNIL )
-      Withdraw_(Row);
+    if ( SRow != qNIL )
+      Withdraw_(SRow);
 
-    Row = seeker::New(RToken, Id, Callers_.New(Driver));
+    SRow = seeker::New(RToken, Id, CRow = Callers_.New(Driver));
+
+    Ties_.Allocate(Callers_.Extent());
+    Ties_.Store(SRow, CRow);
   } else
-    Row = qNIL;
+    SRow = qNIL;
 
-  if ( qRPT && ( Row == qNIL ) )
+  if ( qRPT && ( SRow == qNIL ) )
     qRGnr();
 qRR;
 qRT;
 qRE;
-  return Row != qNIL;
+  return SRow != qNIL;
 }
 
 common::rCaller *device::Hire(
@@ -109,11 +117,16 @@ qRB;
   Row = seeker::GuessRToken(Token, Id);
 
   if ( Row != qNIL )
-    Caller = Callers_.Hire(seeker::GetCaller(Row), UserDiscriminator);
+    Caller = Callers_.Hire(seeker::GetCallerRow(Row), UserDiscriminator);
 qRR;
 qRT;
 qRE;
   return Caller;
+}
+
+void device::WithdrawDevice(common::rCaller &Caller)
+{
+  Withdraw_(Ties_(Caller.Row()));
 }
 
 void device::WithdrawDevice(
@@ -383,6 +396,7 @@ qGCTOR(device)
 {
   Mutex_ = mtx::Create();
   Callers_.Init();
+  Ties_.Init();
 }
 
 qGDTOR(device) {
