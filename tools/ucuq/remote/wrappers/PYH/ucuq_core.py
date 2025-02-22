@@ -148,7 +148,7 @@ def handshake_(socket):
   error = readString_(socket)
 
   if error:
-    sys.exit(error)
+    exit_(error)
 
   notification = readString_(socket)
 
@@ -194,16 +194,16 @@ def displayExitMessage_(Message):
   raise Error(Message)
 
 
-def readThread(socket, resultBegin, resultEnd):
+def readingThread(proxy):
   while True:
-    if ( answer := readUInt_(socket) ) == A_RESULT_:
-      resultBegin.set()
-      resultEnd.wait()
-      resultEnd.clear()
+    if ( answer := readUInt_(proxy.socket) ) == A_RESULT_:
+      proxy.resultBegin.set()
+      proxy.resultEnd.wait()
+      proxy.resultEnd.clear()
     elif answer == A_SENSOR_:
       raise Error("Sensor handling not yet implemented!")
     elif answer == A_ERROR_:
-      result = readString_(socket)
+      result = readString_(proxy.socket)
       print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
       print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
       caller = getframeinfo(stack()[1][0])
@@ -211,9 +211,11 @@ def readThread(socket, resultBegin, resultEnd):
       print(f">>>>>>>>>> ERROR FROM DEVICE CONTENT <<<<<<<<<<")
       print(result)
       print(f">>>>>>>>>> END ERROR FROM DEVICE END <<<<<<<<<<")
-      sys.exit(0)
+      proxy.exit = True
+      proxy.resultBegin.set()
+      exit_()
     elif answer == A_PUZZLED_:
-      readString_(socket) # For future use
+      readString_(proxy.socket) # For future use
       raise Error("Puzzled!")
     elif answer == A_DISCONNECTED_:
         raise Error("Disconnected from device!")
@@ -221,12 +223,21 @@ def readThread(socket, resultBegin, resultEnd):
       raise Error("Unknown answer from device!")
 
 
+class Proxy:
+  def __init__(self, socket):
+    self.socket = socket
+    if socket != None:
+      self.resultBegin = threading.Event()
+      self.resultEnd = threading.Event()
+      self.exit = False
+      threading.Thread(target = readingThread, args=(self,)).start()
+
+
 class Device_:
   def __init__(self, *, id = None, token = None):
-    self.socket_ = None
-
     if id or token:
       self.connect(id, token)
+
 
   def connect(self, id = None, token = None, errorAsException = True):
     if token == None and id == None:
@@ -235,38 +246,35 @@ class Device_:
     self.token = token if token else ALL_DEVICES_VTOKEN
     self.id = id if id else ""
 
-    self.socket_ = connect_(self.token, self.id, errorAsException = errorAsException)
+    self.proxy = Proxy(connect_(self.token, self.id, errorAsException = errorAsException))
 
-    if self.socket_ != None:
-      self.resultBegin_ = threading.Event()
-      self.resultEnd_ = threading.Event()
-      threading.Thread(target = readThread, args=(self.socket_, self.resultBegin_, self.resultEnd_)).start()
-      return True
-    else:
-      return False
+    return self.proxy.socket != None
     
 
   def upload(self, modules):
-    writeString_(self.socket_, R_UPLOAD_)
-    writeStrings_(self.socket_, modules)
+    writeString_(self.proxy.socket, R_UPLOAD_)
+    writeStrings_(self.proxy.socket, modules)
 
 
   def execute_(self, script, expression = ""):
-    if self.socket_:
-      writeString_(self.socket_, R_EXECUTE_)
-      writeString_(self.socket_, script)
-      writeString_(self.socket_, expression)
+    if self.proxy.socket:
+      writeString_(self.proxy.socket, R_EXECUTE_)
+      writeString_(self.proxy.socket, script)
+      writeString_(self.proxy.socket, expression)
 
       if expression:
-        self.resultBegin_.wait()
-        self.resultBegin_.clear()
-        result = readString_(self.socket_)
-        self.resultEnd_.set()
-
-        if result:
-          return json.loads(result)
+        self.proxy.resultBegin.wait()
+        self.proxy.resultBegin.clear()
+        if self.proxy.exit:
+          exit()
         else:
-          return None
+          result = readString_(self.proxy.socket)
+          self.proxy.resultEnd.set()
+
+          if result:
+            return json.loads(result)
+          else:
+            return None
 
 
 class Device(Device_):
@@ -291,7 +299,7 @@ class Device(Device_):
   def addCommand(self, command, commit = None):
     self.commands.append(command)
 
-    if commit == None and DEFAULT_COMMIT:
+    if commit or ( commit == None and DEFAULT_COMMIT ):
       self.commit()
 
   def commit(self, expression = ""):

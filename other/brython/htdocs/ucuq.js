@@ -21,11 +21,9 @@ const PROTOCOL_VERSION = "0";
 
 const s = {
   STEERING: 301,
-  UPLOAD: 302,
-  UPLOAD_ANSWER: 303,
-  EXECUTE: 304,
-  EXECUTE_ANSWER: 305,
-  RESULT: 308
+  EXECUTE: 302,
+  EXECUTE_ANSWER: 303,
+  RESULT: 304
 }
 
 function steering(handler) {
@@ -34,36 +32,29 @@ function steering(handler) {
 
     switch (handler.top()) {
       case s.STEERING:
-        break;
-      case s.UPLOAD:
-        handler.pop(handler.feeder);
-        handler.feeder.cont = true;
-        handler.callback(handler.getSInt(), handler.getString())  // result of 'handler.getString()' doesn't matter ir result of 'handler.getSInt()' is == 0.
-        handler.callback = undefined;
+        log("Steering STEERING");
         break;
       case s.EXECUTE:
+        log("Steering EXECUTE");
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         handler.callback(handler.getSInt(), handler.getString())
         handler.callback = undefined;
         break;
-      case s.UPLOAD_ANSWER:
-        handler.pop(handler.feeder);
-        handler.feeder.cont = true;
-        handler.push(s.RESULT);
-        handler.pushString();
-        break;
       case s.EXECUTE_ANSWER:
+        log("Steering EXECUTE_ANSWER");
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         handler.push(s.RESULT);
         handler.pushString();
         break;
       case s.RESULT:
+        log("Steering RESULT");
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         break;
       default:
+        log("Steering DEFAULT");
         if ( handler.top() >= 0 )
           exit_("Unknown steering operation!");
         else
@@ -184,12 +175,12 @@ function onRead(handler, data, deviceToken, deviceId) {
   while (!handler.feeder.isEmpty()) {
     switch (handler.phase) {
       case p.HANDSHAKES:
-        if (!handshakes(handler, deviceToken, deviceId)) handler.phase = p.IGNITION;
+        if (!handshakes(handler, deviceToken, deviceId))
+          handler.phase = p.IGNITION;
         break;
       case p.IGNITION:
-        if (!ignition(handler)) {
+        if (!ignition(handler))
           handler.phase = p.STEERING;
-        }
         break;
       case p.STEERING:
         steering(handler);
@@ -261,9 +252,8 @@ function subOperate_(handler) {
       setTimeout(() => subOperate_(handler));
   } else if ( handler.funcStack.length ) {
     let item = handler.funcStack.shift();
-    if (item[1][1] !== "")
-      handler.callback = item[2];
-    console.log("Callback:", item.callback);
+    handler.callback = item[2];
+    console.log("Callback:", handler.callback);
     item[0](handler, ...item[1]);
     subOperate_(handler);
   }
@@ -277,10 +267,6 @@ function operate_(handler, func, args, callback) {
 }
 
 function subUpload_(handler, modules) {
-  handler.push(s.UPLOAD)
-  handler.push(s.UPLOAD_ANSWER);
-  handler.pushSInt();
-
   handler.ws.send(
     proto.addStrings(
       proto.handleString("Upload_1"),
@@ -290,15 +276,19 @@ function subUpload_(handler, modules) {
 }
 
 function upload_(handler, modules, callback) {
-  operate_(handler, subUpload_, [modules], callback);
+  log("Launching upload")
+  operate_(handler, subUpload_, [modules], undefined);
 }
 
 
 function subExecute_(handler, script, expression) {
-  handler.push(s.EXECUTE);
-  handler.push(s.EXECUTE_ANSWER);
-  handler.pushSInt();
-  
+  if ( expression !== "" ) {
+    log("Expression: " + expression);
+    handler.push(s.EXECUTE);
+    handler.push(s.EXECUTE_ANSWER);
+    handler.pushSInt();
+  }
+    
   handler.ws.send(
     proto.addString(
       proto.addString(
@@ -309,7 +299,7 @@ function subExecute_(handler, script, expression) {
 }
 
 function execute_(handler, script, expression, callback) {
-  operate_(handler, subExecute_, [script, expression], callback)
+  operate_(handler, subExecute_, [script, expression], expression !== "" ? callback : undefined);
 }
 
 function timeout_(ms) {

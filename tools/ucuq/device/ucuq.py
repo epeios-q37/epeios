@@ -299,17 +299,18 @@ async def serve_():
       except Exception as exception:
         with io.StringIO() as stream:
           sys.print_exception(exception, stream)
-          print("Error: ", stream.getvalue())
-          writeUInt_(A_ERROR_)
-          writeString_(stream.getvalue())
+          error = stream.getvalue()
+          print("Error: ", error)
+          await writeUInt_(A_ERROR_)
+          await writeString_(error)
       else:
         if expression:
           print(expression)
-          writeUInt_(A_RESULT_)
-          writeString_(returned)
+          await writeUInt_(A_RESULT_)
+          await writeString_(returned)
     else:
-      writeUInt_(A_PUZZLED_)
-      writeString_("")  # For future use
+      await writeUInt_(A_PUZZLED_)
+      await writeString_("")  # For future use
 
 
 def defaultCallback_(status, tries):

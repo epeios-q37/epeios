@@ -11,6 +11,8 @@ CONFIG_ITEM = "ucuq-config"
 
 ITEMS_ = "i_"
 
+DEFAULT_COMMIT = False
+
 device_ = None
 uuid_ = 0
 
@@ -62,6 +64,7 @@ def uploadCallback_(code, result):
 
 
 def executeCallback_(data, code, result):
+  print("Execute callback!!!")
   if code != 0:
     if not data:
       raise Exception(result)
@@ -106,6 +109,7 @@ class Device:
     self.commands_ = []
   
   def upload_(self, modules):
+    print("Upload from brython")
     ucuqjs.upload(self.device_, modules, lambda code, result: uploadCallback_(code, result))
 
   async def executeAwait_(self, script, expression):
@@ -142,9 +146,11 @@ class Device:
       for module in modules:
         self.addModule(module)
 
-  def addCommand(self, command, commit = True):
+  def addCommand(self, command, commit = None):
+    print("AddCommand")
     self.commands_.append(command)
-    if commit:
+
+    if commit or ( commit == None and DEFAULT_COMMIT ):
       self.commit()
 
     return self
@@ -206,4 +212,7 @@ async def getDemoDeviceAwait():
   else:
     return None
 
-
+def setDefaultCommit(value = True):
+  global DEFAULT_COMMIT
+  DEFAULT_COMMIT = value
+  print("Default commit: ", DEFAULT_COMMIT)
