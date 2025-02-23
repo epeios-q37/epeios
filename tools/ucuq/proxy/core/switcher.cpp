@@ -168,7 +168,7 @@ namespace {
 
 		Features.Init();
 
-		switch ( Handshake_(*Driver, Features) ) {
+		switch ( Handshake_(*Driver, Features ) ) {
 		case common::cDevice:
 			tol::Init(RToken, Id);
 

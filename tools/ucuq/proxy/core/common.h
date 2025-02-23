@@ -41,9 +41,9 @@ namespace common {
   private:
     mtx::rMutex Mutex_; // To protect access to below two members.
     const void *UserDiscriminator_;   // 'NULL' if no it in use, otherwise a pointer which value is specific to the user which uses it.
-    bso::sBool IsAlive_;  // The device behind is available.
     sck::rRWDriver *Driver_;
     sRow Row_;
+    bso::sBool BreakFlag_;
   public:
     tol::sTimeStamp TimeStamp;
     void reset(bso::sBool P = true)
@@ -59,8 +59,8 @@ namespace common {
       Driver_ = NULL;
       Mutex_ = mtx::Undefined;
       UserDiscriminator_ = NULL;
-      IsAlive_ = false;
       Row_ = qNIL;
+      BreakFlag_ = false;
     }
     qCDTOR( rCaller );
     void Init(
@@ -73,19 +73,22 @@ namespace common {
       Driver_ = Driver;
       TimeStamp = tol::EpochTime(false);
       UserDiscriminator_ = NULL;
-      IsAlive_ = true;
       Row_ = Row;
+      BreakFlag_ = false;
+      Driver_->SetBreakFlag(2, &BreakFlag_);
     }
-    fdr::rRWDriver *GetDriver(void) const
+    sck::rRWDriver *GetDriver(void) const
     {
       return Driver_;
     }
-    void Vanished(void)
+    void RaiseBreakFlag(void)
     {
-      if ( !IsAlive_ )
-        qRGnr();
-
-      IsAlive_ = false;
+      BreakFlag_ = true;
+    }
+    void CancelEOFOnBreak(void)
+    {
+      Driver_->CancelEOFAfterBreakOnTimeout(fdr::ts_Default);
+      BreakFlag_ = false;
     }
     bso::sBool ShouldIDestroy(const void *UserDiscriminator);
     friend class rCallers;

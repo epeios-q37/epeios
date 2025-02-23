@@ -407,6 +407,16 @@ namespace sck {
 			IsAlive_ = true;
 			_Touch();	// On suppose qu'il n'y a pas une trop longue attente entre la cration de la socket et l'appel  cette mthode ...
 		}
+		void CancelEOFAfterBreakOnTimeout(fdr::thread_safety__ ThreadSafety)
+		{
+			if ( !IsAlive_ )
+				qRFwk();
+
+			if ( BreakOnTimeout_ == NULL )
+				qRFwk();
+
+			_ioflow_driver___::Init(ThreadSafety);
+		}
 		void SetBreakFlag(
 			sTimeout Timeout,	// In seconds
 			const bso::sBool *Flag)

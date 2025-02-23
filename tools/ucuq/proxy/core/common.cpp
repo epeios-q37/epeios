@@ -95,7 +95,7 @@ qRB;
 		CallerLocker.reset(false);	// The corresponding mutes will be destroyed.
 		qDELETE(Caller);
 	} else
-		Caller->IsAlive_ = false;
+		Caller->RaiseBreakFlag();
 qRR;
 qRT;
 qRE;
@@ -116,10 +116,12 @@ qRB;
 	if ( Caller == NULL )
 		qRGnr();
 
-	if ( !Caller->IsAlive_ )
+	if ( !Caller->Driver_->IsAlive() )
 		Caller = NULL;
-	else
+	else {
 		Caller->UserDiscriminator_ = UserDiscriminator;
+		Caller->CancelEOFOnBreak();
+	}
 	qRR;
 	qRT;
 	qRE;
@@ -157,7 +159,7 @@ qRH;
 qRB;
 	Locker.InitAndLock(Mutex_);
 
-	if ( !IsAlive_ && (UserDiscriminator == UserDiscriminator_) )
+	if ( !Driver_->IsAlive() && ( UserDiscriminator == UserDiscriminator_ ) )
 		Answer = true;
 qRR;
 qRT;

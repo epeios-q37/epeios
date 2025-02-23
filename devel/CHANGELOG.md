@@ -15,6 +15,10 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2025-02-23
+
+- SCK: fixing break on tileout handling bug;
+
 ## 2025-02-19
 
 - CSDBNS: [adpt];

@@ -273,10 +273,14 @@ namespace routine_ {
     {
       flw::rRFlow *Remote;
       flw::rWFlow *Device;
+      bso::sBool *ExitFlag;
+      tht::rBlocker *Blocker;
       gRemoteToDevice(void)
       {
         Remote = NULL;
         Device = NULL;
+        ExitFlag = NULL;
+        Blocker = NULL;
       }
     };
   
@@ -284,36 +288,58 @@ namespace routine_ {
     {
       flw::rRFlow *Device;
       flw::rWFlow *Remote;
+      bso::sBool *ExitFlag;
+      tht::rBlocker *Blocker;
       gDeviceToRemote(void)
       {
         Device = NULL;
         Remote = NULL;
+        ExitFlag = NULL;
+        Blocker = NULL;
       }
     };
   }
 
   void RemoteToDevice(
     data::gRemoteToDevice &Data,
-    mtk::gBlocker &Blocker)
+    mtk::gBlocker &CallerBlocker)
   {
+  qRH;
     flw::rRFlow &Remote = *Data.Remote;
     flw::rWFlow &Device = *Data.Device;
-
-    Blocker.Release();
+    bso::sBool &ExitFlag = *Data.ExitFlag;
+    tht::rBlocker &Blocker = *Data.Blocker;
+  qRB;
+    CallerBlocker.Release();
 
     process_::RemoteToDevice(Remote, Device);
+  qRR;
+  qRT;
+    ExitFlag = true;
+    Blocker.Unblock();
+    cio::COut << "Quitting R2D" << txf::nl << txf::commit;
+  qRE;
   }
 
   void DeviceToRemote(
     data::gDeviceToRemote &Data,
-    mtk::gBlocker &Blocker)
+    mtk::gBlocker &CallerBlocker)
   {
+  qRH;
     flw::rRFlow &Device = *Data.Device;
     flw::rWFlow &Remote = *Data.Remote;
-
-    Blocker.Release();
+    bso::sBool &ExitFlag = *Data.ExitFlag;
+    tht::rBlocker &Blocker = *Data.Blocker;
+  qRB;
+    CallerBlocker.Release();
 
     process_::DeviceToRemote(Device, Remote);
+  qRR;
+  qRT;
+    ExitFlag = true;
+    Blocker.Unblock();
+    cio::COut << "Quitting D2R" << txf::nl << txf::commit;
+    qRE;
   }
 }
 
@@ -328,14 +354,21 @@ qRH;
   bso::sBool Cont = true;
   routine_::data::gRemoteToDevice RemoteToDeviceData;
   routine_::data::gDeviceToRemote DeviceToRemoteData;
+  tht::rBlocker Blocker;
+  bso::sBool
+    DeviceThreadExited = false,
+    RemoteThreadExited = false,
+    RemoteBreakFlag = false;
 qRB;
+  RemoteDriver.SetBreakFlag(2, &RemoteBreakFlag);
+
   Remote.Init(RemoteDriver);
 
   tol::Init(RToken, Id);
   common::Get(Remote, RToken);
   common::Get(Remote, Id);
 
-  Caller = device::Hire(RToken, Id, (const void *)&RemoteDriver);  // '&RemoteDriver' serves only as discriminator.
+  Caller = device::Hire(RToken, Id, (const void *)&RemoteDriver);  // '&RemoteDriver' serves here only as discriminator.
 
   Remote.Init(RemoteDriver);
 
@@ -351,19 +384,44 @@ qRB;
     common::Dismiss(Remote);
 
     Device.Init(*Caller->GetDriver());
+    Blocker.Init();
+
+    cio::COut << "Launching" << txf::nl << txf::commit;
 
     RemoteToDeviceData.Remote = &Remote;
     RemoteToDeviceData.Device = &Device;
+    RemoteToDeviceData.Blocker = &Blocker;
+    RemoteToDeviceData.ExitFlag = &RemoteThreadExited;
 
     mtk::Launch<routine_::data::gRemoteToDevice>(routine_::RemoteToDevice, RemoteToDeviceData);
 
     DeviceToRemoteData.Device = &Device;
     DeviceToRemoteData.Remote = &Remote;
+    DeviceToRemoteData.Blocker = &Blocker;
+    DeviceToRemoteData.ExitFlag = &DeviceThreadExited;
 
     mtk::Launch<routine_::data::gDeviceToRemote>(routine_::DeviceToRemote, DeviceToRemoteData);
 
-    while ( true )
-      tht::Suspend(1000);
+    Blocker.Wait();
+
+    if ( !RemoteThreadExited || !DeviceThreadExited ) {
+      if ( !DeviceThreadExited )
+        Caller->RaiseBreakFlag();
+
+      if ( !RemoteThreadExited )
+          RemoteBreakFlag = true;
+
+      if ( !RemoteThreadExited && !DeviceThreadExited )
+        qRGnr();
+
+      Blocker.Wait();
+
+      if ( !RemoteThreadExited || !DeviceThreadExited )
+        qRGnr();
+    }
+
+    cio::COut << "Quitting" << txf::nl << txf::commit;
+
   }
 qRR;
 qRT;

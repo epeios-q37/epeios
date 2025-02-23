@@ -89,7 +89,9 @@ qRB;
 
     SRow = seeker::New(RToken, Id, CRow = Callers_.New(Driver));
 
-    Ties_.Allocate(Callers_.Extent());
+    if ( Ties_.New() != CRow )
+      qRGnr();
+
     Ties_.Store(SRow, CRow);
   } else
     SRow = qNIL;
