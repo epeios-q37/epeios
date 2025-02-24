@@ -646,12 +646,17 @@ namespace flw {
 			const byte__ *Buffer,
 			size__ Amount )
 		{
-			size__ AmountWritten = _WriteIntoCache( Buffer, Amount );
+			size__ AmountWritten = 0;
 
-			if ( ( AmountWritten == 0 )  && ( Amount != 0 ) ) {
-				DumpCache_( NULL, err::hThrowException );
-				AmountWritten = _DirectWriteOrIntoCache( Buffer, Amount );
-			}
+			if ( _Size && Amount ) {
+				AmountWritten = _WriteIntoCache(Buffer, Amount);
+
+				if ( AmountWritten == 0 ) {
+					DumpCache_(NULL, err::hThrowException);
+					AmountWritten = _DirectWriteOrIntoCache(Buffer, Amount);
+				}
+			} else if ( Amount )
+				AmountWritten = _DirectWrite(Buffer, Amount, Amount);
 
 			return AmountWritten;
 		}
@@ -680,6 +685,9 @@ namespace flw {
 		{
 			if ( _Size != _Free )
 				Commit( true, err::hUserDefined );	// Errors are ignored.
+
+			if ( ( Size == 0 ) != ( Cache == NULL ) )
+				qRFwk();
 
 			_Driver = &Driver;
 			_Cache = Cache;
@@ -791,6 +799,21 @@ namespace flw {
 		}
 	};
 
+	class rNoCacheDressedWFlow
+	: public oflow__
+	{
+	public:
+		void reset(bso::sBool P = true)
+		{
+			oflow__::reset(P);
+		}
+		qCVDTOR(rNoCacheDressedWFlow);
+		void Init(fdr::oflow_driver_base___ &Driver)
+		{
+			oflow__::Init(Driver, NULL, 0);
+		}
+	};
+
 	template <int CacheSize = FLW__OUTPUT_CACHE_SIZE> class standalone_oflow__
 	: public oflow__
 	{
@@ -857,6 +880,21 @@ namespace flw {
 		tht::sTID Owner( void ) const
 		{
 			return tol::Same( iflow__::Owner(), oflow__::Owner() );
+		}
+	};
+
+	class rNoWCacheDressedRWFlow
+	: public ioflow__
+	{
+	public:
+		void reset(bso::sBool P = true)
+		{
+			ioflow__::reset(P);
+		}
+		qCVDTOR(rNoWCacheDressedRWFlow);
+		void Init(fdr::ioflow_driver_base___ &Driver)
+		{
+			ioflow__::Init(Driver, NULL, 0);
 		}
 	};
 
@@ -964,7 +1002,6 @@ namespace flw {
 	typedef flw::iflow__ rRFlow;	// '__' -> 'r...' instead of 's... : see comment of 'iflow__'.
 	template <int Dummy = 0> qTCLONEs( standalone_iflow__<Dummy>, rDressedRFlow );
 	template <typename driver, int Dummy = 0> qTCLONE( flw::rDressedFlow<qCOVER2( flw::rDressedRFlow<Dummy>, driver )>, rXDressedRFlow );
-
 
 	typedef flw::oflow__ rWFlow;	// '__' -> 'r...' instead of 's... : see comment of 'oflow__'.
 	template <int CacheSize = FLW__OUTPUT_CACHE_SIZE> qTCLONEs( standalone_oflow__<CacheSize>, rDressedWFlow );

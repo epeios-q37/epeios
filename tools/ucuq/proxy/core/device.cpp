@@ -48,9 +48,12 @@ eAnswer device::GetAnswer(flw::rRFlow &Flow)
 {
   bso::sU8 Answer = a_Undefined;
 
-  common::Get(Flow, Answer);
+  if ( !Flow.EndOfFlow() )
+    common::Get(Flow, Answer);
+  else
+    Answer = aDisconnected;
 
-  if ( Answer > a_amount )
+   if ( Answer > a_amount )
     qRGnr();
 
   return (eAnswer)Answer;

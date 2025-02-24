@@ -2,7 +2,7 @@ import os, json, socket, sys, threading, datetime, time, threading
 from inspect import getframeinfo, stack
 
 CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
-DEFAULT_COMMIT = False
+DEFAULT_COMMIT = True
 
 try:
   with open(CONFIG_FILE, "r") as config:

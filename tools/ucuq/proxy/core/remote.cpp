@@ -102,6 +102,10 @@ namespace {
       common::Put(device::rExecute, Device);
       common::Put(Module, Device);
       common::Put(Expression, Device);
+
+      if ( Expression.Amount() )
+        Cont = Cont;
+
       common::Commit(Device);
     qRR;
     qRT;
@@ -228,8 +232,9 @@ namespace routine_ {
     {
     qRH;
       str::wString Returned;   // Result of the JSONified evaluation the expression, or exception description if an error occured.
+      bso::sBool Cont = true;
     qRB;
-      while ( true ) {
+      while ( Cont ) {
         switch ( device::GetAnswer(Device) ) {
         case device::aResult:
           Returned.Init();
@@ -247,6 +252,7 @@ namespace routine_ {
           common::Put(device::aError, Remote);
           common::Put(Returned, Remote);
           common::Commit(Remote);
+          Cont = false;
           break;
         case device::aPuzzled:
           Returned.Init();
@@ -255,6 +261,7 @@ namespace routine_ {
           common::Put(Returned, Remote);
           break;
         case device::aDisconnected:
+          Cont = false;
           break;
         default:
           qRGnr();
@@ -263,6 +270,7 @@ namespace routine_ {
         common::Dismiss(Device);
       }
     qRR;
+      common::Dismiss(Device);
     qRT;
     qRE;
     }
@@ -317,7 +325,6 @@ namespace routine_ {
   qRT;
     ExitFlag = true;
     Blocker.Unblock();
-    cio::COut << "Quitting R2D" << txf::nl << txf::commit;
   qRE;
   }
 
@@ -338,7 +345,6 @@ namespace routine_ {
   qRT;
     ExitFlag = true;
     Blocker.Unblock();
-    cio::COut << "Quitting D2R" << txf::nl << txf::commit;
     qRE;
   }
 }
@@ -346,8 +352,8 @@ namespace routine_ {
 void remote::Process(sck::rRWDriver &RemoteDriver)
 {
 qRH;
-  flw::rDressedRWFlow<> Device;
   flw::rDressedRWFlow<> Remote;
+  flw::rNoWCacheDressedRWFlow Device;
   str::wString Message, Command;
   str::wString RToken, Id;
   common::rCaller *Caller = NULL;
@@ -386,8 +392,6 @@ qRB;
     Device.Init(*Caller->GetDriver());
     Blocker.Init();
 
-    cio::COut << "Launching" << txf::nl << txf::commit;
-
     RemoteToDeviceData.Remote = &Remote;
     RemoteToDeviceData.Device = &Device;
     RemoteToDeviceData.Blocker = &Blocker;
@@ -405,11 +409,11 @@ qRB;
     Blocker.Wait();
 
     if ( !RemoteThreadExited || !DeviceThreadExited ) {
+      if ( !RemoteThreadExited )
+        RemoteBreakFlag = true;
+
       if ( !DeviceThreadExited )
         Caller->RaiseBreakFlag();
-
-      if ( !RemoteThreadExited )
-          RemoteBreakFlag = true;
 
       if ( !RemoteThreadExited && !DeviceThreadExited )
         qRGnr();
@@ -419,9 +423,6 @@ qRB;
       if ( !RemoteThreadExited || !DeviceThreadExited )
         qRGnr();
     }
-
-    cio::COut << "Quitting" << txf::nl << txf::commit;
-
   }
 qRR;
 qRT;

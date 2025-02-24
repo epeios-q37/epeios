@@ -216,7 +216,7 @@ namespace sck {
 	Not currently available under Be OS. */
 	inline void Blocking(
 		socket__ Socket,
-		bso::bool__ Value )
+		bso::bool__ Value)
 	{
 		unsigned long *V;
 
@@ -226,9 +226,9 @@ namespace sck {
 			V = (unsigned long *)"1111";
 
 #	ifdef SCK__WIN
-		ioctlsocket( Socket, FIONBIO, V );
+		ioctlsocket(Socket, FIONBIO, V);
 #	elif defined( SCK__POSIX )
-		ioctl( Socket, FIONBIO, V );
+		ioctl(Socket, FIONBIO, V);
 #	else
 #		error
 #	endif
@@ -242,7 +242,7 @@ namespace sck {
 		socket__ Socket,
 		flw::size__ Amount,
 		void *Buffer,
-		duration__ Timeout );	// En secondes.
+		duration__ Timeout);	// En secondes.
 
 	/*f Write up to 'Amount' bytes from 'Buffer' to the socket 'Socket'. Return
 	the amount effectively written. If 0 is returned, it means 'Timeout' expired.
@@ -251,13 +251,13 @@ namespace sck {
 		socket__ Socket,
 		const void *Buffer,
 		flw::size__ Amount,
-		duration__ Timeout );	// En secondes.
+		duration__ Timeout);	// En secondes.
 
 	/* To initiate a connection closing, which socket is handled from another thread.
 	The socket will be than closed gracefully. See 'Close(…)' */
 	bso::sBool Shutdown(
 		socket__ Socket,
-		qRPN );
+		qRPN);
 
 	// Close the socket 'Socket'.
 	/* If 'Socket' is in a 'select' in another thread (waiting that data is available to be red),
@@ -266,13 +266,13 @@ namespace sck {
 	*/
 	bso::sBool Close(
 		socket__ Socket,
-		qRPN );	// To set to 'qRPU' when called from destructors !
+		qRPN);	// To set to 'qRPU' when called from destructors !
 
 	typedef fdr::ioflow_driver___<> _ioflow_driver___;
 
 	//c Socket as input/output flow driver.
 	class socket_ioflow_driver___
-	: public _ioflow_driver___
+		: public _ioflow_driver___
 	{
 	private:
 		socket__ Socket_;
@@ -280,20 +280,20 @@ namespace sck {
 		bso::bool__ IsAlive_;	// Still at true after reading or writing returning 0 when break occurs.
 		bso::sBool Owner_;
 		time_t EpochTimeStamp_;	// Horodatage de la dernire activit (lecture ou criture);
-		const bso::sBool *BreakOnTimeout_;
-		void _Touch( void )
+		const bso::sBool *BreakFlag_;
+		void _Touch(void)
 		{
-			EpochTimeStamp_ = tol::EpochTime( false );
+			EpochTimeStamp_ = tol::EpochTime(false);
 		}
 		inline bso::sBool Break_(void) const
 		{
 			if ( Timeout_ == NoTimeout )
 				qRUnx();
 
-			if ( BreakOnTimeout_ == NULL )
+			if ( BreakFlag_ == NULL )
 				qRUnx();
 
-			if ( *BreakOnTimeout_ )
+			if ( *BreakFlag_ )
 				return true;
 
 			return false;
@@ -301,7 +301,7 @@ namespace sck {
 	protected:
 		virtual fdr::size__ FDRRead(
 			fdr::size__ Maximum,
-			fdr::byte__ *Buffer ) override
+			fdr::byte__ *Buffer) override
 		{
 			fdr::sSize Red = 0;
 
@@ -309,6 +309,11 @@ namespace sck {
 				qRFwk();
 
 			do {
+				if ( ( BreakFlag_ != NULL ) && *BreakFlag_ ) {
+					Red = 0;
+					break;
+				}
+
 				if ( ( Red = sck::Read(Socket_, ( Maximum ), Buffer, Timeout_) ) == (fdr::sSize)SCK_DISCONNECTED ) {
 					Red = 0;
 					IsAlive_ = false;
@@ -342,6 +347,11 @@ namespace sck {
 				qRFwk();
 
 			do {
+				if ( ( BreakFlag_ != NULL ) && *BreakFlag_ ) {
+					Written = 0;
+					break;
+				}
+
 				if ( ( Written = sck::Write(Socket_, Buffer, Maximum, Timeout_) ) == (fdr::sSize)SCK_DISCONNECTED ) {
 					Socket_ = SCK_INVALID_SOCKET;
 					IsAlive_ = false;
@@ -382,7 +392,7 @@ namespace sck {
 			IsAlive_ = false;
 			EpochTimeStamp_ = 0;
 			Owner_ = false;
-			BreakOnTimeout_ = NULL;
+			BreakFlag_ = NULL;
 		}
 		socket_ioflow_driver___( void )
 		{
@@ -412,7 +422,7 @@ namespace sck {
 			if ( !IsAlive_ )
 				qRFwk();
 
-			if ( BreakOnTimeout_ == NULL )
+			if ( BreakFlag_ == NULL )
 				qRFwk();
 
 			_ioflow_driver___::Init(ThreadSafety);
@@ -425,7 +435,7 @@ namespace sck {
 				qRFwk();
 
 			Timeout_ = Timeout;
-			BreakOnTimeout_ = Flag;
+			BreakFlag_ = Flag;
 		}
 		void EraseBreakFlag(void)
 		{

@@ -17,7 +17,6 @@ UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
 UCUQ_DEFAULT_PORT_ = 53800
 
 UCUQ_HOST_ = CONFIG_["Proxy"]["Host"] if "Proxy" in CONFIG_ and "Host" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["Host"] else UCUQ_DEFAULT_HOST_
-UCUQ_HOST_ = "192.168.1.87"
 
 # only way to test if the entry contains a valid int.
 try:

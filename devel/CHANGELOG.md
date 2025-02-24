@@ -14,10 +14,16 @@
 - [trvl]: trivial modifications;
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
+- 
+
+## 2025-02-24
+
+- FLW: write flow can now have an empty cache, so written data are immediately send to receiver (yseful with socket);
+- SCK: optimizing break flag handling;
 
 ## 2025-02-23
 
-- SCK: fixing break on tileout handling bug;
+- SCK: fixing break on timeout handling bug;
 
 ## 2025-02-19
 
