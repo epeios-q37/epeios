@@ -147,17 +147,14 @@ async def atkConnect(dom):
 async def atkTest():
   reset_()
   step = int(STEP * DEFAULT_SPEED / 2)
-  ucuq.commit()
   for servo in servos:
     ucuq.servoMoves([[servos[servo], 15]], step)
     ucuq.servoMoves([[servos[servo], -15]], step)
     ucuq.servoMoves([[servos[servo], 0]], step)
   
-  ucuq.commit()
 
 async def atkReset(dom):
   reset_()
-  ucuq.commit()
 
 
 def getToken(stream):
@@ -335,10 +332,8 @@ async def atkExecute(dom, id):
 
   if await dom.getValue("Reset") == "true":
     reset_()
-    ucuq.commit()
 
   await execute(dom, moves)
-  ucuq.commit()
 
 
 async def atkSave(dom):
@@ -547,6 +542,3 @@ async def createServos(deviceId):
     else:
       raise Exception("Unknown hardware mode!")
     servos[setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
-
-  ucuq.commit()
-

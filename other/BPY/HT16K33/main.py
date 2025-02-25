@@ -39,7 +39,6 @@ def test():
       ucuq.sleep(TEST_DELAY)
 
     ht16k33.clear().show()
-    ucuq.commit()
 
 
 async def drawOnGUIAwait(dom, motif = pattern):
@@ -83,12 +82,8 @@ def drawOnMatrix(motif = pattern):
   if ht16k33:
     ht16k33.draw(motif).show()
 
-    ucuq.commit()
-
     if mirror:
       mirror.fill(0).draw(motif, 16, mul=8).show()
-
-      mirror.getDevice().commit()
 
 async def drawAwait(dom, motif = pattern):
   global pattern
@@ -165,7 +160,6 @@ async def launchAwait(dom, sda, scl):
     ht16k33.clear().show()
     ht16k33.setBrightness(0)
     ht16k33.setBlinkRate(0)
-    ucuq.commit()
   except Exception as err:
     await dom.alert(err)
     onDuty = False
@@ -238,11 +232,9 @@ async def acAll(dom):
 
 async def acBrightness(dom, id):
   ht16k33.setBrightness(int(await dom.getValue(id)))
-  ucuq.commit()
 
 async def acBlinkRate(dom, id):
   ht16k33.setBlinkRate(float(await dom.getValue(id)))
-  ucuq.commit()
 
 async def acDraw(dom, id):
   await drawAwait(dom, MATRICES[int(await dom.getMark(id))])
@@ -254,7 +246,7 @@ async def acMirror(dom, id):
 
   if state:
     if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9, device = ucuq.Device(id="Yellow")))
+      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9, device = ucuq.Device(id="Bravo")))
     else:
       await dom.setValue(id, "false")
   else:

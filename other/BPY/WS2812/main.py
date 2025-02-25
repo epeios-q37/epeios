@@ -43,7 +43,6 @@ def rainbow():
     ucuq.sleep(RB_DELAY)
     i += ws2812Limiter / 20
   ws2812.fill([0]*3).write()
-  ucuq.commit() 
 
 
 def convert_(hex):
@@ -75,7 +74,6 @@ def update_(r, g, b):
     ws2812.fill([int(r), int(g), int(b)]).write()
     if oledDIY:
       oledDIY.fill(0).text(f"R: {r}", 0, 5).text(f"G: {g}", 0, 20).text(f"B: {b}", 0, 35).show()
-    ucuq.commit()
 
 
 async def launchAwait(dom, pin, count):
@@ -83,7 +81,6 @@ async def launchAwait(dom, pin, count):
 
   try:
     ws2812 = ucuq.WS2812(pin, count)
-    ucuq.commit()
   except Exception as err:
     await dom.alert(err)
     onDuty = False
@@ -229,8 +226,7 @@ async def acDisplay(dom):
       update_(r, g, b)
       if oledDIY:
         oledDIY.text(color, 0, 50).show()
-        ucuq.commit()
-      break;
+      break
 
 
 async def acRainbow(dom):

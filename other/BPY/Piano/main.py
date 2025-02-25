@@ -57,10 +57,8 @@ async def acPlay(dom,id):
     freq = int(baseFreq*math.pow(math.pow(2,1.0/12), int(id)))
     pwm.setU16(int(ratio*65535))
     pwm.setFreq(freq)
-    ucuq.commit()
     ucuq.sleep(.5)
     pwm.setU16(0)
-    ucuq.commit()
   else:
     await dom.alert("Please switch on!")
 
@@ -93,8 +91,7 @@ async def acSwitch(dom, id):
       await dom.alert("No or bad pin value!")
       await dom.setValue(id, "false")
     else:
-      pwm = ucuq.PWM(pin)
-      ucuq.commit()
+      pwm = ucuq.PWM(pin, freq=50, u16=0)
       onDuty = True
   else:
     onDuty = False

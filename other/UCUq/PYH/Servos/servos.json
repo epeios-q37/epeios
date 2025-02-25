@@ -1,5 +1,5 @@
 {
-  "Black": {
+  "Charlie": {
     "Preset": {
       "Hardware": {
         "mode": "Straight"
@@ -300,7 +300,7 @@
       }
     }
   },
-  "Striped": {
+  "Delta": {
     "Preset": {
       "Hardware": {
         "mode": "Straight"

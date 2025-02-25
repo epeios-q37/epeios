@@ -265,7 +265,6 @@ async def acConnect(dom):
   await dom.setValue(W_PRESET, preset)
   
   ucuq.addCommand(MC_INIT)
-  ucuq.commit()
   
   await updateDutyBox(dom)
   await dom.enableElement(W_HARDWARE_BOX)

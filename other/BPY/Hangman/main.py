@@ -29,7 +29,7 @@ sys.path.append("../../atlastk")
 
 import atlastk, ucuq
 
-ucuq.setDevice("Yellow")
+ucuq.setDevice("Bravo")
 
 lcd = ucuq.HD44780_I2C(ucuq.SoftI2C(6, 7), 2, 16)
 
@@ -123,7 +123,6 @@ async def atkSubmit(core, dom, id):
     if correct == len(core.secretWord):
       await dom.alert("You've won! Congratulations!")
       reset(core,dom)
-      ucuq.commit()
       return
   else:
     core.errors += 1
@@ -131,7 +130,6 @@ async def atkSubmit(core, dom, id):
 
   lcd.moveTo(0,1)
   lcd.putString(chosen)
-  ucuq.commit()
 
   if core.errors >= len(HANGED_MAN):
     await dom.removeClass("Face", "hidden")
