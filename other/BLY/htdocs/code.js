@@ -694,7 +694,7 @@ function init() {
     // const ws =  Blockly.getMainWorkspace();
     code = python.pythonGenerator.ucuqOriginalFinish(code);
 
-    return "import ucuq\n\n" + code + "\nucuq.commit()\n";
+    return "import ucuq\n\n" + code;
   }
 
   // Fonction pour gérer l'événement `block_change`

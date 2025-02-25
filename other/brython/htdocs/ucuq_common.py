@@ -214,6 +214,55 @@ H_WOKWI_DISPLAYS = {
   },
 }
 
+CB_AUTO = 0
+CB_MANUAL = 1
+
+defaultCommitBehavior_ = CB_AUTO
+
+def testCommit_(behavior = None):
+  if behavior == None:
+    behavior = defaultCommitBehavior_
+
+  return behavior == CB_AUTO
+
+class Device(Device_):
+  def __init__(self, *, id = None, token = None, callback = None):
+    self.pendingModules_ = ["Init-1"]
+    self.handledModules_ = []
+    self.commands_ = []
+    self.commitBehavior = None
+
+    super().__init__(id=id, token = token, callback = callback)
+  
+  def __del__(self):
+    self.commit()
+
+  def testCommit_(self):
+    return testCommit_(self.commitBehavior)
+
+  def addModule(self, module):
+    if not module in self.pendingModules_ and not module in self.handledModules_:
+      self.pendingModules_.append(module)
+
+  def addModules(self, modules):
+    if isinstance( modules, str):
+      self.addModule(modules)
+    else:
+      for module in modules:
+        self.addModule(module)
+
+  def addCommand(self, command, commit = False):
+    self.commands_.append(command)
+
+    if commit or self.testCommit_():
+      self.commit()
+
+    return self
+
+  def sleep(self, secs):
+    self.addCommand(f"time.sleep({secs})")
+
+
 async def getInfosAwait(device = None):
   device = getDevice_(device)
 
@@ -316,7 +365,7 @@ class Core_:
   def getDevice(self):
     return self.device_
   
-  def init(self, modules, instanciation, device):
+  def init(self, modules, instanciation, device,*,before=""):
     self.id = GetUUID_()
 
     if self.device_:
@@ -327,6 +376,9 @@ class Core_:
 
     if modules:
       self.device_.addModules(modules)
+
+    if before:
+      self.addCommand(before)
 
     if instanciation:
       self.addCommand(f"{self.getObject()} = {instanciation}")
@@ -472,11 +524,12 @@ class PWM(Core_):
     super().__init__(device)
 
     if pin != None:
-      self.init(pin, device = device)
+      self.init(pin, freq = freq, u16 = u16, ns = ns, device = device)
 
 
   def init(self, pin, *, freq = None, u16 = None, ns = None, device = None):
-    super().init("PWM-1", f"machine.PWM(machine.Pin({pin}, machine.Pin.OUT){getParam('freq', freq)}{getParam('duty_u16', u16)}{getParam('duty_ns', ns)})", device)
+    command = f"machine.PWM(machine.Pin({pin}, machine.Pin.OUT){getParam('freq', freq)}{getParam('duty_u16', u16)}{getParam('duty_ns', ns)})"
+    super().init("PWM-1", command, device, before=f"{command}.deinit()")
 
 
   async def getU16Await(self):
@@ -846,3 +899,8 @@ def rbShadeFade(variant, i, max):
   else:
     return rbShade(variant + int( (i - max) / max ), i % max, max)
     
+def setCommitBehavior(behavior):
+  global defaultCommitBehavior_
+
+  defaultCommitBehavior_ = behavior
+  

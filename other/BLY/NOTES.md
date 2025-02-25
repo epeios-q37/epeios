@@ -5,7 +5,8 @@ Lien vers l'environnement en local : <http://localhost/blockly?lang=fr>
 
 - Pour construire les fichiers web (stockés dans ~/ATK/BLY/web) : `BLY_Build` ;
 - pour tester (construit les fichiers et les lance le navigateur) : `BLY_Launch` ;
-- pour publier sur le web (lancer auparavant `BLY_Build`) : `BLY_Publish`
+- pour publier sur le web (lancer auparavant `BLY_Build`) : `BLY_Publish` ;
+- les démos sont cherchés dans <https://raw.githubusercontent.com/epeios-q37/epeios/refs/heads/master/other/BLY/examples/>
 
 Resources :
 

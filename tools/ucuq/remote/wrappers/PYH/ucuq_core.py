@@ -2,7 +2,6 @@ import os, json, socket, sys, threading, datetime, time, threading
 from inspect import getframeinfo, stack
 
 CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
-DEFAULT_COMMIT = True
 
 try:
   with open(CONFIG_FILE, "r") as config:
@@ -234,10 +233,12 @@ class Proxy:
 
 
 class Device_:
-  def __init__(self, *, id = None, token = None):
+  def __init__(self, *, id = None, token = None, callback = None):
+    if callback != None:
+      exit_("'callback' in only used by the Brython version!")
+
     if id or token:
       self.connect(id, token)
-
 
   def connect(self, id = None, token = None, errorAsException = True):
     if token == None and id == None:
@@ -249,12 +250,10 @@ class Device_:
     self.proxy = Proxy(connect_(self.token, self.id, errorAsException = errorAsException))
 
     return self.proxy.socket != None
-    
-
-  def upload(self, modules):
+  
+  def upload_(self, modules):
     writeString_(self.proxy.socket, R_UPLOAD_)
     writeStrings_(self.proxy.socket, modules)
-
 
   def execute_(self, script, expression = ""):
     if self.proxy.socket:
@@ -275,50 +274,20 @@ class Device_:
             return json.loads(result)
           else:
             return None
-
-
-class Device(Device_):
-  def __init__(self, *, id = None, token = None):
-    self.pendingModules = ["Init-1"]
-    self.handledModules = []
-    self.commands = []
-
-    super().__init__(id = id, token = token)
-
-  def addModule(self, module):
-    if not module in self.pendingModules and not module in self.handledModules:
-      self.pendingModules.append(module)
-
-  def addModules(self, modules):
-    if isinstance( modules, str):
-      self.addModule(modules)
-    else:
-      for module in modules:
-        self.addModule(module)
-
-  def addCommand(self, command, commit = None):
-    self.commands.append(command)
-
-    if commit or ( commit == None and DEFAULT_COMMIT ):
-      self.commit()
-
+          
   def commit(self, expression = ""):
     result = ""
 
-    if self.pendingModules:
-      super().upload(self.pendingModules)
-      self.handledModules.extend(self.pendingModules)
-      self.pendingModules = []
+    if self.pendingModules_:
+      self.upload_(self.pendingModules_)
+      self.handledModules_.extend(self.pendingModules_)
+      self.pendingModules_ = []
 
-    if self.commands or expression:
-      result = super().execute_('\n'.join(self.commands), expression)
-      self.commands = []
+    if self.commands_ or expression:
+      result = self.execute_('\n'.join(self.commands_), expression)
+      self.commands_ = []
 
     return result
-  
-  def sleep(self, secs):
-    self.addCommand(f"time.sleep({secs})")
-    
 
 def getDemoDevice():
   device = Device()
@@ -328,7 +297,3 @@ def getDemoDevice():
   else:
     return None   
 
-def setDefaultCommit(value=True):
-  global DEFAULT_COMMIT
-  
-  DEFAULT_COMMIT = value

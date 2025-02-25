@@ -279,11 +279,14 @@ async def atkSwitch(dom, id):
 
     print(ringOffset)
 
+    ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+
     cRing = ucuq.WS2812(inputs[W_H_RING_PIN], inputs[W_H_RING_COUNT])
     cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(inputs[W_H_OLED_SDA], inputs[W_H_OLED_SCL], soft = inputs[W_H_OLED_SOFT]))
     cLCD = ucuq.HD44780_I2C(ucuq.I2C(inputs[W_H_LCD_SDA], inputs[W_H_LCD_SCL], soft = inputs[W_H_LCD_SOFT]), 2, 16).backlightOff()
     if inputs[W_H_BUZZER_ON]:
-      cBuzzer = ucuq.PWM(inputs[W_H_BUZZER_PIN])
+#      ucuq.PWM(inputs[W_H_BUZZER_PIN], freq=50, u16 = 0).deinit()
+      cBuzzer = ucuq.PWM(inputs[W_H_BUZZER_PIN], freq=50, u16 = 0)
     else:
       cBuzzer = ucuq.Nothing()
     cBuzzer.setFreq(50).setNS(0)

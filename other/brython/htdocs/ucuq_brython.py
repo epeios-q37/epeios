@@ -11,8 +11,6 @@ CONFIG_ITEM = "ucuq-config"
 
 ITEMS_ = "i_"
 
-DEFAULT_COMMIT = False
-
 device_ = None
 uuid_ = 0
 
@@ -88,13 +86,10 @@ def displayExitMessage_(message):
   sys.exit()
 
 
-class Device:
+class Device_:
   def __init__(self, *, id = None, token = None, callback = None):
     if id or token or callback:
       self.connect(id = id, token = token, callback = callback)
-
-  def __del__(self):
-    self.commit()
 
   def connect(self, *, id = None, token = None, callback = None):
     if not token and not id:
@@ -104,13 +99,10 @@ class Device:
 
     self.device_ = ucuqjs.launch(token if token else ALL_DEVICES_VTOKEN, id if id else "", LIB_VERSION, callback if callback else lambda answer: answer.replace(ALL_DEVICES_VTOKEN, "<demo token>")) # 'None' is NOT converted in 'undefined' in JS.
 
-    self.pendingModules_ = ["Init-1"]
-    self.handledModules_ = []
-    self.commands_ = []
-  
+
   def upload_(self, modules):
-    print("Upload from brython")
     ucuqjs.upload(self.device_, modules, lambda code, result: uploadCallback_(code, result))
+
 
   async def executeAwait_(self, script, expression):
     lock = Lock_()
@@ -130,30 +122,8 @@ class Device:
     
     return data["result"]
 
-
   def execute_(self, script):
     ucuqjs.execute(self.device_, script, "", lambda code, result: executeCallback_(None, code, result))
-
-
-  def addModule(self, module):
-    if not module in self.pendingModules_ and not module in self.handledModules_:
-      self.pendingModules_.append(module)
-
-  def addModules(self, modules):
-    if isinstance( modules, str):
-      self.addModule(modules)
-    else:
-      for module in modules:
-        self.addModule(module)
-
-  def addCommand(self, command, commit = None):
-    print("AddCommand")
-    self.commands_.append(command)
-
-    if commit or ( commit == None and DEFAULT_COMMIT ):
-      self.commit()
-
-    return self
 
   async def commitAwait(self, expression):
     result = ""
@@ -168,9 +138,6 @@ class Device:
 
     return result
   
-  def sleep(self, secs):
-    self.addCommand(f"time.sleep({secs})")
-
   def commit(self):
     if self.pendingModules_:
       self.upload_(self.pendingModules_)
@@ -181,6 +148,7 @@ class Device:
       self.execute_('\n'.join(self.commands_))
     
     self.commands_ = []
+
 
 # Workaround to the 'Brython' 'unicodedata.normalize()' bug (https://github.com/brython-dev/brython/issues/2514).
 def toASCII(text):
@@ -212,7 +180,3 @@ async def getDemoDeviceAwait():
   else:
     return None
 
-def setDefaultCommit(value = True):
-  global DEFAULT_COMMIT
-  DEFAULT_COMMIT = value
-  print("Default commit: ", DEFAULT_COMMIT)
