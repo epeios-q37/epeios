@@ -140,7 +140,7 @@ async def updateUIAwait(dom, onDuty):
       raise Exception("Unknown preset!")
 
 
-async def acConnect(dom):
+async def atkConnect(dom):
   global oledDIY
   id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
@@ -162,11 +162,11 @@ async def acConnect(dom):
   await updateUIAwait(dom, False)
 
 
-async def acPreset(dom):
+async def atkPreset(dom):
   await updateUIAwait(dom, onDuty)
 
 
-async def acSwitch(dom, id):
+async def atkSwitch(dom, id):
   global onDuty, ws2812Limiter
 
   state = (await dom.getValue(id)) == "true"
@@ -187,7 +187,7 @@ async def acSwitch(dom, id):
   await updateUIAwait(dom, onDuty)
 
 
-async def acSelect(dom):
+async def atkSelect(dom):
   if onDuty:
     R, G, B = (await dom.getValues(["rgb-r", "rgb-g", "rgb-b"])).values()
     await dom.setValues(getAllValues_(R, G, B))
@@ -196,25 +196,25 @@ async def acSelect(dom):
     await dom.executeVoid(f"colorWheel.rgb = [0,0,0]")  
 
 
-async def acSlide(dom):
+async def atkSlide(dom):
   (R,G,B) = (await dom.getValues(["SR", "SG", "SB"])).values()
   await dom.setValues(getNValues_(R, G, B))
   await dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
   update_(R, G, B)
 
 
-async def acAdjust(dom):
+async def atkAdjust(dom):
   (R,G,B) = (await dom.getValues(["NR", "NG", "NB"])).values()
   await dom.setValues(getSValues_(R, G, B))
   await dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
   update_(R, G, B)
 
 
-async def acListen(dom):
+async def atkListen(dom):
   await dom.executeVoid("launch()")
 
   
-async def acDisplay(dom):
+async def atkDisplay(dom):
   colors = json.loads(await dom.getValue("Color"))
 
   for color in colors:
@@ -229,25 +229,11 @@ async def acDisplay(dom):
       break
 
 
-async def acRainbow(dom):
+async def atkRainbow(dom):
   await resetAwait(dom)
   rainbow()
 
 
-async def acReset(dom):
+async def atkReset(dom):
   await resetAwait(dom)
-
-
-CALLBACKS = {
-  "": acConnect,
-  "Preset": acPreset,
-  "Switch": acSwitch,
-  "Select": acSelect,
-  "Slide": acSlide,
-  "Adjust": acAdjust,
-  "Listen": acListen,
-  "Display": acDisplay,
-  "Rainbow": acRainbow,
-  "Reset": acReset
-}
 

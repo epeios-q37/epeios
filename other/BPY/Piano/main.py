@@ -35,7 +35,7 @@ async def setPin(dom, preset):
     await dom.setValue(W_PIN, PINS[preset])
 
 
-async def acConnect(dom):
+async def atkConnect(dom):
   id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
   if id == ucuq.K_BIPEDAL:
@@ -50,7 +50,7 @@ async def acConnect(dom):
   await setPin(dom, preset)  
 
 
-async def acPlay(dom,id):
+async def atkPlay(dom,id):
   global pwm
 
   if onDuty:
@@ -63,7 +63,7 @@ async def acPlay(dom,id):
     await dom.alert("Please switch on!")
 
 
-async def acSetRatio(dom, id):
+async def atkSetRatio(dom, id):
   global ratio
 
   ratio = float(await dom.getValue(id))
@@ -71,13 +71,13 @@ async def acSetRatio(dom, id):
   await dom.setValue(W_RATIO_SLIDE if id == W_RATIO_VALUE else W_RATIO_SLIDE, ratio)
 
 
-async def acPreset(dom, id):
+async def atkPreset(dom, id):
   global onDuty, pwm
 
   await setPin(dom, await dom.getValue(id))
 
 
-async def acSwitch(dom, id):
+async def atkSwitch(dom, id):
   global onDuty, pwm
 
   state = await dom.getValue(id) == "true"
@@ -100,12 +100,3 @@ async def acSwitch(dom, id):
     await dom.disableElement(W_PIN_BOX)
   else:
     await dom.enableElement(W_PIN_BOX)
-
-
-CALLBACKS = {
-  "": acConnect,
-  "Preset": acPreset,
-  "Switch": acSwitch,
-  "Play": acPlay,
-  "SetRatio": acSetRatio
-}

@@ -122,7 +122,7 @@ async def updateUIAwait(dom, onDuty):
         raise Exception("Unknown preset!")
         
 
-async def acConnect(dom):
+async def atkConnect(dom):
   id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
   await drawAwait(dom, "")
@@ -137,7 +137,7 @@ async def acConnect(dom):
 
   await updateUIAwait(dom, onDuty)
 
-async def acPreset(dom, id):
+async def atkPreset(dom, id):
   match await dom.getValue("Preset"):
     case "User":
       await dom.setValues({
@@ -167,7 +167,7 @@ async def launchAwait(dom, sda, scl):
     onDuty = True
 
 
-async def acSwitch(dom, id):
+async def atkSwitch(dom, id):
   global onDuty
 
   state = (await dom.getValue(id)) == "true"
@@ -188,11 +188,11 @@ async def acSwitch(dom, id):
   await updateUIAwait(dom, onDuty)
 
 
-async def acTest():
+async def atkTest():
   test()
 
 
-async def acToggle(dom, id):
+async def atkToggle(dom, id):
   if not onDuty:
     dom.alert("Please switch on!")
     return
@@ -214,7 +214,7 @@ async def acToggle(dom, id):
   await drawAwait(dom, pattern)
 
 
-async def acHexa(dom):
+async def atkHexa(dom):
   global pattern
 
   drawOnMatrix(motif := await dom.getValue("Hexa"))
@@ -224,22 +224,22 @@ async def acHexa(dom):
   pattern = motif
 
 
-async def acAll(dom):
+async def atkAll(dom):
   for matrix in MATRICES:
     await drawAwait(dom, matrix)
     await ucuq.sleepAwait(0.5)
 
 
-async def acBrightness(dom, id):
+async def atkBrightness(dom, id):
   ht16k33.setBrightness(int(await dom.getValue(id)))
 
-async def acBlinkRate(dom, id):
+async def atkBlinkRate(dom, id):
   ht16k33.setBlinkRate(float(await dom.getValue(id)))
 
-async def acDraw(dom, id):
+async def atkDraw(dom, id):
   await drawAwait(dom, MATRICES[int(await dom.getMark(id))])
 
-async def acMirror(dom, id):
+async def atkMirror(dom, id):
   global mirror
 
   state = (await dom.getValue(id)) == "true"
@@ -252,21 +252,6 @@ async def acMirror(dom, id):
   else:
     mirror = None
   
-
-CALLBACKS = {
-  "": acConnect,
-  "Preset": acPreset,
-  "Switch": acSwitch,
-  "Test": acTest,
-  "All": acAll,
-  "Toggle": acToggle,
-  "Brightness": acBrightness,
-  "Blink": acBlinkRate,
-  "Hexa": acHexa,
-  "Draw": acDraw,
-  "Mirror": acMirror
-}
-
 MATRICES = (
   "0FF0300C4002866186614002300C0FF",
   "000006000300FFFFFFFF030006",
