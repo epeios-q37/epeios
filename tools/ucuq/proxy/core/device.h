@@ -58,11 +58,18 @@ namespace device {
     const str::dString &Id,
     sck::rRWDriver *Driver,
     qRPD);
-  common::rCaller *Hire(
+  common::sRow Hire(
     const str::dString &RToken,
     const str::dString &Id,
-    const void *User);
-  void WithdrawDevice(common::rCaller &Caller);
+    bso::sBool *BreakFlag); // 'BreakFlag' acts also as discriminator.
+  sck::rRWDriver &GetDriver(
+    common::sRow Row,
+    const bso::sBool *BreakFlag);
+  // Return 'true' if device withdrawed.
+  bso::sBool Release(
+    common::sRow Row,
+    const bso::sBool *BreakFlag);
+  void WithdrawDevice(common::sRow Row);
   void WithdrawDevice(
     const str::dString &RToken,
     const str::dString &Id );

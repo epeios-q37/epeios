@@ -51,16 +51,15 @@ namespace {
   qRE;
   }
 
-  void Execute_(
-    flw::rRWFlow &Manager,
-    const fdr::rRWDriver &Driver)
+  void Execute_(flw::rRWFlow &Manager)
   {
   qRH;
     flw::rDressedRWFlow<> Device;
     str::wString RToken, Id;
     str::wString Script, Expression, Message, Response;
-    common::rCaller *Caller = NULL;
+    common::sRow Row = qNIL;
     bso::sBool Cont = true;
+    bso::sBool DummyBreakFlagAsDiscrimitator = false;
   qRB;
     tol::Init(RToken, Id, Script, Expression);
 
@@ -69,9 +68,9 @@ namespace {
     common::Get(Manager, Script);
     common::Get(Manager, Expression);
 
-    Caller = device::Hire(RToken, Id, &Driver);
+    Row = device::Hire(RToken, Id, &DummyBreakFlagAsDiscrimitator);
 
-    if ( Caller == NULL ) {
+    if ( Row == qNIL ) {
       Message.Init();
 
       messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, RToken, Id);
@@ -81,7 +80,7 @@ namespace {
       common::Commit(Manager);
     } else {
 
-      Device.Init(*Caller->GetDriver());
+      Device.Init(device::GetDriver(Row, &DummyBreakFlagAsDiscrimitator));
 
       common::Put(device::rExecute, Device);
       common::Put(Script, Device);
@@ -126,10 +125,9 @@ namespace {
     }
   qRR;
   qRT;
-    if ( ( Caller != NULL ) && Caller->ShouldIDestroy(&Driver) ) {
-      Device.reset(false); // To avoid action on underlying driver which will be destroyed.
-      qDELETE(Caller);
-    }
+    DummyBreakFlagAsDiscrimitator = true;
+
+    device::Release(Row, &DummyBreakFlagAsDiscrimitator);
   qRE;
   }
 
@@ -230,7 +228,7 @@ qRB;
     Close_(Flow);
     break;
   case ucumng::rExecute_1:
-    Execute_(Flow, Driver);
+    Execute_(Flow);
     break;
   case ucumng::rCreate_1:
     Create_(Flow);

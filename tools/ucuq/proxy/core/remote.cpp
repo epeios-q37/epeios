@@ -356,7 +356,7 @@ qRH;
   flw::rNoWCacheDressedRWFlow Device;
   str::wString Message, Command;
   str::wString RToken, Id;
-  common::rCaller *Caller = NULL;
+  common::sRow Row = qNIL;
   bso::sBool Cont = true;
   routine_::data::gRemoteToDevice RemoteToDeviceData;
   routine_::data::gDeviceToRemote DeviceToRemoteData;
@@ -364,7 +364,8 @@ qRH;
   bso::sBool
     DeviceThreadExited = false,
     RemoteThreadExited = false,
-    RemoteBreakFlag = false;
+    RemoteBreakFlag = false,
+    DeviceBreakFlag = false;
 qRB;
   RemoteDriver.SetBreakFlag(2, &RemoteBreakFlag);
 
@@ -374,11 +375,11 @@ qRB;
   common::Get(Remote, RToken);
   common::Get(Remote, Id);
 
-  Caller = device::Hire(RToken, Id, (const void *)&RemoteDriver);  // '&RemoteDriver' serves here only as discriminator.
+  Row = device::Hire(RToken, Id, &DeviceBreakFlag); 
 
   Remote.Init(RemoteDriver);
 
-  if ( Caller == NULL ) {
+  if ( Row == qNIL ) {
     Message.Init();
     messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, RToken, Id);
     common::Put(Message, Remote);
@@ -389,7 +390,7 @@ qRB;
 
     common::Dismiss(Remote);
 
-    Device.Init(*Caller->GetDriver());
+    Device.Init(device::GetDriver(Row, &DeviceBreakFlag));
     Blocker.Init();
 
     RemoteToDeviceData.Remote = &Remote;
@@ -413,7 +414,7 @@ qRB;
         RemoteBreakFlag = true;
 
       if ( !DeviceThreadExited )
-        Caller->RaiseBreakFlag();
+        DeviceBreakFlag = true;
 
       if ( !RemoteThreadExited && !DeviceThreadExited )
         qRGnr();
@@ -426,10 +427,8 @@ qRB;
   }
 qRR;
 qRT;
-  if ( (Caller != NULL) && Caller->ShouldIDestroy((const void *)&RemoteDriver) ) {  // 'aRemoteDriver' used as discriminator.
-    Device.reset(false); // To avoid action on underlying driver which will be destroyed.
-    device::WithdrawDevice(*Caller);
-  }
+  if ( Row != qNIL )
+  device::Release(Row, &DeviceBreakFlag);
 qRE;
 }
 

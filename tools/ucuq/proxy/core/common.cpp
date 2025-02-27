@@ -29,85 +29,179 @@
 
 using namespace common;
 
+class common::rCaller_
+{
+private:
+  bso::sBool *BreakFlag_;   // Acts also as discriminator.
+  sck::rRWDriver *Driver_;
+	bso::sBool IsAlive_(void) const
+	{
+		if ( Driver_ == NULL )
+			qRGnr();
+
+		return Driver_ - IsAlive_();
+	}
+public:
+  void reset(bso::sBool P = true)
+  {
+    if ( P ) {
+      qDELETE(Driver_);
+    }
+
+    Driver_ = NULL;
+    BreakFlag_ = NULL;
+  }
+  qCDTOR(rCaller_);
+  void Init(
+    sck::rRWDriver *Driver,
+    sRow Row)
+  {
+    reset();
+
+    Driver_ = Driver;
+    BreakFlag_ = NULL;
+  }
+	// If returning 'false', a break is send and the hire must be tried again.
+  bso::sBool Hire(bso::sBool *BreakFlag)
+  {
+		if ( !IsAlive_() )
+			qRGnr();;
+
+    if ( BreakFlag_ != NULL ) {
+			if ( BreakFlag == BreakFlag_ )
+				qRGnr();
+
+      *BreakFlag_ = true;
+
+			return false;
+		}
+
+    BreakFlag_ = BreakFlag;
+
+		Driver_->SetBreakFlag(2, BreakFlag_);
+
+		return true;
+  }
+	// If returns 'true', this object should be destroyed.
+	bso::sBool Release(const bso::sBool *BreakFlag)
+	{
+		if ( BreakFlag == NULL )
+			qRGnr();
+
+			if ( BreakFlag_ == NULL )
+				qRGnr();
+
+			if ( IsAlive_() ) {
+				if ( BreakFlag_ == BreakFlag )
+					BreakFlag_ = NULL;
+
+				Driver_->RearmAfterBreak(fdr::ts_Default);
+
+				return false;
+			} else if ( BreakFlag_ == BreakFlag ) {
+				BreakFlag_ = NULL;
+
+				return true;
+			}
+
+			return false;
+	}
+	// Mark as must break if in use and return true, or retun false if no more in use.
+	bso::sBool MarkForBreak(void)
+	{
+		if ( BreakFlag_ == NULL )
+			return false;
+
+		*BreakFlag_ = true;
+
+		return true;
+	}
+	sck::rRWDriver *GetDriver(const bso::sBool *BreakFlag) const
+	{
+		if ( !IsAlive_() )
+			qRGnr();
+
+		if ( BreakFlag_ != BreakFlag )
+			qRGnr();
+
+		return Driver_;
+	}
+};
+
 sRow common::rCallers::New(sck::rRWDriver *Driver)
 {
 	sRow Row = qNIL;
-qRH;
-	rCaller *Caller = NULL;
+	qRH;
+	rCaller_ *Caller = NULL;
 	mtx::rHandle Locker;
-qRB;
-	Caller = qNEW(rCaller);
+	qRB;
+	Caller = qNEW(rCaller_);
 
 	Locker.InitAndLock(Mutex_);
 
 	Row = List_.Add(Caller);
 
 	Caller->Init(Driver, Row);
-qRR;
+	qRR;
 	qDELETE(Caller);
-qRT;
-qRE;
+	qRT;
+	qRE;
 	return Row;
-}
-
-tol::sTimeStamp common::rCallers::GetTimestamp(sRow Row) const
-{
-	tol::sTimeStamp Timestamp = 0;
-qRH;
-	mtx::rHandle Locker;
-	rCaller *Caller = NULL;
-qRB;
-	Locker.InitAndLock(Mutex_);
-
-	Caller = List_.Get(Row);
-
-	if ( Caller == NULL )
-		qRGnr();
-
-	Timestamp = Caller->TimeStamp;
-qRR;
-qRT;
-qRE;
-	return Timestamp;
 }
 
 void common::rCallers::Withdraw(sRow Row)
 {
-qRH;
-	rCaller *Caller = NULL;
-	mtx::rHandle ListLocker, CallerLocker;
-qRB;
-	ListLocker.InitAndLock(Mutex_);
+	qRH;
+	mtx::rHandle Locker;
+	rCaller_ *Caller = NULL;
+	qRB;
+	Locker.InitAndLock(Mutex_);
 
 	Caller = List_.Get(Row);
 
 	List_.Delete(Row);
 
-	ListLocker.Unlock();
+	if ( Caller == NULL )
+		qRGnr();
+
+	if ( !Caller->MarkForBreak() )
+		qDELETE(Caller);
+	qRR;
+	qRT;
+	qRE;
+}
+
+bso::sBool common::rCallers::Hire(
+	sRow Row,
+	bso::sBool *BreakFlag) const
+{
+	rCaller_ *Caller = NULL;
+	qRH;
+	mtx::rHandle Locker;
+	qRB;
+	Locker.InitAndLock(Mutex_);
+
+	Caller = List_.Get(Row);
 
 	if ( Caller == NULL )
 		qRGnr();
 
-	CallerLocker.InitAndLock(Caller->Mutex_);
-
-	if ( Caller->UserDiscriminator_ == NULL ) {
-		CallerLocker.Unlock();	// To avoid an error on destroying the underlying mutex because it is still locked.
-		CallerLocker.reset(false);	// The corresponding mutes will be destroyed.
-		qDELETE(Caller);
-	} else
-		Caller->RaiseBreakFlag();
+	if ( !Caller->Hire(BreakFlag) )
+		Caller = NULL;
 qRR;
 qRT;
 qRE;
+	return Caller != NULL;
 }
 
-rCaller *common::rCallers::Hire(
+sck::rRWDriver *common::rCallers::GetDriver(
 	sRow Row,
-	const void *UserDiscriminator) const
+	const bso::sBool *BreakFlag) const
 {
-	rCaller *Caller = NULL;
+	sck::rRWDriver *Driver = NULL;
 qRH;
 	mtx::rHandle Locker;
+	rCaller_ *Caller = NULL;
 qRB;
 	Locker.InitAndLock(Mutex_);
 
@@ -116,16 +210,41 @@ qRB;
 	if ( Caller == NULL )
 		qRGnr();
 
-	if ( !Caller->Driver_->IsAlive() )
-		Caller = NULL;
-	else {
-		Caller->UserDiscriminator_ = UserDiscriminator;
-		Caller->CancelEOFOnBreak();
+	Driver = Caller->GetDriver(BreakFlag);
+
+	if ( Driver == NULL )
+		qRGnr();
+
+qRR;
+qRT;
+qRE;
+	return Driver;
+}
+
+bso::sBool common::rCallers::Release(
+	sRow Row,
+	const bso::sBool *BreakFlag)
+{
+	bso::sBool Withdrawed = false;
+qRH;
+	mtx::rHandle Locker;
+	rCaller_ *Caller = NULL;
+qRB;
+	Locker.InitAndLock(Mutex_);
+
+	Caller = List_.Get(Row);
+
+	if ( Caller == NULL )
+		qRGnr();
+
+	if ( Caller->Release( BreakFlag) ) {
+		Withdrawed = true;
+		Withdraw(Row);
 	}
-	qRR;
-	qRT;
-	qRE;
-		return Caller;
+qRR;
+qRT;
+qRE;
+	return Withdrawed;
 }
 
 namespace {
@@ -149,20 +268,4 @@ namespace {
 
 		return messages::GetTranslation(Id, Translation);
 	}
-}
-
-bso::sBool common::rCaller::ShouldIDestroy(const void *UserDiscriminator)
-{
-	bso::sBool Answer = false;
-qRH;
-	mtx::rHandle Locker;
-qRB;
-	Locker.InitAndLock(Mutex_);
-
-	if ( !Driver_->IsAlive() && ( UserDiscriminator == UserDiscriminator_ ) )
-		Answer = true;
-qRR;
-qRT;
-qRE;
-	return Answer;
 }

@@ -417,12 +417,9 @@ namespace sck {
 			IsAlive_ = true;
 			_Touch();	// On suppose qu'il n'y a pas une trop longue attente entre la cration de la socket et l'appel  cette mthode ...
 		}
-		void CancelEOFAfterBreakOnTimeout(fdr::thread_safety__ ThreadSafety)
+		void RearmAfterBreak(fdr::thread_safety__ ThreadSafety)	// To rearm the drive after a break on timeout.
 		{
 			if ( !IsAlive_ )
-				qRFwk();
-
-			if ( BreakFlag_ == NULL )
 				qRFwk();
 
 			_ioflow_driver___::Init(ThreadSafety);

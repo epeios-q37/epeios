@@ -14,7 +14,10 @@
 - [trvl]: trivial modifications;
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
-- 
+
+## 2025-02-27
+
+- SCK: [trvl];
 
 ## 2025-02-24
 

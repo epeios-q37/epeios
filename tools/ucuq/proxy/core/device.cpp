@@ -107,31 +107,87 @@ qRE;
   return SRow != qNIL;
 }
 
-common::rCaller *device::Hire(
+common::sRow device::Hire(
   const str::dString &Token,
   const str::dString &Id,
-  const void *UserDiscriminator)
+  bso::sBool *BreakFlag)
 {
-  common::rCaller *Caller = NULL;
+  common::sRow Row = qNIL;
 qRH;
   mtx::rHandle Locker;
-  sSRow_ Row = qNIL;
+  sSRow_ SRow = qNIL;
 qRB;
-  Locker.InitAndLock(Mutex_);
+  Locker.Init(Mutex_, false);
 
-  Row = seeker::GuessRToken(Token, Id);
+  do {
+    Locker.Lock();
 
-  if ( Row != qNIL )
-    Caller = Callers_.Hire(seeker::GetCallerRow(Row), UserDiscriminator);
+    SRow = seeker::GuessRToken(Token, Id);
+
+    if ( SRow == qNIL )
+      break;
+
+    Row = seeker::GetCallerRow(SRow);
+
+    if ( Row == qNIL )
+      qRGnr();
+
+    if ( Callers_.Hire(Row, BreakFlag) )
+      break;
+
+    Row = qNIL;
+
+    Locker.Unlock();
+
+    tht::Suspend(500);
+  } while ( true );
 qRR;
 qRT;
 qRE;
-  return Caller;
+  return Row;
 }
 
-void device::WithdrawDevice(common::rCaller &Caller)
+sck::rRWDriver &device::GetDriver(
+  common::sRow Row,
+  const bso::sBool *BreakFlag)
 {
-  Withdraw_(Ties_(Caller.Row()));
+  sck::rRWDriver *Driver = NULL;
+qRH;
+  mtx::rHandle Locker;
+  sSRow_ SRow = qNIL;
+qRB;
+  Locker.InitAndLock(Mutex_);
+
+  Driver = Callers_.GetDriver(Row, BreakFlag);
+
+  if ( Driver == NULL )
+    qRGnr();
+qRR;
+qRT;
+qRE;
+  return *Driver;
+}
+
+bso::sBool device::Release(
+  common::sRow Row,
+  const bso::sBool *BreakFlag)
+{
+  bso::sBool IsWithdrawed = false;
+qRH;
+  mtx::rHandle Locker;
+qRB;
+  Locker.InitAndLock(Mutex_);
+
+  IsWithdrawed = Callers_.Release(Row, BreakFlag);
+qRR;
+qRT;
+qRE;
+  return IsWithdrawed;
+}
+
+void device::WithdrawDevice(common::sRow Row)
+{
+  Withdraw_(Ties_(Row()));
 }
 
 void device::WithdrawDevice(

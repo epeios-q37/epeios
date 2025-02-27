@@ -37,71 +37,13 @@ namespace common {
 
   qROW(Row);
 
-  class rCaller {
-  private:
-    mtx::rMutex Mutex_; // To protect access to below two members.
-    const void *UserDiscriminator_;   // 'NULL' if no it in use, otherwise a pointer which value is specific to the user which uses it.
-    sck::rRWDriver *Driver_;
-    sRow Row_;
-    bso::sBool BreakFlag_;
-  public:
-    tol::sTimeStamp TimeStamp;
-    void reset(bso::sBool P = true)
-    {
-      if ( P ) {
-        qDELETE(Driver_);
+  class rCaller_;
 
-        if ( Mutex_ != mtx::Undefined )
-          mtx::Delete(Mutex_);
-      }
-
-      TimeStamp = 0;
-      Driver_ = NULL;
-      Mutex_ = mtx::Undefined;
-      UserDiscriminator_ = NULL;
-      Row_ = qNIL;
-      BreakFlag_ = false;
-    }
-    qCDTOR( rCaller );
-    void Init(
-      sck::rRWDriver* Driver,
-      sRow Row)
-    {
-      reset();
-
-      Mutex_ = mtx::Create();
-      Driver_ = Driver;
-      TimeStamp = tol::EpochTime(false);
-      UserDiscriminator_ = NULL;
-      Row_ = Row;
-      BreakFlag_ = false;
-      Driver_->SetBreakFlag(2, &BreakFlag_);
-    }
-    sck::rRWDriver *GetDriver(void) const
-    {
-      return Driver_;
-    }
-    void RaiseBreakFlag(void)
-    {
-      BreakFlag_ = true;
-    }
-    void CancelEOFOnBreak(void)
-    {
-      Driver_->CancelEOFAfterBreakOnTimeout(fdr::ts_Default);
-      BreakFlag_ = false;
-    }
-    bso::sBool ShouldIDestroy(const void *UserDiscriminator);
-    friend class rCallers;
-    friend void Test_(void);
-    qRODISCLOSEr(sRow, Row);
-  };
-
-  // TODO: Mutex to protect access of 'Callers_'.
   class rCallers
   {
   private:
     mtx::rMutex Mutex_; // To protect acces to following member.
-    lstbch::qLBUNCHw(rCaller *, sRow) List_;
+    lstbch::qLBUNCHw(rCaller_ *, sRow) List_;
   public:
     void reset(bso::sBool P = true)
     {
@@ -123,11 +65,16 @@ namespace common {
       tol::Init(List_);
     }
     sRow New(sck::rRWDriver *Driver);
-    tol::sTimeStamp GetTimestamp(sRow Row) const;
     void Withdraw(sRow Row); // The corresponding caller is made inaccessible and deleted if applied.
-    rCaller *Hire(
+    bso::sBool Hire(
       sRow Row,
-      const void *UserDiscriminator) const;
+      bso::sBool *BreakFlag) const;
+    sck::rRWDriver *GetDriver(
+      sRow Row,
+      const bso::sBool *BreakFlag) const;
+    bso::sBool Release(
+      sRow Row,
+      const bso::sBool *BreakFlag);
     sdr::sSize Extent(void) const
     {
       return List_.Extent();
