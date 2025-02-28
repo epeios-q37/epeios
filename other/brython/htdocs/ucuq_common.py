@@ -335,10 +335,8 @@ def getDevice_(device = None, *, id_ = None, token = None):
     elif device_ == None:
       device_ = Device()
       device_.connect()
-    print("Device_:", device_.random)
     return device_
   else:
-    print("Device:", device.random)
     return device
 
 

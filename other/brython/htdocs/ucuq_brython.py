@@ -1,4 +1,4 @@
-import javascript, json, sys, random
+import javascript, json, sys
 
 from browser import aio, alert, console
 from browser.local_storage import storage
@@ -87,7 +87,6 @@ def displayExitMessage_(message):
 
 class Device_:
   def __init__(self, *, id = None, token = None, callback = None):
-    self.random = random.random()
     if id or token or callback:
       self.connect(id = id, token = token, callback = callback)
 
