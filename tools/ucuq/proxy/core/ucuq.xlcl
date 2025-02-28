@@ -23,9 +23,9 @@
 		<Translation language="fr">Version de protocole inconnue !</Translation>
 		<Translation language="en">Unknown protocol version!</Translation>
 	</Translations>
-	<Translations text="NoDeviceWithGivenTokenAndId">
-		<Translation language="fr">Pas de dispositif avec le jeton '%1' et l'identifiant '%2' !</Translation>
-		<Translation language="en">No device with '%1' token and '%2' id!</Translation>
+	<Translations text="UnableToFindDevice">
+		<Translation language="fr">Dispositif avec le jeton '%1' et l'identifiant '%2' non trouvé !</Translation>
+		<Translation language="en">Device with '%1' token and '%2' id not found!</Translation>
 	</Translations>
 	<Translations text="UnknownCaller">
 		<Translation language="fr">Appelant '%1' inconnu !</Translation>

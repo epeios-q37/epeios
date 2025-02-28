@@ -32,29 +32,24 @@ function steering(handler) {
 
     switch (handler.top()) {
       case s.STEERING:
-        log("Steering STEERING");
         break;
       case s.EXECUTE:
-        log("Steering EXECUTE");
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         handler.callback(handler.getSInt(), handler.getString())
         handler.callback = undefined;
         break;
       case s.EXECUTE_ANSWER:
-        log("Steering EXECUTE_ANSWER");
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         handler.push(s.RESULT);
         handler.pushString();
         break;
       case s.RESULT:
-        log("Steering RESULT");
         handler.pop(handler.feeder);
         handler.feeder.cont = true;
         break;
       default:
-        log("Steering DEFAULT");
         if ( handler.top() >= 0 )
           exit_("Unknown steering operation!");
         else
@@ -253,7 +248,6 @@ function subOperate_(handler) {
   } else if ( handler.funcStack.length ) {
     let item = handler.funcStack.shift();
     handler.callback = item[2];
-    console.log("Callback:", handler.callback);
     item[0](handler, ...item[1]);
     subOperate_(handler);
   }
@@ -276,14 +270,12 @@ function subUpload_(handler, modules) {
 }
 
 function upload_(handler, modules, callback) {
-  log("Launching upload")
   operate_(handler, subUpload_, [modules], undefined);
 }
 
 
 function subExecute_(handler, script, expression) {
   if ( expression !== "" ) {
-    log("Expression: " + expression);
     handler.push(s.EXECUTE);
     handler.push(s.EXECUTE_ANSWER);
     handler.pushSInt();

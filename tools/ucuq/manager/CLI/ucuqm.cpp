@@ -93,7 +93,7 @@ namespace {
 		HostService.Init();
 		sclm::MGetValue(registry::parameter::HostService, HostService);
 
-		Flow.Init(HostService.Convert(Buffer), sck::NoTimeout, qRPDefault);
+		Flow.Init(HostService.Convert(Buffer), qRPDefault);
 
 		HandShake_(Flow);
 	qRR;
@@ -142,14 +142,6 @@ namespace {
 		return Answer;
 	}
 
-	bso::sBool HandleAnswer_(
-		flw::rRFlow &Flow,
-		str::dString &Result)
-	{
-		return HandleAnswer_(Flow, &Result);
-	}
-
-
 	bso::sBool BaseExecuteScript_(
 		const str::dString &Script,
 		const str::dString &Expression,
@@ -175,7 +167,10 @@ namespace {
 		ucucmn::Put(Expression, Flow);
 		ucucmn::Commit(Flow);
 
-		OK = HandleAnswer_(Flow, Result);
+		if ( Expression.Amount() )
+			OK = HandleAnswer_(Flow, Result);
+		else
+			OK = true;
 	qRR;
 	qRT;
 	qRE;

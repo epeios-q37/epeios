@@ -69,7 +69,6 @@ namespace device {
   bso::sBool Release(
     common::sRow Row,
     const bso::sBool *BreakFlag);
-  void WithdrawDevice(common::sRow Row);
   void WithdrawDevice(
     const str::dString &RToken,
     const str::dString &Id );

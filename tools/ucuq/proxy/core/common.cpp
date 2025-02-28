@@ -39,7 +39,7 @@ private:
 		if ( Driver_ == NULL )
 			qRGnr();
 
-		return Driver_ - IsAlive_();
+		return Driver_->IsAlive();
 	}
 public:
   void reset(bso::sBool P = true)
@@ -61,11 +61,11 @@ public:
     Driver_ = Driver;
     BreakFlag_ = NULL;
   }
-	// If returning 'false', a break is send and the hire must be tried again.
+	// If returning 'false', a break is send and the hire must be tried again after a little while.
   bso::sBool Hire(bso::sBool *BreakFlag)
   {
 		if ( !IsAlive_() )
-			qRGnr();;
+			qRGnr();
 
     if ( BreakFlag_ != NULL ) {
 			if ( BreakFlag == BreakFlag_ )
@@ -88,23 +88,23 @@ public:
 		if ( BreakFlag == NULL )
 			qRGnr();
 
-			if ( BreakFlag_ == NULL )
-				qRGnr();
+		if ( BreakFlag_ == NULL )
+			qRGnr();
 
-			if ( IsAlive_() ) {
-				if ( BreakFlag_ == BreakFlag )
-					BreakFlag_ = NULL;
-
-				Driver_->RearmAfterBreak(fdr::ts_Default);
-
-				return false;
-			} else if ( BreakFlag_ == BreakFlag ) {
+		if ( IsAlive_() ) {
+			if ( BreakFlag_ == BreakFlag )
 				BreakFlag_ = NULL;
 
-				return true;
-			}
+			Driver_->RearmAfterBreak(fdr::ts_Default);
 
 			return false;
+		} else if ( BreakFlag_ == BreakFlag ) {
+			BreakFlag_ = NULL;
+
+			return true;
+		}
+
+		return false;
 	}
 	// Mark as must break if in use and return true, or retun false if no more in use.
 	bso::sBool MarkForBreak(void)
@@ -128,47 +128,58 @@ public:
 	}
 };
 
+namespace {
+	void Log_(const char *Message)
+	{
+		cio::COut << Message << txf::nl << txf::commit;
+	}
+}
+
 sRow common::rCallers::New(sck::rRWDriver *Driver)
 {
 	sRow Row = qNIL;
-	qRH;
+qRH;
 	rCaller_ *Caller = NULL;
 	mtx::rHandle Locker;
-	qRB;
+qRB;
 	Caller = qNEW(rCaller_);
+
+	Caller->Init(Driver, Row);
 
 	Locker.InitAndLock(Mutex_);
 
 	Row = List_.Add(Caller);
 
-	Caller->Init(Driver, Row);
-	qRR;
+	Log_("New");
+qRR;
 	qDELETE(Caller);
-	qRT;
-	qRE;
+qRT;
+qRE;
 	return Row;
 }
 
 void common::rCallers::Withdraw(sRow Row)
 {
-	qRH;
+qRH;
 	mtx::rHandle Locker;
 	rCaller_ *Caller = NULL;
-	qRB;
+qRB;
 	Locker.InitAndLock(Mutex_);
 
 	Caller = List_.Get(Row);
 
-	List_.Delete(Row);
-
 	if ( Caller == NULL )
 		qRGnr();
 
-	if ( !Caller->MarkForBreak() )
+	if ( !Caller->MarkForBreak() ) {
+		List_.Delete(Row);
 		qDELETE(Caller);
-	qRR;
-	qRT;
-	qRE;
+		Log_("Withdraw with delete");
+	} else
+		Log_("Withdraw w/o delete");
+qRR;
+qRT;
+qRE;
 }
 
 bso::sBool common::rCallers::Hire(
@@ -176,9 +187,9 @@ bso::sBool common::rCallers::Hire(
 	bso::sBool *BreakFlag) const
 {
 	rCaller_ *Caller = NULL;
-	qRH;
+qRH;
 	mtx::rHandle Locker;
-	qRB;
+qRB;
 	Locker.InitAndLock(Mutex_);
 
 	Caller = List_.Get(Row);
@@ -186,8 +197,11 @@ bso::sBool common::rCallers::Hire(
 	if ( Caller == NULL )
 		qRGnr();
 
-	if ( !Caller->Hire(BreakFlag) )
+	if ( !Caller->Hire(BreakFlag) ) {
 		Caller = NULL;
+		Log_("Hire failure");
+	} else
+		Log_("Hire success");
 qRR;
 qRT;
 qRE;
@@ -215,6 +229,7 @@ qRB;
 	if ( Driver == NULL )
 		qRGnr();
 
+	Log_("Get driver");
 qRR;
 qRT;
 qRE;
@@ -240,7 +255,9 @@ qRB;
 	if ( Caller->Release( BreakFlag) ) {
 		Withdrawed = true;
 		Withdraw(Row);
-	}
+		Log_("Release with withdraw");
+	} else
+		Log_("Release w/o withdraw");
 qRR;
 qRT;
 qRE;

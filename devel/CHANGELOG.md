@@ -15,6 +15,10 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 2025-02-28
+
+- CSDBNC: [adpt];
+
 ## 2025-02-27
 
 - SCK: [trvl];

@@ -41,7 +41,7 @@ def setDevice(id = None, *, device = None, token = None):
       raise Exception("'device' can not be given together with 'id' or 'token'!")
     device_ = device
   else:    
-    getDevice_(id = id, token = token)
+    getDevice_(id_ = id, token = token)
 
 
 # Infos keys and subkeys
@@ -323,21 +323,22 @@ async def ATKConnectAwait(dom, body, *, device = None):
   return infos
 
 
-def getDevice_(device = None, *, id = None, token = None):
-  if device and ( token or id):
+def getDevice_(device = None, *, id_ = None, token = None):
+  if device and ( token or id_):
     displayExitMessage_("'device' can not be given together with 'token' or 'id'!")
 
   if device == None:
     global device_
 
-    if token or id:
-      device_ = Device(id = id, token = token)
+    if token or id_:
+      device_ = Device(id = id_, token = token)
     elif device_ == None:
       device_ = Device()
       device_.connect()
-    
+    print("Device_:", device_.random)
     return device_
   else:
+    print("Device:", device.random)
     return device
 
 

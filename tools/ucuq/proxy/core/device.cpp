@@ -41,7 +41,6 @@ namespace {
 
   mtx::rMutex Mutex_ = mtx::Undefined;  // Protection of below two members.
   common::rCallers Callers_;
-  lstbch::qLBUNCHw(sSRow_, sCRow_) Ties_; // common::sRow -> seeker::sRow (caller row to seeker row).
 }
 
 eAnswer device::GetAnswer(flw::rRFlow &Flow)
@@ -62,9 +61,7 @@ eAnswer device::GetAnswer(flw::rRFlow &Flow)
 namespace {
   void Withdraw_(sSRow_ Row)
   {
-    sCRow_ CRow = qNIL;
-    Callers_.Withdraw(CRow = seeker::GetCallerRow(Row));
-    Ties_.Delete(CRow);
+    Callers_.Withdraw(seeker::GetCallerRow(Row));
     seeker::Delete(Row);
   }
 }
@@ -91,11 +88,6 @@ qRB;
       Withdraw_(SRow);
 
     SRow = seeker::New(RToken, Id, CRow = Callers_.New(Driver));
-
-    if ( Ties_.New() != CRow )
-      qRGnr();
-
-    Ties_.Store(SRow, CRow);
   } else
     SRow = qNIL;
 
@@ -183,11 +175,6 @@ qRR;
 qRT;
 qRE;
   return IsWithdrawed;
-}
-
-void device::WithdrawDevice(common::sRow Row)
-{
-  Withdraw_(Ties_(Row()));
 }
 
 void device::WithdrawDevice(
@@ -305,7 +292,6 @@ qRT;
 qRE;
   return Row != qNIL;
 }
-
 
 void device::GetRTokenIds(
   const str::dString &RToken,
@@ -457,7 +443,6 @@ qGCTOR(device)
 {
   Mutex_ = mtx::Create();
   Callers_.Init();
-  Ties_.Init();
 }
 
 qGDTOR(device) {

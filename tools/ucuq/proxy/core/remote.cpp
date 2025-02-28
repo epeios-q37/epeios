@@ -345,7 +345,7 @@ namespace routine_ {
   qRT;
     ExitFlag = true;
     Blocker.Unblock();
-    qRE;
+   qRE;
   }
 }
 
@@ -376,8 +376,6 @@ qRB;
   common::Get(Remote, Id);
 
   Row = device::Hire(RToken, Id, &DeviceBreakFlag); 
-
-  Remote.Init(RemoteDriver);
 
   if ( Row == qNIL ) {
     Message.Init();
@@ -428,7 +426,7 @@ qRB;
 qRR;
 qRT;
   if ( Row != qNIL )
-  device::Release(Row, &DeviceBreakFlag);
+    device::Release(Row, &DeviceBreakFlag);
 qRE;
 }
 

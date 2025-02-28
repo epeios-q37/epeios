@@ -204,22 +204,20 @@ namespace csdbnc {
 		bso::bool__ Init(
 			const char *Host,
 			const char *Service,
-			sck::duration__ Timeout,
 			qRPN )	// No default value, because a 'err::handling___' value is confused with a 'duration__'.
 		{
 			if ( Socket_.Init( Host, Service, qRP ) ) {
-				_flow___::Init( Socket_.Socket, false, Timeout );
+				_flow___::Init( Socket_.Socket, false);
 				return true;
 			} else
 				return false;
 		}
 		bso::bool__ Init(
 			const char *HostService,
-			sck::duration__ Timeout,
 			qRPN )	// No default value, because a 'err::handling___' value is confused with a 'duration__'.
 		{
 			if ( Socket_.Init( HostService, qRP ) ) {
-				_flow___::Init( Socket_.Socket, false, Timeout );
+				_flow___::Init(Socket_.Socket, false);
 				return true;
 			} else
 				return false;
@@ -249,22 +247,20 @@ namespace csdbnc {
 		bso::bool__ Init(
 			const char *Host,
 			const char *Service,
-			sck::duration__ Timeout,
 			qRPN )	// No default value, because a 'err::handling___' value is confused with a 'duration__'.
 		{
 			if ( Socket_.Init( Host, Service, qRP ) ) {
-				rDriver_::Init( Socket_.Socket, false, fdr::ts_Default, Timeout );
+				rDriver_::Init( Socket_.Socket, false, fdr::ts_Default );
 				return true;
 			} else
 				return false;
 		}
 		bso::bool__ Init(
 			const char *HostService,
-			sck::duration__ Timeout,
 			qRPN )	// No default value, because a 'err::handling___' value is confused with a 'duration__'.
 		{
 			if ( Socket_.Init( HostService, qRP ) ) {
-				rDriver_::Init( Socket_.Socket, false, fdr::ts_Default, Timeout );
+				rDriver_::Init( Socket_.Socket, false, fdr::ts_Default );
 				return true;
 			} else
 				return false;

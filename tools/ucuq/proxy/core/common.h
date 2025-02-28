@@ -75,10 +75,6 @@ namespace common {
     bso::sBool Release(
       sRow Row,
       const bso::sBool *BreakFlag);
-    sdr::sSize Extent(void) const
-    {
-      return List_.Extent();
-    }
   };
 
   inline void Test_(void)
