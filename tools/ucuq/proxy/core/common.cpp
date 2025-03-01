@@ -131,7 +131,7 @@ public:
 namespace {
 	void Log_(const char *Message)
 	{
-		cio::COut << Message << txf::nl << txf::commit;
+		// cio::COut << Message << txf::nl << txf::commit;
 	}
 }
 

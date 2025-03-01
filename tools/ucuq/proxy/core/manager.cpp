@@ -127,7 +127,8 @@ namespace {
   qRT;
     DummyBreakFlagAsDiscrimitator = true;
 
-    device::Release(Row, &DummyBreakFlagAsDiscrimitator);
+    if ( Row != qNIL )
+      device::Release(Row, &DummyBreakFlagAsDiscrimitator);
   qRE;
   }
 

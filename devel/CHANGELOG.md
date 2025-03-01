@@ -15,6 +15,12 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
+## 202503-01
+
+- SCK:
+    - using 'poll' for *POSIX* instead of 'select' due to 'FD-SETSIZE' limitation;
+    - changing handling of the break flag;
+
 ## 2025-02-28
 
 - CSDBNC: [adpt];

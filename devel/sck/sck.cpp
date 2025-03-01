@@ -43,91 +43,240 @@ typedef int ssize_t;
 bool sck::Ready_ = true;
 #endif
 
+/*
+	Under Windows, the 'FD_SETSIZE' is the max amount of socket a 'select'
+	can simultaneously monitor.
+	Under POSIX, the 'FD_SETSIZE' is the max value (usually 1024) of a file descriptor
+	a select can monitor, hence the use of 'poll'.
+*/
+
+namespace {
+#ifdef CPE_S_WIN
+	flw::size__ WindowsRead_(
+		socket__ Socket,
+		flw::size__ Amount,
+		void *Buffer,
+		duration__ Timeout,
+		const bso::sBool *BreakFlag)
+	{
+		fd_set fds;
+		ssize_t Result;
+
+		FD_ZERO(&fds);
+		FD_SET(Socket, &fds);
+
+		if ( Timeout == SCK_INFINITE )
+			Result = select((int)( Socket + 1 ), &fds, NULL, NULL, NULL);
+		else {
+			timeval TV;
+
+			TV.tv_sec = Timeout;
+			TV.tv_usec = 0;
+
+			do
+				Result = select((int)( Socket + 1 ), &fds, NULL, NULL, &TV);
+			while ( !Result && !*BreakFlag );
+		}
+
+		if ( Result == 1 ) {
+			Result = recv(Socket, (cast__)Buffer, (int)Amount, 0);
+
+			if ( Result == SCK_SOCKET_ERROR ) {
+				Result = SCK_DISCONNECTED;
+
+				if ( Error() != SCK_ECONNRESET )
+					qRLbr();
+			} else if ( !Result && Amount )
+				Result = SCK_DISCONNECTED;
+		} else if ( Result == SCK_SOCKET_ERROR )
+			qRLbr();
+		else if ( ( Result == 0 ) && ( Timeout == SCK_INFINITE ) )
+			qRSys();
+
+		return Result;
+	}
+
+	flw::size__ WindowsWrite_(
+		socket__ Socket,
+		const void *Buffer,
+		flw::size__ Amount,
+		duration__ Timeout,
+		const bso::sBool *BreakFlag)
+	{
+		fd_set fds;
+		int Result;
+
+		FD_ZERO(&fds);
+		FD_SET(Socket, &fds);
+
+		if ( Timeout == SCK_INFINITE )
+			Result = select((int)( Socket + 1 ), NULL, &fds, NULL, NULL);
+		else {
+			timeval TV;
+
+			TV.tv_sec = Timeout;
+			TV.tv_usec = 0;
+			do {
+				Result = select((int)( Socket + 1 ), NULL, &fds, NULL, &TV);
+			} while ( !Result && !*BreakFlag );
+		}
+
+		if ( Result == 1 ) {
+			Result = send(Socket, (const cast__)Buffer, (int)Amount, 0);
+
+			if ( Result == SCK_SOCKET_ERROR ) {
+				Result = SCK_DISCONNECTED;
+
+				if ( Error() != SCK_ECONNRESET )
+					qRLbr();
+			} else if ( !Result && Amount )	// I assume that, because the send is call immediatly after the select, this can not be happen.
+				qRFwk();
+		} else if ( Result == SCK_SOCKET_ERROR )
+			qRLbr();
+		else if ( ( Result == 0 ) && ( Timeout == SCK_INFINITE ) )
+			qRSys();
+
+		return Result;
+	}
+#else
+	bso::sSign poll_(
+		socket__ Socket,
+		int Flags,
+		duration__ Timeout,
+		const bso::sBool *BreakFlag)
+	{
+		bso::sSign Return = 0;
+
+		int Result = 0;
+		pollfd fds;
+
+		fds.fd = Socket;
+		fds.events = Flags;
+		fds.revents = 0;
+
+		if ( Timeout == NoTimeout ) {
+			if ( BreakFlag != NULL )
+				qRFwk();
+
+			Result = poll(&fds, 1, -1);
+		} else {
+			if ( BreakFlag == NULL )
+				qRFwk();
+
+			do
+				Result = poll(&fds, 1, Timeout * 1000);
+			while ( !Result && !*BreakFlag );
+		}
+
+		if ( Result == 1 ) {
+			if ( fds.revents & POLLERR )
+				qRLbr();
+			else if ( fds.revents & POLLHUP )
+				Return = -1;
+			else if ( fds.revents & ~Flags )
+				qRLbr();
+			else
+				Return = 1;
+		} else if ( Result < 0 )
+			qRLbr();
+		else if ( Result > 1 )
+			qRLbr();
+		else if ( Timeout == NoTimeout )
+			qRLbr();
+		else
+			Return = 0;
+
+		return Return;
+	}
+
+	flw::size__ PosixRead_(
+		socket__ Socket,
+		flw::size__ Amount,
+		void *Buffer,
+		duration__ Timeout,
+		const bso::sBool *BreakFlag)
+	{
+		ssize_t Result = 0;
+
+		switch ( poll_(Socket, POLLIN | POLLPRI, Timeout, BreakFlag) ) {
+		case -1:
+			Result = SCK_DISCONNECTED;
+			break;
+		case 0:
+			Result = 0;
+			break;
+		case 1:
+			Result = recv(Socket, (cast__)Buffer, (int)Amount, 0);
+
+			if ( Result == 0 )
+				qRLbr();
+			break;
+		default:
+			qRUnx();
+			break;
+		}
+
+		return Result;
+	}
+
+	flw::size__ PosixWrite_(
+		socket__ Socket,
+		const void *Buffer,
+		flw::size__ Amount,
+		duration__ Timeout,
+		const bso::sBool *BreakFlag)
+	{
+		ssize_t Result = 0;
+
+		switch ( poll_(Socket, POLLOUT, Timeout, BreakFlag) ) {
+		case -1:
+			Result = SCK_DISCONNECTED;
+			break;
+		case 0:
+			Result = 0;
+			break;
+		case 1:
+			Result = send(Socket, (const cast__)Buffer, (int)Amount, 0);
+
+			if ( Result == 0 )
+				qRLbr();
+			break;
+		default:
+			qRUnx();
+			break;
+		}
+
+		return Result;
+	}
+#endif
+}
+
 flw::size__ sck::Read(
 	socket__ Socket,
 	flw::size__ Amount,
 	void *Buffer,
-	duration__ Timeout )
+	duration__ Timeout,
+	const bso::sBool *BreakFlag)
 {
-	fd_set fds;
-	ssize_t Result;
-
-	FD_ZERO( &fds );
-	FD_SET( Socket, &fds );
-
-	if ( Timeout == SCK_INFINITE )
-		Result = select( (int)( Socket + 1 ), &fds, NULL, NULL, NULL );
-	else {
-		timeval TV;
-
-		TV.tv_sec = Timeout;
-		TV.tv_usec = 0;
-
-		Result = select( (int)( Socket + 1 ), &fds, NULL, NULL, &TV );
-	}
-
-	if ( Result == 1 ) {
-		Result = recv( Socket, (cast__)Buffer, (int)Amount, 0 );
-
-		if ( Result == SCK_SOCKET_ERROR ) {
-			Result = SCK_DISCONNECTED;
-
-			if ( Error() != SCK_ECONNRESET )
-				qRLbr();
-		} else if ( !Result && Amount )
-			Result = SCK_DISCONNECTED;
-	} else if ( Result == SCK_SOCKET_ERROR )
-		qRLbr();
-	else if ( ( Result == 0 ) && ( Timeout == SCK_INFINITE ) )
-		qRSys();
-
-	return Result;
+#ifdef CPE_S_WIN
+	return WindowsRead_(Socket, Amount, Buffer, Timeout, BreakFlag);
+#else
+	return PosixRead_(Socket, Amount, Buffer, Timeout, BreakFlag);
+#endif
 }
 
 flw::size__ sck::Write(
 	socket__ Socket,
 	const void *Buffer,
 	flw::size__ Amount,
-	duration__ Timeout )
+	duration__ Timeout,
+	const bso::sBool *BreakFlag)
 {
-	fd_set fds;
-	int Result;
-
-	FD_ZERO( &fds );
-	FD_SET( Socket, &fds );
-
-	if ( Timeout == SCK_INFINITE )
-		Result = select( (int)( Socket + 1 ), NULL, &fds, NULL, NULL );
-	else
-	{
-		timeval TV;
-
-		TV.tv_sec = Timeout;
-		TV.tv_usec = 0;
-
-		Result = select( (int)( Socket + 1 ), NULL, &fds, NULL, &TV );
-	}
-
-	if ( Result == 1 )
-	{
-		Result = send( Socket, (const cast__)Buffer, (int)Amount, 0 );
-
-		if ( Result == SCK_SOCKET_ERROR )
-		{
-			Result = SCK_DISCONNECTED;
-
-			if ( Error() != SCK_ECONNRESET )
-				qRLbr();
-		}
-		else if ( !Result && Amount )	// I assume that, because the send is call immediatly after the select, this can not be happen.
-			qRFwk();
-	}
-	else if ( Result == SCK_SOCKET_ERROR )
-		qRLbr();
-	else if ( ( Result == 0 ) && ( Timeout == SCK_INFINITE ) )
-		qRSys();
-
-	return Result;
+#ifdef CPE_S_WIN
+	return WindowsWrite_(Socket, Buffer, Amount, Timeout, BreakFlag);
+#else
+	return PosixWrite_(Socket, Buffer, Amount, Timeout, BreakFlag);
+#endif
 }
 
 #ifdef SCK__WIN

@@ -60,6 +60,7 @@
 #	include <netinet/in.h>
 #	include <sys/ioctl.h>
 #	include <errno.h>
+# include <poll.h>
 #	define SCK_INVALID_SOCKET		-1
 #	define SCK_SOCKET_ERROR			-1
 #	define SCK_ECONNRESET			ECONNRESET
@@ -242,7 +243,8 @@ namespace sck {
 		socket__ Socket,
 		flw::size__ Amount,
 		void *Buffer,
-		duration__ Timeout);	// En secondes.
+		duration__ Timeout,	// En secondes.
+		const bso::sBool *BreakFlag);
 
 	/*f Write up to 'Amount' bytes from 'Buffer' to the socket 'Socket'. Return
 	the amount effectively written. If 0 is returned, it means 'Timeout' expired.
@@ -251,7 +253,8 @@ namespace sck {
 		socket__ Socket,
 		const void *Buffer,
 		flw::size__ Amount,
-		duration__ Timeout);	// En secondes.
+		duration__ Timeout,	// En secondes.
+		const bso::sBool *BreakFlag);
 
 	/* To initiate a connection closing, which socket is handled from another thread.
 	The socket will be than closed gracefully. See 'Close(…)' */
@@ -285,19 +288,6 @@ namespace sck {
 		{
 			EpochTimeStamp_ = tol::EpochTime(false);
 		}
-		inline bso::sBool Break_(void) const
-		{
-			if ( Timeout_ == NoTimeout )
-				qRUnx();
-
-			if ( BreakFlag_ == NULL )
-				qRUnx();
-
-			if ( *BreakFlag_ )
-				return true;
-
-			return false;
-		}
 	protected:
 		virtual fdr::size__ FDRRead(
 			fdr::size__ Maximum,
@@ -308,22 +298,11 @@ namespace sck {
 			if ( !IsAlive_ )
 				qRFwk();
 
-			do {
-				if ( ( BreakFlag_ != NULL ) && *BreakFlag_ ) {
-					Red = 0;
-					break;
-				}
-
-				if ( ( Red = sck::Read(Socket_, ( Maximum ), Buffer, Timeout_) ) == (fdr::sSize)SCK_DISCONNECTED ) {
-					Red = 0;
-					IsAlive_ = false;
-					break;
-				}  else if ( Red == 0 ) {
-					if ( Break_() )
-						break;
-				} else
-					_Touch();
-			} while ( Red == 0 );
+			if ( ( Red = sck::Read(Socket_, ( Maximum ), Buffer, Timeout_, BreakFlag_) ) == (fdr::sSize)SCK_DISCONNECTED ) {
+				Red = 0;
+				IsAlive_ = false;
+			} else
+				_Touch();
 
 			return Red;
 		}
@@ -346,22 +325,12 @@ namespace sck {
 			if ( !IsAlive_ )
 				qRFwk();
 
-			do {
-				if ( ( BreakFlag_ != NULL ) && *BreakFlag_ ) {
-					Written = 0;
-					break;
-				}
-
-				if ( ( Written = sck::Write(Socket_, Buffer, Maximum, Timeout_) ) == (fdr::sSize)SCK_DISCONNECTED ) {
-					Socket_ = SCK_INVALID_SOCKET;
-					IsAlive_ = false;
-					Written = 0;
-				} else if ( Written == 0 ) {
-					if ( Break_() )
-						break;
-				} else
-					_Touch();
-			} while ( Written == 0 );
+			if ( ( Written = sck::Write(Socket_, Buffer, Maximum, Timeout_, BreakFlag_) ) == (fdr::sSize)SCK_DISCONNECTED ) {
+				Socket_ = SCK_INVALID_SOCKET;
+				IsAlive_ = false;
+				Written = 0;
+			} else
+				_Touch();
 
 			return Written;
 		}

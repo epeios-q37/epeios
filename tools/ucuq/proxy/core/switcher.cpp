@@ -189,10 +189,10 @@ namespace {
 			break;
 		}
 	qRR;
-		if ( Driver != NULL ) {
-			qDELETE(Driver);
-		}
 	qRT;
+	if ( Driver != NULL ) {
+		qDELETE(Driver);
+	}
 	qRE;
 	}
 

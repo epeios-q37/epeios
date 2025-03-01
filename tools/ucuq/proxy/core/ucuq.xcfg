@@ -15,9 +15,23 @@
     <xpp:define name="LinuxHGRoot">
       <xpp:bloc>/home/csimon/hg</xpp:bloc>
     </xpp:define>
-    <ModulesFileName>
-      <xpp:expand select="WindowsHGRoot"/>
+    <xpp:define name="ModulesFileRelativePath">
       <xpp:bloc>/q37/epeios/tools/ucuq/proxy/core/Modules.xml</xpp:bloc>
+    </xpp:define>
+    <xpp:define name="WindowsModulesFile">
+      <xpp:bloc>
+        <xpp:expand select="WindowsHGRoot"/>
+        <xpp:expand select="ModulesFileRelativePath"/>
+      </xpp:bloc>
+    </xpp:define>
+    <xpp:define name="LinuxModulesFile">
+      <xpp:bloc>
+        <xpp:expand select="LinuxHGRoot"/>
+        <xpp:expand select="ModulesFileRelativePath"/>
+      </xpp:bloc>
+    </xpp:define>
+    <ModulesFileName>
+      <xpp:expand select="LinuxModulesFile"/>
     </ModulesFileName>
   </Parameters>
   <Definitions>

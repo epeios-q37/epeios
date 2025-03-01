@@ -1,0 +1,26 @@
+{
+"L2R": {
+    "Description": "Left to right",
+    "Content": "l-90:L-90:R-90:r-90"
+  },
+  "R2L": {
+    "Description": "Right to left",
+    "Content": "l+90:L+90:R+90:r+90"
+  },
+  "Rest": {
+    "Description": "Resting position",
+    "Content": "l+90:L-90:R+90:r-90"
+  },
+  "R2L2R": {
+    "Description": "Right to left to right",
+    "Content": "l-90:L-90:R-90:r-90: %10 l-45 l:L-45 l+45:L:R-45 l+90:L+45:R:r-45 l+45:L+90:R+45:r l:L+45:R+90:r+45 l-45:L:R+45:r+90 l-90:L-45:R:r+45 L-90:R-45:r R-90:r-45 r-90"
+  },
+  "L2R2L": {
+    "Description": "Left to right to left",
+    "Content": "l+90:L+90:R+90:r+90: %10 l+45 l:L+45 l-45:L:R+45 l-90:L-45:R:r+45 l-45:L-90:R-45:r l:L-45:R-90:r-45 l+45:L:R-45:r-90 l+90:L+45:R:r-45 L+90:R+45:r R+90:r+45 r+90"
+  },
+  "Misc": {
+    "Description": "Divers",
+    "Content": "l:L:R:r l-90 L+90 R-90 r+90 l+90:L-90:R+90:r-90 l+45:r-45 l:r:L-45:R+45 L+45:R-45 l+45:L+90:R-90:r-45 l+90:r-90 l+45:L-45:R:r+45 l:L-45:R+45:r l+45:L-45:R-45:r l-45:L:R+45:r+45 $Rest"
+  }
+}
