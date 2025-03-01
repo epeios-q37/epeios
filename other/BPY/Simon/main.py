@@ -383,6 +383,7 @@ async def atkClick(dom, id):
       cLCD.clear().moveTo(0,0).putString(STRINGS[2]).moveTo(0,1).putString(STRINGS[3])
       number(None)
       ucuq.commit()
+      number(0)
       ucuq.sleep(.75)
       play(seq)
     else:
