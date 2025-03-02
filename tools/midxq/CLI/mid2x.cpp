@@ -50,7 +50,7 @@ namespace {
         const fnm::rName &Target )
     {
     qRH
-        sclm::rTextWFlowRack Rack;
+        sclm::rTWFlowRack Rack;
     qRB
         Convert_( RFlow, Rack.Init(Target) );
     qRR

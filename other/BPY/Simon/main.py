@@ -131,7 +131,7 @@ PRESETS = {
   ucuq.K_WOKWI_DISPLAYS: P_WOKWI
 }
 
-seq = "RRRRR"
+seq = ""
 userSeq = ""
 
 def digit(n,offset):
