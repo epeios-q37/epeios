@@ -73,7 +73,7 @@ namespace {
     if ( Row == qNIL ) {
       Message.Init();
 
-      messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, RToken, Id);
+      messages::GetTranslation(messages::iUnableToFindDevice, Message, RToken, Id);
 
       common::Put(ucumng::aError, Manager);
       common::Put(Message, Manager);

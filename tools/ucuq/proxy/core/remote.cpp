@@ -367,7 +367,7 @@ qRH;
     RemoteBreakFlag = false,
     DeviceBreakFlag = false;
 qRB;
-  RemoteDriver.SetBreakFlag(2, &RemoteBreakFlag);
+  RemoteDriver.SetBreakFlag(common::BreakFlagTimeout, &RemoteBreakFlag);
 
   Remote.Init(RemoteDriver);
 
@@ -379,7 +379,7 @@ qRB;
 
   if ( Row == qNIL ) {
     Message.Init();
-    messages::GetTranslation(messages::iNoDeviceWithGivenTokenAndId, Message, RToken, Id);
+    messages::GetTranslation(messages::iUnableToFindDevice, Message, RToken, Id);
     common::Put(Message, Remote);
     common::Commit(Remote);
   } else {

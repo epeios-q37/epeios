@@ -70,11 +70,11 @@ namespace {
 		else {
 			timeval TV;
 
-			TV.tv_sec = Timeout;
-			TV.tv_usec = 0;
+			TV.tv_sec = Timeout / 1000;
+			TV.tv_usec = (Timeout % 1000 ) * 1000;
 
 			do
-				Result = select((int)( Socket + 1 ), &fds, NULL, NULL, &TV);
+				Result = select((int)( Socket + 1 ), &fds, NULL, NULL, &TV);	// Unlike what happens under Linux,, 'select' does not modify 'TV'.
 			while ( !Result && !*BreakFlag );
 		}
 
@@ -114,10 +114,11 @@ namespace {
 		else {
 			timeval TV;
 
-			TV.tv_sec = Timeout;
-			TV.tv_usec = 0;
+			TV.tv_sec = Timeout / 1000;
+			TV.tv_usec = ( Timeout % 1000 ) * 1000;
+
 			do {
-				Result = select((int)( Socket + 1 ), NULL, &fds, NULL, &TV);
+				Result = select((int)( Socket + 1 ), NULL, &fds, NULL, &TV);	// Unlike what happens under Linux,, 'select' does not modify 'TV'.
 			} while ( !Result && !*BreakFlag );
 		}
 
@@ -164,7 +165,7 @@ namespace {
 				qRFwk();
 
 			do
-				Result = poll(&fds, 1, Timeout * 1000);
+				Result = poll(&fds, 1, Timeout);
 			while ( !Result && !*BreakFlag );
 		}
 

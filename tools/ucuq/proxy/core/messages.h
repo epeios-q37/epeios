@@ -29,7 +29,7 @@ namespace messages {
     iDevice,
     iUnknownProtocol,
     iUnknownProtocolVersion,
-    iNoDeviceWithGivenTokenAndId,  // %1: token, %2: id
+    iUnableToFindDevice,  // %1: token, %2: id
     iUnknownCaller,  // %1: caller
     iUnknownModule, // %1: module name
     i_amount,

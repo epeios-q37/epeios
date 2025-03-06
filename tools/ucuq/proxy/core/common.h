@@ -35,6 +35,9 @@
 namespace common {
   using namespace ucucmn;
 
+  extern const sck::sTimeout BreakFlagTimeout;  // In ms.
+
+
   qROW(Row);
 
   class rCaller_;

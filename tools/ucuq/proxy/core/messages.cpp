@@ -31,7 +31,7 @@ const char* messages::GetLabel(eId Id)
     C(Device);
 		C(UnknownProtocol);
 		C(UnknownProtocolVersion);
-    C(NoDeviceWithGivenTokenAndId);
+    C(UnableToFindDevice);
     C(UnknownModule);
 	default:
 		qRFwk();

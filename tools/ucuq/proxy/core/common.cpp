@@ -29,6 +29,8 @@
 
 using namespace common;
 
+qCDEF(sck::sTimeout, common::BreakFlagTimeout, 500);	// In ms.
+
 class common::rCaller_
 {
 private:
@@ -78,7 +80,7 @@ public:
 
     BreakFlag_ = BreakFlag;
 
-		Driver_->SetBreakFlag(2, BreakFlag_);
+		Driver_->SetBreakFlag(BreakFlagTimeout, BreakFlag_);
 
 		return true;
   }

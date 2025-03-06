@@ -394,7 +394,7 @@ namespace sck {
 			_ioflow_driver___::Init(ThreadSafety);
 		}
 		void SetBreakFlag(
-			sTimeout Timeout,	// In seconds
+			sTimeout Timeout,	// In ms
 			const bso::sBool *Flag)
 		{
 			if ( ( Timeout != NoTimeout ) && ( Flag == NULL ) )
@@ -444,7 +444,7 @@ namespace sck {
 			ioflow__::Init(Driver_, Cache_, sizeof( Cache_ ));
 		}
 		void SetBreakFlag(
-			sTimeout Timeout,	// In seconds
+			sTimeout Timeout,	// In ms
 			const bso::sBool *Flag)
 		{
 			Driver_.SetBreakFlag(Timeout, Flag);
