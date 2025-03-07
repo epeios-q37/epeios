@@ -35,7 +35,7 @@ async def setPin(dom, preset):
     await dom.setValue(W_PIN, PINS[preset])
 
 
-async def atkConnect(dom):
+async def atk(dom):
   id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
   if id == ucuq.K_BIPEDAL:

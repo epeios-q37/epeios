@@ -122,7 +122,7 @@ async def updateUIAwait(dom, onDuty):
         raise Exception("Unknown preset!")
         
 
-async def atkConnect(dom):
+async def atk(dom):
   id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
 
   await drawAwait(dom, "")

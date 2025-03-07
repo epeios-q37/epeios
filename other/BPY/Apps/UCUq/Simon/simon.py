@@ -246,7 +246,7 @@ async def updateHardwareUI(dom):
   await dom.setValues(SETTINGS[await dom.getValue(W_H_PRESET)])
 
 
-async def atkConnect(dom):
+async def atk(dom):
   preset = PRESETS[ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))]
 
   await dom.setValue(W_H_PRESET, preset)

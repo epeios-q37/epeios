@@ -257,7 +257,7 @@ async def setWidth(width):
   return await getParams()
 
 
-async def atkConnect(dom):
+async def atk(dom):
   preset = PRESETS[ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))]
 
   await updateSettingsUIFollowingPreset_(dom, preset)

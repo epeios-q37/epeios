@@ -1,27 +1,3 @@
-"""
-MIT License
-
-Copyright (c) 2019 Claude SIMON (https://q37.info/s/rmnmqd49)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 import os, sys
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -33,23 +9,54 @@ ucuq.setDevice("Bravo")
 
 lcd = ucuq.HD44780_I2C(ucuq.SoftI2C(6, 7), 2, 16)
 oled = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9))
+ring = ucuq.WS2812(2, 8)
+buzzer = ucuq.PWM(5, freq=50, u16 = 0).setNS(0)
+
 
 from random import randint
 
-DICTIONARY = [
-  "accommodate", "afterthought", "allegiance", "aloft", "ancestor", "anticipation", "antics",
-  "apparel", "ascend", "beckon", "brink", "catastrophe", "coax", "compassion", "complexion", "content",
-  "courteous", "cringe", "derelict", "dignity", "distaste", "dormant", "elaborate", "endure", "enforce",
-  "exertion", "expanse", "extraordinary", "foliage", "foremost", "frank", "function", "futile", "gaze",
-  "glimmer", "glimpse", "grimace", "headstrong", "hesitate", "hoist", "immense", "imperceptibly",
-  "indication", "inscription", "instinctive", "intent", "interior", "jar", "keepsake", "knack",
-  "literacy", "lurch", "makeshift", "malicious", "massive", "meager", "melancholy", "merge", "mingle",
-  "minuscule", "momentary", "nape", "nimble", "obstinate", "opt", "overwhelming", "pact", "pandemonium",
-  "persuade", "phenomenal", "ponder", "quantity", "quaver", "quench", "radiant", "ravine", "recipient",
-  "resentful", "satisfactory", "sensitive", "sentiment", "shudder", "sickly", "sleek", "solemn", "soothe",
-  "stagger", "stern", "tantalize", "temptation", "transform", "unscrupulous", "vain", "vengeance",
-  "violate", "vital", "vivid", "wistful", "yield", "zest"
+DICTIONARY_EN = [
+  "apple", "banana", "grape", "orange", "mango", "peach", "pineapple", "strawberry",
+  "blueberry", "blackberry", "kiwi", "melon", "pear", "plum", "cherry", "coconut",
+  "watermelon", "papaya", "apricot", "lemon", "lime", "pomegranate", "fig", "date",
+  "tomato", "cucumber", "carrot", "potato", "onion", "garlic", "pepper", "spinach",
+  "lettuce", "broccoli", "cabbage", "celery", "zucchini", "eggplant", "beet", "radish",
+  "turnip", "squash", "pumpkin", "asparagus", "artichoke", "parsley", "basil", "oregano",
+  "cilantro", "thyme", "rosemary", "sage", "chili", "cinnamon", "ginger", "nutmeg",
+  "vanilla", "peppermint", "cardamom", "anise", "clove", "fennel", "cumin", "coriander",
+  "mustard", "sesame", "sunflower", "almond", "walnut", "pecan", "hazelnut", "cashew",
+  "pistachio", "peanut", "grain", "barley", "oat", "wheat", "rice", "quinoa",
+  "corn", "millet", "sorghum", "rye", "buckwheat", "spelt", "farro", "teff",
+  "chickpea", "lentil", "kidney", "blackbean", "soybean", "pinto", "tofu", "tempeh",
+  "seitan", "vegan", "vegetarian", "carnivore", "omnivore", "sustainable", "organic"
 ]
+
+DICTIONARY_FR = [
+"abondant", "bateau", "chien", "dormir", "fleur", "gantier", "hiver",
+"jardin", "kiwi", "lune", "maison", "nuage", "oiseau", "plage",
+"quai", "rire", "soleil", "table", "usine", "verre", "wagon", "hippopotame",
+"arbre", "bonheur", "ciel", "danse", "feuille", "guitare", "herbe",
+"insecte", "jouet", "livre", "montagne", "neige", "glacier", "pluie",
+"question", "sable", "train", "univers", "vent", "whisky", "avion",
+"ballon", "chapeau", "drapeau", "foret", "glace", "horloge", "igloo",
+"kayak", "lampe", "musique", "nuit", "papillon", "radio", "stylo",
+"voiture", "amour", "biscuit", "cacao", "dent", "fromage", "graine",
+"hibou", "image", "jupe", "koala", "lait", "miel", "orange", "pomme",
+"quiche", "rose", "sucre", "tomate", "violon", "yaourt", "abeille",
+"banane", "carotte", "dauphin", "fraise", "gorille", "hamster",
+"igname", "jonquille", "kiosque", "lavande", "mouton", "narcisse",
+"poire", "renard", "serpent", "tulipe", "valise", "wasabi", "xylophone",
+"yoga", "zeste", "abricot", "bambou", "cactus", "dahlia", "framboise",
+"gantier", "hautbois", "jardinier", "kiosquier", "laurier", "magnolia",
+"mouvement", "nation", "nature", "nuageux", "paysage", "chasseur", "petit",
+"pouvoir", "rapport", "region", "ramification", "retour", "cauchemar", "rivage",
+"saison", "sang", "sauvetage", "secours", "sentier", "film", "service",
+"situation", "village", "spectacle", "sport", "station", "style", "appareil",
+"tendance", "terrain", "concert", "tourisme", "travail", "tribunal", "colifichet"
+]
+
+
+DICTIONARY = DICTIONARY_EN
 
 HANGED_MAN = "Head Body LeftArm RightArm LeftLeg RightLeg".split()
 
@@ -64,7 +71,7 @@ HANGED_MAN_PATTERNS = (
   "007ffffffe00007ffffffe00006000000600006000000600006000000600006000000600006000000600006000000600006000000600006000000f00006000003fc00060000070e000600000606000600000c03000600000c03000600000c03000600000c0300060000060600060000070e0006000003fc0006000000f00006000000600006000000600006000000600006000000f00006000001f800060000036c000600000666000600000c63000600001861800600003060c006000060606006000000600006000000600006000000600006000000600006000000600006000000600006000000600006000000f000060000019800060000019800060000030c000600000606000600000606000600000c03000600001801800600001801800600003000c006000060006006000060006006000000000006000000000006000000000006000000000006000000000006000000000006000000000006000000000006000000000006000000000006000000000ffffffffffffffffffffffff",
 )
 
-chosen = ""
+HAPPY_PATTERN = "03c00c30181820044c32524a80018001824181814812442223c410080c3003c0"
 
 
 class Core:
@@ -72,6 +79,7 @@ class Core:
     self.errors = 0
     self.correctGuesses = []
     self.secretWord = ""
+    self.chosen = ""
 
   def __init__(self):
     self.reset()
@@ -81,10 +89,21 @@ def randword():
   return DICTIONARY[randint(0, len(DICTIONARY)-1)]
 
 
+def normalize(string):
+  if len(string) < 16:
+    return string.ljust(16)
+  else:
+    return string[-16:]
+
+
 async def showHanged(dom, errors):
   if (errors):
     oled.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
     await dom.removeClass(HANGED_MAN[errors-1], "hidden")
+
+  for l in range(errors+1):
+    ring.setValue(l, [l * 5, 30 - l * 5, 0])
+  ring.write()
 
 
 async def showWord(dom, secretWord, correctGuesses):
@@ -94,8 +113,8 @@ async def showWord(dom, secretWord, correctGuesses):
     if secretWord[i] in correctGuesses:
       output = output[:i] + secretWord[i] + output[i + 1:]
 
-  lcd.moveTo(0,0).putString(output)
-  
+  lcd.moveTo(0,0).putString(output.center(16))
+
   html = atlastk.createHTML()
   html.putTagAndValue("h1", output)
   await dom.inner("output", html)
@@ -106,21 +125,21 @@ async def reset(core, dom):
   await dom.inner("", BODY)
   core.secretWord = randword()
   print(core.secretWord)
-  oled.fill((0,0,0)).draw(START_PATTERN, 48, ox=47).show()
+  oled.fill(0).draw(START_PATTERN, 48, ox=47).show()
   await showWord(dom, core.secretWord, core.correctGuesses)
+  lcd.moveTo(0,1).putString(normalize(""))
+  ring.fill([0,0,0]).setValue(0,[0,30,0]).write()
 
 
-async def atkConnect(core, dom):
+async def atk(core, dom):
   await reset(core,dom)
 
 
 async def atkSubmit(core, dom, id):
-  global chosen
-
   await dom.addClass(id, "chosen")
 
   guess = id.lower()
-  chosen += guess
+  core.chosen += guess
 
   if guess in core.secretWord:
     core.correctGuesses.append(guess)
@@ -134,31 +153,33 @@ async def atkSubmit(core, dom, id):
     await showWord(dom, core.secretWord, core.correctGuesses)
 
     if correct == len(core.secretWord):
+      lcd.moveTo(0,1).putString("Congratulations!")
+      oled.draw(HAPPY_PATTERN, 16, mul=4, ox=32).show()
       await dom.alert("You've won! Congratulations!")
-      reset(core,dom)
+      await reset(core, dom)
       return
   else:
     core.errors += 1
     await showHanged(dom, core.errors)
+    lcd.moveTo(0,1).putString(normalize(''.join([char for char in core.chosen if char not in core.correctGuesses])))
+    buzzer.setFreq(30).setU16(50000)
+    ucuq.sleep(0.5)
+    buzzer.setU16(0)
 
-  lcd.moveTo(0,1)
-  lcd.putString(chosen)
-
+  
   if core.errors >= len(HANGED_MAN):
     await dom.removeClass("Face", "hidden")
     await dom.alert("\nYou've run out of guesses. \nYou had " + str(core.errors) +
-          " errors and " + str(len(core.correctGuesses)) + " correct guesses. " +
-          "\n\nThe word was '" + core.secretWord + "'.")
+      " errors and " + str(len(core.correctGuesses)) + " correct guesses. " +
+      "\n\nThe word was '" + core.secretWord + "'.")
     await reset(core, dom)
-
-    chosen = ""
 
 
 async def atkRestart(core, dom):
   if (core.secretWord != "" ):
     await dom.alert("You had " + str(core.errors) +
-        " errors and " + str(len(core.correctGuesses)) + " correct guesses. " +
-        "\nThe word was '" + core.secretWord + "'.")
+      " errors and " + str(len(core.correctGuesses)) + " correct guesses. " +
+      "\nThe word was '" + core.secretWord + "'.")
 
   await reset(core, dom)
 

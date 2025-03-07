@@ -233,20 +233,7 @@ function handleLaunch(instance, id, action) {
   instance._xdh.inProgress = true;
 
   bundle = { instance: instance, id: id, action: action };
-  /*
-  if (
-  action === "" ||
-  !("_PreProcess" in actionCallbacks) ||
-  await callCallback(actionCallbacks["_PreProcess"], instance, id, action)
-  )
-  if (
-    await callCallback(actionCallbacks[action], instance, id, action) &&
-    "_PostProcess" in actionCallbacks
-  )
-    await callCallback(actionCallbacks["_PostProcess"], instance, id, action);
 
-  standBy(instance);
-  */
   if (receiveCallbacksQueue.length !== 0) {
     // Somebody is waiting to receive this message.
     receiveCallbacksQueue.shift().resolve(bundle);

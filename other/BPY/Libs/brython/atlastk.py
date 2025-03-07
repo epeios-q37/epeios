@@ -8,8 +8,7 @@ javascript.import_js("atlastk.js", "atlastkjs")
 
 # Options entries
 O_CALLBACKS_PREFIX_ = "CallbacksPrefix"
-O_CONNECT_ACTION_NAME_ = "ConnectActionName"
-O_CALLBACKS_DICT_NAME_ = "CallbacksDictName"
+O_CONNECT_ACTION_AFFIX_ = "ConnectActionName"
 O_PREPROCESS_ACTION_NAME_ = "PreprocessActionName"
 O_POSTPROCESS_ACTION_NAME_ = "PostprocessActionName"
 
@@ -20,10 +19,8 @@ options_ = {
   # if absent from callbacks dict.
   # If 'None' or '', callbacks for the actions must be in callbacks dict.
   O_CALLBACKS_PREFIX_: DEFAULT_CALLBACK_PREFIX,
-  # The name for the connect action.
-  O_CONNECT_ACTION_NAME_: "Connect",
-  # Name of the callbacks dict.
-  O_CALLBACKS_DICT_NAME_: DEFAULT_CALLBACK_PREFIX.upper() + "_CALLBACKS",
+  # The affix for the connect action.
+  O_CONNECT_ACTION_AFFIX_: "",
   # NOTA: there is no default callback name for below 2 actions.
   # They must be specifically defined in the callbacks dict.
   # Name of the preprocessing action.
@@ -96,14 +93,16 @@ class Lock:
     self.locked_ = False
 
 class DOM:
-  def __init__(self,userCallback):
-    args=[]
-
+  def __init__(self, userCallback):
     if ( userCallback is not None ):
+      args=[]
+
       if ( not(inspect.isclass(userCallback)) and len(inspect.getfullargspec(userCallback).args) == 1 ):
         args.append(self)
 
-    self.userObject = userCallback(*args)
+      self.userObject = userCallback(*args)
+    else:
+      self.userObject = None
 
 
   async def call_(self, command, type, *args):
@@ -453,20 +452,20 @@ def buildArgs(callback, bundle):
   instance = bundle.instance 
   userObject = instance.userObject
 
-  if ( not(userObject)) :
+  if not userObject:
     amount += 1
 
-  if ( amount == 4 ):
-    args.insert(0,bundle.action)
+  if amount == 4:
+    args.insert(0, bundle.action)
 
-  if( amount >= 3 ):
-    args.insert(0,bundle.id)
+  if amount >= 3:
+    args.insert(0, bundle.id)
 
-  if( amount >= 2 ):
-    args.insert(0,instance)
+  if amount >= 2:
+    args.insert(0, instance)
 
-  if( userObject and (amount >= 1 )):
-    args.insert(0,userObject)
+  if userObject and ( amount >= 1 ):
+    args.insert(0, userObject)
 
   return args
 
@@ -485,7 +484,7 @@ async def handleCallbackBundle(userCallbacks, callingGlobals, bundle):
     if action in userCallbacks:
       callback = userCallbacks[action]
     elif options_[O_CALLBACKS_PREFIX_]:
-      callbackName = options_[O_CALLBACKS_PREFIX_] + ( options_[O_CONNECT_ACTION_NAME_] if action == "" else action )
+      callbackName = options_[O_CALLBACKS_PREFIX_] + ( options_[O_CONNECT_ACTION_AFFIX_] if action == "" else action )
 
       if callbackName in callingGlobals:
         callback = callingGlobals[callbackName]
@@ -500,25 +499,24 @@ async def handleCallbackBundle(userCallbacks, callingGlobals, bundle):
     else:
       await bundle.instance.alert(("\tDEV ERROR: missing callback for '" + action + "' action!"))
 
-async def handleCallbackBundles(userCallbacks, callingGlobals):
+async def handleCallbackBundles(callbacks, callingGlobals):
   if callingGlobals == None:
     callingGlobals = {}
 
-  if userCallbacks == None:
-    userCallbacks = callingGlobals[options_[O_CALLBACKS_DICT_NAME_]] if options_[O_CALLBACKS_DICT_NAME_] in callingGlobals else {}
+  if callbacks == None:
+    callbacks = {}
 
   while True:
     bundle = await atlastkjs.getCallbackBundle()
-    aio.run(handleCallbackBundle(userCallbacks,callingGlobals, bundle))
+    aio.run(handleCallbackBundle(callbacks, callingGlobals, bundle))
 
 def retrieve_(var, id, globals):
-  if var != None:
-    return var
-  
-  if id in globals:
+  if ( var == None ) and ( id in globals ):
     return globals[id]
+  
+  return var
 
-def launch(callbacks = None, *, userCallback = lambda : None, globals = None, headContent = None):
+def launch(callbacks = None, *, userCallback = None, globals = None, headContent = None):
 
   if globals != None:
     callbacks = retrieve_(callbacks, "ATK_CALLBACKS", globals)

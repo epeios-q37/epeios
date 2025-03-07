@@ -127,7 +127,7 @@ async def updateUI(dom):
   await dom.focus(W_TOKEN if not K_DEVICE_TOKEN in device else W_ID)
 
 
-async def atkConnect(dom):
+async def atk(dom):
   await dom.inner("", BODY)
 
 # BEGIN PYH

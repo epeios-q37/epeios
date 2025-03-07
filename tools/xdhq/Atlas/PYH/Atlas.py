@@ -33,8 +33,7 @@ getAppURL = get_app_url
 
 # Options entries
 O_CALLBACKS_PREFIX_ = "CallbacksPrefix"
-O_CONNECT_ACTION_NAME_ = "ConnectActionName"
-O_CALLBACKS_DICT_NAME_ = "CallbacksDictName"
+O_CONNECT_ACTION_AFFIX_ = "ConnectActionName"
 O_PREPROCESS_ACTION_NAME_ = "PreprocessActionName"
 O_POSTPROCESS_ACTION_NAME_ = "PostprocessActionName"
 
@@ -45,10 +44,8 @@ options_ = {
   # if absent from callbacks dict.
   # If 'None' or '', callbacks for the actions must be in callbacks dict.
   O_CALLBACKS_PREFIX_: DEFAULT_CALLBACK_PREFIX,
-  # The name for the connect action.
-  O_CONNECT_ACTION_NAME_: "Connect",
-  # Name of the callbacks dict.
-  O_CALLBACKS_DICT_NAME_: DEFAULT_CALLBACK_PREFIX.upper() + "_CALLBACKS",
+  # The affix for the connect action.
+  O_CONNECT_ACTION_AFFIX_: "",
   # NOTA: there is no default callback name for below 2 actions.
   # They must be specifically defined in the callbacks dict.
   # Name of the preprocessing action.
@@ -95,20 +92,20 @@ def _call(func, userObject, dom, id, action):
 	amount = len(inspect.getfullargspec(func).args)
 	args = []
 
-	if ( not(userObject)) :
+	if not(userObject):
 		amount += 1
 
-	if ( amount == 4 ):
-		args.insert(0,action)
+	if amount == 4:
+		args.insert(0, action)
 
-	if( amount >= 3 ):
-		args.insert(0,id)
+	if amount >= 3:
+		args.insert(0, id)
 
-	if( amount >= 2 ):
-		args.insert(0,dom)
+	if amount >= 2:
+		args.insert(0 ,dom)
 
-	if( userObject and (amount >= 1 )):
-		args.insert(0,userObject)
+	if userObject and ( amount >= 1 ):
+		args.insert(0, userObject)
 
 	return func(*args)
 
@@ -155,7 +152,7 @@ def worker(userCallback, dom, callbacks, callingGlobals):
 			if action in callbacks:
 				callback = callbacks[action]
 			elif options_[O_CALLBACKS_PREFIX_]:
-				callbackName = options_[O_CALLBACKS_PREFIX_] + ( options_[O_CONNECT_ACTION_NAME_] if action == "" else action )
+				callbackName = options_[O_CALLBACKS_PREFIX_] + ( options_[O_CONNECT_ACTION_AFFIX_] if action == "" else action )
 
 				if callbackName in callingGlobals:
 					callback = callingGlobals[callbackName]
@@ -225,9 +222,21 @@ def _launch(callbacks, callingGlobals, userCallback, headContent):
 		XDHq.launch(_callback, userCallback, callbacks, callingGlobals, headContent)
 	except socket.timeout:
 		pass
+
+
+def retrieve_(var, id, globals):
+  if ( var == None ) and ( id in globals ):
+    return globals[id]
+  
+  return var	
 	
 
 def launch(callbacks, *, globals = None,  userCallback = None, headContent = None):
+	if globals != None:
+		callbacks = retrieve_(callbacks, "ATK_CALLBACKS", globals)
+		userCallback = retrieve_(userCallback, "ATK_USER", globals)
+		headContent = retrieve_(headContent, "ATK_HEAD", globals)
+
 	if _is_jupyter():
 		global _intraLock, _thread
 
