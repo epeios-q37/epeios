@@ -245,6 +245,91 @@
       }
     }
   },
+  "Golf": {
+    "_comment": "F: Front; B: Back; L: Left; R: Right; a, b, c the motors from the body to the extremity.",
+    "Preset": {
+      "Hardware": {
+        "mode": "Straight"
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Tweak": {
+        "angle": 90,
+        "offset": 0,
+        "invert": true
+      }
+    },
+    "Motors": {
+      "L": {
+        "Hardware": {
+          "pin": 0
+        }
+      },
+      "l": {
+        "Hardware": {
+          "pin": 1
+        }
+      },
+      "R": {
+        "Hardware": {
+          "pin": 2
+        }
+      },
+      "r": {
+        "Hardware": {
+          "pin": 3
+        }
+      }
+    }
+  },
+  "Golf_": {
+    "_comment": "F: Front; B: Back; L: Left; R: Right; a, b, c the motors from the body to the extremity.",
+    "Preset": {
+      "Hardware": {
+        "mode": "PCA",
+        "sda": 6,
+        "scl": 7,
+        "offset": 9
+      },
+      "Specs": {
+        "freq": 50,
+        "u16_min": 1632,
+        "u16_max": 8800,
+        "range": 180
+      },
+      "Tweak": {
+        "angle": 90,
+        "offset": 0,
+        "invert": true
+      }
+    },
+    "Motors": {
+      "L": {
+        "Hardware": {
+          "channel": 0
+        }
+      },
+      "l": {
+        "Hardware": {
+          "channel": 1
+        }
+      },
+      "R": {
+        "Hardware": {
+          "channel": 2
+        }
+      },
+      "r": {
+        "Hardware": {
+          "channel": 3
+        }
+      }
+    }
+  },
   "Yellow": {
     "Preset": {
       "Hardware": {

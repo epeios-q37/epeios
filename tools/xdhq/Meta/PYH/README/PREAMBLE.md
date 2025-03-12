@@ -1,3 +1,3 @@
-> Take also a look to the [*Zelbinium*](http://zelbinium.q37.info) project, which uses the *Python* version of the *Atlas* toolkit to prevent smartphone-related risks among teenagers.
-
-<ins>***WebGPIO* (*Raspberry Pi*/*ODROID-C2*)**</ins>: the *WebGPIO* application, with which you can control the *Raspberry Pi*/*ODROID-C2* (and probably other similar devices) GPIOs with your smartphone, is described in the *Raspberry Pi*/*ODROID-C2* below section.
+> [*Zelbinium*](http://zelbinium.q37.info): IT for all (especially for teenagers).
+>
+> Use the *Atlas* toolkit to remotely control microcontrollers like the *ESP32*, *ESP8266*, *Raspberry Pi Pico (2) W*: [*UCUq*](https://s.q37.info/7zrtt9xc).

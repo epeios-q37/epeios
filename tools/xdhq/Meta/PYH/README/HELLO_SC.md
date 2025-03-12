@@ -12,20 +12,15 @@ BODY = """
 </fieldset>
 """
  
-def acConnect(dom):
+def atk(dom): # Callback called on new connections.
   dom.inner("", BODY)
   dom.focus("Input")
  
-def acSubmit(dom):
+def atkSubmit(dom): # Callback for the 'Submit' action, hence the name.
   name = dom.getValue("Input")
   dom.begin("Output", f"<div>Hello, {name}!</div>")
   dom.setValue("Input", "")
   dom.focus("Input")
  
-CALLBACKS = {
-  "": acConnect,
-  "Submit": acSubmit
-}
- 
-atlastk.launch(CALLBACKS)
+atlastk.launch(globals=globals())
 ```

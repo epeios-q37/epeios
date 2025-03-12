@@ -231,7 +231,7 @@ def retrieve_(var, id, globals):
   return var	
 	
 
-def launch(callbacks, *, globals = None,  userCallback = None, headContent = None):
+def launch(callbacks = None, *, globals = None,  userCallback = None, headContent = None):
 	if globals != None:
 		callbacks = retrieve_(callbacks, "ATK_CALLBACKS", globals)
 		userCallback = retrieve_(userCallback, "ATK_USER", globals)

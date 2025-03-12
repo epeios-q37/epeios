@@ -18,7 +18,6 @@ La commande `ATKAtlasPack` génère le fichier `atlastk.zip` qui contient la bib
 
 Pour l'utiliser, utiliser le code suivant (adapter le chemin ; il semblerait qu'il faille un chemin, même si l'archive se trouve dans le répertoire courant) :
 
-
 ```python
 __import__("sys").path.append("./atlastk.zip")
 
@@ -80,6 +79,7 @@ Dans `RTW/atlas-python` :
 `python3 setup.py sdist bdist_wheel`
 
 <ins>**IMPORTANT**</ins> — auparavant, effacer :
+
 - les répertoires :
   - `examples`,
   - `tutorials`,

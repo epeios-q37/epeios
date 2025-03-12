@@ -1,6 +1,6 @@
 ## *Android* devices
 
-Programs made with the *Atlas* toolkit work perfectly on your [*Android*](https://en.wikipedia.org/wiki/Android_(operating_system)) devices (smartphone or tablet) using the [*Termux*](https://termux.com/) application. Simply install (``pkg intall …``) the *git* and *python* packages. That's all!
+Applications made with the *Atlas* toolkit work perfectly on your [*Android*](https://en.wikipedia.org/wiki/Android_(operating_system)) devices (smartphone or tablet) using the [*Termux*](https://termux.com/) application. Simply install (``pkg intall …``) the *git* and *python* packages. That's all!
 
 ## *Jupyter* notebooks
 
