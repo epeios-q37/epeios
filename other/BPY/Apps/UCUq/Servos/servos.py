@@ -95,7 +95,7 @@ MACRO_HTML="""
 """
 
 servos = {}
-pca = None
+devices = []
 
 
 def reset_():
@@ -136,12 +136,14 @@ async def updateFileList(dom, kit = ucuq.K_UNKNOWN):
 
 
 async def atk(dom):
-  infos = await ucuq.ATKConnectAwait(dom, BODY)
+#  infos = await ucuq.ATKConnectAwait(dom, BODY)
 
-  await createServos(ucuq.getDeviceId(infos))
+  dom.inner("", BODY)
 
-  await displayMacros(dom)
-  await updateFileList(dom, ucuq.getKitId(infos))
+  await createServos()
+
+#  await displayMacros(dom)
+#  await updateFileList(dom, ucuq.getKitId(infos))
 
 
 async def atkTest():
@@ -210,12 +212,13 @@ def getMacro(token):
   if not name in macros:
     raise Exception(f"Unknown macro ({token[1]})!")
 
-  return {"name": name, "amount" :amount} 
+  return {"name": name, "amount" :amount}
 
 
 def getMoves(token):
   moves = []
   speed = None
+  device = ""
 
   with io.StringIO(token[0]) as stream:
     while char := stream.read(1):
@@ -230,8 +233,18 @@ def getMoves(token):
         servo += char
         char = stream.read(1)
 
+      if char == '.':
+        device = servo
+
+        while char and ( char.isalnum() or char == '_' ):
+          servo += char
+          char = stream.read(1)
+      else:
+        if device != "":
+          servo = device + '.' + servo
+
       if not servo in servos:
-        raise Exception(f"No servo of id '{servo}'  ({token[1]})")
+        raise Exception(f"No servo of id '{servo}' ({token[1]})")
         
       angle = 0
       sign = 1
@@ -247,7 +260,7 @@ def getMoves(token):
         angle = angle * 10 + int(char)
         char = stream.read(1)
 
-      moves.append((servos[servo], angle * sign))
+      moves.append(servos[servo], angle * sign)
 
       if not char:
         break
@@ -519,26 +532,38 @@ async def getServosSetups(target):
 
   return setups
 
-async def createServos(deviceId):
-  global servos, pca
+async def createServos():
+  global servos
+  
+  pca = None
 
-  setups = await getServosSetups(deviceId)
+  targets = {
+    "F": "Charlie",
+    "G": "Echo"
+  }
 
-  for setup in setups:
-    servo = setups[setup]
-    hardware = servo[HARDWARE_KEY]
-    specs = servo[SPECS_KEY]
-    tweak = servo[TWEAK_KEY]
-    if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
-      pwm = ucuq.PWM(hardware["pin"])
-      pwm.setFreq(specs["freq"])
-    elif hardware["mode"] == "PCA":
-      if not pca:
-        i2c = ucuq.SoftI2C if hardware["soft"] else ucuq.I2C
-        pca = ucuq.PCA9685(i2c(hardware["sda"], hardware["scl"]))
-        pca.setFreq(specs["freq"])
-        pca.setOffset(hardware["offset"])
-      pwm = ucuq.PWM_PCA9685(pca, hardware["channel"])
-    else:
-      raise Exception("Unknown hardware mode!")
-    servos[setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
+  for key in targets:
+    device = ucuq.Device(id=targets[key])
+    setups = await getServosSetups(targets[key])
+#    print(key, setups)
+    for setup in setups:
+      servo = setups[setup]
+      hardware = servo[HARDWARE_KEY]
+      specs = servo[SPECS_KEY]
+      tweak = servo[TWEAK_KEY]
+      if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
+        pwm = ucuq.PWM(hardware["pin"],device=device)
+        pwm.setFreq(specs["freq"])
+      elif hardware["mode"] == "PCA":
+        if not pca:
+          i2c = ucuq.SoftI2C if hardware["soft"] else ucuq.I2C
+          pca = ucuq.PCA9685(i2c(hardware["sda"], hardware["scl"],device=device))
+          pca.setFreq(specs["freq"])
+          pca.setOffset(hardware["offset"])
+        pwm = ucuq.PWM_PCA9685(pca, hardware["channel"])
+      else:
+        raise Exception("Unknown hardware mode!")
+
+      servos[key+'.'+setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
+
+  print(servos)  

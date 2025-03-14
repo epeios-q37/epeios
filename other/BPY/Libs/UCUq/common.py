@@ -837,11 +837,7 @@ class SSD1306_I2C(SSD1306):
     super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice())
 
 
-def pwmJumps(jumps, step = 100, delay = 0.05, *,device = None):
-  device = getDevice_(device)
-
-  device.addModule("PWMJumps-1")
-
+def pwmJumps(jumps, step = 100, delay = 0.05):
   command = "pwmJumps([\n"
 
   for jump in jumps:
@@ -849,16 +845,33 @@ def pwmJumps(jumps, step = 100, delay = 0.05, *,device = None):
 
   command += f"], {step}, {delay})"
 
-  device.addCommand(command)
+  return command
 
-def servoMoves(moves, step = 100, delay = 0.05, *,device = None):
-  jumps = []
+
+def execute_(command, device):
+    device.addModule("PWMJumps-1")
+    device.addCommand(command)
+
+
+def servoMoves(moves, step = 100, delay = 0.05):
+  jumps = {}
+  devices = {}
   
   for move in moves:
     servo = move[0]
-    jumps.append([servo.pwm, servo.angleToDuty(move[1])])
+    key = id(servo.getDevice())
+    jumps[key].append([servo.pwm, servo.angleToDuty(move[1])])
 
-  pwmJumps(jumps, step, delay, device = device)
+    if not key in devices:
+      devices[key] = servo.getDevice()
+
+  commands = {}
+
+  for key in jumps:
+    commands[key].append(pwmJumps(jumps[key], step, delay))
+
+  for key in commands:
+    execute_(commands[key], devices[key])
 
 def rbShade(variant, i, max):
   match int(variant) % 6:

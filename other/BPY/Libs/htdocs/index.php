@@ -1,8 +1,9 @@
 <?php
 
 $demo = $_REQUEST["demo"];
-$version = $_REQUEST["version"];
+$brython_version = $_REQUEST["brython"] ?? $_REQUEST["version"];  // 'version' parameter is deprecated!
 $code = $_REQUEST["code"];
+$url = $_REQUEST["url"];
 $cursor = $_REQUEST["cursor"];
 $id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "_BrythonIdNotSet_"; // For the Zelbinium sandboxes.
 $go = isset($_REQUEST["go"]) ? "true" : "false";
@@ -25,28 +26,36 @@ echo <<<BODY
       var collapse = $collapse;
 
       function go() {
-      if (collapse)
-          document.getElementById("Source").parentNode.previousElementSibling.removeAttribute("open");
+        if (collapse)
+            document.getElementById("Source").parentNode.previousElementSibling.removeAttribute("open");
         document.getElementById("Brython").style["display"] = "";
         document.getElementById("Code").value = editor.getValue();
         document.forms['Brython'].submit();
         run = false;
       }
 
-      function getSourceCode(demo) {
-      collapse = true;
-        document.getElementById("Brython").style["display"] = "none";
-        fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/' + demo + '.py').then(function (response) {
+      function fetchCodeFromURL(url, callback) {
+        fetch(url).then(function (response) {
           return response.text();
         }).then(function (data) {
-          editor.session.setValue(data)
-          old = data;
-          document.getElementById("Source").parentNode.previousElementSibling.setAttribute("open", 'true');
-          if (run)
-            go();
+          callback(data);
         }).catch(function (err) {
-          console.warn('Something went wrong.', err);
+          console.warn(`Unable to fetch '\${url}'`, err);
         });
+      }
+
+      function execute(code) {
+        editor.session.setValue(code)
+        old = code;
+        document.getElementById("Source").parentNode.previousElementSibling.setAttribute("open", 'true');
+        if (run)
+          go();
+      }
+
+      function fetchDemoCode(demo) {
+        collapse = true;
+        document.getElementById("Brython").style["display"] = "none";
+        fetchCodeFromURL(`https://raw.githubusercontent.com/epeios-q37/brython/main/\${demo}.py`, execute)
       }  
 
       function fillDemosList() {
@@ -79,6 +88,7 @@ echo <<<BODY
           let code = decodeURIComponent(`$code`);
           
           if ( code !== "" ) {
+            select.value="None"
             code = code.replaceAll('_BrythonWorkaroundForBackQuote_', '`').replaceAll('_BrythonWorkaroundForSingleQuote_', "'")
             editor.session.setValue(code);
 
@@ -94,6 +104,9 @@ echo <<<BODY
           } else if ( "{$demo}" !== "" ) {
             select.value = "{$demo}";
             select.dispatchEvent(new Event('change'));
+          } else if ( "{$url}" !== "" ) {
+            select.value = "None";
+            fetchCodeFromURL("$url", execute);
           } else if ( localStorage.getItem("brython-buffer" ) != null ) {
             editor.setValue(localStorage.getItem("brython-buffer"));
             if (run)
@@ -206,8 +219,8 @@ echo <<<BODY
         <span role="term" class="source" aria-details="pure-css">Code</span>
         <span style="width: 10px;"></span>
         <!-- Filled with the content of the 'Demos.json' file in the 'brython' GitHub repo.-->
-        <select id="Demos" onchange="getSourceCode(this.value)">
-          <option disabled="true" selected="true" value="">Select a demo</option>
+        <select id="Demos" onchange="fetchDemoCode(this.value)">
+          <option disabled="true" selected="true" value="None">Select a demo</option>
         </select>
         <span style="width: 5px;"></span>
         <button onclick="go();">Run</button>
@@ -235,7 +248,7 @@ echo <<<BODY
     </div>
     <form style="display: none;" action="/brython/brython.php" name="Brython" method="post" target="Brython">
       <input type="hidden" name="code" id="Code" />
-      <input type="hidden" name="version" value="$version" />
+      <input type="hidden" name="brython" value="$brython_version" />
     </form>
     <iframe name="Brython" src="" id="Brython" width="100%"
       style="display: none; height: calc(100% - 50px); border: 0px;">

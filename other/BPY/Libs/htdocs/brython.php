@@ -2,14 +2,14 @@
 $sourceCode = str_replace("</script>", "_BrythonWorkaroundForClosingScriptTag_", $_REQUEST['code']);
 
 // Si modifié, adapter '/themes/hugo-book/layouts/_default/baseof.html' de atlastk.org et zelbinium.q37.info.
-$version = "3.12.4";
-$eruda_version="3.4.0";
+$brython_version = "3.13.1";
+$eruda_version="3.4.1";
 
-if (!empty($_REQUEST['version'])) {
-  $version = $_REQUEST['version'];
+if (!empty($_REQUEST['brython'])) {
+  $brython_version = $_REQUEST['brython'];
 }
 
-if ( $version == "dev") {
+if ( $brython_version == "dev") {
  $brython = <<< EOS
  <script src="https://raw.githack.com/brython-dev/brython/master/www/src/brython.js"
  crossorigin="anonymous">
@@ -20,8 +20,8 @@ if ( $version == "dev") {
 EOS;
 } else {
   $brython = <<< EOS
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$version/brython.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$version/brython_stdlib.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$brython_version/brython.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@$brython_version/brython_stdlib.js"></script>
 EOS;
 }
 
@@ -39,7 +39,7 @@ echo <<< EOD
 
     function onLoad() {
       eruda.init();
-      console.log('Brython version: $version; eruda version: $eruda_version');
+      console.log("Brython version ('brython' URL parameter): $brython_version; eruda version: $eruda_version");
       brython();
     }
   </script>

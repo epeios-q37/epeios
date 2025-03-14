@@ -1,0 +1,25 @@
+{
+  "ATK": [
+    "Hello",
+    "Hellos",
+    "Messages",
+    "Flooder",
+    "Tortoise",
+    "TicTacToe",
+    "FourInARow",
+    "Mancala",
+    "PigGame",
+    "Widgets"
+  ],
+  "UCUq": [
+    "Config",
+    "Device",
+    "Piano",
+    "WS2812",
+    "HT16K33",
+    "Hangman",
+    "Tweak",
+    "Simon",
+    "Servos"
+  ]
+}

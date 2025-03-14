@@ -246,7 +246,7 @@
     }
   },
   "Golf": {
-    "_comment": "F: Front; B: Back; L: Left; R: Right; a, b, c the motors from the body to the extremity.",
+    "_comment": "",
     "Preset": {
       "Hardware": {
         "mode": "Straight"
