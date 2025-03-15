@@ -1,0 +1,120 @@
+[
+  {
+    "brand": "q37.info",
+    "model": "DIY",
+    "variant": "Test",
+    "hardware": {
+      "OnBoardLed": [
+        8,
+        false
+      ]
+    },
+    "devices": [
+      "Alpha"
+    ]
+  },
+  {
+    "brand": "q37.info",
+    "model": "DIY",
+    "variant": "Displays",
+    "hardware": {
+      "OnBoardLed": [
+        8,
+        false
+      ],
+      "Ring": {
+        "Pin": 2,
+        "Count": 8,
+        "Offset": 3,
+        "Limiter": 30
+      },
+      "OLED": {
+        "Soft": false,
+        "SDA": 8,
+        "SCL": 9
+      },
+      "LCD": {
+        "Soft": true,
+        "SDA": 6,
+        "SCL": 7
+      },
+      "Buzzer": {
+        "Pin": 5
+      }
+    },
+    "devices": [
+      "Bravo"
+    ]
+  },
+  {
+    "brand": "Freenove",
+    "model": "Bipedal",
+    "variant": "RPiPico(2)W",
+    "hardware": {
+      "OnBoardLed": [
+        2,
+        false
+      ],
+      "RGB": {
+        "Pin": 0,
+        "Count": 4,
+        "Limiter": 30,
+        "Offset": 0
+      }
+    },
+    "devices": [
+      "Charlie",
+      "Echo"
+    ]
+  },
+  {
+    "brand": "Freenove",
+    "model": "Dog",
+    "variant": "ESP32",
+    "hardware": {
+      "OnBoardLed": [
+        2,
+        false
+      ],
+      "RGB": {
+        "Pin": 0,
+        "Count": 4,
+        "Limiter": 30,
+        "Offset": 0
+      },
+      "devices": [
+        "Foxtrot"
+      ]
+    }
+  },
+  {
+    "brand": "q37.info",
+    "model": "Wokwi",
+    "variant": "Displays",
+    "hardware": {
+      "OnBoardLed": [
+        2,
+        true
+      ],
+      "Ring": {
+        "Pin": 15,
+        "Count": 16,
+        "Offset": -7,
+        "Limiter": 255
+      },
+      "OLED": {
+        "Soft": false,
+        "SDA": 21,
+        "SCL": 22
+      },
+      "LCD": {
+        "Soft": true,
+        "SDA": 25,
+        "SCL": 26
+      },
+      "Buzzer": {
+        "Pin": 32
+      }
+    }
+  }
+]

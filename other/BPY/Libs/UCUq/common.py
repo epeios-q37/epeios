@@ -1,3 +1,5 @@
+ITEMS_ = "i_"
+
 # Keys
 K_DEVICE = "Device"
 K_DEVICE_TOKEN = "Token"
@@ -6,18 +8,30 @@ K_DEVICE_ID = "Id"
 ONE_DEVICE_VTOKEN = "%ONE_DEVICE_VTOKEN%"
 ALL_DEVICES_VTOKEN = "%ALL_DEVICES_VTOKEN%"
 
+uuid_ = 0
+device_ = None
+
+
+def GetUUID_():
+  global uuid_
+
+  uuid_ += 1
+
+  return uuid_
+
+
 def displayMissingConfigMessage_():
   displayExitMessage_("Please launch the 'Config' app first to set the device to use!")
 
 
 def handlingConfig_(token, id):
-  if not CONFIG:
+  if not CONFIG_:
     displayMissingConfigMessage_()
 
-  if K_DEVICE not in CONFIG:
+  if K_DEVICE not in CONFIG_:
     displayMissingConfigMessage_()
 
-  device = CONFIG[K_DEVICE]
+  device = CONFIG_[K_DEVICE]
 
   if not token:
     if K_DEVICE_TOKEN not in device:
@@ -45,38 +59,26 @@ def setDevice(id = None, *, device = None, token = None):
 
 
 # Infos keys and subkeys
-I_KITS_KEY = "Kits"
-I_KIT_KEY = "Kit"
-I_DEVICE_KEY = "Device"
-I_DEVICE_ID_KEY = "Id"
-I_DEVICE_UNAME_KEY = "uname"
-I_KIT_BRAND_KEY = "brand"
-I_KIT_MODEL_KEY = "model"
-I_KIT_VARIANT_KEY = "variant"
-I_KIT_LABEL_KEY = "label"
-I_UNAME_KEY = "uname"
+IK_DEVICE_ = "Device"
+IK_DEVICE_ID_ = "Id"
+IK_DEVICE_UNAME_ = "uname"
+
+# Kits keys
+IK_BRAND_ = "brand"
+IK_MODEL_ = "model"
+IK_VARIANT_ = "variant"
 
 
 INFO_SCRIPT_ = f"""
-def ucuqGetKit():
-  try:
-    return CONFIG_["{I_KIT_KEY}"]
-  except:
-    try:
-      return CONFIG_["{I_KITS_KEY}"][getIdentificationId_(IDENTIFICATION_)]
-    except:
-      return None
-
 def ucuqStructToDict(obj):
     return {{attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}}
 
 def ucuqGetInfos():
   return {{
-    "{I_DEVICE_KEY}" : {{
-      "{I_DEVICE_ID_KEY}": getIdentificationId_(IDENTIFICATION_),
-      "{I_DEVICE_UNAME_KEY}": ucuqStructToDict(uos.uname())
-    }},
-    "{I_KIT_KEY}": ucuqGetKit(),
+    "{IK_DEVICE_}" : {{
+      "{IK_DEVICE_ID_}": getIdentificationId_(IDENTIFICATION_),
+      "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
+    }}
   }}
 """
 
@@ -118,100 +120,13 @@ K_DIY_FREE = 5
 K_WOKWI_DISPLAYS = 6
 K_WOKWI_SERVOS = 7
 
-KITS_ = {
-  "Freenove/Bipedal/RPiPicoW": K_BIPEDAL,
-  "Freenove/Bipedal/RPiPico2W": K_BIPEDAL,
+KITS_IDS_ = {
+  "Freenove/Bipedal/RPiPico(2)W": K_BIPEDAL,
   "Freenove/Dog/ESP32": K_DOG,
   "q37.info/DIY/Displays": K_DIY_DISPLAYS,
   "q37.info/DIY/Servos": K_DIY_SERVOS,
   "q37.info/Wokwi/Displays": K_WOKWI_DISPLAYS,
   "q37.info/Wokwi/Servos": K_WOKWI_SERVOS,
-}
-
-# Hardware kits
-
-H_BIPEDAL = {
-  "OnBoardLed": ["LED", True],
-  "RGB": {
-    "Pin": 16,
-    "Count": 4,
-    "Limiter": 30,
-    "Offset": 0,
-  }
-}
-
-H_DOG = {
-  "OnBoardLed":[2, False],
-  "RGB": {
-    "Pin": 0,
-    "Count": 4,
-    "Limiter": 30,
-    "Offset": 0,
-  }
-}
-
-H_DIY_DISPLAYS = {
-  "OnBoardLed": [8, False],
-  "Ring": {
-    "Pin": 2,
-    "Count": 8,
-    "Offset": 3,
-    "Limiter": 30,
-  },
-  "OLED": {
-    "Soft": False,
-    "SDA": 8,
-    "SCL": 9,
-  },
-  "LCD": {
-    "Soft": True,
-    "SDA": 6,
-    "SCL": 7
-  },
-  "Buzzer": {
-    "Pin": 5
-  },
-}
-
-# NOTA : below 'Pins' (GPIO) correspond to respectively
-# physical pins 'D6' 'D7' 'D5' 'D8'.
-H_DIY_SERVOS = {
-  "OnBoardLed":  [2, False],
-  "Servos": {
-    "Mode": "Straight",
-    "Pins": [12, 13, 14, 15]
-  }
-}
-
-H_DIY_FREE = {
-  "OnBoardLed":  [8, False],
-  "Servos": {
-    "Mode": "Straight",
-    "Pins": [12, 13, 14, 27]
-  }
-}
-
-H_WOKWI_DISPLAYS = {
-  "OnBoardLed": [2, True],
-  "Ring": {
-    "Pin": 15,
-    "Count": 16,
-    "Offset": -7,
-    "Limiter": 255,
-  },
-  "OLED": {
-    "Soft": False,
-    "SDA": 21,
-    "SCL": 22,
-  },
-  "LCD": {
-    "Soft": True,
-    "SDA": 25,
-    "SCL": 26
-  },
-  "Buzzer": {
-    "Pin": 32
-  },
 }
 
 CB_AUTO = 0
@@ -271,32 +186,62 @@ async def getInfosAwait(device = None):
   return await device.commitAwait("ucuqGetInfos()")
 
 
-def getKitLabel(infos):
-  kit = infos[I_KIT_KEY]
+def getKitFromDeviceId_(deviceId):
+  for kit in KITS_:
+    if deviceId in kit["devices"]:
+      return kit
+  else:
+    return None
+  
+
+def getKitLabel(deviceId):
+  kit = getKitFromDeviceId_(deviceId)
 
   if kit:
-    return f"{kit[I_KIT_BRAND_KEY]}/{kit[I_KIT_MODEL_KEY]}/{kit[I_KIT_VARIANT_KEY]}"
+    return f"{kit[IK_BRAND_]}/{kit[IK_MODEL_]}/{kit[IK_VARIANT_]}"
   else:
     return "Undefined"
+  
 
+def getKitFromLabel_(label):
+  brand, model, variant = label.split('/4')
 
-def getKitId(infos):
-  label = getKitLabel(infos)
-
-  if label in KITS_:
-    return KITS_[label]
+  for kit in KITS_:
+    if ["brand"] == brand and kit["model"] == model and kit["variant"] == variant:
+      return kit
   else:
-    return K_UNKNOWN
+    return None
+
+
+def getKitHArdware(label):
+  kit = getKitFromLabel_(label)
+
+  if kit:
+    return kit["hardware"]
+  else:
+    return "Undefined"
   
 
 def getDeviceId(infos):
-  return infos[I_DEVICE_KEY][I_DEVICE_ID_KEY]
-  
+  return infos[IK_DEVICE_][IK_DEVICE_ID_]
+
+
+def getKitId(infos):
+  label = getKitLabel(getDeviceId(infos))
+
+  if label in KITS_IDS_:
+    return KITS_IDS_[label]
+  else:
+    return K_UNKNOWN
+
 
 async def ATKConnectAwait(dom, body, *, device = None):
+  if not KITS_:
+    raise Exception("No kits defined!")
+
   await dom.inner("", "<h3>Connecting…</h3>")
   
-  if device or CONFIG:
+  if device or CONFIG_:
     device = getDevice_(device)
   else:
     device = await getDemoDeviceAwait()
@@ -307,8 +252,10 @@ async def ATKConnectAwait(dom, body, *, device = None):
   else:
     setDevice(device = device)
     infos = await getInfosAwait(device)
+
+  deviceId =  getDeviceId(infos)
   
-  await dom.inner("", ATK_BODY.format(getKitLabel(infos), getDeviceId(infos)))
+  await dom.inner("", ATK_BODY.format(getKitLabel(deviceId), deviceId))
 
   await dom.inner("ucuq_body", body)
 
@@ -363,6 +310,9 @@ class Core_:
 
   def getDevice(self):
     return self.device_
+  
+  def getId(self):
+    return self.id
   
   def init(self, modules, instanciation, device,*,before=""):
     self.id = GetUUID_()
@@ -856,22 +806,25 @@ def execute_(command, device):
 def servoMoves(moves, step = 100, delay = 0.05):
   jumps = {}
   devices = {}
+  commands = {}
   
   for move in moves:
     servo = move[0]
     key = id(servo.getDevice())
-    jumps[key].append([servo.pwm, servo.angleToDuty(move[1])])
 
     if not key in devices:
       devices[key] = servo.getDevice()
+      jumps[key] = []
+      commands[key] = []
 
-  commands = {}
+    jumps[key].append([servo.pwm, servo.angleToDuty(move[1])])
 
   for key in jumps:
     commands[key].append(pwmJumps(jumps[key], step, delay))
 
   for key in commands:
-    execute_(commands[key], devices[key])
+    for command in commands[key]:
+      execute_(command, devices[key])
 
 def rbShade(variant, i, max):
   match int(variant) % 6:

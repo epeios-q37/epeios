@@ -1,48 +1,8 @@
 import os, io, json, datetime
 import ucuq, atlastk
 
-# BEGIN BRY
-from browser import ajax, aio
-
-class Lock:
-  def __init__(self):
-    self.locked_ = False
-
-  async def acquire(self):
-    while self.locked_:
-      await aio.sleep(0)
-    self.locked_ = True
-
-  def release(self):
-    self.locked_ = False
-
-async def get_github_file_content(file_path):
-  url = f'https://raw.githubusercontent.com/epeios-q37/ucuq-python/refs/heads/main/{file_path}'
-
-  lock = Lock()
-  result = ""
-
-  await lock.acquire()
-
-  def on_complete(req):
-    nonlocal result
-    if req.status == 200:
-      result = req.text  # Résoudre la promesse avec le contenu du fichier  
-    else:
-      raise Exception(f'Erreur lors de la récupération du fichier : {req.status}')  # Rejeter la promesse
-    
-    lock.release()
-
-  # Créer une requête AJAX  
-  req = ajax.ajax()
-  req.bind('complete', on_complete)  # Lier la fonction de rappel  
-  req.open('GET', url, True)  # Ouvrir la requête  
-  req.send()  # Envoyer la requête
-
-  await lock.acquire()
-
-  return result
-# END BRY
+async def getGithubFileContentAwait(file_path):
+  return await ucuq.getWebFileContentAwait(f'https://raw.githubusercontent.com/epeios-q37/ucuq-python/refs/heads/main/{file_path}')
 
 MACRO_MARKER_ = '$'
 
@@ -236,6 +196,10 @@ def getMoves(token):
       if char == '.':
         device = servo
 
+        servo += char
+
+        char = stream.read(1)
+
         while char and ( char.isalnum() or char == '_' ):
           servo += char
           char = stream.read(1)
@@ -260,7 +224,7 @@ def getMoves(token):
         angle = angle * 10 + int(char)
         char = stream.read(1)
 
-      moves.append(servos[servo], angle * sign)
+      moves.append((servos[servo], angle * sign))
 
       if not char:
         break
@@ -455,7 +419,7 @@ async def atkLoadFromFile(dom):
 # END PYH
 
 # BEGIN BRY
-  macros = json.loads(await get_github_file_content(f"demos/Servos/Macros/{await dom.getValue('Files')}.json"))
+  macros = json.loads(await getGithubFileContentAwait(f"demos/Servos/Macros/{await dom.getValue('Files')}.json"))
 # END BRY
 
   print("Macros: ", macros)
@@ -504,7 +468,7 @@ async def getServosSetups(target):
 
 # BEGIN BRY
 
-  config = json.loads(await get_github_file_content("demos/Servos/servos.json"))[target]
+  config = json.loads(await getGithubFileContentAwait("demos/Servos/servos.json"))[target]
 
 # END BRY
 
@@ -538,14 +502,14 @@ async def createServos():
   pca = None
 
   targets = {
-    "F": "Charlie",
-    "G": "Echo"
+    "C": "Charlie",
+    "E": "Echo"
   }
 
   for key in targets:
     device = ucuq.Device(id=targets[key])
     setups = await getServosSetups(targets[key])
-#    print(key, setups)
+
     for setup in setups:
       servo = setups[setup]
       hardware = servo[HARDWARE_KEY]
@@ -565,5 +529,3 @@ async def createServos():
         raise Exception("Unknown hardware mode!")
 
       servos[key+'.'+setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
-
-  print(servos)  

@@ -1,33 +1,39 @@
-import os, json, socket, sys, threading, datetime, time, threading
+import datetime, http, os, json, socket, sys, threading, time, urllib
 from inspect import getframeinfo, stack
 
-CONFIG_FILE = ( "/home/csimon/q37/epeios/tools/ucuq/remote/wrappers/PYH/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
+
+CONFIG_FILE_ = ( "/home/csimon/q37/epeios/other/BPY/Apps/UCUq/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
+KITS_FILE_ = ( "/home/csimon/epeios/other/BPY/Apps/UCUq/" if "Q37_EPEIOS" in os.environ else "../" ) + "kits.json"
 
 try:
-  with open(CONFIG_FILE, "r") as config:
-    CONFIG = json.load(config)
+  with open(CONFIG_FILE_, "r") as config:
+    CONFIG_ = json.load(config)
 except:
-  CONFIG = None
+  CONFIG_ = None
+
+
+try:
+  with open(KITS_FILE_, "r") as kits:
+    KITS_ = json.load(kits)
+except:
+  KITS_ = None
+
 
 UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
 UCUQ_DEFAULT_PORT_ = "53800"
 
-UCUQ_HOST_ = CONFIG["Proxy"]["Host"] if CONFIG and "Proxy" in CONFIG and "Host" in CONFIG["Proxy"] and CONFIG["Proxy"]["Host"] else UCUQ_DEFAULT_HOST_
+UCUQ_HOST_ = CONFIG_["Proxy"]["Host"] if CONFIG_ and "Proxy" in CONFIG_ and "Host" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["Host"] else UCUQ_DEFAULT_HOST_
 
 # only way to test if the entry contains a valid int.
 try:
-  UCUQ_PORT_ = int(CONFIG["Proxy"]["Port"])
+  UCUQ_PORT_ = int(CONFIG_["Proxy"]["Port"])
 except:
   UCUQ_PORT_ = int(UCUQ_DEFAULT_PORT_)
 
 PROTOCOL_LABEL_ = "c37cc83e-079f-448a-9541-5c63ce00d960"
 PROTOCOL_VERSION_ = "0"
 
-uuid_ = 0
-device_ = None
 _writeLock = threading.Lock()
-
-ITEMS_ = "i_"
 
 # Request
 R_EXECUTE_ = "Execute_1"
@@ -41,13 +47,6 @@ A_ERROR_ = 2
 A_PUZZLED_ = 3
 A_DISCONNECTED_ = 4
 
-
-def GetUUID_():
-  global uuid_
-
-  uuid_ += 1
-
-  return uuid_
 
 def recv_(socket, size):
   buffer = bytes()
@@ -295,5 +294,17 @@ def getDemoDevice():
   if device.connect(token = ONE_DEVICE_VTOKEN, errorAsException = False):
     return device
   else:
-    return None   
+    return None 
 
+def getWebFileContent(url):
+  parsedURL = urllib.parse.urlparse(url)
+
+  with http.client.HTTPSConnection(parsedURL.netloc) as connection:
+    connection.request("GET", parsedURL.path)
+
+    response = connection.getresponse()
+
+    if response.status == 200:
+      return response.read().decode('utf-8')  
+    else:
+      raise Exception(f"Error retrieving the file '{url}': {response.status} {response.reason}")
