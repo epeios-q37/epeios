@@ -56,10 +56,16 @@
         false
       ],
       "RGB": {
-        "Pin": 0,
+        "Pin": 16,
         "Count": 4,
         "Limiter": 30,
         "Offset": 0
+      },
+      "Buzzer": {
+        "Pin": 2
+      },
+      "Loudspeaker": {
+        "Pin": 6
       }
     },
     "devices": [

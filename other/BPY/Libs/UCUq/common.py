@@ -1,3 +1,5 @@
+import zlib, base64
+
 ITEMS_ = "i_"
 
 # Keys
@@ -11,6 +13,7 @@ ALL_DEVICES_VTOKEN = "%ALL_DEVICES_VTOKEN%"
 uuid_ = 0
 device_ = None
 
+unpak_ = lambda data : zlib.decompress(base64.b64decode(data)).decode()
 
 def GetUUID_():
   global uuid_
@@ -59,9 +62,10 @@ def setDevice(id = None, *, device = None, token = None):
 
 
 # Infos keys and subkeys
-IK_DEVICE_ = "Device"
-IK_DEVICE_ID_ = "Id"
+IK_DEVICE_ID_ = "DeviceId"
 IK_DEVICE_UNAME_ = "uname"
+IK_HARDWARE = "Hardware"
+IK_KIT_LABEL = "KitLabel"
 
 # Kits keys
 IK_BRAND_ = "brand"
@@ -75,59 +79,13 @@ def ucuqStructToDict(obj):
 
 def ucuqGetInfos():
   return {{
-    "{IK_DEVICE_}" : {{
-      "{IK_DEVICE_ID_}": getIdentificationId_(IDENTIFICATION_),
-      "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
-    }}
+    "{IK_DEVICE_ID_}": getIdentificationId_(IDENTIFICATION_),
+    "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
   }}
 """
 
-ATK_STYLE = """
-<style>
-.ucuq {
-  max-height: 200px;
-  overflow: hidden;
-  opacity: 1;
-  animation: ucuqFadeOut 2s forwards;
-}
-
-@keyframes ucuqFadeOut {
-  0% {
-    max-height: 200px;
-  }
-  100% {
-    max-height: 0;
-  }
-}
-</style>
-"""
-
-ATK_BODY = """
-<div style="display: flex; justify-content: center;" class="ucuq">
-  <h3>'{}' (<em>{}</em>)</h3>
-</div>
-<div id="ucuq_body">
-</div>
-"""
-
-# Handled kits.
-K_UNKNOWN = 0
-K_BIPEDAL = 1
-K_DOG = 2
-K_DIY_DISPLAYS = 3
-K_DIY_SERVOS = 4
-K_DIY_FREE = 5
-K_WOKWI_DISPLAYS = 6
-K_WOKWI_SERVOS = 7
-
-KITS_IDS_ = {
-  "Freenove/Bipedal/RPiPico(2)W": K_BIPEDAL,
-  "Freenove/Dog/ESP32": K_DOG,
-  "q37.info/DIY/Displays": K_DIY_DISPLAYS,
-  "q37.info/DIY/Servos": K_DIY_SERVOS,
-  "q37.info/Wokwi/Displays": K_WOKWI_DISPLAYS,
-  "q37.info/Wokwi/Servos": K_WOKWI_SERVOS,
-}
+# Cotent of 'body.html' after compression.
+ATK_BODY_ = unpak_("eJy1Vdtu2zAMfe9XEC6KXlYnzg1FnTQYMGCvAzYU2NsgS3KtRbFcSc5lQf699EVO7KTo9jAUaGzyiDw8pOiZsVvJ5xcAvZzmr75ZC0sTn6rUEpFyDbsd+gCYMJkk2xBiyTfTwrTfX3ROOWymjLBCpSFoLokVKz5txxCpxNh+JBVdVK61YDYJYRRkVXBIuHhJbAiDB2dZEv0iMCbJrXqPgEiz3DoaKiNUWEwXtHIE7QTBaSwp2KHwQzEkMkrmti6G5tooHaJfpJbrymhV1iSQPG7Cgz5OBpGyVi0Pr4QuXrTKU4a6yyLoJaW08vlrHi2E9a0mqSPSG5s6XduInCJB/Yj/EVzfBPcwuIegN8HfW5dXY2W+JkzkJoRxdqaTZfFhxGOl+Yca4JTwFOvyvE7XRq5rtegHQyVL8+qkGDaGEzHWiXAJ/6cao5Ya5SR9OjcQ57r1OBmOJ+40gDsf0oTTBWd/G2cypI/jcZdFGCuam/Mx1MY3CWFqjcOEf9hRuHzgMXkITqKc49Lpc0tedGBfyke8xPznzQAvZy2dvzQfgz4CVOT6d/C9EIEzqDgZuOt3xrFXynQoutW3ZkOcjnF1rlNk5/gkuOqedsgl2fhuoodBs5rUiutYFpIngjGeTtvbZlC9k1QsSTWMRcyvhPFvuJuGBpDMmmhmjtJ+XvBtrMmSmxa45hFcuad3OVVzBzAI3gMHLSD+n/Xr1T9jYgXl85PXXvPwOzdWxFu/ueiUl8vOAyqJMU9ewdYrvh6zZDS/3u2v4WbGl/PdftbHn9tZH82YCTP8Wx6DanKfr3gqt9N69ftuV0yw6iopwtJjKiefrxKGQEkiLs8gaz8iqk+HYE/e85fn1x+VF+w2Q7bl1cG75sGGJaFKC162BWzCnDKqLmw5id4cRUdATapfsioLqc3HShVUigi/IsW2nvO9AcQZWu8=")
 
 CB_AUTO = 0
 CB_MANUAL = 1
@@ -194,27 +152,38 @@ def getKitFromDeviceId_(deviceId):
     return None
   
 
-def getKitLabel(deviceId):
+def getKitLabelFormDeviceId_(deviceId):
   kit = getKitFromDeviceId_(deviceId)
 
   if kit:
     return f"{kit[IK_BRAND_]}/{kit[IK_MODEL_]}/{kit[IK_VARIANT_]}"
   else:
-    return "Undefined"
+    return "Undefined"  
   
 
 def getKitFromLabel_(label):
-  brand, model, variant = label.split('/4')
+  brand, model, variant = label.split('/')
 
   for kit in KITS_:
-    if ["brand"] == brand and kit["model"] == model and kit["variant"] == variant:
+    if kit["brand"] == brand and kit["model"] == model and kit["variant"] == variant:
       return kit
   else:
     return None
+  
+
+def getKit_(infosOrLabel):
+  if type(infosOrLabel) != str:
+    infosOrLabel = getKitLabel(infosOrLabel)
+
+  return getKitFromLabel_(infosOrLabel)
 
 
-def getKitHArdware(label):
-  kit = getKitFromLabel_(label)
+def getKitLabel(infos):
+  return infos[IK_KIT_LABEL]
+  
+
+def getKitHardware(infosOrLabel):
+  kit = getKit_(infosOrLabel)
 
   if kit:
     return kit["hardware"]
@@ -223,16 +192,7 @@ def getKitHArdware(label):
   
 
 def getDeviceId(infos):
-  return infos[IK_DEVICE_][IK_DEVICE_ID_]
-
-
-def getKitId(infos):
-  label = getKitLabel(getDeviceId(infos))
-
-  if label in KITS_IDS_:
-    return KITS_IDS_[label]
-  else:
-    return K_UNKNOWN
+  return infos[IK_DEVICE_ID_]
 
 
 async def ATKConnectAwait(dom, body, *, device = None):
@@ -254,18 +214,22 @@ async def ATKConnectAwait(dom, body, *, device = None):
     infos = await getInfosAwait(device)
 
   deviceId =  getDeviceId(infos)
-  
-  await dom.inner("", ATK_BODY.format(getKitLabel(deviceId), deviceId))
+
+  kitLabel = getKitLabelFormDeviceId_(deviceId)
+
+  infos[IK_KIT_LABEL] = kitLabel
+
+  infos[IK_HARDWARE] = getKitHardware(infos)
+
+  await dom.inner("", ATK_BODY_.format(kitLabel, deviceId))
 
   await dom.inner("ucuq_body", body)
 
   await sleepAwait(0.5)
 
-  await dom.begin("", ATK_STYLE)
+#  await dom.begin("", ATK_STYLE)
 
   await sleepAwait(1.5)
-
-  dom.inner("", body)
 
   return infos
 

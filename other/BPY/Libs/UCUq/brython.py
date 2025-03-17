@@ -9,11 +9,6 @@ LIB_VERSION = "0.0.1"
 
 CONFIG_ITEM = "ucuq-config"
 
-ITEMS_ = "i_"
-
-device_ = None
-uuid_ = 0
-
 try:
   CONFIG = json.loads(storage[CONFIG_ITEM])
 except:
@@ -23,22 +18,18 @@ except:
 async def sleepAwait(time):
   await ucuqjs.sleep(1000 * time, lambda : None)
 
-def GetUUID_():
-  global uuid_
-
-  uuid_ += 1
-
-  return uuid_
-
 
 def launchAsync(func, *args, **kwargs):
   aio.run(func(*args, **kwargs))
 
+
 def commit():
   getDevice_().commit()
 
+
 async def commitAwait(expr):
   return await getDevice_().commitAwait(expr)
+
 
 def sleep(secs):
   getDevice_().sleep(secs)
