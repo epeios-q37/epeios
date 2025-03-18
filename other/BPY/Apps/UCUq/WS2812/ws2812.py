@@ -3,11 +3,6 @@ import atlastk, ucuq, random, json
 
 RB_DELAY = .05
 
-ws2812 = None
-ws2812Limiter = 0
-onDuty = False
-lcd = None
-
 SPOKEN_COLORS =  {
   "rouge": [255, 0, 0],
   "vert": [0, 255, 0],
@@ -28,34 +23,8 @@ SPOKEN_COLORS =  {
   "beige": [255, 212, 170]
 }
 
-# Widgets
-W_UCUQ_SWITCH = "UCUqSwitch"
-# Below generated with 'Q_CreateWidgetConstants Body.html'.
-W_HARDWARE_VIEW = "HardwareView"
-W_PIN = "Pin"
-W_COUNT = "Count"
-W_OFFSET = "Offset"
-W_LIMITER = "Limiter"
-W_LCD_SWITCH = "LCDSwitch"
-W_SOFT = "Soft"
-W_SDA = "SDA"
-W_SCL = "SCL"
-W_MAIN_VIEW = "MainView"
-W_S_R = "SR"
-W_N_R = "NR"
-W_S_G = "SG"
-W_N_G = "NG"
-W_S_B = "SB"
-W_N_B = "NB"
-W_PICKER_BOX = "PickerBox"
-W_COLOR = "Color"
-
-
-W_LCD_WIDGETS=(W_SOFT, W_SDA, W_SCL)
-
-
 # Kits
-K_BIPEDAL =0
+K_BIPEDAL = 0
 K_DOG = 1
 K_DIY = 2
 K_WOKWI = 3
@@ -71,10 +40,10 @@ def rainbow():
   v =  random.randint(0, 5)
   i = 0
   while i < 7 * ws2812Limiter:
-    update_(*ucuq.rbShadeFade(v, int(i), ws2812Limiter))
+    update_(*ucuq.rbShadeFade(v, int(i), ws2812Limiter), ws2812Limiter)
     ucuq.sleep(RB_DELAY)
     i += ws2812Limiter / 20
-  update_(0,0,0)
+  update_(0, 0, 0, ws2812Limiter)
 
 
 def convert_(hex):
@@ -100,12 +69,26 @@ def getSValues_(R, G, B):
 def getAllValues_(R, G, B):
   return getNValues_(R, G, B) | getSValues_(R, G, B)
 
+def drawLineOnMatrix(x, height):
+  y = int(height)
+  print(y)
+  if y != 0:
+    matrix.rect(x * 6, 8 - y, x * 6 + 3, 7)
 
-def update_(r, g, b, color=""):
+def update_(r, g, b, limit, color=""):
   if ws2812:
-    ws2812.fill(list(map(int, [r, g, b]))).write()
+    r, g, b = map(int, [r, g, b])
+
+    ws2812.fill((r, g, b)).write()
+
+    matrix.clear()
+    drawLineOnMatrix(0, r * 8 / limit)
+    drawLineOnMatrix(1, g * 8 / limit)
+    drawLineOnMatrix(2, b * 8 / limit)
+    matrix.show()
 
     r, g, b = map(lambda s: str(s).rjust(3), [r, g, b])
+
     lcd.moveTo(0,0)\
       .putString("RGB: {} {} {}".format(*map(lambda s: str(s).rjust(3), [r, g, b])))\
       .moveTo(0,1)\
@@ -115,146 +98,81 @@ def update_(r, g, b, color=""):
 async def resetAwait(dom):
   await dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
   await dom.setValues(getAllValues_(0, 0, 0))
-  update_(0, 0, 0)    
-
-
-async def fillHardwareAwait(dom, infos):
-  hardware = ucuq.getKitHardware(infos)
-
-  kit = KITS[ucuq.getKitLabel(infos)]
-
-  lcd = None
-
-  values = {}
-
-  if kit == K_BIPEDAL or kit == K_DOG:
-    ws2812 = hardware["RGB"]
-  elif kit == K_DIY or kit == K_WOKWI:
-    ws2812 = hardware["Ring"]
-    lcd = hardware["LCD"]
-  else:
-    raise Exception("Unknown kit!")
-
-  values.update({
-    W_PIN: ws2812["Pin"],
-    W_COUNT: ws2812["Count"],
-    W_OFFSET: ws2812["Offset"],
-    W_LIMITER: ws2812["Limiter"],
-  })
-
-  if lcd:
-    values.update({
-      W_LCD_SWITCH: "true",
-      W_SOFT: "true" if lcd["Soft"] else "false",
-      W_SDA: lcd["SDA"],
-      W_SCL: lcd["SCL"],
-    })
-  else:
-    values[W_LCD_SWITCH] = "false"
-
-  await dom.setValues(values)
-
-
-async def updateUIAwait(dom, onDuty):
-  if onDuty:
-    await dom.removeClass(W_MAIN_VIEW, "hide")
-    await dom.addClass(W_HARDWARE_VIEW, "hide")
-    await dom.setValue(W_UCUQ_SWITCH, "true")
-  else:
-    await dom.addClass(W_MAIN_VIEW, "hide")
-    await dom.removeClass(W_HARDWARE_VIEW, "hide")
-    await dom.setValue(W_UCUQ_SWITCH, "false")
-
-  if dom.getValue(W_LCD_SWITCH) == "true":
-    dom.enableElements(W_LCD_WIDGETS)
-  else:
-    dom.disableElements(W_LCD_WIDGETS)
-
+  update_(0, 0, 0, 255)    
 
 
 async def atk(dom):
+  global lcd, matrix
+  
   infos = await ucuq.ATKConnectAwait(dom, BODY)
 
   await dom.executeVoid("setColorWheel()")
   await dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
 
-  if not onDuty:
-    await fillHardwareAwait(dom, infos)
+  hardware = ucuq.getKitHardware(infos)
+
+  kit = KITS[ucuq.getKitLabel(infos)]
+
+  if kit == K_BIPEDAL or kit == K_DOG:
+    turnOnMain(hardware["RGB"][0])
+    turnOnMatrix(hardware["Matrix"][0])
+    lcd = ucuq.Nothing()
+  elif kit == K_DIY or kit == K_WOKWI:
+    turnOnMain(hardware["Ring"][0])
+    turnOnLCD(hardware["LCD"][0])
+    matrix = ucuq.Nothing()
   else:
-    await dom.disableElement(W_UCUQ_SWITCH)
-
-  await updateUIAwait(dom, onDuty)
+    raise Exception("Unknown kit!")
 
 
-async def atkSwitchLCD(dom):
-  await updateUIAwait(dom, onDuty)
-
-
-async def turnOnMainAwait(dom):
+def turnOnMain(hardware):
   global ws2812, ws2812Limiter
 
-  try:
-    pin, count, ws2812Limiter = (int(value.strip()) for value in (await dom.getValues([W_PIN, W_COUNT, W_LIMITER])).values())
-  except:
-    await dom.alert("No or bad value for Pin/Count!")
-    return False
-  else:
-    ws2812 = ucuq.WS2812(pin, count)
-    return True
+  pin = hardware["Pin"]
+  count = hardware["Count"]
+  ws2812Limiter = hardware["Limiter"]
+
+  ws2812 = ucuq.WS2812(pin, count)
   
 
-async def turnOnLCDAwait(dom):
+def turnOnLCD(hardware):
   global lcd
 
-  values = dom.getValues((W_LCD_SWITCH, W_SOFT, W_SDA, W_SCL))
+  soft = hardware["Soft"]
+  sda = hardware["SDA"]
+  scl = hardware["SCL"]
 
-  if values[W_LCD_SWITCH] == "true":
-    try:
-      sda = int(values[W_SDA].strip())
-      scl = int(values[W_SCL].strip())
-    except:
-      await dom.alert("No or bad value for SDA/SCL!")
-      return False
-    else:
-      lcd = ucuq.HD44780_I2C(ucuq.I2C(sda, scl, soft=values[W_SOFT] == "true"), 2, 16).backlightOn()
-      return True
-  else:
-    lcd = ucuq.Nothing()
-    return True
+  lcd = ucuq.HD44780_I2C(ucuq.I2C(sda, scl, soft=soft), 2, 16).backlightOn()
 
 
-async def atkUCUqSwitch(dom, id):
-  global onDuty
+def turnOnMatrix(hardware):
+  global matrix
 
-  if (await dom.getValue(id)) == "true":
-    onDuty = turnOnMainAwait(dom) and turnOnLCDAwait(dom)
-  else:
-    onDuty = False
+  soft = hardware["Soft"]
+  sda = hardware["SDA"]
+  scl = hardware["SCL"]
 
-  await updateUIAwait(dom, onDuty)
+  matrix = ucuq.HT16K33(ucuq.I2C(sda, scl, soft=soft))
 
 
 async def atkSelect(dom):
-  if onDuty:
-    R, G, B = (await dom.getValues(["rgb-r", "rgb-g", "rgb-b"])).values()
-    await dom.setValues(getAllValues_(R, G, B))
-    update_(R, G, B)
-  else:
-    await dom.executeVoid(f"colorWheel.rgb = [0,0,0]")  
+  R, G, B = (await dom.getValues(["rgb-r", "rgb-g", "rgb-b"])).values()
+  await dom.setValues(getAllValues_(R, G, B))
+  update_(R, G, B, 255)
 
 
 async def atkSlide(dom):
   (R,G,B) = (await dom.getValues(["SR", "SG", "SB"])).values()
   await dom.setValues(getNValues_(R, G, B))
   await dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
-  update_(R, G, B)
+  update_(R, G, B, 255)
 
 
 async def atkAdjust(dom):
   (R,G,B) = (await dom.getValues(["NR", "NG", "NB"])).values()
   await dom.setValues(getSValues_(R, G, B))
   await dom.executeVoid(f"colorWheel.rgb = [{R},{G},{B}]")
-  update_(R, G, B)
+  update_(R, G, B, 255)
 
 
 async def atkListen(dom):
@@ -270,7 +188,7 @@ async def atkDisplay(dom):
       r, g, b = [ws2812Limiter * c // 255 for c in SPOKEN_COLORS[color]]
       await dom.setValues(getAllValues_(r, g, b))
       await dom.executeVoid(f"colorWheel.rgb = [{r},{g},{b}]")
-      update_(r, g, b, color)
+      update_(r, g, b, ws2812Limiter, color)
       break
 
 

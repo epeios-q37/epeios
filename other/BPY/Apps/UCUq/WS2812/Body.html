@@ -11,59 +11,7 @@
 </div>
 <fieldset>
   <legend>WS2012</legend>
-  <div id="HardwareView" class="view">
-    <fieldset style="display: flex; flex-direction: row; justify-content: space-evenly;">
-      <legend>Main</legend>
-      <div style="display: flex; flex-direction: column; justify-content: space-between; margin-right: 5px;">
-        <label style="display: flex; justify-content: space-between">
-          <span>Pin:&nbsp;</span>
-          <input id="Pin" min="0" max="99" type="number">
-        </label>
-        <span style="height: 5px;"></span>
-        <label style="display: flex; justify-content: space-between">
-          <span>Count:&nbsp;</span>
-          <input id="Count" min="0" max="999" type="number">
-        </label>
-      </div>
-      <div style="display: flex; flex-direction: column; justify-content: space-between">
-        <label style="display: flex; justify-content: space-between">
-          <span>Offset:&nbsp;</span>
-          <input id="Offset" min="-999" max="999" type="number">
-        </label>
-        <span style="height: 5px;"></span>
-        <label style="display: flex; justify-content: space-between">
-          <span>Limiter:&nbsp;</span>
-          <input id="Limiter" min="0" max="255" type="number">
-        </label>
-      </div>
-    </fieldset>
-    <fieldset style="height: 100%; display: flex; flex-direction: row; justify-content: space-evenly;">
-      <legend>LCD</legend>
-      <div style="display: flex; flex-direction: column">
-        <label style="display: flex; justify-content: space-between; align-items: self-end;">
-          <span>Activate:</span>
-          <input id="LCDSwitch" type="checkbox" xdh:onevent="SwitchLCD">
-        </label>
-        <span style="height: 5px;"></span>
-        <label style="display: flex; justify-content: space-between; align-items:self-end">
-          <span>Soft:</span>
-          <input id="Soft" type="checkbox">
-        </label>
-      </div>
-      <div style="display: flex; flex-direction: column">
-        <label style="display: flex; justify-content: space-between">
-          <span>SDA:&nbsp;</span>
-          <input id="SDA" min="0" max="99" type="number">
-        </label>
-        <span style="height: 5px;"></span>
-        <label style="display: flex; justify-content: space-between">
-          <span>SCL:&nbsp;</span>
-          <input id="SCL" min="0" max="999" type="number">
-        </label>
-      </div>
-    </fieldset>
-  </div>
-  <div id="MainView"" class="view hide">
+  <div class="view">
     <div>
       <label style="display: flex; align-items: center;">
         <span>R:&nbsp;</span>

@@ -85,7 +85,9 @@ def ucuqGetInfos():
 """
 
 # Cotent of 'body.html' after compression.
-ATK_BODY_ = unpak_("eJy1Vdtu2zAMfe9XEC6KXlYnzg1FnTQYMGCvAzYU2NsgS3KtRbFcSc5lQf699EVO7KTo9jAUaGzyiDw8pOiZsVvJ5xcAvZzmr75ZC0sTn6rUEpFyDbsd+gCYMJkk2xBiyTfTwrTfX3ROOWymjLBCpSFoLokVKz5txxCpxNh+JBVdVK61YDYJYRRkVXBIuHhJbAiDB2dZEv0iMCbJrXqPgEiz3DoaKiNUWEwXtHIE7QTBaSwp2KHwQzEkMkrmti6G5tooHaJfpJbrymhV1iSQPG7Cgz5OBpGyVi0Pr4QuXrTKU4a6yyLoJaW08vlrHi2E9a0mqSPSG5s6XduInCJB/Yj/EVzfBPcwuIegN8HfW5dXY2W+JkzkJoRxdqaTZfFhxGOl+Yca4JTwFOvyvE7XRq5rtegHQyVL8+qkGDaGEzHWiXAJ/6cao5Ya5SR9OjcQ57r1OBmOJ+40gDsf0oTTBWd/G2cypI/jcZdFGCuam/Mx1MY3CWFqjcOEf9hRuHzgMXkITqKc49Lpc0tedGBfyke8xPznzQAvZy2dvzQfgz4CVOT6d/C9EIEzqDgZuOt3xrFXynQoutW3ZkOcjnF1rlNk5/gkuOqedsgl2fhuoodBs5rUiutYFpIngjGeTtvbZlC9k1QsSTWMRcyvhPFvuJuGBpDMmmhmjtJ+XvBtrMmSmxa45hFcuad3OVVzBzAI3gMHLSD+n/Xr1T9jYgXl85PXXvPwOzdWxFu/ueiUl8vOAyqJMU9ewdYrvh6zZDS/3u2v4WbGl/PdftbHn9tZH82YCTP8Wx6DanKfr3gqt9N69ftuV0yw6iopwtJjKiefrxKGQEkiLs8gaz8iqk+HYE/e85fn1x+VF+w2Q7bl1cG75sGGJaFKC162BWzCnDKqLmw5id4cRUdATapfsioLqc3HShVUigi/IsW2nvO9AcQZWu8=")
+ATK_BODY_ = unpak_("eJy1VU1v2zAMvfdXEC6KfqxOnC8UddJgW7FdB7QosNsgS3KtRbFcSU7iDf3voy3biZMU3Q5DDpFI6vHxiaJnxhaSz08AejnNX3yzFpYmPlWpJSLlGn6jC4AJk0lShBBLvpmWpteTvTN1ZKaMsEKlIWguiRUrPu0iiFQisB9JRRfOtRbMJiGMgsxBQ8LFc2JDGNw0liXRzwIxSW7VG+lFmuW2JqEyQoXFZEEnQ9CFDw6QpGBtydtCSGSUzG1dCM21UTpEv0gt185oVdbCSx634KB3U0GkrFXL7ZbQxbNWecpQcFmCnlJKnc9f82ghrG81SRsivbGp03WNyCkS1I/4L8H1RXANg2sIehP8v2zyaizM14SJ3IQwzg7vsCo9jHisNH9PAWwOnmJVnrd3X6PmvmrBtwYnSrtthBi2hgMp1oloEv5PLUa7WlQ99OFIMxy7qdvJcDypzwI0p0OacLrg7C9RJkN6Ox7vMQhjRXNzFEFtfJMQptbYRPjDm4TTGx6Tm2Af4xiP7v12ZEU73ke1xGfLv18M8DnWkvlL837QewEVtf4VPJT1cwaOkYGr/l4T9iqF2oI7t9VOhIPWdae6Be4dngRne2fruCXZ+E0PD4N2DKkV17EspU4EYzyddmfLwO1JKpbEtV8J+ZUw/g0H0dAAMlkTzcw26ccFL2JNltx0Yh2L4KxevEmoajSAQfBGaLAb9noy69fDfcbECqr1nded5PAzN1bEhd++acqrqeYBlcSYO6/k6ZXfh1kymp9/fvh0/+XxHC5mfDl3m1kfl5ezProxI2b6t3wG5eQ+X/FUFtN6zvvNeJhg5S45hqW7lA4+VFUYBkoScXkksvZjhPtQCHbnPd0/vTw6L9giQ7bVo8FH5sGGJaFKS162E9jCHDJyD7XqQ2+O4mNATapfsaoKqc27SpVUSoQfkWKF1/j+ABQ2Tdc=")\
+.replace("{", "{{").replace("}", "}}").replace("BRACES", "{}")
+
 
 CB_AUTO = 0
 CB_MANUAL = 1
@@ -423,6 +425,10 @@ class HT16K33(Core_):
 
   def plot(self, x, y, ink=True):
     return self.addMethods(f"plot({x}, {y}, ink={1 if ink else 0})")  
+  
+  def rect(self, x0, y0, x1, y1, ink = True):
+    return self.addMethods(f"rect({x0}, {y0}, {x1}, {y1}, ink={1 if ink else 0})")  
+
 
   def show(self):
     return self.addMethods(f"render()")

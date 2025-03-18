@@ -1,23 +1,23 @@
 <style>
-  .ucuq-switch-container {{
+  .ucuq-switch-container {
     display: flex;
-   }}
+   }
 
-  .ucuq-switch {{
+  .ucuq-switch {
     position: relative;
     display: inline-block;
     width: 30px;
     height: 17px;
     margin: auto;
-   }}
+   }
 
-  .ucuq-switch input {{
+  .ucuq-switch input {
     opacity: 0;
     width: 0;
     height: 0;
-   }}
+   }
 
-  .ucuq-slider {{
+  .ucuq-slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -28,9 +28,9 @@
     -webkit-transition: .4s;
     transition: .4s cubic-bezier(0, 1, 0.5, 1);
     border-radius: 4px;
-   }}
+   }
 
-  .ucuq-slider:before {{
+  .ucuq-slider:before {
     position: absolute;
     content: "";
     height: 13px;
@@ -41,53 +41,53 @@
     -webkit-transition: .4s;
     transition: .4s cubic-bezier(0, 1, 0.5, 1);
     border-radius: 3px;
-   }}
+   }
 
-  input+.ucuq-slider {{
+  input+.ucuq-slider {
     background-color: #c95245;
-   }}
+   }
   
-  input:checked+.ucuq-slider {{
+  input:checked+.ucuq-slider {
     background-color: #52c944;
-   }}
+   }
 
-  input:focus+.ucuq-slider {{
+  input:focus+.ucuq-slider {
     box-shadow: 0 0 4px #7efa70;
-   }}
+   }
 
-  input:checked+.ucuq-slider:before {{
+  input:checked+.ucuq-slider:before {
     -webkit-transform: translateX(10px);
     -ms-transform: translateX(10px);
     transform: translateX(10px);
-   }}
+   }
 
   /* Rounded sliders */
-  .ucuq-slider.round {{
+  .ucuq-slider.round {
     border-radius: 17px;
-   }}
+   }
 
-  .ucuq-slider.round:before {{
+  .ucuq-slider.round:before {
     border-radius: 50%;
-   }}
+   }
 
-  .ucuq {{
+  .ucuq {
     max-height: 200px;
     overflow: hidden;
     opacity: 1;
     animation: ucuqFadeOut 2s forwards;
-   }}
+   }
 
-  @keyframes ucuqFadeOut {{
-    0% {{
+  @keyframes ucuqFadeOut {
+    0% {
       max-height: 200px;
-     }}
-    100% {{
+     }
+    100% {
       max-height: 0;
-     }}
-   }}
+     }
+   }
 </style>
 <div style="display: flex; justify-content: center;" class="ucuq">
-  <h3>'{}' (<em>{}</em>)</h3>
+  <h3>'BRACES' (<em>BRACES</em>)</h3>
 </div>
 <div style="display: flex; justify-content: space-evenly; margin-bottom: 5px;">
   <span class="ucuq-switch-container">
