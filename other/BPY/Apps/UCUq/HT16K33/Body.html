@@ -1,28 +1,4 @@
 <fieldset>
-  <fieldset style="display: flex;">
-    <fieldset id="HardwareBox">
-      <select id="Preset" xdh:onevent="Preset">
-        <option value="User">User defined</option>
-        <optgroup label="Freenove">
-          <option value="Bipedal">Bipedal</option>
-        </optgroup>
-      </select>
-      <label>
-        <span>SDA:</span>
-        <input id="SDA" size="2" type="number">
-      </label>
-      <label>
-        <span>SCL:</span>
-        <input id="SCL" size="2" type="number">
-      </label>
-    </fieldset>
-    <span class="switch-container">
-      <label class="switch">
-        <input id="Switch" type="checkbox" xdh:onevent="Switch">
-        <span class="slider round"></span>
-      </label>
-    </span>
-  </fieldset>
   <fieldset id="MatrixBox" style="display: flex; justify-content: center;">
     <div class="matrix" id="Matrix"></div>
   </fieldset>

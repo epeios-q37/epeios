@@ -84,9 +84,30 @@ def ucuqGetInfos():
   }}
 """
 
-# Cotent of 'body.html' after compression.
-ATK_BODY_ = unpak_("eJy1VU1v2zAMvfdXEC6KfqxOnC8UddJgW7FdB7QosNsgS3KtRbFcSU7iDf3voy3biZMU3Q5DDpFI6vHxiaJnxhaSz08AejnNX3yzFpYmPlWpJSLlGn6jC4AJk0lShBBLvpmWpteTvTN1ZKaMsEKlIWguiRUrPu0iiFQisB9JRRfOtRbMJiGMgsxBQ8LFc2JDGNw0liXRzwIxSW7VG+lFmuW2JqEyQoXFZEEnQ9CFDw6QpGBtydtCSGSUzG1dCM21UTpEv0gt185oVdbCSx634KB3U0GkrFXL7ZbQxbNWecpQcFmCnlJKnc9f82ghrG81SRsivbGp03WNyCkS1I/4L8H1RXANg2sIehP8v2zyaizM14SJ3IQwzg7vsCo9jHisNH9PAWwOnmJVnrd3X6PmvmrBtwYnSrtthBi2hgMp1oloEv5PLUa7WlQ99OFIMxy7qdvJcDypzwI0p0OacLrg7C9RJkN6Ox7vMQhjRXNzFEFtfJMQptbYRPjDm4TTGx6Tm2Af4xiP7v12ZEU73ke1xGfLv18M8DnWkvlL837QewEVtf4VPJT1cwaOkYGr/l4T9iqF2oI7t9VOhIPWdae6Be4dngRne2fruCXZ+E0PD4N2DKkV17EspU4EYzyddmfLwO1JKpbEtV8J+ZUw/g0H0dAAMlkTzcw26ccFL2JNltx0Yh2L4KxevEmoajSAQfBGaLAb9noy69fDfcbECqr1nded5PAzN1bEhd++acqrqeYBlcSYO6/k6ZXfh1kymp9/fvh0/+XxHC5mfDl3m1kfl5ezProxI2b6t3wG5eQ+X/FUFtN6zvvNeJhg5S45hqW7lA4+VFUYBkoScXkksvZjhPtQCHbnPd0/vTw6L9giQ7bVo8FH5sGGJaFKS162E9jCHDJyD7XqQ2+O4mNATapfsaoKqc27SpVUSoQfkWKF1/j+ABQ2Tdc=")\
-.replace("{", "{{").replace("}", "}}").replace("BRACES", "{}")
+ATK_BODY_ = """
+<style>
+  .ucuq {
+    max-height: 200px;
+    overflow: hidden;
+    opacity: 1;
+    animation: ucuqFadeOut 2s forwards;
+   }
+
+  @keyframes ucuqFadeOut {
+    0% {
+      max-height: 200px;
+     }
+    100% {
+      max-height: 0;
+     }
+   }
+</style>
+<div style="display: flex; justify-content: center;" class="ucuq">
+  <h3>'BRACES' (<em>BRACES</em>)</h3>
+</div>
+<div id="ucuq_body">
+</div>
+""".replace("{", "{{").replace("}", "}}").replace("BRACES", "{}")
 
 
 CB_AUTO = 0
@@ -138,7 +159,7 @@ class Device(Device_):
     self.addCommand(f"time.sleep({secs})")
 
 
-async def getInfosAwait(device = None):
+async def getBaseInfosAwait_(device = None):
   device = getDevice_(device)
 
   device.addCommand(INFO_SCRIPT_, False)
@@ -193,8 +214,31 @@ def getKitHardware(infosOrLabel):
     return "Undefined"
   
 
+getHardware_ = lambda hardware, key, index: hardware[key][index] if key in hardware and index < len(hardware[key]) else None
+
+
+def getHardware(hardware, stringOrList, index = 0):
+  if type(stringOrList) == str:
+    return getHardware_(hardware, stringOrList, index)
+  else:
+    for key in stringOrList:
+      if result := getHardware_(hardware, key, index):
+        return result
+
+  return None      
+  
+
 def getDeviceId(infos):
   return infos[IK_DEVICE_ID_]
+
+
+async def getInfosAwait(device):
+  infos = await getBaseInfosAwait_(device)
+
+  infos[IK_KIT_LABEL] = getKitLabelFormDeviceId_(getDeviceId(infos))
+  infos[IK_HARDWARE] = getKitHardware(infos)
+
+  return infos
 
 
 async def ATKConnectAwait(dom, body, *, device = None):
@@ -211,25 +255,17 @@ async def ATKConnectAwait(dom, body, *, device = None):
   if not device:
     await dom.inner("", "<h3>ERROR: Please launch the 'Config' application!</h3>")
     raise SystemExit("Unable to connect to a device!")
-  else:
-    setDevice(device = device)
-    infos = await getInfosAwait(device)
+  
+  setDevice(device = device)
+  infos = await getInfosAwait(device)
 
   deviceId =  getDeviceId(infos)
 
-  kitLabel = getKitLabelFormDeviceId_(deviceId)
-
-  infos[IK_KIT_LABEL] = kitLabel
-
-  infos[IK_HARDWARE] = getKitHardware(infos)
-
-  await dom.inner("", ATK_BODY_.format(kitLabel, deviceId))
+  await dom.inner("", ATK_BODY_.format(getKitLabelFormDeviceId_(deviceId), deviceId))
 
   await dom.inner("ucuq_body", body)
 
   await sleepAwait(0.5)
-
-#  await dom.begin("", ATK_STYLE)
 
   await sleepAwait(1.5)
 
@@ -258,11 +294,15 @@ def addCommand(command, /,device = None):
 
 
 # does absolutely nothing whichever method is called.
+# 'if Nothing()' returns 'False'.
 class Nothing:
   def __getattr__(self, name):
     def doNothing(*args, **kwargs):
       return self
     return doNothing
+  
+  def __bool__(self):
+    return False
 
 
 class Core_:

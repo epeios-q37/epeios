@@ -1,58 +1,4 @@
-<fieldset style="display: flex; flex-direction: column">
-  <div style="display: flex; justify-content: space-evenly;">
-    <select xdh:onevent="Preset" id="Preset">
-      <option value="User">User</option>
-      <option value="DIY">DIY</option>
-      <option value="Wokwi">Wokwi</option>
-    </select>
-    <span class="switch-container">
-      <label class="switch">
-        <input id="Switch" type="checkbox" xdh:onevent="Switch">
-        <span class="slider round"></span>
-      </label>
-    </span>
-  </div>
-  <div id="Hardware" style="display: flex;">
-    <fieldset style="display: flex; flex-direction: column; justify-content: space-around;">
-      <legend>Ring</legend>
-      <div style="display: flex; justify-content: space-between">
-        <input id="Ring_Pin" min="0" max="99" type="number" placeholder="Pin">
-        <input id="Ring_Count" min="0" max="999" type="number" placeholder="Count">
-      </div>
-      <div style="display: flex; justify-content: space-between">
-        <input id="Ring_Offset" min="-999" max="999" type="number" placeholder="Offset">
-        <input id="Ring_Limiter" min="0" max="255" type="number" placeholder="Limiter">
-      </div>
-    </fieldset>
-    <fieldset style="display: flex; flex-direction: column; justify-content: space-around;">
-      <legend>Buzzer</legend>
-      <label>
-        <input id="Buzzer_On" type="checkbox" />
-        <span>On</span>
-      </label>
-      <input id="Buzzer_Pin" min="0" max="99" type="number" placeholder="Pin">
-    </fieldset>
-    <fieldset style="display: flex; flex-direction: column; justify-content: space-around;">
-      <legend>OLED</legend>
-      <label>
-        <input id="OLED_Soft" type="checkbox">
-        <span>Soft</span>
-      </label>
-      <input id="OLED_SDA" type="number" min="0" max="99" placeholder="SDA">
-      <input id="OLED_SCL" type="number" min="0" max="99" placeholder="SCL">
-    </fieldset>
-    <fieldset style="display: flex; flex-direction: column; justify-content: space-around;">
-      <legend>LCD</legend>
-      <label>
-        <input id="LCD_Soft" type="checkbox">
-        <span>Soft</span>
-      </label>
-      <input id="LCD_SDA" type="number" min="0" max="99" placeholder="SDA">
-      <input id="LCD_SCL" type="number" min="0" max="99" placeholder="SCL">
-    </fieldset>
-</fieldset>
-</div>
-<fieldset id="Board">
+<fieldset>
   <input id="Color" type="hidden">
   <div id="outer-circle">
     <div id="G" xdh:onevent="Click"></div>
@@ -61,11 +7,15 @@
     <div id="B" xdh:onevent="Click"></div>
     <div id="inner-circle" style="display: flex;justify-content: center;align-items: center; flex-direction: column;">
       <div>
-        <button id="Repeat" xdh:onevent="Repeat" disabled="disabled">Repeat</button>
+        <button xdh:onevent="New">New</button>
       </div>
       <div>
-        <button id="New" xdh:onevent="New" disabled="disabled">New</button>
+        <button xdh:onevent="Repeat">Repeat</button>
       </div>
+      <label style="display: flex; background-color: white; margin-top: 1px;">
+        <span>🎵:</span>
+        <input type="checkbox" xdh:onevent="SwitchSound" checked="">
+      </label>
     </div>
   </div>
 </fieldset>

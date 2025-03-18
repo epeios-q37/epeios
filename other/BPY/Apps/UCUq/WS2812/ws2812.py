@@ -23,18 +23,11 @@ SPOKEN_COLORS =  {
   "beige": [255, 212, 170]
 }
 
-# Kits
-K_BIPEDAL = 0
-K_DOG = 1
-K_DIY = 2
-K_WOKWI = 3
 
-KITS = {
-  "Freenove/Bipedal/RPiPico(2)W": K_BIPEDAL,
-  "Freenove/Dog/ESP32": K_DOG,
-  "q37.info/DIY/Displays": K_DIY,
-  "q37.info/Wokwi/Displays": K_WOKWI,
-}
+ws2812 = None
+lcd = None
+matrix = None
+
 
 def rainbow():
   v =  random.randint(0, 5)
@@ -44,10 +37,6 @@ def rainbow():
     ucuq.sleep(RB_DELAY)
     i += ws2812Limiter / 20
   update_(0, 0, 0, ws2812Limiter)
-
-
-def convert_(hex):
-  return int(int(hex,16) * 100 / 256)
 
 
 def getValues_(target, R, G, B):
@@ -69,26 +58,25 @@ def getSValues_(R, G, B):
 def getAllValues_(R, G, B):
   return getNValues_(R, G, B) | getSValues_(R, G, B)
 
-def drawLineOnMatrix(x, height):
+
+def drawBarOnMatrix(x, height):
   y = int(height)
-  print(y)
+
   if y != 0:
     matrix.rect(x * 6, 8 - y, x * 6 + 3, 7)
 
+
 def update_(r, g, b, limit, color=""):
-  if ws2812:
-    r, g, b = map(int, [r, g, b])
+  ws2812.fill(list(map(int, [r, g, b]))).write()
 
-    ws2812.fill((r, g, b)).write()
-
+  if matrix:
     matrix.clear()
-    drawLineOnMatrix(0, r * 8 / limit)
-    drawLineOnMatrix(1, g * 8 / limit)
-    drawLineOnMatrix(2, b * 8 / limit)
+    drawBarOnMatrix(0, int(r) * 8 / limit)
+    drawBarOnMatrix(1, int(g) * 8 / limit)
+    drawBarOnMatrix(2, int(b) * 8 / limit)
     matrix.show()
 
-    r, g, b = map(lambda s: str(s).rjust(3), [r, g, b])
-
+  if lcd:
     lcd.moveTo(0,0)\
       .putString("RGB: {} {} {}".format(*map(lambda s: str(s).rjust(3), [r, g, b])))\
       .moveTo(0,1)\
@@ -101,58 +89,57 @@ async def resetAwait(dom):
   update_(0, 0, 0, 255)    
 
 
-async def atk(dom):
-  global lcd, matrix
-  
-  infos = await ucuq.ATKConnectAwait(dom, BODY)
-
-  await dom.executeVoid("setColorWheel()")
-  await dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
-
-  hardware = ucuq.getKitHardware(infos)
-
-  kit = KITS[ucuq.getKitLabel(infos)]
-
-  if kit == K_BIPEDAL or kit == K_DOG:
-    turnOnMain(hardware["RGB"][0])
-    turnOnMatrix(hardware["Matrix"][0])
-    lcd = ucuq.Nothing()
-  elif kit == K_DIY or kit == K_WOKWI:
-    turnOnMain(hardware["Ring"][0])
-    turnOnLCD(hardware["LCD"][0])
-    matrix = ucuq.Nothing()
-  else:
-    raise Exception("Unknown kit!")
-
-
 def turnOnMain(hardware):
   global ws2812, ws2812Limiter
 
-  pin = hardware["Pin"]
-  count = hardware["Count"]
-  ws2812Limiter = hardware["Limiter"]
+  if hardware:
+    pin = hardware["Pin"]
+    count = hardware["Count"]
+    ws2812Limiter = hardware["Limiter"]
 
-  ws2812 = ucuq.WS2812(pin, count)
+    ws2812 = ucuq.WS2812(pin, count)
+  else:
+    raise("Kit has no ws2812!")
   
 
 def turnOnLCD(hardware):
   global lcd
 
-  soft = hardware["Soft"]
-  sda = hardware["SDA"]
-  scl = hardware["SCL"]
+  if hardware:
+    soft = hardware["Soft"]
+    sda = hardware["SDA"]
+    scl = hardware["SCL"]
 
-  lcd = ucuq.HD44780_I2C(ucuq.I2C(sda, scl, soft=soft), 2, 16).backlightOn()
+    lcd = ucuq.HD44780_I2C(ucuq.I2C(sda, scl, soft=soft), 2, 16).backlightOn()
+  else:
+    lcd = ucuq.Nothing()
 
 
 def turnOnMatrix(hardware):
   global matrix
 
-  soft = hardware["Soft"]
-  sda = hardware["SDA"]
-  scl = hardware["SCL"]
+  if hardware:
+    soft = hardware["Soft"]
+    sda = hardware["SDA"]
+    scl = hardware["SCL"]
 
-  matrix = ucuq.HT16K33(ucuq.I2C(sda, scl, soft=soft))
+    matrix = ucuq.HT16K33(ucuq.I2C(sda, scl, soft=soft)).clear().show()
+  else:
+    matrix = ucuq.Nothing()
+
+
+async def atk(dom):
+  infos = await ucuq.ATKConnectAwait(dom, BODY)
+
+  await dom.executeVoid("setColorWheel()")
+  await dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
+
+  if not ws2812:
+    hardware = ucuq.getKitHardware(infos)
+
+    turnOnMain(ucuq.getHardware(hardware, ("Ring", "RGB")))
+    turnOnMatrix(ucuq.getHardware(hardware, "Matrix"))
+    turnOnLCD(ucuq.getHardware(hardware, "LCD"))
 
 
 async def atkSelect(dom):
@@ -177,6 +164,7 @@ async def atkAdjust(dom):
 
 async def atkListen(dom):
   await dom.executeVoid("launch()")
+
 
 # Launched by the JS 'launch()' script.
 async def atkDisplay(dom):

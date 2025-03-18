@@ -1,6 +1,5 @@
 import ucuq, atlastk, binascii
 
-onDuty = False
 ht16k33 = None
 mirror = None
 
@@ -9,36 +8,31 @@ pattern = "0" * 32
 TEST_DELAY = 0.05
 
 def test():
-  if ht16k33:
-    for y in range(8):
-      for x in range(16):
-        ht16k33.plot(x,y)
-      ht16k33.show()
-      ucuq.sleep(TEST_DELAY)
-      ht16k33.clear()
-
+  for y in range(8):
     for x in range(16):
-      for y in range(8):
-        ht16k33.plot(x,y)
-      ht16k33.show()
-      ucuq.sleep(TEST_DELAY)
-      ht16k33.clear()
-
-    for x in range(16):
-      for y in range(8):
-        ht16k33.plot(x,y)
-
+      ht16k33.plot(x,y)
     ht16k33.show()
+    ucuq.sleep(TEST_DELAY)
+    ht16k33.clear()
 
-    for b in range(0, 16):
-      ht16k33.setBrightness(b)
-      ucuq.sleep(TEST_DELAY)
+  for x in range(16):
+    for y in range(8):
+      ht16k33.plot(x,y)
+    ht16k33.show()
+    ucuq.sleep(TEST_DELAY)
+    ht16k33.clear()
 
-    for b in range(15, -1, -1):
-      ht16k33.setBrightness(b)
-      ucuq.sleep(TEST_DELAY)
+  ht16k33.rect(0, 0, 15, 7).show()
 
-    ht16k33.clear().show()
+  for b in range(0, 16):
+    ht16k33.setBrightness(b)
+    ucuq.sleep(TEST_DELAY)
+
+  for b in range(15, -1, -1):
+    ht16k33.setBrightness(b)
+    ucuq.sleep(TEST_DELAY)
+
+  ht16k33.clear().show()
 
 
 async def drawOnGUIAwait(dom, motif = pattern):
@@ -85,6 +79,7 @@ def drawOnMatrix(motif = pattern):
     if mirror:
       mirror.fill(0).draw(motif, 16, mul=8).show()
 
+
 async def drawAwait(dom, motif = pattern):
   global pattern
 
@@ -97,95 +92,33 @@ async def drawAwait(dom, motif = pattern):
   await setHexaAwait(dom, motif)
 
 
-async def updateUIAwait(dom, onDuty):
-  ids = ["MatrixBox", "HexaBox", "MiscBox", "MatricesBox"]
+def turnOnMain(hardware):
+  global ht16k33
 
-  if onDuty:
-    await dom.enableElements(ids)
-    await dom.disableElement("HardwareBox")
-    await dom.setValue("Switch", "true")
-  else:
-    await dom.disableElements(ids)
-    await dom.enableElement("HardwareBox")
-    await dom.setValue("Switch", "false")
+  if not hardware:
+    raise Exception("Kit has no ht16k33 component!")
+  
+  sda = hardware["SDA"]
+  scl = hardware["SCL"]
+  soft = hardware["Soft"]
+  
+  ht16k33 = ucuq.HT16K33(ucuq.I2C(sda, scl, soft=soft))
+  ht16k33.clear().show()
+  ht16k33.setBrightness(0)
+  ht16k33.setBlinkRate(0)
 
-    match await dom.getValue("Preset"):
-      case "User":
-        await dom.enableElements(["SDA", "SCL"])
-      case "Bipedal":
-        await dom.setValues({
-          "SDA": 4,
-          "SCL": 5
-        })
-        await dom.disableElements(["SDA", "SCL"])
-      case _:
-        raise Exception("Unknown preset!")
-        
 
 async def atk(dom):
-  id = ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))
+  infos = await ucuq.ATKConnectAwait(dom, BODY)
+
+  if not ht16k33:
+    turnOnMain(ucuq.getHardware(ucuq.getKitHardware(infos), "Matrix"))
 
   await drawAwait(dom, "")
 
   dom.executeVoid("patchHexaInput();")
 
-  await drawLittleMatricesAwait(dom,MATRICES)
-
-  if not onDuty:
-    if id == ucuq.K_BIPEDAL:
-      await dom.setValue("Preset", "Bipedal")
-
-  await updateUIAwait(dom, onDuty)
-
-async def atkPreset(dom, id):
-  match await dom.getValue("Preset"):
-    case "User":
-      await dom.setValues({
-        "SDA": "",
-        "SCL": ""
-      })
-    case "Bipedal":
-      pass
-    case _:
-      raise Exception("Unknown preset!")
-    
-  await updateUIAwait(dom, False)
-
-
-async def launchAwait(dom, sda, scl):
-  global ht16k33, onDuty
-
-  try:
-    ht16k33 = ucuq.HT16K33(ucuq.I2C(sda, scl))
-    ht16k33.clear().show()
-    ht16k33.setBrightness(0)
-    ht16k33.setBlinkRate(0)
-  except Exception as err:
-    await dom.alert(err)
-    onDuty = False
-  else:
-    onDuty = True
-
-
-async def atkSwitch(dom, id):
-  global onDuty
-
-  state = (await dom.getValue(id)) == "true"
-
-  if state:
-    await updateUIAwait(dom, state)
-
-    try:
-      sda, scl = (int(value.strip()) for value in (await dom.getValues(["SDA", "SCL"])).values())
-    except:
-      await dom.alert("No or bad value for SDA/SCL!")
-      await updateUIAwait(dom, False)
-    else:
-      await launchAwait(dom, sda, scl)
-  else:
-    onDuty = False
-
-  await updateUIAwait(dom, onDuty)
+  await drawLittleMatricesAwait(dom, MATRICES)
 
 
 async def atkTest():
@@ -193,10 +126,6 @@ async def atkTest():
 
 
 async def atkToggle(dom, id):
-  if not onDuty:
-    dom.alert("Please switch on!")
-    return
-
   global pattern
 
   [x, y] = list(map(lambda v: int(v), (await dom.getMark(id)).split()))
@@ -233,20 +162,28 @@ async def atkAll(dom):
 async def atkBrightness(dom, id):
   ht16k33.setBrightness(int(await dom.getValue(id)))
 
+
 async def atkBlinkRate(dom, id):
   ht16k33.setBlinkRate(float(await dom.getValue(id)))
+
 
 async def atkDraw(dom, id):
   await drawAwait(dom, MATRICES[int(await dom.getMark(id))])
 
+
 async def atkMirror(dom, id):
   global mirror
 
-  state = (await dom.getValue(id)) == "true"
-
-  if state:
+  if  (await dom.getValue(id)) == "true":
     if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9, device = ucuq.Device(id="Bravo")))
+      device = ucuq.Device(id="Bravo")
+      hardware = ucuq.getHardware(ucuq.getKitHardware(await ucuq.getInfosAwait(device)), "OLED")
+
+      sda = hardware["SDA"]
+      scl = hardware["SCL"]
+      soft = hardware["Soft"]
+
+      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(sda, scl, soft=soft, device=device ))
     else:
       await dom.setValue(id, "false")
   else:

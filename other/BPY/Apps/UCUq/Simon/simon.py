@@ -1,10 +1,15 @@
 import atlastk, ucuq, json, math, random
 
-onDuty = False
 cRing = None
 cOLED = None
 cBuzzer = None
 cLCD = None
+
+buzzerPin = None
+
+ringCount = 0
+ringOffset = 0
+ringLimiter = 0
 
 EN = {
   0: "Welcome to",
@@ -45,97 +50,22 @@ HAPPY_MOTIF = "03c00c30181820044c32524a80018001824181814812442223c410080c3003c0"
 SAD_MOTIF = "03c00c30181820044c3280018001824181814002400227e410080c3003c0"
 
 OLED_COEFF = 8
-ringCount = 0
-ringOffset = 0
-ringLimiter = 0
 
-# Presets
-P_USER = "User"
-P_DIY = "DIY"
-P_WOKWI = "Wokwi"
+seq = ""
+userSeq = ""
 
-# Widgets
-# Hardware widgets
-W_HARDWARE = "Hardware"
-W_H_SWITCH = "Switch"
-W_H_PRESET = "Preset"
-W_H_RING_PIN = "Ring_Pin"
-W_H_RING_COUNT = "Ring_Count"
-W_H_RING_OFFSET = "Ring_Offset"
-W_H_RING_LIMITER = "Ring_Limiter"
-W_H_BUZZER_ON = "Buzzer_On"
-W_H_BUZZER_PIN = "Buzzer_Pin"
-W_H_OLED_SOFT = "OLED_Soft"
-W_H_OLED_SDA = "OLED_SDA"
-W_H_OLED_SCL = "OLED_SCL"
-W_H_LCD_SOFT = "LCD_Soft"
-W_H_LCD_SDA = "LCD_SDA"
-W_H_LCD_SCL = "LCD_SCL"
-# Board widgets
-W_BOARD = "Board"
-W_B_R = "R"
-W_B_G = "G"
-W_B_B = "B"
-W_B_Y = "Y"
-W_B_NEW = "New"
-W_B_REPEAT = "Repeat"
 
 def getValuesOfVarsBeginningWith(prefix):
   return [value for var, value in globals().items() if var.startswith(prefix)]
+
 
 def remove(source, items):
   return [item for item in source if item not in items]
 
 
-HARDWARE_WIDGETS = getValuesOfVarsBeginningWith("W_H_")
-HARDWARE_WIDGETS_WITHOUT_SWITCH = remove(HARDWARE_WIDGETS, [W_H_SWITCH])
-BOARD_WIDGETS = getValuesOfVarsBeginningWith("W_B_")
-
-# Default hardware settings
-SETTINGS = {
-  P_USER: {
-  },
-  P_DIY: {
-    W_H_RING_PIN: ucuq.H_DIY_DISPLAYS["Ring"]["Pin"],
-    W_H_RING_COUNT: ucuq.H_DIY_DISPLAYS["Ring"]["Count"],
-    W_H_RING_OFFSET: ucuq.H_DIY_DISPLAYS["Ring"]["Offset"],
-    W_H_RING_LIMITER:ucuq.H_DIY_DISPLAYS["Ring"]["Limiter"],
-    W_H_BUZZER_ON: "true",
-    W_H_BUZZER_PIN: ucuq.H_DIY_DISPLAYS["Buzzer"]["Pin"],
-    W_H_OLED_SOFT: ucuq.H_DIY_DISPLAYS["OLED"]["Soft"],
-    W_H_OLED_SDA: ucuq.H_DIY_DISPLAYS["OLED"]["SDA"],
-    W_H_OLED_SCL: ucuq.H_DIY_DISPLAYS["OLED"]["SCL"],
-    W_H_LCD_SOFT: ucuq.H_DIY_DISPLAYS["LCD"]["Soft"],
-    W_H_LCD_SDA: ucuq.H_DIY_DISPLAYS["LCD"]["SDA"],
-    W_H_LCD_SCL: ucuq.H_DIY_DISPLAYS["LCD"]["SCL"],
-  },
-  P_WOKWI: {
-    W_H_RING_PIN: ucuq.H_WOKWI_DISPLAYS["Ring"]["Pin"],
-    W_H_RING_COUNT: ucuq.H_WOKWI_DISPLAYS["Ring"]["Count"],
-    W_H_RING_OFFSET: ucuq.H_WOKWI_DISPLAYS["Ring"]["Offset"],
-    W_H_RING_LIMITER:ucuq.H_WOKWI_DISPLAYS["Ring"]["Limiter"],
-    W_H_BUZZER_ON: "true",
-    W_H_BUZZER_PIN: ucuq.H_WOKWI_DISPLAYS["Buzzer"]["Pin"],
-    W_H_OLED_SOFT: ucuq.H_WOKWI_DISPLAYS["OLED"]["Soft"],
-    W_H_OLED_SDA: ucuq.H_WOKWI_DISPLAYS["OLED"]["SDA"],
-    W_H_OLED_SCL: ucuq.H_WOKWI_DISPLAYS["OLED"]["SCL"],
-    W_H_LCD_SOFT: ucuq.H_WOKWI_DISPLAYS["LCD"]["Soft"],
-    W_H_LCD_SDA: ucuq.H_WOKWI_DISPLAYS["LCD"]["SDA"],
-    W_H_LCD_SCL: ucuq.H_WOKWI_DISPLAYS["LCD"]["SCL"],
-  }
-}
-
-PRESETS = {
-  ucuq.K_UNKNOWN: P_USER,
-  ucuq.K_DIY_DISPLAYS: P_DIY,
-  ucuq.K_WOKWI_DISPLAYS: P_WOKWI
-}
-
-seq = ""
-userSeq = ""
-
 def digit(n,offset):
   cOLED.draw(DIGITS[n], 8, offset, mul=8)
+
 
 def number(n):
   try:
@@ -145,6 +75,7 @@ def number(n):
     cOLED.fill(0)
   cOLED.show()
 
+
 BUTTONS = {
   "R": [[255, 0, 0], 5, 9],
   "B": [[0, 0, 255], 7, 12],
@@ -152,14 +83,6 @@ BUTTONS = {
   "G": [[0, 255, 0], 3, 5],
 }
 
-SPOKEN_COLORS = {
-  "rouge": "R",
-  "bleu": "B",
-  "jaune": "Y",
-  "vert": "G",
-  "verre": "G",
-  "verte": "G"
-}
 
 pitches = []
 
@@ -182,35 +105,6 @@ FAIL_JINGLE = [
 ]
 
 
-def convert(value, converter):
-  try:
-    return converter(value)
-  except:
-    raise Exception("Bad or missing value!")
-
-
-async def getInputs(dom):
-  values = await dom.getValues([
-      W_H_RING_PIN, W_H_RING_COUNT, W_H_RING_OFFSET, W_H_RING_LIMITER,
-      W_H_BUZZER_ON, W_H_BUZZER_PIN,
-      W_H_OLED_SOFT, W_H_OLED_SDA, W_H_OLED_SCL,
-      W_H_LCD_SOFT, W_H_LCD_SDA, W_H_LCD_SCL])
-
-  return {
-    W_H_RING_PIN: convert(values[W_H_RING_PIN], int),
-    W_H_RING_COUNT: convert(values[W_H_RING_COUNT], int),
-    W_H_RING_OFFSET: convert(values[W_H_RING_OFFSET], int),
-    W_H_RING_LIMITER: convert(values[W_H_RING_LIMITER], int),
-    W_H_BUZZER_ON: True if values[W_H_BUZZER_ON] == "true" else False,
-    W_H_BUZZER_PIN: convert(values[W_H_BUZZER_PIN], int),
-    W_H_OLED_SOFT: True if values[W_H_OLED_SOFT] == "true" else False,
-    W_H_OLED_SDA: convert(values[W_H_OLED_SDA], int),
-    W_H_OLED_SCL: convert(values[W_H_OLED_SCL], int),
-    W_H_LCD_SOFT: True if values[W_H_LCD_SOFT] == "true" else False,
-    W_H_LCD_SDA: convert(values[W_H_LCD_SDA], int),
-    W_H_LCD_SCL: convert(values[W_H_LCD_SCL], int),
-  }
-
 def flash(button):
   cRing.fill([0,0,0])
   if button in BUTTONS:
@@ -230,7 +124,7 @@ def beep(note, delay = 0.29, sleep = 0.01):
 def playJingle(jingle):
   prevButton = ""
   prevPrevButton = ""
-#  number(None)
+
   for n in jingle:
     while True:
       button = random.choice(list(BUTTONS.keys())) 
@@ -242,57 +136,72 @@ def playJingle(jingle):
   flash("")
 
 
-async def updateHardwareUI(dom):
-  await dom.setValues(SETTINGS[await dom.getValue(W_H_PRESET)])
+def turnBuzzerOn(hardware):
+  global cBuzzer, buzzerPin
+
+  if buzzerPin == None:
+    if not hardware:
+      raise Exception("No buzzer!")
+    
+    buzzerPin = hardware["Pin"]
+  
+  cBuzzer = ucuq.PWM(buzzerPin, freq=50).setNS(0)
+
+
+def turnRingOn(hardware):
+  global cRing, ringCount, ringOffset, ringLimiter
+
+  if not hardware:
+    raise Exception("No ring!")
+  
+  ringCount = hardware["Count"]
+  ringOffset = hardware["Offset"]
+  ringLimiter = hardware["Limiter"]
+
+  cRing = ucuq.WS2812(hardware["Pin"], ringCount).fill([0,0,0]).write()  
+
+
+def getI2C(hardware):
+  sda = hardware["SDA"]
+  scl = hardware["SCL"]
+  soft = hardware["Soft"]
+
+  return ucuq.I2C(sda, scl, soft=soft)
+
+
+def turnLCDOn(hardware):
+  global cLCD
+
+  if not hardware:
+    raise Exception("No LCD!")
+  
+  cLCD = ucuq.HD44780_I2C(getI2C(hardware), 2, 16).backlightOff()
+
+
+def turnOLEDOn(hardware):
+  global cOLED
+
+  if not hardware:
+    raise Exception("No LCD!")
+  
+  cOLED = ucuq.SSD1306_I2C(128, 64, getI2C(hardware))
 
 
 async def atk(dom):
-  preset = PRESETS[ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))]
+  infos = await ucuq.ATKConnectAwait(dom, BODY)
 
-  await dom.setValue(W_H_PRESET, preset)
+  hardware = ucuq.getKitHardware(infos)
 
-  await updateHardwareUI(dom)
+  turnBuzzerOn(ucuq.getHardware(hardware, "Buzzer"))
+  turnRingOn(ucuq.getHardware(hardware, "Ring"))
+  turnLCDOn(ucuq.getHardware(hardware, "LCD"))
+  turnOLEDOn(ucuq.getHardware(hardware, "OLED"))
 
+  ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
-async def atkPreset(dom):
-  await updateHardwareUI(dom)
-
-
-async def atkSwitch(dom, id):
-  global onDuty, cRing, cOLED, cBuzzer, cLCD, ringCount, ringOffset, ringLimiter
-
-  if await dom.getValue(id) == "true":
-    try:
-      inputs = await getInputs(dom)
-    except Exception as exc:
-      await dom.setValue(W_H_SWITCH, "false")
-      await dom.alert(exc)
-      return
-
-    ringCount = inputs[W_H_RING_COUNT]
-    ringOffset = inputs[W_H_RING_OFFSET]
-    ringLimiter = inputs[W_H_RING_LIMITER]
-
-    ucuq.setCommitBehavior(ucuq.CB_MANUAL)
-
-    cRing = ucuq.WS2812(inputs[W_H_RING_PIN], inputs[W_H_RING_COUNT]).fill([0,0,0]).write()
-    cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(inputs[W_H_OLED_SDA], inputs[W_H_OLED_SCL], soft = inputs[W_H_OLED_SOFT]))
-    cLCD = ucuq.HD44780_I2C(ucuq.I2C(inputs[W_H_LCD_SDA], inputs[W_H_LCD_SCL], soft = inputs[W_H_LCD_SOFT]), 2, 16).backlightOff()
-    if inputs[W_H_BUZZER_ON]:
-      cBuzzer = ucuq.PWM(inputs[W_H_BUZZER_PIN], freq=50, u16 = 0)
-    else:
-      cBuzzer = ucuq.Nothing()
-    cBuzzer.setFreq(50).setNS(0)
-    number(None)
-    cLCD.backlightOff()
-    ucuq.commit()
-    await dom.enableElements(BOARD_WIDGETS)
-    await dom.disableElements(HARDWARE_WIDGETS_WITHOUT_SWITCH)
-    onDuty = True
-  else:
-    onDuty = False
-    await dom.disableElements(BOARD_WIDGETS)
-    await dom.enableElements(HARDWARE_WIDGETS_WITHOUT_SWITCH)
+  number(None)
+  cLCD.backlightOff()
+  ucuq.commit()
 
 
 async def atkRepeat():
@@ -323,17 +232,6 @@ def play(sequence):
       ucuq.commit()
 
   
-async def atkDisplay(dom):
-  colors = json.loads(await dom.getValue("Color"))
-
-  for color in colors:
-    color = color.lower()
-    if color in SPOKEN_COLORS:
-      ucuq.sleep(.25)
-      display(SPOKEN_COLORS[color])
-      ucuq.commit()
-
-
 async def atkNew():
   global seq
   
@@ -401,3 +299,13 @@ async def atkClick(dom, id):
     seq = ""
 
   ucuq.commit()
+
+
+async def atkSwitchSound(dom, id):
+  global cBuzzer
+  
+  if await dom.getValue(id) == "true":
+    turnBuzzerOn(None)
+  else:
+    cBuzzer = ucuq.Nothing()
+
