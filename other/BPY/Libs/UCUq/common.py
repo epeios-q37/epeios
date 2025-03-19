@@ -289,6 +289,10 @@ def getDevice_(device = None, *, id = None, token = None):
     return device
 
 
+def getDevice():
+  return device_
+
+
 def addCommand(command, /,device = None):
   getDevice_(device).addCommand(command)
 

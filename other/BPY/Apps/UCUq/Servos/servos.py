@@ -15,23 +15,16 @@ macros = {}
 # Hardware modes
 M_STRAIGHT = "Straight"
 M_PCA ="PCA"
+M_KIT ="Kit"
 
 # Config keys
 HARDWARE_KEY = "Hardware"
-HARDWARE_MODE_SUBKEY = "mode"
+HARDWARE_MODE_SUBKEY = "Mode"
 SPECS_KEY = "Specs"
 TWEAK_KEY = "Tweak"
 
 STEP = int(1625 / 180)
 
-CONFIG_KEYS = {
-  HARDWARE_KEY: {
-    M_STRAIGHT: ["pin"],
-    M_PCA: ["sda", "scl", "channel", "offset", "soft"]
-  },
-  SPECS_KEY: ["freq", "u16_min", "u16_max", "range"],
-  TWEAK_KEY: ["angle", "offset", "invert"]
-}
 
 MACRO_HTML="""
 <div class="macro" xdh:mark="Macro{}" style="margin-bottom: 3px;">
@@ -81,29 +74,32 @@ async def displayMacros(dom):
   await dom.inner("Macros", html)
 
 
-MACROS = {
-  "Bipedal": ucuq.K_BIPEDAL,
-  "DIY": ucuq.K_DIY_SERVOS,
-  "Dog": ucuq.K_DOG
+KIT_LABELS = {
+  "Bipedal": "Freenove/Bipedal/RPiPico(2)W",
+  "DIY": "q37.info/DIY/Servos",
+  "Dog": "Freenove/Dog/ESP32"
 }
 
-async def updateFileList(dom, kit = ucuq.K_UNKNOWN):
+async def updateFileList(dom, kitLabel = ""):
   html = ""
-  for macro in MACROS:
-    html = f"<option value=\"{macro}\" {'selected=\"selected\"' if MACROS[macro] == kit else ''}>{macro}</option>\n" + html
+
+  for kit in KIT_LABELS:
+    html = f"<option value=\"{kit}\" {'selected=\"selected\"' if kit == kitLabel else ''}>{kit}</option>\n" + html
 
   await dom.inner("Files", html)
 
 
 async def atk(dom):
-#  infos = await ucuq.ATKConnectAwait(dom, BODY)
+  infos = await ucuq.ATKConnectAwait(dom, BODY)
 
-  dom.inner("", BODY)
+  # await createCohortServos()
 
-  await createServos()
+  await createServo(ucuq.getDeviceId(infos), ucuq.getDevice(), ucuq.getKitHardware(infos), "")
 
-#  await displayMacros(dom)
-#  await updateFileList(dom, ucuq.getKitId(infos))
+  await displayMacros(dom)
+  kitLabel =  ucuq.getKitLabel(infos)
+
+  await updateFileList(dom, next((key for key, val in KIT_LABELS.items() if val == kitLabel), None))
 
 
 async def atkTest():
@@ -339,6 +335,7 @@ async def atkSave(dom):
     await displayMacros(dom)
 # END PYH
 
+
 def expand(moves):
   content = ""
   
@@ -422,43 +419,23 @@ async def atkLoadFromFile(dom):
   macros = json.loads(await getGithubFileContentAwait(f"demos/Servos/Macros/{await dom.getValue('Files')}.json"))
 # END BRY
 
-  print("Macros: ", macros)
-
   if "_" in macros:
     await dom.setValue("Content", macros["_"]["Content"])
 
   await displayMacros(dom)
 
 
-command = ""
+def handleSetupsKits(setups, kitHardware):
+  for setup in setups:
+    hardware = setups[setup]["Hardware"]
 
-def getSetupDefaultValue(key, subkey):
-  if key == HARDWARE_KEY:
-    if subkey == "offset":
-      return 0
-    elif subkey == "soft":
-      return False
-  elif key == TWEAK_KEY:
-    if subkey in ["angle", "offset"]:
-      return 0
-    elif subkey == "invert":
-      return False
-  
-  raise Exception(f"Missing value for '{key}/{subkey}' in servos setup file!")
+    if hardware[HARDWARE_MODE_SUBKEY] == M_KIT:
+      setups[setup]["Hardware"] = ucuq.getHardware(kitHardware, hardware["Key"], hardware["Index"])
+
+  return setups
 
 
-def getServoSetup(key, subkey, preset, motor):
-  if ( key in motor ) and ( subkey in motor[key] ):
-    return motor [key][subkey]
-  elif subkey in preset[key]:
-    return preset[key][subkey]
-  else:
-    return getSetupDefaultValue(key, subkey)
-
-
-async def getServosSetups(target):
-  setups = {}
-
+async def getServosSetups(target, kitHardware):
 # BEGIN PYH
 
   with open("servos.json", "r") as file:
@@ -472,60 +449,45 @@ async def getServosSetups(target):
 
 # END BRY
 
-  preset = config["Preset"]
-  motors = config["Motors"]
+  return handleSetupsKits(config["Servos"], kitHardware)
 
-  for label in motors:
-    setups[label] = {}
 
-    motor = motors[label]
+async def createServo(deviceId, device, kitHardware, key):
+  global servos
 
-    for key in CONFIG_KEYS:
-      setups[label][key] = {}
+  if key:
+    key += '.'
 
-      if key == HARDWARE_KEY:
-        mode = getServoSetup(key, HARDWARE_MODE_SUBKEY, motor, preset)
+  setups = await getServosSetups(deviceId, kitHardware)
 
-        setups[label][key][HARDWARE_MODE_SUBKEY] = mode
+  for setup in setups:
+    servo = setups[setup]
+    hardware = servo[HARDWARE_KEY]
+    specs = servo[SPECS_KEY]
+    tweak = servo[TWEAK_KEY]
+    if ( not HARDWARE_MODE_SUBKEY in hardware ) or hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
+      pwm = ucuq.PWM(hardware["Pin"],device=device)
+      pwm.setFreq(specs["Freq"])
+    elif hardware[HARDWARE_MODE_SUBKEY] == M_PCA:
+      if not pca:
+        i2c = ucuq.SoftI2C if hardware["soft"] else ucuq.I2C
+        pca = ucuq.PCA9685(i2c(hardware["sda"], hardware["scl"],device=device))
+        pca.setFreq(specs["Freq"])
+        pca.setOffset(hardware["Offset"])
+      pwm = ucuq.PWM_PCA9685(pca, hardware["channel"])
+    else:
+      raise Exception("Unknown hardware mode!")
 
-        for subkey in CONFIG_KEYS[key][mode]:
-          setups[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
-      else:
-        for subkey in CONFIG_KEYS[key]:
-          setups[label][key][subkey] = getServoSetup(key, subkey, preset, motor)
+    servos[key+setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["U16Min"], specs["U16Max"], specs["Range"]), tweak = ucuq.Servo.Tweak(tweak["Angle"],tweak["Offset"], tweak["Invert"]))
 
-  return setups
 
-async def createServos():
+async def createCohortServos():
   global servos
   
-  pca = None
-
   targets = {
     "C": "Charlie",
     "E": "Echo"
   }
 
   for key in targets:
-    device = ucuq.Device(id=targets[key])
-    setups = await getServosSetups(targets[key])
-
-    for setup in setups:
-      servo = setups[setup]
-      hardware = servo[HARDWARE_KEY]
-      specs = servo[SPECS_KEY]
-      tweak = servo[TWEAK_KEY]
-      if hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
-        pwm = ucuq.PWM(hardware["pin"],device=device)
-        pwm.setFreq(specs["freq"])
-      elif hardware["mode"] == "PCA":
-        if not pca:
-          i2c = ucuq.SoftI2C if hardware["soft"] else ucuq.I2C
-          pca = ucuq.PCA9685(i2c(hardware["sda"], hardware["scl"],device=device))
-          pca.setFreq(specs["freq"])
-          pca.setOffset(hardware["offset"])
-        pwm = ucuq.PWM_PCA9685(pca, hardware["channel"])
-      else:
-        raise Exception("Unknown hardware mode!")
-
-      servos[key+'.'+setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["u16_min"], specs["u16_max"], specs["range"]), tweak = ucuq.Servo.Tweak(tweak["angle"],tweak["offset"], tweak["invert"]))
+    createServo(targets[key], ucuq.Device(id=targets[key]), key)

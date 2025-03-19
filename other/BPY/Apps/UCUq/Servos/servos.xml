@@ -1,0 +1,270 @@
+<Root xmlns:xpp="http://q37.info/ns/xpp">
+  <Charlie>
+    <xpp:define name="Presets">
+      <xpp:bloc>
+        <Hardware>
+          <Mode>Kit</Mode>
+          <Key>Servo</Key>
+        </Hardware>
+        <Specs>
+          <Freq>50</Freq>
+          <U16Min>1639</U16Min>
+          <U16Max>8192</U16Max>
+          <Range>180</Range>
+        </Specs>
+        <Tweak>
+          <Angle>90</Angle>
+          <Offset>0</Offset>
+          <Invert>false</Invert>
+        </Tweak>
+      </xpp:bloc>
+    </xpp:define>
+    <Servos>
+      <l>
+        <xpp:expand select="Presets" />
+        <Hardware>
+          <Index>1</Index>
+        </Hardware>
+        <Tweak>
+          <Offset>-115</Offset>
+        </Tweak>
+      </l>
+      <L>
+        <xpp:expand select="Presets" />
+        <Hardware>
+          <Index>0</Index>
+        </Hardware>
+      </L>
+      <R>
+        <xpp:expand select="Presets" />
+        <Hardware>
+          <Index>2</Index>
+        </Hardware>
+        <Tweak>
+          <Offset>-55</Offset>
+        </Tweak>
+      </R>
+      <r>
+        <xpp:expand select="Presets" />
+        <Hardware>
+          <Index>3</Index>
+        </Hardware>
+      </r>
+    </Servos>
+  </Charlie>
+  <Echo>
+    <xpp:define name="Presets">
+      <xpp:bloc>
+        <Hardware>
+          <Mode>Straight</Mode>
+        </Hardware>
+        <Specs>
+          <Freq>50</Freq>
+          <U16Min>1639</U16Min>
+          <U16Max>8192</U16Max>
+          <Range>180</Range>
+        </Specs>
+        <Tweak>
+          <Angle>90</Angle>
+          <Offset>0</Offset>
+          <Invert>false</Invert>
+        </Tweak>
+      </xpp:bloc>
+    </xpp:define>
+    <Servos>
+      <L>
+        <xpp:expand select="Presets" />
+        <Hardware>
+          <Pin>10</Pin>
+        </Hardware>
+        <Tweak>
+          <Offset>85</Offset>
+        </Tweak>
+      </L>
+      <l>
+        <xpp:expand select="Presets" />
+        <Hardware>
+          <Pin>11</Pin>
+        </Hardware>
+        <Tweak>
+          <Offset>-15</Offset>
+        </Tweak>
+      </l>
+      <R>
+        <xpp:expand select="Presets" />
+        <Hardware>
+          <Pin>12</Pin>
+        </Hardware>
+        <Tweak>
+          <Offset>225</Offset>
+        </Tweak>
+      </R>
+      <r>
+        <xpp:expand select="Presets" />
+        <Hardware>
+          <Pin>13</Pin>
+        </Hardware>
+        <Tweak>
+          <Offset>35</Offset>
+        </Tweak>
+      </r>
+    </Servos>
+  </Echo>
+  <Foxtrot>
+    <_comment>F: Front; B: Back; L: Left; R: Right; a, b, c the motors from the body to the extremity.</_comment>
+    <xpp:define name="Presets">
+      <xpp:bloc>
+        <Hardware>
+          <Mode>PCA</Mode>
+          <sda>13</sda>
+          <scl>14</scl>
+          <Offset>9</Offset>
+        </Hardware>
+        <Specs>
+          <Freq>50</Freq>
+          <U16Min>1632</U16Min>
+          <U16Max>8800</U16Max>
+          <Range>180</Range>
+        </Specs>
+        <Tweak>
+          <Angle>90</Angle>
+          <Offset>0</Offset>
+          <Invert>false</Invert>
+        </Tweak>
+      </xpp:bloc>
+      </xpp:define>
+      <Servos>
+        <FLa>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>0</channel>
+          </Hardware>
+        </FLa>
+        <FLb>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>1</channel>
+          </Hardware>
+          <Tweak>
+            <Invert>true</Invert>
+          </Tweak>
+        </FLb>
+        <FLc>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>2</channel>
+          </Hardware>
+        </FLc>
+        <BLc>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>5</channel>
+          </Hardware>
+        </BLc>
+        <BLb>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>6</channel>
+          </Hardware>
+          <Tweak>
+            <Invert>true</Invert>
+          </Tweak>
+        </BLb>
+        <BLa>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>7</channel>
+          </Hardware>
+        </BLa>
+        <BRa>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>8</channel>
+          </Hardware>
+        </BRa>
+        <BRb>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>9</channel>
+          </Hardware>
+        </BRb>
+        <BRc>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>10</channel>
+          </Hardware>
+          <Tweak>
+            <Invert>true</Invert>
+          </Tweak>
+        </BRc>
+        <FRc>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>13</channel>
+          </Hardware>
+          <Tweak>
+            <Invert>true</Invert>
+          </Tweak>
+        </FRc>
+        <FRb>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>14</channel>
+          </Hardware>
+        </FRb>
+        <FRa>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <channel>15</channel>
+          </Hardware>
+        </FRa>
+      </Servos>
+  </Foxtrot>
+  <Golf>
+    <_comment></_comment>
+    <xpp:define name="Presets">
+      <xpp:bloc>
+        <Hardware>
+          <Mode>Straight</Mode>
+        </Hardware>
+        <Specs>
+          <Freq>50</Freq>
+          <U16Min>1632</U16Min>
+          <U16Max>8800</U16Max>
+          <Range>180</Range>
+        </Specs>
+        <Tweak>
+          <Angle>90</Angle>
+          <Offset>0</Offset>
+          <Invert>true</Invert>
+        </Tweak>
+      </xpp:bloc>
+      </xpp:define>
+      <Servos>
+        <L>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <Pin>0</Pin>
+          </Hardware>
+        </L>
+        <l>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <Pin>1</Pin>
+          </Hardware>
+        </l>
+        <R>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <Pin>2</Pin>
+          </Hardware>
+        </R>
+        <r>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <Pin>3</Pin>
+          </Hardware>
+        </r>
+      </Servos>
+  </Golf>
+</Root>
