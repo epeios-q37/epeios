@@ -74,15 +74,6 @@ SETTINGS = {
   }
 }
 
-# Presets by kit ids
-PRESETS = {
-  ucuq.K_UNKNOWN: P_USER,
-  ucuq.K_BIPEDAL: P_BIPEDAL,
-  ucuq.K_DOG: P_DOG,
-  ucuq.K_DIY_SERVOS: P_DIY
-}
-
-
 async def getParams():
   return (await ucuq.commitAwait(f"getParams({pwm.getObject()},{state == S_PCA9685})")) if state else None
 
@@ -219,7 +210,7 @@ async def initPWM(inputs):
   global pwm
 
   if inputs[W_MODE] == M_STRAIGHT:
-    pwm = ucuq.PWM(inputs[W_PIN])
+    pwm = ucuq.PWM(inputs[W_PIN], freq=50, u16=0).setNS(0)
     pwm.setFreq(inputs[W_FREQ])
   elif inputs[W_MODE] == M_PCA9685:
     i2c = ucuq.SoftI2C if inputs[W_SOFT] else ucuq.I2C
@@ -258,11 +249,11 @@ async def setWidth(width):
 
 
 async def atk(dom):
-  preset = PRESETS[ucuq.getKitId(await ucuq.ATKConnectAwait(dom, BODY))]
+  await ucuq.ATKConnectAwait(dom, BODY)
 
-  await updateSettingsUIFollowingPreset_(dom, preset)
+#  await updateSettingsUIFollowingPreset_(dom, preset)
 
-  await dom.setValue(W_PRESET, preset)
+#  await dom.setValue(W_PRESET, preset)
   
   ucuq.addCommand(MC_INIT)
   

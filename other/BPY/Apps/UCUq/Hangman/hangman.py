@@ -5,11 +5,11 @@ sys.path.append("../../atlastk")
 
 import atlastk, ucuq
 
-ucuq.setDevice("Bravo")
+ucuq.setDevice("Golf")
 
 lcd = ucuq.HD44780_I2C(ucuq.SoftI2C(6, 7), 2, 16)
 oled = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9))
-ring = ucuq.WS2812(2, 8)
+ring = ucuq.WS2812(20, 8)
 buzzer = ucuq.PWM(5, freq=50, u16 = 0).setNS(0)
 
 

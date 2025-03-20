@@ -135,10 +135,13 @@ def wlanConnect_(wlan, callback):
 
     wifi.active(True)
 
+    id = getIdentificationId_(IDENTIFICATION_)
+
     # Without below, an EXP32-C3 supermini does not connect to WiFi when plugged in a breadboard.
     # See https://www.reddit.com/r/arduino/comments/1dl6atc/esp32c3_boards_cant_connect_to_wifi_when_plugged/
     # RPi Pico does not support a float.
-    wifi.config(txpower=8)
+    if id in CONFIG_["WifiPower"]:
+      wifi.config(txpower=CONFIG_["WifiPower"][id])
 
     wifi.connect(wlan[0], wlan[1])
 

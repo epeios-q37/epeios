@@ -225,7 +225,8 @@
     <xpp:define name="Presets">
       <xpp:bloc>
         <Hardware>
-          <Mode>Straight</Mode>
+          <Mode>Kit</Mode>
+          <Key>Servo</Key>
         </Hardware>
         <Specs>
           <Freq>50</Freq>
@@ -241,28 +242,28 @@
       </xpp:bloc>
       </xpp:define>
       <Servos>
-        <L>
-          <xpp:expand select="Presets" />
-          <Hardware>
-            <Pin>0</Pin>
-          </Hardware>
-        </L>
         <l>
           <xpp:expand select="Presets" />
           <Hardware>
-            <Pin>1</Pin>
+            <Index>3</Index>
           </Hardware>
         </l>
+        <L>
+          <xpp:expand select="Presets" />
+          <Hardware>
+            <Index>0</Index>
+          </Hardware>
+        </L>
         <R>
           <xpp:expand select="Presets" />
           <Hardware>
-            <Pin>2</Pin>
+            <Index>2</Index>
           </Hardware>
         </R>
         <r>
           <xpp:expand select="Presets" />
           <Hardware>
-            <Pin>3</Pin>
+            <Index>1</Index>
           </Hardware>
         </r>
       </Servos>

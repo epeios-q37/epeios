@@ -466,7 +466,7 @@ async def createServo(deviceId, device, kitHardware, key):
     specs = servo[SPECS_KEY]
     tweak = servo[TWEAK_KEY]
     if ( not HARDWARE_MODE_SUBKEY in hardware ) or hardware[HARDWARE_MODE_SUBKEY] == M_STRAIGHT:
-      pwm = ucuq.PWM(hardware["Pin"],device=device)
+      pwm = ucuq.PWM(hardware["Pin"],device=device, freq=50, u16=0).setNS(0)
       pwm.setFreq(specs["Freq"])
     elif hardware[HARDWARE_MODE_SUBKEY] == M_PCA:
       if not pca:

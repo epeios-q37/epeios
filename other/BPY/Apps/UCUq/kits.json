@@ -24,7 +24,7 @@
       ],
       "Ring": [
         {
-          "Pin": 2,
+          "Pin": 20,
           "Count": 8,
           "Offset": 3,
           "Limiter": 30
@@ -48,10 +48,24 @@
         {
           "Pin": 5
         }
+      ],
+      "Servo": [
+        {
+          "Pin": 0
+        },
+        {
+          "Pin": 1
+        },
+        {
+          "Pin": 2
+        },
+        {
+          "Pin": 3
+        }
       ]
     },
     "devices": [
-      "Bravo"
+      "Golf"
     ]
   },
   {
