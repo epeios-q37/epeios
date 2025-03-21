@@ -296,7 +296,6 @@ async def serve_():
       expression = await readString_()
       returned = ""
       try:
-        print(script)
         exec(script)
         if expression:
           returned = json.dumps(eval(expression))
@@ -309,7 +308,6 @@ async def serve_():
           await writeString_(error)
       else:
         if expression:
-          print(expression)
           await writeUInt_(A_RESULT_)
           await writeString_(returned)
     else:

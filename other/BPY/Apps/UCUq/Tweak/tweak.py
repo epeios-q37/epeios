@@ -11,17 +11,9 @@ state = S_OFF_DUTY
 D_RATIO = "Ratio"
 D_WIDTH = "Width"
 
-# Presets
-P_USER = "None"
-P_BIPEDAL = "Bipedal"
-P_DOG = "Dog"
-P_DIY = "DIY"
-
 # Interface elements
-W_PRESET = "Preset"
-W_HARDWARE_BOX = "HardwareBox"
 W_SWITCH = "Switch"
-W_SETTINGS_BOX = "SettingsBox"
+W_HARDWARE_BOX = "HardwareBox"
 W_MODE = "Mode"
 W_PIN = "Pin"
 W_SDA = "SDA"
@@ -46,33 +38,6 @@ O_RATIO = "TrueRatio"
 O_WIDTH = "TrueWidth"
 O_PRESCALE = "TruePrescale"
 
-
-# Default hardware settings
-SETTINGS = {
-  P_USER: {
-    W_MODE: M_NONE,
-    W_OFFSET: "0"
-  },
-  P_BIPEDAL: {
-    W_MODE: M_STRAIGHT,
-    W_PIN: "10",
-    W_WIDTH: "1.5"
-  },
-  P_DOG: {
-    W_MODE: M_PCA9685,
-    W_SOFT: "false",
-    W_SDA: "13",
-    W_SCL: "14",
-    W_OFFSET: "9",
-    W_WIDTH: "1.5"
-  },
-  P_DIY: {
-    W_MODE: M_STRAIGHT,
-    W_SOFT: "false",
-    W_PIN: "12",
-    W_WIDTH: "1.5"
-  }
-}
 
 async def getParams():
   return (await ucuq.commitAwait(f"getParams({pwm.getObject()},{state == S_PCA9685})")) if state else None
@@ -248,17 +213,23 @@ async def setWidth(width):
   return await getParams()
 
 
+async def updateHardware_(dom, hardware):
+  servo = ucuq.getHardware(hardware, "Servo")
+
+  if servo:
+    await updateSettingsUIFollowingMode_(dom, servo[W_MODE])
+
+    await dom.setValues(servo)
+
+
 async def atk(dom):
-  await ucuq.ATKConnectAwait(dom, BODY)
+  infos = await ucuq.ATKConnectAwait(dom, BODY)
 
-#  await updateSettingsUIFollowingPreset_(dom, preset)
+  await updateHardware_(dom, ucuq.getKitHardware(infos))
 
-#  await dom.setValue(W_PRESET, preset)
-  
   ucuq.addCommand(MC_INIT)
   
   await updateDutyBox(dom)
-  await dom.enableElement(W_HARDWARE_BOX)
 
 
 async def updateSettingsUIFollowingMode_(dom, mode):
@@ -275,20 +246,6 @@ async def updateSettingsUIFollowingMode_(dom, mode):
     raise Exception("Unknown mode!")
 
 
-async def updateSettingsUIFollowingPreset_(dom, preset):
-  setting = SETTINGS[preset]
-
-  await updateSettingsUIFollowingMode_(dom, setting[W_MODE])
-
-  await dom.setValues(setting)
-
-
-async def atkPreset(dom, id):
-  preset = await dom.getValue(id)
-
-  await updateSettingsUIFollowingPreset_(dom, preset)
-
-
 async def atkMode(dom, id):
   await updateSettingsUIFollowingMode_(dom, await dom.getValue(id))
   
@@ -303,14 +260,14 @@ async def atkSwitch(dom, id):
       await dom.setValue(id, False)
     else:
       state = S_PCA9685 if inputs[W_MODE] == M_PCA9685 else S_STRAIGHT
-      await dom.disableElements([W_SETTINGS_BOX, W_PRESET])
+      await dom.disableElement(W_HARDWARE_BOX)
       await updateDuties(dom, await initPWM(inputs))
   else:
     if state:
       pwm.deinit()
       state = S_OFF_DUTY
     await updateDuties(dom)
-    await dom.enableElements([W_SETTINGS_BOX, W_PRESET])
+    await dom.enableElement(W_HARDWARE_BOX)
 
 
 async def atkSelect(dom):

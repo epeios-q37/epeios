@@ -76,7 +76,7 @@ async def displayMacros(dom):
 
 KIT_LABELS = {
   "Bipedal": "Freenove/Bipedal/RPiPico(2)W",
-  "DIY": "q37.info/DIY/Servos",
+  "DIY": "q37.info/DIY/Samples",
   "Dog": "Freenove/Dog/ESP32"
 }
 

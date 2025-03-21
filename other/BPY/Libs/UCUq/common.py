@@ -13,7 +13,7 @@ ALL_DEVICES_VTOKEN = "%ALL_DEVICES_VTOKEN%"
 uuid_ = 0
 device_ = None
 
-unpak_ = lambda data : zlib.decompress(base64.b64decode(data)).decode()
+unpack_ = lambda data : zlib.decompress(base64.b64decode(data)).decode()
 
 def GetUUID_():
   global uuid_
@@ -78,6 +78,14 @@ def ucuqStructToDict(obj):
     return {{attr: getattr(obj, attr) for attr in dir(obj) if not attr.startswith('__')}}
 
 def ucuqGetInfos():
+  infos = {{
+    "{IK_DEVICE_ID_}": getIdentificationId_(IDENTIFICATION_),
+    "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
+  }}
+
+  if "{IK_KIT_LABEL}" in CONFIG_:
+    infos["{IK_KIT_LABEL}"] = CONFIG_["{IK_KIT_LABEL}"]
+
   return {{
     "{IK_DEVICE_ID_}": getIdentificationId_(IDENTIFICATION_),
     "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
@@ -175,11 +183,14 @@ def getKitFromDeviceId_(deviceId):
     return None
   
 
+buildKitLabel_ = lambda brand, model, variant : f"{brand}/{model}/{variant}"
+  
+
 def getKitLabelFormDeviceId_(deviceId):
   kit = getKitFromDeviceId_(deviceId)
 
   if kit:
-    return f"{kit[IK_BRAND_]}/{kit[IK_MODEL_]}/{kit[IK_VARIANT_]}"
+    return buildKitLabel_(kit[IK_BRAND_],kit[IK_MODEL_],kit[IK_VARIANT_])
   else:
     return "Undefined"  
   
@@ -194,16 +205,16 @@ def getKitFromLabel_(label):
     return None
   
 
+def getKitLabel(infos):
+  return infos[IK_KIT_LABEL]
+  
+
 def getKit_(infosOrLabel):
   if type(infosOrLabel) != str:
     infosOrLabel = getKitLabel(infosOrLabel)
 
   return getKitFromLabel_(infosOrLabel)
 
-
-def getKitLabel(infos):
-  return infos[IK_KIT_LABEL]
-  
 
 def getKitHardware(infosOrLabel):
   kit = getKit_(infosOrLabel)
@@ -235,13 +246,17 @@ def getDeviceId(infos):
 async def getInfosAwait(device):
   infos = await getBaseInfosAwait_(device)
 
-  infos[IK_KIT_LABEL] = getKitLabelFormDeviceId_(getDeviceId(infos))
+  if not IK_KIT_LABEL in infos:
+    infos[IK_KIT_LABEL] = getKitLabelFormDeviceId_(getDeviceId(infos))
+    
   infos[IK_HARDWARE] = getKitHardware(infos)
 
   return infos
 
 
 async def ATKConnectAwait(dom, body, *, device = None):
+  await getKitsAwait()
+  
   if not KITS_:
     raise Exception("No kits defined!")
 

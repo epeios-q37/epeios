@@ -372,7 +372,7 @@
                 <field name="VAR" id="{xln9TtWdr$$=z8u+H/a">Id</field>
                 <value name="VALUE">
                   <block type="text" id="73@V4#lCmTNUz8~Xv3#m">
-                    <field name="TEXT">Bravo</field>
+                    <field name="TEXT">Golf</field>
                   </block>
                 </value>
                 <next>
@@ -380,7 +380,7 @@
                     <field name="VAR" id="ZhH#$aQ{V3bH=u^+vmYH">Pin</field>
                     <value name="VALUE">
                       <block type="math_number" id="BJlmXCA){+/3mpd.i[-Z">
-                        <field name="NUM">2</field>
+                        <field name="NUM">20</field>
                       </block>
                     </value>
                     <next>

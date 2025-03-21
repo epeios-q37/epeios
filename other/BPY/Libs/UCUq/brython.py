@@ -7,12 +7,12 @@ javascript.import_js("ucuq.js", "ucuqjs")
 
 LIB_VERSION = "0.0.1"
 
-CONFIG_ITEM = "ucuq-config"
+CONFIG_ITEM_ = "ucuq-config"
 
 try:
-  CONFIG = json.loads(storage[CONFIG_ITEM])
+  CONFIG_ = json.loads(storage[CONFIG_ITEM_])
 except:
-  CONFIG = None
+  CONFIG_ = None
 
 
 async def sleepAwait(time):
@@ -170,23 +170,12 @@ async def getDemoDeviceAwait():
   else:
     return None
 
-class Lock_:
-  def __init__(self):
-    self.locked_ = False
-
-  async def acquire(self):
-    while self.locked_:
-      await aio.sleep(0)
-    self.locked_ = True
-
-  def release(self):
-    self.locked_ = False
 
 async def getWebFileContentAwait(url):
   lock = Lock_()
   result = ""
 
-  await lock.acquire()
+  await lock.acquireAwait()
 
   def on_complete(req):
     nonlocal result
@@ -203,6 +192,11 @@ async def getWebFileContentAwait(url):
   req.open('GET', url, True)  # Ouvrir la requête  
   req.send()  # Envoyer la requête
 
-  await lock.acquire()
+  await lock.acquireAwait()
 
   return result
+
+async def getKitsAwait():
+  global KITS_
+
+  KITS_ = json.loads(await getWebFileContentAwait("https://raw.githubusercontent.com/epeios-q37/ucuq-python/refs/heads/main/demos/kits.json"))

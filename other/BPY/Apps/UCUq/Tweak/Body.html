@@ -1,20 +1,7 @@
 <fieldset style="display: flex; flex-direction: column">
   <legend>PWM</legend>
-  <div style="display: flex; justify-content: space-between;">
-    <fieldset id="HardwareBox" style="display: flex; flex-direction: column" disabled="">
-      <legend>Hardware</legend>
+  <div style="display: flex; justify-content: space-between; flex-direction: column;">
       <div style="display: flex; justify-content: space-evenly;">
-        <label>
-          <span>Preset:</span>
-          <select id="Preset" xdh:onevent="Preset">
-            <option value="None">User</option>
-            <optgroup label="Freenove">
-              <option value="Bipedal">Bipedal</option>
-              <option value="Dog">Dog</option>
-            </optgroup>
-            <option value="DIY">DIY</option>
-          </select>
-        </label>
         <span class="switch-container">
           <label class="switch">
             <input id="Switch" type="checkbox" xdh:onevent="Switch">
@@ -22,8 +9,8 @@
           </label>
         </span>
       </div>
-      <fieldset id="SettingsBox" style="display: flex; ">
-        <legend>Settings</legend>
+      <fieldset id="HardwareBox" style="display: flex; ">
+        <legend>Hardware</legend>
         <div style="align-content: center;">
           <select id="Mode" xdh:onevent="Mode">
             <option selected="Selected" disabled="disabled" value="None">Select mode</option>
@@ -63,7 +50,6 @@
           </div>
         </div>
       </fieldset>
-    </fieldset>
   </div>
   <fieldset xdh:radio="duty" id="Duty" xdh:onevent="Select"
     style="display: grid; grid-template-columns: repeat(3, max-content);">

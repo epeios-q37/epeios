@@ -176,7 +176,7 @@ async def atkMirror(dom, id):
 
   if  (await dom.getValue(id)) == "true":
     if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      device = ucuq.Device(id="Bravo")
+      device = ucuq.Device(id="Golf")
       hardware = ucuq.getHardware(ucuq.getKitHardware(await ucuq.getInfosAwait(device)), "OLED")
 
       sda = hardware["SDA"]

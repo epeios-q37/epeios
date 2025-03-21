@@ -308,3 +308,7 @@ def getWebFileContent(url):
       return response.read().decode('utf-8')  
     else:
       raise Exception(f"Error retrieving the file '{url}': {response.status} {response.reason}")
+    
+def getKits():
+  pass# With Python, the kits are already retrieved.
+

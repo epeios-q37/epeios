@@ -16,7 +16,7 @@
   {
     "brand": "q37.info",
     "model": "DIY",
-    "variant": "Displays",
+    "variant": "Samples",
     "hardware": {
       "OnBoardLed": [
         8,
@@ -46,20 +46,25 @@
       ],
       "Buzzer": [
         {
+          "Mode": "Straight",
           "Pin": 5
         }
       ],
       "Servo": [
         {
+          "Mode": "Straight",
           "Pin": 0
         },
         {
+          "Mode": "Straight",
           "Pin": 1
         },
         {
+          "Mode": "Straight",
           "Pin": 2
         },
         {
+          "Mode": "Straight",
           "Pin": 3
         }
       ]
@@ -94,25 +99,31 @@
       ],
       "Buzzer": [
         {
+          "Mode": "Straight",
           "Pin": 2
         }
       ],
       "Loudspeaker": [
         {
+          "Mode": "Straight",
           "Pin": 6
         }
       ],
       "Servo": [
         {
+          "Mode": "Straight",
           "Pin": 10
         },
         {
+          "Mode": "Straight",
           "Pin": 11
         },
         {
+          "Mode": "Straight",
           "Pin": 12
         },
         {
+          "Mode": "Straight",
           "Pin": 13
         }
       ]
@@ -177,6 +188,7 @@
       ],
       "Buzzer": [
         {
+          "Mode": "Straight",
           "Pin": 32
         }
       ]
