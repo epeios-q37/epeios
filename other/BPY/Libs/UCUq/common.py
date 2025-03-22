@@ -86,10 +86,7 @@ def ucuqGetInfos():
   if "{IK_KIT_LABEL}" in CONFIG_:
     infos["{IK_KIT_LABEL}"] = CONFIG_["{IK_KIT_LABEL}"]
 
-  return {{
-    "{IK_DEVICE_ID_}": getIdentificationId_(IDENTIFICATION_),
-    "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
-  }}
+  return infos
 """
 
 ATK_BODY_ = """
@@ -177,7 +174,7 @@ async def getBaseInfosAwait_(device = None):
 
 def getKitFromDeviceId_(deviceId):
   for kit in KITS_:
-    if deviceId in kit["devices"]:
+    if "devices" in kit and deviceId in kit["devices"]:
       return kit
   else:
     return None
@@ -254,7 +251,7 @@ async def getInfosAwait(device):
   return infos
 
 
-async def ATKConnectAwait(dom, body, *, device = None):
+async def ATKConnectAwait(dom, body, demo = False, *, device = None):
   await getKitsAwait()
   
   if not KITS_:
@@ -264,7 +261,7 @@ async def ATKConnectAwait(dom, body, *, device = None):
   
   if device or CONFIG_:
     device = getDevice_(device)
-  else:
+  elif demo:
     device = await getDemoDeviceAwait()
 
   if not device:
@@ -276,7 +273,7 @@ async def ATKConnectAwait(dom, body, *, device = None):
 
   deviceId =  getDeviceId(infos)
 
-  await dom.inner("", ATK_BODY_.format(getKitLabelFormDeviceId_(deviceId), deviceId))
+  await dom.inner("", ATK_BODY_.format(infos[IK_KIT_LABEL], deviceId))
 
   await dom.inner("ucuq_body", body)
 

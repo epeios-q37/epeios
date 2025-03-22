@@ -126,16 +126,16 @@ async def notify(dom, text):
   await dom.inner("output", '<output class="fade-in">{}</output>'.format(text))
 
 
-async def acConnect(dom):
+async def atk(dom):
   await dom.inner("", BODY)
   await displayBoard(dom, gameBoard, playerTurn)
 
 
-async def baDisplay(dom):
+async def atkDisplay(dom):
   await displayBoard(dom, gameBoard, playerTurn)  
 
 
-async def acSubmit(dom, id):
+async def atkSubmit(dom, id):
   global gameBoard, playerTurn
   
   columnIndex = int(id)
@@ -162,19 +162,12 @@ async def acSubmit(dom, id):
   atlastk.broadcastAction("Display")
 
 
-async def acNew():
+async def atkNew():
   newGame()
   atlastk.broadcastAction("Display")
 
 
-CALLBACKS = {
-  "": acConnect,
-  "Display": baDisplay,
-  "Submit": acSubmit,
-  "New": acNew
-}
-
-HEAD = """
+ATK_HEAD = """
 <title>Four in a Row</title>
 <style>
   td {
@@ -213,4 +206,5 @@ BOARD = '<table style="margin: auto; width: 100%;"><tr>' +\
   "</tr>") + "</table>"
 
 newGame()
-atlastk.launch(CALLBACKS, headContent=HEAD)
+
+atlastk.launch(globals=globals())  

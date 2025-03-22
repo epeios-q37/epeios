@@ -82,12 +82,12 @@ async def call(tortoise, dom, id):
   await tortoise.draw()
 
 
-async def acConnect(tortoise, dom):
+async def atk(tortoise, dom):
   await dom.inner("", BODY)
   await dom.enableElements(ids)
 
 
-async def acAll(tortoise, dom, id):
+async def atkAll(tortoise, dom, id):
   await call(tortoise, dom, 0)
   await call(tortoise, dom, 1)
   await call(tortoise, dom, 2)
@@ -97,7 +97,7 @@ async def acAll(tortoise, dom, id):
   globals()["autoDraw"] = 50
 
 
-async def acDraw(tortoise, dom, id):
+async def atkDraw(tortoise, dom, id):
   await call(tortoise, dom, id)
   await dom.enableElements(ids)
 
@@ -116,7 +116,7 @@ BODY = """
  </div>
 """
 
-HEAD = """
+ATK_HEAD = """
 <title>Turtle graphics with the Atlas toolkit</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAAMFBMVEUEAvyEhsxERuS8urQsKuycnsRkYtzc2qwUFvRUVtysrrx0ctTs6qTMyrSUksQ0NuyciPBdAAABHklEQVR42mNgwAa8zlxjDd2A4POfOXPmzZkFCAH2M8fNzyALzDlzg2ENssCbMwkMOsgCa858YOjBKxBzRoHhD7LAHiBH5swCT9HQ6A9ggZ4zp7YCrV0DdM6pBpAAG5Blc2aBDZA68wCsZPuZU0BDH07xvHOmAGKKvgMP2NA/Zw7ADIYJXGDgLQeBBSCBFu0aoAPYQUadMQAJAE29zwAVWMCWpgB08ZnDQGsbGhpsgCqBQHNfzRkDEIPlzFmo0T5nzoMovjPHoAK8Zw5BnA5yDosDSAVYQOYMKIDZzkoDzagAsjhqzjRAfXTmzAQgi/vMQZA6pjtAvhEk0E+ATWRRm6YBZuScCUCNN5szH1D4TGdOoSrggtiNAH3vBBjwAQCglIrSZkf1MQAAAABJRU5ErkJggg==" />
 <style>
@@ -133,9 +133,6 @@ HEAD = """
 </style>
 """
 
+ATK_USER = lambda dom: Tortoise(dom, "SVG")
 
-atlastk.launch(
-  {"": acConnect, "All": acAll, "Draw": acDraw},
-  lambda dom: Tortoise(dom, "SVG"),
-  HEAD,
-)
+atlastk.launch(globals=globals())

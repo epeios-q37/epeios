@@ -1,11 +1,11 @@
 import atlastk
 
-async def acConnect(dom):
+async def atk(dom):
   await dom.inner("", BODY)
   await dom.focus("Input")
  
 
-async def acSubmit(dom):
+async def atkSubmit(dom):
   global name
   name = await dom.getValue("Input")
   await dom.setValue("Input", "")
@@ -13,18 +13,11 @@ async def acSubmit(dom):
   atlastk.broadcastAction("Refresh")
 
 
-async def acDisplay(dom):
+async def atkRefresh(dom):
   await dom.begin("Output", f"<div>Hello, {name}!</div>")
 
 
-CALLBACKS = {
-  "": acConnect,
-  "Submit": acSubmit,
-  "Refresh": acDisplay
-}
- 
-
-HEAD = """
+ATK_HEAD = """
 <title>Hello, World! (shared)</title>
 """
  
@@ -41,5 +34,4 @@ BODY = """
 </fieldset>
 """
 
-
-atlastk.launch(CALLBACKS, headContent=HEAD)
+atlastk.launch(globals=globals())  

@@ -24,7 +24,7 @@ def turnMainOn(hardware):
 async def atk(dom):
   global pwm, target, hardware
 
-  infos = await ucuq.ATKConnectAwait(dom, BODY)
+  infos = await ucuq.ATKConnectAwait(dom, BODY, True)
 
   if not pwm:
     hardware = ucuq.getKitHardware(infos)

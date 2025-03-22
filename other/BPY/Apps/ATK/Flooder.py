@@ -24,7 +24,7 @@ SHAPES_MAP = {0: HEART, 1: TRIANGLE, 2: DIAMOND,
 
 def main():
   newGame()
-  atlastk.launch(CALLBACKS, headContent=HEAD)  
+  atlastk.launch(globals=globals())  
 
 
 def newGame():
@@ -122,12 +122,12 @@ async def notify(dom, text):
   await dom.inner("output", '<output class="fade-in">{}</output>'.format(text))
 
 
-async def acConnect(dom):
+async def atk(dom):
   await dom.inner("", BODY)
   await displayBoard(gameBoard, dom)
 
 
-async def acSubmit(dom,id):
+async def atkSubmit(dom,id):
   global movesLeft
 
   if not hasWon(gameBoard) and movesLeft != 0:
@@ -137,23 +137,16 @@ async def acSubmit(dom,id):
   atlastk.broadcastAction("Display")
 
 
-def acNew(dom):
+async def atkNew(dom):
   newGame()
   atlastk.broadcastAction("Display")
 
 
-async def acDisplay(dom):
+async def atkDisplay(dom):
   await displayBoard(gameBoard, dom)
 
 
-CALLBACKS = {
-  "": acConnect,
-  "Submit": acSubmit,
-  "New": acNew,
-  "Display": acDisplay,
-}
-
-HEAD = """
+ATK_HEAD = """
 <title>Flooder</title>
 <style>
   td {

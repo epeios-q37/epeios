@@ -109,7 +109,7 @@ def turnOnMain(hardware):
 
 
 async def atk(dom):
-  infos = await ucuq.ATKConnectAwait(dom, BODY)
+  infos = await ucuq.ATKConnectAwait(dom, BODY, True)
 
   if not ht16k33:
     turnOnMain(ucuq.getHardware(ucuq.getKitHardware(infos), "Matrix"))

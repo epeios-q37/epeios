@@ -17,9 +17,9 @@ async def displayCode(dom, element):
   await dom.setValue(target, html.escape(code))
 
 
-async def acConnect(dom):
+async def atk(dom):
   await dom.inner("", BODY)
-  last = await dom.nextSibling(await dom.nextSibling(await dom.firstChild("")))
+  last = await dom.nextSibling(await dom.firstChild(""))
   current = await dom.lastChild(await dom.parent(last))
 
   while True:
@@ -49,10 +49,11 @@ def dlShape(flavors):
 
   return html
 
+
 dlFlavors = ["Vanilla", "Chocolate", "Caramel", "Mint"]  
 
 
-async def acDlSubmit(dom, id):
+async def atkDLSubmit(dom, id):
   global dlFlavors
 
   flavor = await dom.getValue(id)
@@ -64,7 +65,7 @@ async def acDlSubmit(dom, id):
   await dom.setValue("dlOutput", flavor)
 
 
-async def acRgSubmit(dom, id):
+async def atkRGSubmit(dom, id):
   value = await dom.getValue(id)
 
   await dom.setValues({
@@ -84,95 +85,65 @@ def slEmbed(other):
   return html
 
 
-async def acSlAdd(dom):
+async def atkSLAdd(dom):
   await dom.begin("slOthers", slEmbed(await dom.getValue("slInput")))
   await dom.setValue("slInput", "")
   await dom.focus("slInput")  
 
 
-async def acBtSubmit(dom):
+async def atkBTSubmit(dom):
   await dom.alert("Click on button detected!")
 
 
-async def acPwSubmit(dom, id):
+async def atkPWSubmit(dom, id):
   await dom.setValue("pwOutput", await dom.getValue(id))
 
 
-async def acCbSelect(dom, id):
+async def atkCBSelect(dom, id):
   await dom.setValue("cbOutput", "{} ({})".format(id, await dom.getValue(id)))
 
 
-async def acCbSubmit(dom):
+async def atkCBSubmit(dom):
   await dom.alert(str(await dom.getValues(["cbBicycle", "cbCar", "cbPirogue"])))
 
 
-async def acRdCheck(dom,id):
+async def atkRDCheck(dom,id):
   await dom.setValue("rdSelect", await dom.getValue(id))
 
 
-async def acRdSelect(dom, id):
+async def atkRDSelect(dom, id):
   await dom.setValue("rdRadios", await dom.getValue(id))
 
 
-async def acRdReset(dom):
+async def atkRDReset(dom):
   await dom.setValues({"rdSelect": "None", "rdRadios": ""})
 
 
-async def acDtSelect(dom, id):
+async def atkDTSelect(dom, id):
   await dom.setValue("dtOutput", await dom.getValue(id))
 
 
-async def acClSelect(dom, id):
+async def atkCLSelect(dom, id):
   await dom.setValue("clOutput", await dom.getValue(id))
 
 
-async def acSlSelect(dom, id):
+async def atkSLSelect(dom, id):
   await dom.setValue("slOutput", await dom.getValue(id))
 
 
-async def acSlToggle(dom, id):
+async def atkSLToggle(dom, id):
   await dom.disableElement("slOthers") if (await dom.getValue(id)) == 'true' else await dom.enableElement("slOthers")
 
 
-async def acSlRadio(dom):
+async def atkSLRadio(dom):
   await dom.scrollTo("radio")
 
 
-async def acCkSubmit(dom, id):
+async def atkCKSubmit(dom, id):
   await dom.setValue("ckOutput", await dom.getValue("ckInput"))
 
 
-CALLBACKS = {
-  "": acConnect,
-
-  "btSubmit": acBtSubmit,
-
-  "pwSubmit": acPwSubmit,
-
-  "cbSelect": acCbSelect,
-  "cbSubmit": acCbSubmit,
-
-  "rdCheck": acRdCheck,
-  "rdSelect": acRdSelect,
-  "rdReset": acRdReset,
-
-  "dlSubmit": acDlSubmit,
-
-  "dtSelect": acDtSelect,
-
-  "clSelect": acClSelect,
-
-  "rgSubmit": acRgSubmit,
-
-  "slSelect": acSlSelect,
-  "slAdd": acSlAdd,
-  "slToggle": acSlToggle,
-  "slRadio": acSlRadio,
-
-  "ckSubmit": acCkSubmit,
-}
-
-HEAD = """
+ATK_HEAD = """
 <title>Widgets | Zelbinium</title>
 
 <!-- HTML Syntax highlighting -->
@@ -232,7 +203,7 @@ BODY = """
 <fieldset class="hidden" id="button">
   <legend class="widget">button</legend>
   <fieldset>
-    <button xdh:onevent="btSubmit">A button</button>
+    <button xdh:onevent="BTSubmit">A button</button>
   </fieldset>
   <hr />
   <details>
@@ -244,16 +215,14 @@ BODY = """
     <fieldset>
       <legend>Python</legend>
       <pre class="lang-python">
-CALLBACKS = {
-  "btSubmit": lambda dom: dom.alert("Click on button detected!"),
-}      </pre>
+atkBTSubmit = lambda dom: dom.alert("Click on button detected!")</pre>
     </fieldset>
   </details>
 </fieldset>
 <fieldset class="hidden" id="password">
   <legend class="widget">password</legend>
   <fieldset>
-    <input type="password" xdh:onevent="pwSubmit" placeholder="Password" />
+    <input type="password" xdh:onevent="PWSubmit" placeholder="Password" />
     <span>Submitted password: </span>
     <output id="pwOutput">
       <span>Type a password and hit the <span style="font-weight: bold;">Enter</span> key</span>
@@ -269,9 +238,7 @@ CALLBACKS = {
     <fieldset>
       <legend>Python</legend>
       <pre class="lang-python">
-CALLBACKS = {
-  "pwSubmit": lambda dom, id: dom.setValue("pwOutput", dom.getValue(id)),
-}      </pre>
+atkPWSubmit = lambda dom, id: dom.setValue("pwOutput", dom.getValue(id))</pre>
     </fieldset>
   </details>
 </fieldset>
@@ -281,17 +248,17 @@ CALLBACKS = {
     <div>
       <p>Specify the type of vehicle you own:</p>
       <label>
-        <input type="checkbox" id="cbBicycle" xdh:onevent="cbSelect" />
+        <input type="checkbox" id="cbBicycle" xdh:onevent="CBSelect" />
         <span>Bicycle</span>
       </label>
       <br />
       <label>
-        <input type="checkbox" id="cbCar" xdh:onevent="cbSelect" />
+        <input type="checkbox" id="cbCar" xdh:onevent="CBSelect" />
         <span>Car</span>
       </label>
       <br />
       <label>
-        <input type="checkbox" id="cbPirogue" xdh:onevent="cbSelect" />
+        <input type="checkbox" id="cbPirogue" xdh:onevent="CBSelect" />
         <span>Pirogue</span>
       </label>
     </div>
@@ -304,7 +271,7 @@ CALLBACKS = {
     </div>
     <p></p>
     <div>
-      <button xdh:onevent="cbSubmit">Submit</button>
+      <button xdh:onevent="CBSubmit">Submit</button>
     </div>
   </fieldset>
   <hr />
@@ -317,10 +284,8 @@ CALLBACKS = {
     <fieldset>
       <legend>Python</legend>
       <pre class="lang-python">
-CALLBACKS = {
-  "cbSelect": lambda dom, id: dom.setValue("cbOutput", "{} ({})".format(id, dom.getValue(id))),
-  "cbSubmit": lambda dom: dom.alert(str(dom.getValues(["cbBicycle", "cbCar","cbPirogue"]))),
-}      </pre>
+atkCBSelect = lambda dom, id: dom.setValue("cbOutput", "{} ({})".format(id, dom.getValue(id)))
+atkCBSubmit = lambda dom: dom.alert(str(dom.getValues(["cbBicycle", "cbCar","cbPirogue"])))</pre>
     </fieldset>
   </details>
 </fieldset>
@@ -328,7 +293,7 @@ CALLBACKS = {
   <legend class="widget">radio</legend>
   <fieldset>
     <div>How to contact you:</p>
-      <span id="rdRadios" xdh:radio="rdContact" xdh:onevent="rdCheck">
+      <span id="rdRadios" xdh:radio="rdContact" xdh:onevent="RDCheck">
         <label>
           <input type="radio" name="rdContact" value="Email" />
           <span>Email</span>
@@ -344,13 +309,13 @@ CALLBACKS = {
       </span>
       <span>&nbsp;</span>
       <span>
-        <button xdh:onevent="rdReset">Reset</button>
+        <button xdh:onevent="RDReset">Reset</button>
       </span>
     </div>
     <p></p>
     <div>
       <span>Selected contact method: </span>
-      <select id="rdSelect" xdh:onevent="rdSelect">
+      <select id="rdSelect" xdh:onevent="RDSelect">
         <option selected="" disabled="" value="None">Check above or select below</option>
         <option value="Email">Email</option>
         <option value="Phone">Phone</option>
@@ -368,11 +333,9 @@ CALLBACKS = {
     <fieldset>
       <legend>Python</legend>
       <pre class="lang-python">
-CALLBACKS = {
-  "rdCheck": lambda dom, id: dom.setValue("rdSelect", dom.getValue(id)),
-  "rdSelect": lambda dom, id: dom.setValue("rdRadios", dom.getValue(id)),
-  "rdReset": lambda dom: dom.setValues({"rdSelect": "None", "rdRadios": ""}),
-}      </pre>
+atkRDCheck = lambda dom, id: dom.setValue("rdSelect", dom.getValue(id))
+atkRDSelect = lambda dom, id: dom.setValue("rdRadios", dom.getValue(id))
+atkRDReset = lambda dom: dom.setValues({"rdSelect": "None", "rdRadios": ""})</pre>
     </fieldset>
   </details>
 </fieldset>
@@ -380,7 +343,7 @@ CALLBACKS = {
   <legend class="widget">datalist</legend>
   <fieldset>
     <span>
-      <input list="dlFlavors" xdh:onevent="dlSubmit" placeholder="Select a flavor" />
+      <input list="dlFlavors" xdh:onevent="DLSubmit" placeholder="Select a flavor" />
       <datalist id="dlFlavors">
         <option value="Caramel"></option>
         <option value="Chocolate"></option>
@@ -405,8 +368,7 @@ CALLBACKS = {
       <pre class="lang-python">
 dlFlavors = ["Vanilla", "Chocolate", "Caramel", "Mint"]  
 
-
-def acDlSubmit(dom, id):
+def atkDLSubmit(dom, id):
   global dlFlavors
 
   flavor = dom.getValue(id)
@@ -415,19 +377,14 @@ def acDlSubmit(dom, id):
     dlFlavors.append(flavor)
     dlFlavors.sort()
     dom.inner("dlFlavors", dlShape(dlFlavors))
-  dom.setValue("dlOutput", flavor)
-
-
-CALLBACKS = {
-  "dlSubmit": acDlSubmit,
-}      </pre>
+  dom.setValue("dlOutput", flavor)</pre>
     </fieldset>
   </details>
 </fieldset>
 <fieldset class="hidden" id="date">
   <legend class="widget">date</legend>
   <fieldset>
-    <input type="date" xdh:onevent="dtSelect" />
+    <input type="date" xdh:onevent="DTSelect" />
     <span>Selected date: </span>
     <output id="dtOutput">
       <span>Click on the date selector</span>
@@ -443,16 +400,14 @@ CALLBACKS = {
     <fieldset>
       <legend>Python</legend>
       <pre class="lang-python">
-CALLBACKS = {
-  "dtSelect": lambda dom, id: dom.setValue("dtOutput", dom.getValue(id)),
-}      </pre>
+atkDTSelect = lambda dom, id: dom.setValue("dtOutput", dom.getValue(id))</pre>
     </fieldset>
   </fieldset>
 </fieldset>
 <fieldset class="hidden" id="color">
   <legend class="widget">color</legend>
   <fieldset>
-    <input type="color" id="clColor" xdh:onevent="clSelect" />
+    <input type="color" id="clColor" xdh:onevent="CLSelect" />
     <span>Selected color: </span>
     <output id="clOutput">
       <span>Click on the color selector</span>
@@ -468,9 +423,7 @@ CALLBACKS = {
     <fieldset>
       <legend>Python</legend>
       <pre class="lang-python">
-CALLBACKS = {
-  "clSelect": lambda dom, id: dom.setValue("clOutput", dom.getValue(id)),
-}      </pre>
+atkCLSelect: lambda dom, id: dom.setValue("clOutput", dom.getValue(id))</pre>
     </fieldset>
   </details>
 </fieldset>
@@ -479,9 +432,9 @@ CALLBACKS = {
   <fieldset style="display: flex; flex-direction: row; align-items: center; gap: 5px;">
     <label style="display: flex; align-items: center;">
       <span>Volume: </span>
-      <input type="range" id="rgRange" xdh:onevent="rgSubmit" min="0" max="15" value="5" />
+      <input type="range" id="rgRange" xdh:onevent="RGSubmit" min="0" max="15" value="5" />
     </label>
-    <input type="number" id="rgNumber" xdh:onevent="rgSubmit" min="0" max="15" value="5" size="3" />
+    <input type="number" id="rgNumber" xdh:onevent="RGSubmit" min="0" max="15" value="5" size="3" />
     <meter id="rgMeter" min="0" max="15" low="5" high="10" optimum="3" value="5"></meter>
   </fieldset>
   <hr />
@@ -494,26 +447,21 @@ CALLBACKS = {
     <fieldset>
       <legend>Python</legend>
       <pre class="lang-python">
-def acRgSubmit(dom, id):
+def atkRGSubmit(dom, id):
   value = dom.getValue(id)
 
   dom.setValues({
     "rgRange": value,
     "rgNumber": value,
     "rgMeter": value
-  })        
-
-
-CALLBACKS = {
-  "rgSubmit": acRgSubmit,
-}      </pre>
+  })        </pre>
     </fieldset>
   </details>
 </fieldset>
 <fieldset class="hidden" id="select">
   <legend class="widget">select</legend>
   <fieldset>
-    <select xdh:onevent="slSelect">
+    <select xdh:onevent="SLSelect">
       <option selected disabled>-- Select a dinausor --</option>
       <optgroup label="Theropods">
         <option value="tyrannosaurus">Tyrannosaurus</option>
@@ -535,14 +483,14 @@ CALLBACKS = {
     </span>
     <p></p>
     <div>
-      <input id="slInput" xdh:onevent="slAdd" placeholder="Other dinausor to add" />
+      <input id="slInput" xdh:onevent="SLAdd" placeholder="Other dinausor to add" />
       <label>
-        <input type="checkbox" xdh:onevent="slToggle" />
+        <input type="checkbox" xdh:onevent="SLToggle" />
         <strong>Deactivate</strong>
       </label>
     </div>
     <p></p>
-    <div>See the above <a href="#" target="_self" xdh:onevent="slRadio">radio widget</a> to see how to
+    <div>See the above <a href="#" target="_self" xdh:onevent="SLRadio">radio widget</a> to see how to
       programmatically select an item from a list box.</div>
   </fieldset>
   <hr />
@@ -563,17 +511,14 @@ def slEmbed(other):
   return html
 
 
-def acSlAdd(dom):
+def atkSLAdd(dom):
   dom.begin("slOthers", slEmbed(dom.getValue("slInput")))
   dom.setValue("slInput", "")
   dom.focus("slInput")  
   
 
-CALLBACKS = {
-  "slSelect": lambda dom, id: dom.setValue("slOutput", dom.getValue(id)),
-  "slAdd": acSlAdd,
-  "slToggle": lambda dom, id: dom.disableElement("slOthers") if dom.getValue(id) == 'true' else dom.enableElement("slOthers"),
-}      </pre>
+atkSLSelect = lambda dom, id: dom.setValue("slOutput", dom.getValue(id))
+atkSLToggle = lambda dom, id: dom.disableElement("slOthers") if dom.getValue(id) == 'true' else dom.enableElement("slOthers")</pre>
     </fieldset>
   </details>
 </fieldset>
@@ -582,7 +527,7 @@ CALLBACKS = {
   <fieldset>
     <textarea id="ckInput"
       xdh:widget_="ckeditor|{entities: false, enterMode : CKEDITOR.ENTER_BR, linkShowTargetTab: false, versionCheck: false}|val\(\)|"></textarea>
-    <button xdh:onevent="ckSubmit">Submit</button>
+    <button xdh:onevent="CKSubmit">Submit</button>
     <fieldset>
       <output id="ckOutput" style="all: initial;">
         <span>Type content in the editor and hit the <span style="font-weight: bold;">Submit</span> button</span>
@@ -599,13 +544,11 @@ CALLBACKS = {
     <fieldset>
       <legend>Python</legend>
       <pre class="lang-python">
-CALLBACKS = {
-  "ckSubmit": lambda dom, id: dom.setValue("ckOutput", dom.getValue("ckInput")),
-}      </pre>
+atkCKSubmit = lambda dom, id: dom.setValue("ckOutput", dom.getValue("ckInput"))</pre>
     </fieldset>
   </details>
 </fieldset>
 """
 
 
-atlastk.launch(CALLBACKS, headContent=HEAD)
+atlastk.launch(globals=globals())

@@ -59,11 +59,11 @@ async def reset(core,dom):
   await showWord(dom, core.secretWord, core.correctGuesses)
 
 
-async def acConnect(core, dom):
+async def atk(core, dom):
   await reset(core,dom)
 
 
-async def acSubmit(core, dom, id):
+async def atkSubmit(core, dom, id):
   await dom.addClass(id, "chosen")
 
   guess = id.lower()
@@ -95,7 +95,7 @@ async def acSubmit(core, dom, id):
     await reset(core, dom)
 
 
-async def acRestart(core, dom):
+async def atkRestart(core, dom):
   if (core.secretWord != "" ):
     await dom.alert("You had " + str(core.errors) +
         " errors and " + str(len(core.correctGuesses)) + " correct guesses. " +
@@ -103,13 +103,7 @@ async def acRestart(core, dom):
 
   await reset(core, dom)
 
-callbacks = {
-  "": acConnect,
-  "Submit": acSubmit,
-  "Restart": acRestart
-}
-
-HEAD = """
+ATK_HEAD = """
 <title>Hangman</title>
 <style type="text/css">
     #Keyboard text {
@@ -691,4 +685,7 @@ BODY = """
 </fieldset>
 """
 
-atlastk.launch(callbacks, Core, HEAD)
+ATK_USER = Core
+
+atlastk.launch(globals=globals())  
+

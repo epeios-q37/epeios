@@ -223,7 +223,7 @@ async def updateHardware_(dom, hardware):
 
 
 async def atk(dom):
-  infos = await ucuq.ATKConnectAwait(dom, BODY)
+  infos = await ucuq.ATKConnectAwait(dom, BODY, True)
 
   await updateHardware_(dom, ucuq.getKitHardware(infos))
 

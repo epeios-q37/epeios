@@ -7,13 +7,13 @@ class Profile:
     self.pseudo = ""
 
 
-async def acConnect(profile, dom):
+async def atk(profile, dom):
   await dom.inner("", BODY)
   await dom.enableElement("XDHFullHeight")
   await dom.focus("Input")
 
 
-async def acSubmit(profile, dom):
+async def atkSubmit(profile, dom):
   global message
   input = (await dom.getValue('Input')).strip()
 
@@ -31,19 +31,12 @@ async def acSubmit(profile, dom):
   await dom.focus("Input")
 
 
-async def acDisplay(profile, dom, id):
+async def atkDisplay(profile, dom, id):
   if id != profile.pseudo:
     await dom.begin("Output", f"<div class='other'><span style='font-style: oblique;'>{id}</span>: {message}</div>")
 
 
-CALLBACKS = {
-  "": acConnect,
-  "Submit": acSubmit,
-  "Display": acDisplay
-}
-
-
-HEAD = """
+ATK_HEAD = """
 <style>
 .me, .other {
   border-radius: 10px;
@@ -73,4 +66,7 @@ BODY = """
 </fieldset>
 """
 
-atlastk.launch(CALLBACKS, userCallback=Profile, headContent=HEAD)
+ATK_USER = Profile
+
+atlastk.launch(globals=globals())  
+

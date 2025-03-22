@@ -1,24 +1,18 @@
 import atlastk
 
 
-async def acConnect(dom):
+async def atk(dom):
   await dom.inner("", BODY)
   await dom.focus("input")
 
 
-async def acSubmit(dom):
+async def atkSubmit(dom):
   await dom.setValue("output", f"Hello, {await dom.getValue('input')}!")
   await dom.setValue("input", "")
   await dom.focus("input")
 
 
-CALLBACKS = {
-  "": acConnect,
-  "Submit": acSubmit,
-}
-
-
-HEAD = """
+ATK_HEAD = """
   <title>Hello</title>
 """
 
@@ -34,5 +28,4 @@ xdh:onevent="Submit" value="World"/>
 </fieldset>
 """
 
-
-atlastk.launch(CALLBACKS, headContent=HEAD)    
+atlastk.launch(globals=globals())  

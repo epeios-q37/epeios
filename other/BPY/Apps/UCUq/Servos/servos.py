@@ -76,7 +76,7 @@ async def displayMacros(dom):
 
 KIT_LABELS = {
   "Bipedal": "Freenove/Bipedal/RPiPico(2)W",
-  "DIY": "q37.info/DIY/Samples",
+  "DIY": "q37.info/DIY/Displays",
   "Dog": "Freenove/Dog/ESP32"
 }
 
@@ -90,7 +90,7 @@ async def updateFileList(dom, kitLabel = ""):
 
 
 async def atk(dom):
-  infos = await ucuq.ATKConnectAwait(dom, BODY)
+  infos = await ucuq.ATKConnectAwait(dom, BODY, True)
 
   # await createCohortServos()
 

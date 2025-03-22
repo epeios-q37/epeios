@@ -98,7 +98,7 @@ async def setCell(dom, i, j, value):
   await dom.addClass(cellId, value)
 
 
-async def acClick(dom, id):
+async def atkClick(dom, id):
   i = await dom.getAttribute(id, "data-x")
   j = await dom.getAttribute(id, "data-y")
 
@@ -112,23 +112,17 @@ async def acClick(dom, id):
     await nextTurn(dom)
 
 
-async def acConnect(dom):
+async def atk(dom):
   initWinningCombos()
   await dom.inner("", BODY)
   await newGame(dom)
 
 
-async def acNew(dom):
+async def atkNew(dom):
   await newGame(dom)
 
 
-CALLBACKS = {
-  "": acConnect,
-  "Click": acClick,
-  "New": acNew
-}
-
-HEAD = """
+ATK_HEAD = """
 <link href="https://fonts.googleapis.com/css?family=Indie+Flower" rel="stylesheet">
 <style>
 h1, h2 {
@@ -207,4 +201,4 @@ BODY = f"""
 </div>
 """
 
-atlastk.launch(CALLBACKS, headContent = HEAD)
+atlastk.launch(globals=globals())  
