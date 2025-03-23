@@ -10,6 +10,7 @@ DEFAULT_SPEED = 10
 
 contentsHidden = True
 
+show = {}
 macros = {}
 
 # Hardware modes
@@ -74,19 +75,28 @@ async def displayMacros(dom):
   await dom.inner("Macros", html)
 
 
-KIT_LABELS = {
+SOLOS = {
   "Bipedal": "Freenove/Bipedal/RPiPico(2)W",
   "DIY": "q37.info/DIY/Displays",
   "Dog": "Freenove/Dog/ESP32"
 }
 
-async def updateFileList(dom, kitLabel = ""):
+TROOPS = ["Cats"]
+
+async def updateFileList(dom, soloId = ""):
   html = ""
 
-  for kit in KIT_LABELS:
-    html = f"<option value=\"{kit}\" {'selected=\"selected\"' if kit == kitLabel else ''}>{kit}</option>\n" + html
+  for solo in SOLOS:
+    html = f"<option value=\"{solo}\" {'selected=\"selected\"' if solo == soloId else ''}>{solo}</option>\n" + html
 
-  await dom.inner("Files", html)
+  await dom.inner("Solos", html)
+
+  html = ""
+
+  for troop in TROOPS:
+    html = f"<option value=\"{troop}\" >{troop}</option>\n" + html
+
+  await dom.inner("Troops", html)
 
 
 async def atk(dom):
@@ -99,7 +109,7 @@ async def atk(dom):
   await displayMacros(dom)
   kitLabel =  ucuq.getKitLabel(infos)
 
-  await updateFileList(dom, next((key for key, val in KIT_LABELS.items() if val == kitLabel), None))
+  await updateFileList(dom, next((key for key, val in SOLOS.items() if val == kitLabel), None))
 
 
 async def atkTest():
@@ -397,32 +407,42 @@ async def atkHideContents(dom):
   
 async def atkSaveToFile(dom):
 # BEGIN BRY
-  await dom.alert("Not implemented yet in Brython version!")
+  await dom.alert("Not implemented in Brython version!")
 # END BRY
 
 # BEGIN PYH
-  with open(f"Macros/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w") as file: 
-    file.write(json.dumps(macros, indent=2)) # type: ignore
+  global show
+
+  show["Macros"] = macros
+
+  with open(f"Shows/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w") as file:
+
+    file.write(json.dumps(show, indent=2)) # type: ignore
   
   await updateFileList(dom)
 # END PYH
 
 async def atkLoadFromFile(dom):
-  global macros
+  global show, macros
 
 # BEGIN PYH
-  with open(f"Macros/{await dom.getValue('Files')}.json", "r") as file:
-    macros = json.load(file)
+  with open(f"Shows/{await dom.getValue('Shows')}.json", "r") as file:
+    show = json.load(file)
 # END PYH
 
 # BEGIN BRY
-  macros = json.loads(await getGithubFileContentAwait(f"demos/Servos/Macros/{await dom.getValue('Files')}.json"))
+  macros = json.loads(await getGithubFileContentAwait(f"demos/Servos/Shows/{await dom.getValue('Shows')}.json"))
 # END BRY
+
+  macros = show["Macros"]
 
   if "_" in macros:
     await dom.setValue("Content", macros["_"]["Content"])
 
   await displayMacros(dom)
+
+  if "Cohort" in show:
+    createCohortServos(show["Cohort"])
 
 
 def handleSetupsKits(setups, kitHardware):
@@ -481,13 +501,15 @@ async def createServo(deviceId, device, kitHardware, key):
     servos[key+setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["U16Min"], specs["U16Max"], specs["Range"]), tweak = ucuq.Servo.Tweak(tweak["Angle"],tweak["Offset"], tweak["Invert"]))
 
 
-async def createCohortServos():
+async def createCohortServos(cohort):
   global servos
-  
-  targets = {
-    "C": "Charlie",
-    "E": "Echo"
-  }
 
-  for key in targets:
-    createServo(targets[key], ucuq.Device(id=targets[key]), key)
+  servos = {}
+  
+  for key in cohort:
+    device = ucuq.Device(id=cohort[key])
+    infos = await ucuq.getInfos(device)
+
+    createServo(cohort[key], device, ucuq.getKitHardware(ucuq.getKitLabel(infos)), key)
+
+    print(servos)

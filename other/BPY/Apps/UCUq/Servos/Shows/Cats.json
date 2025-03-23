@@ -1,0 +1,16 @@
+{
+  "Cohort" : {
+    "C": "Charlie",
+    "E": "Echo"
+  },
+  "Macros": {
+    "Dance": {
+      "Description": "Let's rocking!",
+      "Content": "E.L-25:C.L-25 E.R-25:C.R-25 E.L:R:C.L:R E.L-25:R+25:C.L-25:R+25 E.L+23:R-23:C.L+23:R-23 E.L-15:R+15:C.L-15:R+15 E.l+20:r-20:C.l+20:r-20 E.r:C.r E.l:C.l E.r-15:R+15:l+5:C.r-15:R+15:l+5 E.r:R:C.r:R E.l+10:L+15:C.l+10:L+15 E.R-10:r-15:C.R-10:r-15 E.l:L+15:C.l:L+15 E.R+15:r:C.R+15:r E.L-15:R-15:C.L-15:R-15 E.l-15:C.l-15: E.l:L-15:C.l:L-15 E.R+15:L-15:r-25:C.R+15:L-15:r-25 E.R-15:L-15:C.R-15:L-15 E.R+10:L+10:r:l:C.R+10:L+10:r:l E.r+20:l+20:C.r+20:l+20 E.r:l:C.r:l E.l:r+40:C.l:r+40 E.L-15:R-15:C.L-15:R-15 E.l-25:r:C.l-25:r E.R+25:L+25:r+30:C.R+25:L+25:r+30 E.R-25:L-25:r-30:C.R-25:L-25:r-30 %40 E.r+30:C.r+30 E.r-30:C.r-30 E.R+30:r+30:C.R+30:r+30 E.r-30:C.r-30 % E.l:r:R:L:C.l:r:R:L "
+    },
+    "Mirror": {
+      "Description": "Let's rocking bis!",
+      "Content": "E.L-25:C.R+25 E.R-25:C.L+25 E.L:R:C.R:L E.L-25:R+25:C.R+25:L-25 E.L+23:R-23:C.R-23:L+23 E.L-15:R+15:C.R+15:L-15 E.l+20:r-20:C.r-20:l+20 E.r:C.l E.l:C.r E.r-15:R+15:l+5:C.l+15:L-15:r-5 E.r:R:C.l:L E.l+10:L+15:C.r-10:R-15 E.R-10:r-15:C.L+10:l+15 E.l:L+15:C.r:R-15 E.R+15:r:C.L-15:l E.L-15:R-15:C.R+15:L+15 E.l-15:C.r+15: E.l:L-15:C.r:R+15 E.R+15:L-15:r-25:C.L-15:R+15:l+25 E.R-15:L-15:C.L+15:R+15 E.R+10:L+10:r:l:C.L-10:R-10:l:r E.r+20:l+20:C.l-20:r-20 E.r:l:C.l:r E.l:r+40:C.r:l-40 E.L-15:R-15:C.R+15:L+15 E.l-25:r:C.r+25:l E.R+25:L+25:r+30:C.L-25:R-25:l-30 E.R-25:L-25:r-30:C.L+25:R+25:l+30 %40 E.r+30:C.l-30 E.r-30:C.l+30 E.R+30:r+30:C.L-30:l-30 E.r-30:C.l+30 %  E.l:r:R:L:C.r:l:L:R"
+    }
+  }
+}
