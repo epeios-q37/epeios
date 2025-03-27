@@ -49,24 +49,6 @@
           "Mode": "Straight",
           "Pin": 5
         }
-      ],
-      "Servo": [
-        {
-          "Mode": "Straight",
-          "Pin": 0
-        },
-        {
-          "Mode": "Straight",
-          "Pin": 1
-        },
-        {
-          "Mode": "Straight",
-          "Pin": 2
-        },
-        {
-          "Mode": "Straight",
-          "Pin": 3
-        }
       ]
     },
     "devices": [
@@ -191,7 +173,14 @@
           "Mode": "Straight",
           "Pin": 32
         }
+      ],
+      "Servo": [
+        {
+          "Mode": "Straight",
+          "Pin": 33
+        }
       ]
+
     }
   }
 ]

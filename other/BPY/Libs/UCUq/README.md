@@ -31,10 +31,10 @@ Content of the *ucuq.json* file to put on the microcontroller:
 - *&lt;wlan_name>*: name of the wlan (whatever value you want);
 - *&lt;wlan_ssid>*: SSID of the wlan;
 - *&lt;wlan_key>*: secret key of the wlan;
-- *&lt;led_pin>*: the pin of the onboard led from the microcontroller (usually an integer, but can be a string, as with the *RPI pico (2) W*);
+- *&lt;led_pin>*: the pin of the onboard led from the microcontroller (usually an integer, but can be a string, as with the *RPI Pico (2) W*);
 - *&lt;led_logic>*: `true` when the led lights up when the pin level is high, `false` otherwise.
 
-The `OnBoardLed` entry can be omitted.
+The `OnBoardLed` entry is optional.
 
 You can put more then one entry under the `WLAN`; the microcontroller will automatically connect to the first available one. For example, one can be your smartphone's access point, the second your home's WiFi.
 
@@ -51,11 +51,9 @@ As an example, to light up a LED connected to your device, create a file with be
 import ucuq
 
 ucuq.GPIO(<led_pin>).high()
-
-ucuq.commit()
 ```
 
-Replace `<led_pin>` with the number corresponding of the onboard led pin number or string (or of whichever led connected to your microcontroller). With some controller, the led lights up when the corresponding pin is at low level, so you have to replace `high()` with `low())`. Launch this program with *python3*.
+Replace `<led_pin>` with the number corresponding of the onboard led pin number or string (or of whichever led connected to your microcontroller). With some controllers, the led lights up when the corresponding pin is at low level, so you have to replace `high()` with `low()`. Launch this program with *python3*.
 
 See the above online demonstrations link for the *API* and examples of use.
 

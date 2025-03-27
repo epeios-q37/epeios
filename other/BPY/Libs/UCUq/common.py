@@ -133,7 +133,7 @@ class Device(Device_):
     self.commands_ = []
     self.commitBehavior = None
 
-    super().__init__(id=id, token = token, callback = callback)
+    super().__init__(id=id, token=token, callback=callback)
   
   def __del__(self):
     self.commit()
@@ -225,15 +225,20 @@ def getKitHardware(infosOrLabel):
 getHardware_ = lambda hardware, key, index: hardware[key][index] if key in hardware and index < len(hardware[key]) else None
 
 
-def getHardware(hardware, stringOrList, index = 0):
+def getHardware(kitHardware, stringOrList, keys=None, *, index = 0):
   if type(stringOrList) == str:
-    return getHardware_(hardware, stringOrList, index)
+    hardware = getHardware_(kitHardware, stringOrList, index)
   else:
     for key in stringOrList:
-      if result := getHardware_(hardware, key, index):
-        return result
+      if hardware := getHardware_(kitHardware, key, index):
+        break
 
-  return None      
+  if hardware and keys:
+    result = (hardware[key] for key in keys)
+  else:
+    result = hardware
+
+  return result
   
 
 def getDeviceId(infos):
@@ -425,20 +430,20 @@ class WS2812(Core_):
   
 
 class I2C_Core_(Core_):
-  def __init__(self, sda = None, scl = None, *, device = None, soft = None):
+  def __init__(self, sda = None, scl = None, soft = None, *, device = None):
     super().__init__(device)
 
     if sda == None != scl == None:
       raise Exception("None or both of sda/scl must be given!")
     elif sda != None:
-      self.init(sda, scl, device = device, soft = soft)
+      self.init(sda, scl, soft = soft, device = device)
 
   async def scanAwait(self):
     return (await commitAwait(f"{self.getObject()}.scan()"))
 
 
 class I2C(I2C_Core_):
-  def init(self, sda, scl, *, device = None, soft = False):
+  def init(self, sda, scl, soft = None, *, device = None):
     if soft == None:
       soft = False
 
@@ -446,11 +451,11 @@ class I2C(I2C_Core_):
 
 
 class SoftI2C(I2C):
-  def init(self, sda, scl, *, device = None, soft = True):
+  def init(self, sda, scl, *, soft = None, device = None):
     if soft == None:
       soft = True
 
-    super().init(sda, scl, device = device, soft = soft)
+    super().init(sda, scl, soft = soft, device = device)
 
 
 class HT16K33(Core_):

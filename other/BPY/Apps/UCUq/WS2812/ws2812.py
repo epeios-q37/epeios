@@ -129,7 +129,7 @@ def turnOnMatrix(hardware):
 
 
 async def atk(dom):
-  infos = await ucuq.ATKConnectAwait(dom, BODY, True)
+  infos = await ucuq.ATKConnectAwait(dom, BODY)
 
   await dom.executeVoid("setColorWheel()")
   await dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")

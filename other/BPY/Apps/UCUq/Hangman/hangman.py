@@ -5,14 +5,6 @@ sys.path.append("../../atlastk")
 
 import atlastk, ucuq
 
-ucuq.setDevice("Golf")
-
-lcd = ucuq.HD44780_I2C(ucuq.SoftI2C(6, 7), 2, 16)
-oled = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9))
-ring = ucuq.WS2812(20, 8)
-buzzer = ucuq.PWM(5, freq=50, u16 = 0).setNS(0)
-
-
 from random import randint
 
 DICTIONARY_EN = [
@@ -100,16 +92,16 @@ def normalize(string):
 
 async def showHanged(dom, errors):
   if (errors):
-    oled.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
+    cOLED.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
     await dom.removeClass(HANGED_MAN[errors-1], "hidden")
 
   for l in range(errors):
-    ring.setValue(l + int(l > 2), [30, 0, 0])
+    cRing.setValue(l + int(l > 2), [30, 0, 0])
 
   for l in range(errors, 7):
-    ring.setValue(l + int(l > 2), [0, 30, 0])
+    cRing.setValue(l + int(l > 2), [0, 30, 0])
 
-  ring.setValue(7, [5 *  errors, 0, 5 * ( 6 - errors )]).setValue(3, [5 *  errors, 0, 5 * ( 6 - errors )]).write()
+  cRing.setValue(7, [5 *  errors, 0, 5 * ( 6 - errors )]).setValue(3, [5 *  errors, 0, 5 * ( 6 - errors )]).write()
 
 
 async def showWord(dom, secretWord, correctGuesses):
@@ -119,7 +111,7 @@ async def showWord(dom, secretWord, correctGuesses):
     if secretWord[i] in correctGuesses:
       output = output[:i] + secretWord[i] + output[i + 1:]
 
-  lcd.moveTo(0,0).putString(output.center(16))
+  cLCD.moveTo(0,0).putString(output.center(16))
 
   html = atlastk.createHTML()
   html.putTagAndValue("h1", output)
@@ -131,14 +123,24 @@ async def reset(core, dom):
   await dom.inner("", BODY)
   core.secretWord = randword()
   print(core.secretWord)
-  oled.fill(0).draw(START_PATTERN, 48, ox=47).show()
+  cOLED.fill(0).draw(START_PATTERN, 48, ox=47).show()
   await showWord(dom, core.secretWord, core.correctGuesses)
-  lcd.moveTo(0,1).putString(normalize(""))
-  ring.fill([0,0,0]).setValue(0,[0,30,0]).write()
+  cLCD.moveTo(0,1).putString(normalize(""))
+  cRing.fill([0,0,0]).setValue(0,[0,30,0]).write()
   await showHanged(dom, 0)
 
 
 async def atk(core, dom):
+  global cLCD, cOLED, cRing, cBuzzer
+
+  infos = await ucuq.ATKConnectAwait(dom, "")
+  hardware = ucuq.getKitHardware(infos)
+
+  cLCD = ucuq.HD44780_I2C(ucuq.I2C(*ucuq.getHardware(hardware, "LCD", ["SDA", "SCL", "Soft"])), 2, 16)
+  cOLED =  ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hardware, "OLED", ["SDA", "SCL", "Soft"])))
+  cRing = ucuq.WS2812(*ucuq.getHardware(hardware, "Ring", ["Pin", "Count"]))
+  cBuzzer = ucuq.PWM(*ucuq.getHardware(hardware, "Buzzer", ["Pin"]), freq=50, u16 = 0).setNS(0)
+
   await reset(core,dom)
 
 
@@ -160,11 +162,11 @@ async def atkSubmit(core, dom, id):
     await showWord(dom, core.secretWord, core.correctGuesses)
 
     if correct == len(core.secretWord):
-      lcd.moveTo(0,1).putString("Congratulations!")
-      oled.draw(HAPPY_PATTERN, 16, mul=4, ox=32).show()
+      cLCD.moveTo(0,1).putString("Congratulations!")
+      cOLED.draw(HAPPY_PATTERN, 16, mul=4, ox=32).show()
       for _ in range(3):
         for l in range(8):
-          ring.setValue(l,[randint(0,10),randint(0,10),randint(0,10)]).write()
+          cRing.setValue(l,[randint(0,10),randint(0,10),randint(0,10)]).write()
           ucuq.sleep(0.075)
       await dom.alert("You've won! Congratulations!")
       await reset(core, dom)
@@ -172,10 +174,10 @@ async def atkSubmit(core, dom, id):
   else:
     core.errors += 1
     await showHanged(dom, core.errors)
-    lcd.moveTo(0,1).putString(normalize(''.join([char for char in core.chosen if char not in core.correctGuesses])))
-    buzzer.setFreq(30).setU16(50000)
+    cLCD.moveTo(0,1).putString(normalize(''.join([char for char in core.chosen if char not in core.correctGuesses])))
+    cBuzzer.setFreq(30).setU16(50000)
     ucuq.sleep(0.5)
-    buzzer.setU16(0)
+    cBuzzer.setU16(0)
 
   
   if core.errors >= len(HANGED_MAN):

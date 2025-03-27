@@ -73,24 +73,24 @@
       </xpp:bloc>
     </xpp:define>
     <Servos>
-      <L>
+      <l>
         <xpp:expand select="Presets" />
         <Hardware>
           <Index>1</Index>
         </Hardware>
         <Tweak>
-          <Offset>85</Offset>
+          <Offset>-15</Offset>
         </Tweak>
-      </L>
-      <l>
+      </l>
+      <L>
         <xpp:expand select="Presets" />
         <Hardware>
           <Index>0</Index>
         </Hardware>
         <Tweak>
-          <Offset>-15</Offset>
+          <Offset>85</Offset>
         </Tweak>
-      </l>
+      </L>
       <R>
         <xpp:expand select="Presets" />
         <Hardware>

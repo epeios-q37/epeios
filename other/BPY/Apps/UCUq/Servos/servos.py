@@ -100,11 +100,11 @@ async def updateFileList(dom, soloId = ""):
 
 
 async def atk(dom):
-  infos = await ucuq.ATKConnectAwait(dom, BODY, True)
+  infos = await ucuq.ATKConnectAwait(dom, BODY)
 
   # await createCohortServos()
 
-  await createServo(ucuq.getDeviceId(infos), ucuq.getDevice(), ucuq.getKitHardware(infos), "")
+  await createServoAwait(ucuq.getDeviceId(infos), ucuq.getDevice(), ucuq.getKitHardware(infos), "")
 
   await displayMacros(dom)
   kitLabel =  ucuq.getKitLabel(infos)
@@ -431,7 +431,7 @@ async def atkLoadFromFile(dom):
 # END PYH
 
 # BEGIN BRY
-  macros = json.loads(await getGithubFileContentAwait(f"demos/Servos/Shows/{await dom.getValue('Shows')}.json"))
+  show = json.loads(await getGithubFileContentAwait(f"demos/Servos/Shows/{await dom.getValue('Shows')}.json"))
 # END BRY
 
   macros = show["Macros"]
@@ -442,7 +442,7 @@ async def atkLoadFromFile(dom):
   await displayMacros(dom)
 
   if "Cohort" in show:
-    createCohortServos(show["Cohort"])
+    await createCohortServosAwait(show["Cohort"])
 
 
 def handleSetupsKits(setups, kitHardware):
@@ -450,7 +450,7 @@ def handleSetupsKits(setups, kitHardware):
     hardware = setups[setup]["Hardware"]
 
     if hardware[HARDWARE_MODE_SUBKEY] == M_KIT:
-      setups[setup]["Hardware"] = ucuq.getHardware(kitHardware, hardware["Key"], hardware["Index"])
+      setups[setup]["Hardware"] = ucuq.getHardware(kitHardware, hardware["Key"], index = hardware["Index"])
 
   return setups
 
@@ -472,7 +472,7 @@ async def getServosSetups(target, kitHardware):
   return handleSetupsKits(config["Servos"], kitHardware)
 
 
-async def createServo(deviceId, device, kitHardware, key):
+async def createServoAwait(deviceId, device, kitHardware, key):
   global servos
 
   if key:
@@ -501,15 +501,13 @@ async def createServo(deviceId, device, kitHardware, key):
     servos[key+setup] = ucuq.Servo(pwm, ucuq.Servo.Specs(specs["U16Min"], specs["U16Max"], specs["Range"]), tweak = ucuq.Servo.Tweak(tweak["Angle"],tweak["Offset"], tweak["Invert"]))
 
 
-async def createCohortServos(cohort):
+async def createCohortServosAwait(cohort):
   global servos
 
   servos = {}
   
   for key in cohort:
     device = ucuq.Device(id=cohort[key])
-    infos = await ucuq.getInfos(device)
+    infos = await ucuq.getInfosAwait(device)
 
-    createServo(cohort[key], device, ucuq.getKitHardware(ucuq.getKitLabel(infos)), key)
-
-    print(servos)
+    await createServoAwait(cohort[key], device, ucuq.getKitHardware(ucuq.getKitLabel(infos)), key)
