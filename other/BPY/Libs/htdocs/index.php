@@ -7,8 +7,9 @@ $url = $_REQUEST["url"] ?? "";
 $cursor = $_REQUEST["cursor"] ?? "";
 $id = $_REQUEST["id"] ?? "_BrythonIdNotSet_"; // For the Zelbinium sandboxes.
 $go = isset($_REQUEST["go"]) ? "true" : "false";
-$collapse = ( $go == "false" or strtolower($_REQUEST["go"]) == "collapse" ) ? "true" : "false";
-$use_ucuq_demo_devices = isset($_REQUEST["useUCUqDemoDevices"]) ? "true" : "false"; // 
+$collapse = $_REQUEST["collapse"] ?? ( ( $go == "false" or strtolower($_REQUEST["go"]) == "collapse" ) ? "true" : "false" );
+$use_ucuq_demo_devices = isset($_REQUEST["useUCUqDemoDevices"]) ? "true" : "false";
+$collapse = strtolower($collapse) == "true" ? "true" : "false";
 
 echo <<<BODY
 <html>
@@ -30,6 +31,7 @@ echo <<<BODY
       var demo = `$demo`;
       var url = `$url`;
       var id = `$id`;
+      console.log("Collapse: ", collapse);
     </script>
     <script src="index.js"></script>
     <!-- Will be filled on run. -->

@@ -1,7 +1,7 @@
 
 function go() {
   if (collapse)
-      document.getElementById("Source").parentNode.previousElementSibling.removeAttribute("open");
+    document.getElementById("Source").parentNode.previousElementSibling.removeAttribute("open");
   document.getElementById("Brython").style["display"] = "";
   document.getElementById("Code").value = editor.getValue();
   document.forms['Brython'].submit();

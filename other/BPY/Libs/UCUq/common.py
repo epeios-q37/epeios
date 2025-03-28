@@ -110,7 +110,7 @@ ATK_BODY_ = """
 <div style="display: flex; justify-content: center;" class="ucuq">
   <h3>'BRACES' (<em>BRACES</em>)</h3>
 </div>
-<div id="ucuq_body">
+<div id="ucuq_body" style="display: flex; justify-content: center;">
 </div>
 """.replace("{", "{{").replace("}", "}}").replace("BRACES", "{}")
 
@@ -282,9 +282,9 @@ async def ATKConnectAwait(dom, body, demo = False, *, device = None):
 
   await dom.inner("ucuq_body", body)
 
-  await sleepAwait(0.5)
-
   await sleepAwait(1.5)
+
+  await dom.inner("", body)
 
   return infos
 
