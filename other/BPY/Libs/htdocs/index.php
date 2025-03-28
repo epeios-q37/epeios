@@ -31,7 +31,6 @@ echo <<<BODY
       var demo = `$demo`;
       var url = `$url`;
       var id = `$id`;
-      console.log("Collapse: ", collapse);
     </script>
     <script src="index.js"></script>
     <!-- Will be filled on run. -->
