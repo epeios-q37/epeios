@@ -10,7 +10,7 @@
     },
     "Rest": {
       "Description": "Resting position",
-      "Content": "l+90:L-90:R+90:r-90"
+      "Content": "l-90:L+90:R-90:r+90"
     },
     "R2L2R": {
       "Description": "Right to left to right",

@@ -83,8 +83,18 @@ Code.workspace = null;
  * @param {string} defaultValue Value to return if parameter not found.
  * @return {string} The parameter value or the default value if not found.
  */
-Code.getStringParamFromUrl = function(name, defaultValue) {
-  var val = location.search.match(new RegExp('[?&]' + name + '=([^&]+)'));
+
+Code.getParamFromUrl = function(name) {
+  return location.search.match(new RegExp('[?&]' + name + '=([^&]+)'));
+};
+
+Code.getRawParamValueFromUrl = function(name) {
+  let val =  this.getParamFromUrl(name);
+  return val ? val[1] : '';
+};
+
+Code.getParamValueFromUrl = function(name, defaultValue) {
+  var val = this.getParamFromUrl(name);
   return val ? decodeURIComponent(val[1].replace(/\+/g, '%20')) : defaultValue;
 };
 
@@ -93,7 +103,7 @@ Code.getStringParamFromUrl = function(name, defaultValue) {
  * @return {string} User's language.
  */
 Code.getLang = function() {
-  var lang = Code.getStringParamFromUrl('lang', '');
+  var lang = Code.getParamValueFromUrl('lang', '');
   if (Code.LANGUAGE_NAME[lang] === undefined) {
     // Default to English.
     lang = 'fr';
@@ -102,12 +112,19 @@ Code.getLang = function() {
 };
 
 Code.getDemo = function() {
-  return Code.getStringParamFromUrl('demo', '');
+  return Code.getParamValueFromUrl('demo', '');
 };
 
 Code.getURL = function() {
-  return Code.getStringParamFromUrl('url', '');
+  return Code.getParamValueFromUrl('url', '');
 };
+
+// NOTA: the XML param value is compressed.
+Code.getXML = function() {
+  let compressedXml = Code.getRawParamValueFromUrl('xml');
+  return compressedXml ? unpackXMLCode(compressedXml) : '';
+};
+
 
 /**
  * Is the current language (Code.LANG) an RTL language?
@@ -246,6 +263,8 @@ Code.LANG = Code.getLang();
 Code.DEMO = Code.getDemo();
 
 Code.URL = Code.getURL();
+
+Code.XML = Code.getXML();
 
 /**
  * List of tab names.
@@ -443,6 +462,7 @@ function getGithubDemo(demo, callback) {
 }
 
 function fillWorkspace(xmlString) {
+  console.log(xmlString)
   Code.workspace.clear();
 
   var parser = new DOMParser();
@@ -480,7 +500,9 @@ Code.init = function() {
           // Account for the 19 pixel margin and on each side.
     }
 
-    if ( Code.DEMO !== "" ) {
+    if ( Code.XML !== "" ) {
+      fillWorkspace(Code.XML);
+    } else if ( Code.DEMO !== "" ) {
       getGithubDemo(Code.DEMO, fillWorkspace);
     } else if ( Code.URL !== "" ) {
       getDemo(Code.URL, fillWorkspace);

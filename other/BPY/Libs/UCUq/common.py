@@ -51,6 +51,13 @@ def handlingConfig_(token, id):
   return token, id
 
 
+def getConfigToken_():
+    try:
+      return CONFIG_[K_DEVICE][K_DEVICE_TOKEN]
+    except:
+      return ""
+
+
 def setDevice(id = None, *, device = None, token = None):
   if device != None:
     global device_

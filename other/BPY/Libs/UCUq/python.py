@@ -243,6 +243,9 @@ class Device_:
     if token == None and id == None:
       token, id = handlingConfig_(token, id)
 
+    if not token:
+      token = getConfigToken_()
+
     self.token = token if token else ALL_DEVICES_VTOKEN
     self.id = id if id else ""
 

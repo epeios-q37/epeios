@@ -77,7 +77,7 @@ async def displayMacros(dom):
 
 SOLOS = {
   "Bipedal": "Freenove/Bipedal/RPiPico(2)W",
-  "DIY": "q37.info/DIY/Displays",
+  "DIY": "q37.info/DIY/Servos",
   "Dog": "Freenove/Dog/ESP32"
 }
 

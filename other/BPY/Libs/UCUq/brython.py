@@ -87,6 +87,9 @@ class Device_:
         raise Exception("'callback' can not be given without 'id' or 'token'!")
       token, id = handlingConfig_(token, id)
 
+    if not token:
+      token = getConfigToken_()
+
     self.device_ = ucuqjs.launch(token if token else ALL_DEVICES_VTOKEN, id if id else "", LIB_VERSION, callback if callback else lambda answer: answer.replace(ALL_DEVICES_VTOKEN, "<demo token>")) # 'None' is NOT converted in 'undefined' in JS.
 
 

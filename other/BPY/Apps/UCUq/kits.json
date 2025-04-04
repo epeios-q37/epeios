@@ -56,6 +56,38 @@
     ]
   },
   {
+    "brand": "q37.info",
+    "model": "DIY",
+    "variant": "Servos",
+    "hardware": {
+      "OnBoardLed": [
+        8,
+        false
+      ],
+      "Servo": [
+        {
+          "Mode": "Straight",
+          "Pin": 14
+        },
+        {
+          "Mode": "Straight",
+          "Pin": 12
+        },
+        {
+          "Mode": "Straight",
+          "Pin": 13
+        },
+        {
+          "Mode": "Straight",
+          "Pin": 15
+        }
+      ]
+    },
+    "devices": [
+      "Delta"
+    ]
+  },
+  {
     "brand": "Freenove",
     "model": "Bipedal",
     "variant": "RPiPico(2)W",
