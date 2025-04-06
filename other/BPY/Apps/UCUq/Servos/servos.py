@@ -339,7 +339,7 @@ async def atkSave(dom):
     elif not name in macros or await dom.getValue("Ask") == "true" or await dom.confirm(f"Overwrite existing macro of name '{name}'?"):
       macros[name] = {"Description": await dom.getValue("Description"), "Content": content}
 
-      with open(f"Macros/Latest.json", "w") as file: 
+      with open(f"Shows/Latest.json", "w") as file: 
         file.write(json.dumps(macros, indent=2)) # type: ignore
 
     await displayMacros(dom)

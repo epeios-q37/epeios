@@ -1,3 +1,12 @@
+<?php
+
+$lang = $_REQUEST["lang"] ?? "";
+$demo = $_REQUEST["demo"] ?? "";
+$code = $_REQUEST["code"] ?? "";
+$cxml = $_REQUEST["xml"] ?? ""; // Compressed with 'Q_COMPRESS'!!!
+
+
+echo <<<BODY
 <!DOCTYPE html>
 <html>
 
@@ -15,6 +24,12 @@
   <!--script src="https://unpkg.com/blockly/php_compressed.js"></script-->
   <!--script src="https://unpkg.com/blockly/lua_compressed.js"></script-->
   <!--script src="https://unpkg.com/blockly/dart_compressed.js"></script-->
+  <script type="text/javascript">
+    const LANG = `$lang`;
+    const DEMO = `$demo`;
+    const CODE = `$code`;
+    const CXML = `$cxml`;
+  </script>
   <script src="tools.js"></script>
   <script src="code.js"></script>
   <script src="ucuq.js"></script>
@@ -471,3 +486,5 @@
 </body>
 
 </html>
+BODY
+?>

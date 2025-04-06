@@ -103,24 +103,29 @@ Code.getParamValueFromUrl = function(name, defaultValue) {
  * @return {string} User's language.
  */
 Code.getLang = function() {
-  var lang = Code.getParamValueFromUrl('lang', '');
+  let lang = LANG === "" ? "fr" : LANG;
+//  var lang = Code.getParamValueFromUrl('lang', '');
   if (Code.LANGUAGE_NAME[lang] === undefined) {
-    // Default to English.
+    // Default to French.
     lang = 'fr';
   }
   return lang;
 };
 
 Code.getDemo = function() {
+  return DEMO;
   return Code.getParamValueFromUrl('demo', '');
 };
 
 Code.getURL = function() {
+  return URL;
   return Code.getParamValueFromUrl('url', '');
 };
 
 // NOTA: the XML param value is compressed.
 Code.getXML = function() {
+  console.log("CXML: ", CXML);
+  return CXML === "" ? "" : unpackXMLCode(decodeURIComponent(CXML));
   let compressedXml = Code.getRawParamValueFromUrl('xml');
   return compressedXml ? unpackXMLCode(compressedXml) : '';
 };
@@ -500,8 +505,10 @@ Code.init = function() {
           // Account for the 19 pixel margin and on each side.
     }
 
+    console.log(code.XML, code.DEMO, code.URL);
+
     if ( Code.XML !== "" ) {
-      fillWorkspace(Code.XML);
+      setTimeout( fillWorkspace, 100, Code.XML);  // Delay before injecting XML otherwise the blocs are not displayed neatly.
     } else if ( Code.DEMO !== "" ) {
       getGithubDemo(Code.DEMO, fillWorkspace);
     } else if ( Code.URL !== "" ) {
