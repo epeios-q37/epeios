@@ -16,8 +16,6 @@ python.pythonGenerator.forBlock['hd44780_init_soft'] = function (block) {
 
   const code = `${value_soft == "TRUE" ? "True" : "False"}`;
 
-  console.log("hd44780_init_soft", value_soft, code);
-
   return [code, javascript.Order.ATOMIC];
 }
 

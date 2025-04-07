@@ -77,34 +77,11 @@ Code.LANGUAGE_RTL = ['ar', 'fa', 'he', 'lki'];
 Code.workspace = null;
 
 /**
- * Extracts a parameter from the URL.
- * If the parameter is absent default_value is returned.
- * @param {string} name The name of the parameter.
- * @param {string} defaultValue Value to return if parameter not found.
- * @return {string} The parameter value or the default value if not found.
- */
-
-Code.getParamFromUrl = function(name) {
-  return location.search.match(new RegExp('[?&]' + name + '=([^&]+)'));
-};
-
-Code.getRawParamValueFromUrl = function(name) {
-  let val =  this.getParamFromUrl(name);
-  return val ? val[1] : '';
-};
-
-Code.getParamValueFromUrl = function(name, defaultValue) {
-  var val = this.getParamFromUrl(name);
-  return val ? decodeURIComponent(val[1].replace(/\+/g, '%20')) : defaultValue;
-};
-
-/**
  * Get the language of this user from the URL.
  * @return {string} User's language.
  */
 Code.getLang = function() {
   let lang = LANG === "" ? "fr" : LANG;
-//  var lang = Code.getParamValueFromUrl('lang', '');
   if (Code.LANGUAGE_NAME[lang] === undefined) {
     // Default to French.
     lang = 'fr';
@@ -114,20 +91,15 @@ Code.getLang = function() {
 
 Code.getDemo = function() {
   return DEMO;
-  return Code.getParamValueFromUrl('demo', '');
 };
 
 Code.getURL = function() {
   return URL;
-  return Code.getParamValueFromUrl('url', '');
 };
 
 // NOTA: the XML param value is compressed.
 Code.getXML = function() {
-  console.log("CXML: ", CXML);
   return CXML === "" ? "" : unpackXMLCode(decodeURIComponent(CXML));
-  let compressedXml = Code.getRawParamValueFromUrl('xml');
-  return compressedXml ? unpackXMLCode(compressedXml) : '';
 };
 
 
@@ -467,7 +439,6 @@ function getGithubDemo(demo, callback) {
 }
 
 function fillWorkspace(xmlString) {
-  console.log(xmlString)
   Code.workspace.clear();
 
   var parser = new DOMParser();
@@ -504,8 +475,6 @@ Code.init = function() {
           (Code.workspace.getToolbox().width - 38) + 'px';
           // Account for the 19 pixel margin and on each side.
     }
-
-    console.log(code.XML, code.DEMO, code.URL);
 
     if ( Code.XML !== "" ) {
       setTimeout( fillWorkspace, 100, Code.XML);  // Delay before injecting XML otherwise the blocs are not displayed neatly.
@@ -731,14 +700,9 @@ function init() {
     if (event.type === Blockly.Events.BLOCK_CREATE) {
         const blockId = event.blockId;
         const block = workspace.getBlockById(event.blockId);
-        if (block) {
-          console.log(`Un nouveau bloc a été créé avec l'ID: ${blockId}`);
-          console.log(`Type de bloc: ${block.type}`);
-        }
 
         if ( block.type === "gpio_high") {
           const dropdownField = block.getField('NAME');
-          console.log(dropdownField);
           /*
           dropdownField.menuGenerator_ = [["a", "b"],["c", "d"]]
           dropdownField.updateDropdown();

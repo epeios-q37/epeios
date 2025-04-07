@@ -24,7 +24,6 @@ function stringOrInt(input) {
 // XML Blockly code compressed with 'Q_Compress'.
 function unpackXMLCode(base64CompressedCode) {
 
-  console.log(base64CompressedCode)
   // Décoder le base64  
   const binaryString = atob(base64CompressedCode);
   
