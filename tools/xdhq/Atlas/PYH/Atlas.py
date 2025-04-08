@@ -267,3 +267,5 @@ def options(options = None):
 
   return options_
 
+def isDev():
+	return XDHqSHRD.isDev()

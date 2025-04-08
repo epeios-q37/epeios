@@ -2,11 +2,11 @@ import os, sys, json
 
 import atlastk
 
+def isDev():
+  return atlastk.isDev()
+
 # BEGIN BRY
 from browser.local_storage import storage
-
-def isDev():
-  return False
 
 CONFIG_ITEM = "ucuq-config"
 
@@ -32,9 +32,6 @@ def delete():
 # END BRY
 
 # BEGIN PYH
-def isDev():
-  return "Q37_EPEIOS" in os.environ
-
 CONFIG_FILE = ( "/home/csimon/q37/epeios/other/BPY/Apps/UCUq/" if isDev() else "../" ) + "ucuq.json"
 
 

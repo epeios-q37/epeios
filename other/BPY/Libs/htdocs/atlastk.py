@@ -598,3 +598,6 @@ def options(options = None):
         options_[key] = options[key]
 
   return options_
+
+def isDev():
+  return False  # No dev environment in Brython.

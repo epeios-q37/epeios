@@ -415,8 +415,7 @@ async def atkSaveToFile(dom):
 
   show["Macros"] = macros
 
-  with open(f"Shows/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w") as file:
-
+  with open(f"{'/home/csimon/H/hg/epeios/other/BPY/Apps/UCUq/Servos/' if atlastk.isDev() else ''}Shows/{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w") as file:
     file.write(json.dumps(show, indent=2)) # type: ignore
   
   await updateFileList(dom)
