@@ -1,7 +1,7 @@
 # MicroController Remote Server (runs on the µcontroller)
 # Use of asyncio in prevision of the future handling of sensors.
 
-import asyncio, sys, uos, time, network, json, binascii, io
+import asyncio, sys, uos, time, network, json, binascii, io, ssl
 from machine import Pin
 
 WLAN = "" # Connect to one of the WLAN defined in 'ucuq.json'.
@@ -11,18 +11,22 @@ WLAN = "" # Connect to one of the WLAN defined in 'ucuq.json'.
 with open("ucuq.json", "r") as config:
   CONFIG_ = json.load(config)
 
-IDENTIFICATION_ = CONFIG_["Identification"]
+K_IDENTIFICATION = "Identification"
+K_ONBOARD_LED = "OnBoardLed"
+K_PROXY = "Proxy"
+K_WIFI_POWER = "WifiPower"
 
-UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
-UCUQ_DEFAULT_PORT_ = 53800
+DEFAULT_ONBOARD_LED = (None, True)
+DEFAULT_PROXY = ("ucuq.q37.info", 53843, True)
+DEFAULT_WIFI_POWER = [None]
 
-UCUQ_HOST_ = CONFIG_["Proxy"]["Host"] if "Proxy" in CONFIG_ and "Host" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["Host"] else UCUQ_DEFAULT_HOST_
+def getConfig(key):
+  return CONFIG_[key] if key in CONFIG_ else None
 
-# only way to test if the entry contains a valid int.
-try:
-  UCUQ_PORT_ = int(CONFIG_["Proxy"]["Port"])
-except:
-  UCUQ_PORT_ = int(UCUQ_DEFAULT_PORT_)
+CONFIG_IDENTIFICATION = CONFIG_[K_IDENTIFICATION]
+CONFIG_ONBOARD_LED = getConfig(K_ONBOARD_LED)
+CONFIG_PROXY = getConfig(K_PROXY)
+CONFIG_WIFI_POWER = getConfig(K_WIFI_POWER)
 
 WLAN_FALLBACK_ = "q37"
 
@@ -135,13 +139,15 @@ def wlanConnect_(wlan, callback):
 
     wifi.active(True)
 
-    id = getIdentificationId_(IDENTIFICATION_)
+    id = getIdentificationId_(CONFIG_IDENTIFICATION)
 
-    # Without below, an EXP32-C3 supermini does not connect to WiFi when plugged in a breadboard.
+    # An ESP32-C3 supermini does not connect to WiFi with default WiFi power when plugged in a breadboard.
     # See https://www.reddit.com/r/arduino/comments/1dl6atc/esp32c3_boards_cant_connect_to_wifi_when_plugged/
     # RPi Pico does not support a float.
-    if id in CONFIG_["WifiPower"]:
-      wifi.config(txpower=CONFIG_["WifiPower"][id])
+    wifiPowerParams = getEntry(CONFIG_WIFI_POWER, getIdentificationId_(CONFIG_IDENTIFICATION), DEFAULT_WIFI_POWER)
+
+    if wifiPowerParams[0]:
+      wifi.config(txpower=wifiPowerParams)
 
     wifi.connect(wlan[0], wlan[1])
 
@@ -153,8 +159,8 @@ def wlanConnect_(wlan, callback):
 
   return True
 
-IN_ = 0
-OUT_ = 1
+IN = 0
+OUT = 1
 
 buffer_ = bytes()
 
@@ -163,7 +169,7 @@ async def recv_(size):
   global buffer_
 
   while len(buffer_) < size:
-    buffer_ += await proxy_[IN_].read(4096)
+    buffer_ += await proxy[IN].read(4096)
 
   result = buffer_[:size]
 
@@ -182,8 +188,8 @@ async def send_(data):
     if amount > 4096:
       amount = 4096
 
-    proxy_[OUT_].write(data[amountSent:amountSent + amount])	
-    await proxy_[OUT_].drain()
+    proxy[OUT].write(data[amountSent:amountSent + amount])	
+    await proxy[OUT].drain()
 
     amountSent += amount
 
@@ -240,13 +246,14 @@ def exit_(message=None):
   sys.exit(-1)
 
 
-def init_(host, port, callback):
-  global proxy_
+def init(callback):
+  global proxy
+  proxyParam = getEntry(CONFIG_PROXY, getIdentificationId_(CONFIG_IDENTIFICATION), getEntry(CONFIG_PROXY, "_default", DEFAULT_PROXY))
 
   callback(S_UCUQ_, 0)
 
   try:
-    proxy_ = asyncio.run(asyncio.open_connection(host, port))
+    proxy = asyncio.run(asyncio.open_connection(proxyParam[0], proxyParam[1], proxyParam[2]))
   except:
     return False
   else:
@@ -279,8 +286,8 @@ def handshake_():
 
 
 def ignition_():
-  blockingWriteString_(IDENTIFICATION_[0])
-  blockingWriteString_(getIdentificationId_(IDENTIFICATION_))
+  blockingWriteString_(CONFIG_IDENTIFICATION[0])
+  blockingWriteString_(getIdentificationId_(CONFIG_IDENTIFICATION))
 
   error = blockingReadString_()
 
@@ -365,21 +372,33 @@ def ledCallback_(status, tries, pin, onValue):
     ledBlink_(pin, 3, onValue)
   return defaultCallback_(status, tries) and not ( ( status == S_UCUQ_) and ( tries > 5 ) )
 
+def complete(data, default):
+    if data is None:
+        return default  
+    elif isinstance(data, (int, str, float)):  # Vérifie si 'data' est une donnée simple  
+        return [data] + default[1:]  
+    elif isinstance(data, (list, tuple)):  # Vérifie si 'data' est un tableau 
+        return data + list(default[len(data):])
+        return default  
+    else:
+        return default  # Retourne 'default' si 'data' n'est ni None, ni simple, ni un tableau
+
+
+def getEntry(data, device, default):
+    if not isinstance(data, (list, tuple)) or not all(isinstance(item, (list, tuple)) for item in data):
+        return complete(data, default)  # Si 'data' n'est pas un tableau de tableaux, utilise A  
+    else:
+        for sublist in data:
+            if device in sublist[1]:
+                return complete(sublist[0], default)  # Appelle A avec le premier élément de la sous-liste  
+        return default  # Retourne 'default' si aucune entrée correspondante n'existe
+
 
 def getCallback_():
-  if "OnBoardLed" in CONFIG_:
-    onBoardLed = CONFIG_["OnBoardLed"]
+  onBoardLed = getEntry(CONFIG_ONBOARD_LED, getIdentificationId_(CONFIG_IDENTIFICATION), getEntry(CONFIG_ONBOARD_LED, "_default", DEFAULT_ONBOARD_LED))
 
-    if isinstance(onBoardLed, dict):
-      id = getIdentificationId_(IDENTIFICATION_)
-
-      if id in onBoardLed:
-        onBoardLed = onBoardLed[id]
-      else:
-        onBoardLed = None
-
-    if onBoardLed:
-      return lambda status, tries: ledCallback_(status, tries, onBoardLed[0], onBoardLed[1])
+  if onBoardLed[0]:
+    return lambda status, tries: ledCallback_(status, tries, onBoardLed[0], onBoardLed[1])
     
   return defaultCallback_
 
@@ -391,7 +410,7 @@ def main():
     callback(S_FAILURE_, 0)
     exit_()
 
-  if not init_(UCUQ_HOST_, UCUQ_PORT_, callback):
+  if not init(callback):
     if ( WLAN != "" ):
       callback(S_FAILURE_, 0)
       exit_()
@@ -402,7 +421,7 @@ def main():
       callback(S_FAILURE_, 0)
       exit_()
 
-    if not init_(UCUQ_HOST_, UCUQ_PORT_, callback):
+    if not init(callback):
       callback(S_FAILURE_, 0)
       exit_()
 

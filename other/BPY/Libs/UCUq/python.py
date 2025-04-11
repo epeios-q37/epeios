@@ -1,4 +1,4 @@
-import datetime, http, os, json, socket, sys, threading, time, urllib
+import datetime, http, os, json, socket, ssl, sys, threading, time, urllib
 from inspect import getframeinfo, stack
 
 
@@ -20,7 +20,8 @@ except:
 
 
 UCUQ_DEFAULT_HOST_ = "ucuq.q37.info"
-UCUQ_DEFAULT_PORT_ = "53800"
+UCUQ_DEFAULT_PORT_ = "53843"
+UCUQ_DEFAULT_SSL_ = True
 
 UCUQ_HOST_ = CONFIG_["Proxy"]["Host"] if CONFIG_ and "Proxy" in CONFIG_ and "Host" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["Host"] else UCUQ_DEFAULT_HOST_
 
@@ -29,6 +30,9 @@ try:
   UCUQ_PORT_ = int(CONFIG_["Proxy"]["Port"])
 except:
   UCUQ_PORT_ = int(UCUQ_DEFAULT_PORT_)
+
+UCUQ_SSL_ = CONFIG_["Proxy"]["SSL"] if CONFIG_ and "Proxy" in CONFIG_ and "SSL" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["SSL"] else UCUQ_DEFAULT_SSL_
+
 
 PROTOCOL_LABEL_ = "c37cc83e-079f-448a-9541-5c63ce00d960"
 PROTOCOL_VERSION_ = "0"
@@ -122,12 +126,12 @@ def exit_(message=None):
 
 
 def init_():
-  s = socket.socket()
-
   print("Connection to UCUq server…", end="", flush=True)
 
   try:
-    s.connect((UCUQ_HOST_, UCUQ_PORT_))
+    s = socket.create_connection((UCUQ_HOST_, UCUQ_PORT_))
+    if UCUQ_SSL_:
+      s = ssl.create_default_context().wrap_socket(s, server_hostname="q37.info" if UCUQ_HOST_ == UCUQ_DEFAULT_HOST_ else UCUQ_HOST_)
   except Exception as e:
     raise e
   else:

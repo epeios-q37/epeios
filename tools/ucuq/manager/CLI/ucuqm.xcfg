@@ -8,7 +8,10 @@
       <Language>en</Language>
       <!-- Default command -->
       <xpp:define name="Prod">
-        <HostService>ucuq.q37.info:53800</HostService>
+        <!-- Connection to daemon via unsecured channel!-->
+        <!--HostService>ucuq.q37.info:53800</HostService-->
+        <!-- Connection to a securized channel through local stunnel -->
+        <HostService>127.0.0.1:53800</HostService>
       </xpp:define>
       <xpp:define name="Dev">
         <HostService>192.168.1.87:53800</HostService>
