@@ -4,26 +4,17 @@
     "model": "DIY",
     "variant": "Test",
     "hardware": {
-      "OnBoardLed": [
-        8,
-        false
-      ]
+      "OnBoardLed": [ 8, false ]
     },
-    "devices": [
-      "Alpha"
-    ]
-  },
-  {
+    "devices": [ "Alpha" ]
+  }, {
+    "_comment": "ESP32-C3",
     "brand": "q37.info",
     "model": "DIY",
     "variant": "Displays",
     "hardware": {
-      "OnBoardLed": [
-        8,
-        false
-      ],
-      "Ring": [
-        {
+      "OnBoardLed": [ 8, false ],
+      "Ring": [ {
           "Pin": 20,
           "Count": 8,
           "Offset": 3,
@@ -51,19 +42,14 @@
         }
       ]
     },
-    "devices": [
-      "Golf"
-    ]
-  },
-  {
+    "devices": [ "Golf" ]
+  }, {
+    "_comment": "ESP8266",
     "brand": "q37.info",
     "model": "DIY",
     "variant": "Servos",
     "hardware": {
-      "OnBoardLed": [
-        8,
-        false
-      ],
+      "OnBoardLed": [ 8, false ],
       "Servo": [
         {
           "Mode": "Straight",
@@ -83,19 +69,13 @@
         }
       ]
     },
-    "devices": [
-      "Delta"
-    ]
-  },
-  {
+    "devices": [ "Delta" ]
+  }, {
     "brand": "Freenove",
     "model": "Bipedal",
     "variant": "RPiPico(2)W",
     "hardware": {
-      "OnBoardLed": [
-        2,
-        false
-      ],
+      "OnBoardLed": [ 2, false ],
       "RGB": [
         {
           "Pin": 16,
@@ -142,20 +122,13 @@
         }
       ]
     },
-    "devices": [
-      "Charlie",
-      "Echo"
-    ]
-  },
-  {
+    "devices": [ "Charlie", "Echo" ]
+  }, {
     "brand": "Freenove",
     "model": "Dog",
     "variant": "ESP32",
     "hardware": {
-      "OnBoardLed": [
-        2,
-        false
-      ],
+      "OnBoardLed": [ 2, false ],
       "RGB": [
         {
           "Pin": 0,
@@ -164,20 +137,14 @@
           "Offset": 0
         }
       ],
-      "devices": [
-        "Foxtrot"
-      ]
+      "devices": [ "Foxtrot" ]
     }
-  },
-  {
+  }, {
     "brand": "q37.info",
     "model": "Wokwi",
     "variant": "Displays",
     "hardware": {
-      "OnBoardLed": [
-        2,
-        true
-      ],
+      "OnBoardLed": [ 2, true ],
       "Ring": [
         {
           "Pin": 15,
@@ -212,7 +179,6 @@
           "Pin": 33
         }
       ]
-
     }
   }
 ]

@@ -86,9 +86,12 @@ def ucuqStructToDict(obj):
 
 def ucuqGetInfos():
   infos = {{
-    "{IK_DEVICE_ID_}": getIdentificationId_(CONFIG_IDENTIFICATION),
+    "{IK_DEVICE_ID_}": getIdentificationId(CONFIG_IDENTIFICATION),
     "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
   }}
+
+  if "{IK_KIT_LABEL}" in CONFIG:
+    infos["{IK_KIT_LABEL}"] = CONFIG["{IK_KIT_LABEL}"]
 
   return infos
 """
@@ -197,6 +200,7 @@ def getKitLabelFromDeviceId_(deviceId):
   
 
 def getKitFromLabel_(label):
+  print(label)
   brand, model, variant = label.split('/')
 
   for kit in KITS_:
@@ -252,7 +256,8 @@ def getDeviceId(infos):
 async def getInfosAwait(device):
   infos = await getBaseInfosAwait_(device)
 
-  infos[IK_KIT_LABEL] = getKitLabelFromDeviceId_(getDeviceId(infos))
+  if not IK_KIT_LABEL in infos:
+    infos[IK_KIT_LABEL] = getKitLabelFromDeviceId_(getDeviceId(infos))
   infos[IK_HARDWARE] = getKitHardware(infos)
 
   return infos

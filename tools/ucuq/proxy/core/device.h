@@ -28,7 +28,7 @@
 
 namespace device {
   qENUM(Request) { // Request sent to device (as integer)
-    rPing,
+    r_Ping,  // Deprecated.
     rExecute,
     r_amount,
     r_Undefined
