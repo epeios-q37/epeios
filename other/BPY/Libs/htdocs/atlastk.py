@@ -582,7 +582,7 @@ def createHTML(root_tag=""):	# If 'root_tag' is empty, there will be no root tag
   return XML(root_tag)
 
 async def sleep(time):
-  await atlastkjs.sleep(time, lambda : None)
+  await aio.sleep(time)
 
 def getAppURL(id=""):
   return atlastkjs.getAppURL() + ("&_id=" + str(id) if id else "")

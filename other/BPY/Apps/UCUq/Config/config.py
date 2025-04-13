@@ -163,20 +163,21 @@ async def atkSave(dom):
 
   if not host and not port:
     proxyConfig = None
-  elif host:
-    if not port:
-      await dom.alert("Please enter a port!")
-      await dom.focus(W_PORT)
-      return
-  elif port:
-    if not host:
-      await dom.alert("Please enter a host!")
-      await dom.focus(W_HOST)
-      return
+  else:
+    if host:
+      if not port:
+        await dom.alert("Please enter a port!")
+        await dom.focus(W_PORT)
+        return
+    elif port:
+      if not host:
+        await dom.alert("Please enter a host!")
+        await dom.focus(W_HOST)
+        return
 
-  proxyConfig[K_PROXY_HOST] = host
-  proxyConfig[K_PROXY_PORT] = port
-  proxyConfig[K_PROXY_SSL] = ssl
+    proxyConfig[K_PROXY_HOST] = host
+    proxyConfig[K_PROXY_PORT] = port
+    proxyConfig[K_PROXY_SSL] = ssl
     
   config = getConfig()
 

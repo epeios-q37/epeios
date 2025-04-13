@@ -294,15 +294,6 @@ function execute(handler, script, expression, callback) {
   operate_(handler, subExecute_, [script, expression], expression !== "" ? callback : undefined);
 }
 
-function timeout_(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function sleep(time, fn, ...args) {
-  await timeout_(time);
-  return fn(...args);
-}
-
 // Workaround to the brython 'unicodedata.normalize()' bug.
 function toASCII(text) {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -310,7 +301,6 @@ function toASCII(text) {
 
 // ATTENTION: si modification, mettre script 'Build' à jour !!!
 module.exports = {
-sleep,
 launch,
 upload,
 execute,

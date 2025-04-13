@@ -661,15 +661,6 @@ function broadcastAction(action, id) {
   );
 }
 
-function timeout_(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function sleep(time, fn, ...args) {
-  await timeout_(time);
-  return fn(...args);
-}
-
 function getAppURL() {
   return app_url_;
 }
@@ -680,6 +671,5 @@ module.exports = {
   standBy,
   getCallbackBundle,
   broadcastAction,
-  sleep,
   getAppURL,
 }

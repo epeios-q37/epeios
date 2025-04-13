@@ -200,7 +200,6 @@ def getKitLabelFromDeviceId_(deviceId):
   
 
 def getKitFromLabel_(label):
-  print(label)
   brand, model, variant = label.split('/')
 
   for kit in KITS_:

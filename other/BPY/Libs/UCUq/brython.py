@@ -14,9 +14,9 @@ try:
 except:
   CONFIG_ = None
 
-
+# Calls to this function are replaced with 'time.sleep()' when converted to regular Python()' ('Make' script).
 async def sleepAwait(time):
-  await ucuqjs.sleep(1000 * time, lambda : None)
+  await aio.sleep(time)
 
 
 def launchAsync(func, *args, **kwargs):
