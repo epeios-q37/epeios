@@ -1,4 +1,4 @@
-import atlastk, ucuq, random
+import atlastk, ucuq, random, time, threading, urllib
 
 DIGITS = (
   "708898A8C88870",
@@ -24,8 +24,23 @@ HTML_CALCULATION = """
 </tr>
 """
 
+JAUGE_SCRIPT="""
+def jauge(oled, v):
+  l = int(126*v)
+  oled.rect(0, 50, 127, 13, 0, True)
+  oled.rect(0, 50, l, 13, 1, True)
+  oled.rect(l, 50, 127-l, 13, 1, False)
+  oled.show()
+"""
+
+
 PROD = False
-UCUQ = False
+UCUQ = True
+
+if PROD:
+  DELAY = 45
+else:
+  DELAY = 15
 
 # Calculation states
 CS_NONE = 0
@@ -36,11 +51,28 @@ CS_V2 = 3
 BIGS = (25, 50, 75, 100)
 LITTLES = tuple( x for x in range(1, 11) for _ in range(2))
 
+OPERATOR_CARDS=("+", "-", "×", "÷")
+TRUE_OPERATORS = ("+", "-", "*", "//")
+
+# Widgets
+W_OPERATORS = tuple(range(4))
+W_QRCODE = "QRCode"
+
+# Styles
+S_HIDE_QR_CODE = "HideQRCode"
+
 cOLED = None
+cLCD = None
+cRing = None
+cRingCount = 0
+cRingLimiter = 0
+cRingOffset = 9
 cards = []
+players = 0 # Amount of players.
 
 class Player:
   def __init__(self):
+    self.role = 0
     self.reset()
 
   def reset(self):
@@ -51,9 +83,28 @@ class Player:
     self.calc = [None, None, None]
 
 
-OPERATOR_CARDS=("+", "-", "×", "÷")
-TRUE_OPERATORS = ("+", "-", "*", "//")
-W_OPERATORS = tuple(range(4))
+def setHardwareAwait(dom):
+  global cOLED, cLCD,cRing, cRingCount, cRingLimiter, cRingOffset
+
+  if UCUQ:
+    infos = ucuq.ATKConnect(dom, BODY)
+
+    hardware = ucuq.getKitHardware(infos)
+
+    cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware
+    (hardware, "OLED", ("SDA", "SCL", "Soft"))))
+    cLCD = ucuq.HD44780_I2C(ucuq.I2C(*ucuq.getHardware(hardware, "LCD", ("SDA", "SCL", "Soft"))), 2, 16).backlightOff()
+    pin, cRingCount, cRingLimiter, cRingOffset = ucuq.getHardware(hardware, "Ring", ("Pin", "Count", "Limiter", "Offset"))
+    cRing = ucuq.WS2812(pin, cRingCount).fill((0,0,0)).write()
+    ucuq.addCommand(JAUGE_SCRIPT)
+
+    return True
+  else:
+    cOLED = cLCD = ucuq.Nothing()
+    dom.inner("", BODY)
+
+    return False
+
 
 def displayDigit(n,offset):
   cOLED.draw(DIGITS[n], 8, offset, mul=6)
@@ -71,7 +122,34 @@ def displayNumber(n):
 
 def jauge(v): # v: 0 <= v <= 1
   l = int(126*v)
-  cOLED.rect(0, 50, l, 13, 1).rect(l, 50, 127-l, 13, 1, False)
+  cOLED.rect(0,50,127,13,0).rect(0, 50, l, 13, 1).rect(l, 50, 127-l, 13, 1, False).show()
+
+
+def ringCounter(v):
+  limit = int((cRingCount - 1) * v)
+  colorCore = int(cRingLimiter * v)
+  color = (colorCore, cRingLimiter - colorCore, 0)
+
+  for l in range(cRingCount):
+    cRing.setValue((l + cRingOffset) % cRingCount, color if l <= limit else (0,0,0))
+
+  cRing.write()
+
+
+def counter():
+  ucuq.addCommand("start = time.ticks_ms()")
+
+  start = time.monotonic()
+
+  while((elapsed := time.monotonic() - start) < DELAY ):
+    ucuq.addCommand(f"jauge({cOLED.getObject()}, ({DELAY * 1000} - time.ticks_diff(time.ticks_ms(), start)) / {DELAY * 1000})")
+    ringCounter(elapsed / DELAY)
+    time.sleep(1.5)
+
+  ucuq.addCommand(f"jauge({cOLED.getObject()}, 0)")
+  ringCounter(1)
+
+  atlastk.broadcastAction("BElapsed")
 
 
 def displayCardsOnLCD(cards, center = True):
@@ -100,28 +178,9 @@ async def enable(player, dom, wIds, state = True):
   dom.addClasses(like)
   dom.removeClasses(opposite)
 
-async def atk(player, dom):
-  global cOLED, cLCD
-
-  if UCUQ:
-    infos = ucuq.ATKConnect(dom, BODY)
-
-    hardware = ucuq.getKitHardware(infos)
-
-    cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware
-    (hardware, "OLED", ["SDA", "SCL", "Soft"])))
-    cLCD = ucuq.HD44780_I2C(ucuq.I2C(*ucuq.getHardware(hardware, "LCD", ["SDA", "SCL", "Soft"])), 2, 16).backlightOff()
-  else:
-    cOLED = cLCD = ucuq.Nothing()
-    dom.inner("", BODY)
-
-  if not PROD and False:
-    await atkNew(dom)
-
-  updateUIAwait(player, dom)
-
 
 patchCard = lambda c: TRUE_OPERATORS[OPERATOR_CARDS.index(c)] if c in OPERATOR_CARDS else c
+
 
 def evalCalc(cards, calc):
   if all(item is not None for item in calc):
@@ -139,10 +198,10 @@ def buildCalcs(player):
   html = "<tr>"
 
   for i, c in enumerate(player.calcs):
-    html += buildCalc(i, player.cards, c, 10 + i not in player.usedCards)
+    html += buildCalc(i, player.cards, c, 10 + i not in player.usedCards and player.calcState != CS_NONE)
 
   if len(cards) >= 10:
-    html += buildCalc(len(player.calcs), player.cards, player.calc, player.calcState != CS_V1)
+    html += buildCalc(len(player.calcs), player.cards, player.calc, player.calcState not in (CS_V1, CS_NONE))
 
   return html + "</tr>"
 
@@ -159,7 +218,28 @@ async def updateUIAwait(player, dom):
   else:
     raise Exception("Unknown state")
   
-async def atkBroadcastDrawing(player, dom):
+
+def buildProgress(player):
+  usedCalcs = sum(1 for c in player.usedCards if c >= 10)
+
+  return f"{len(player.usedCards) - usedCalcs} {usedCalcs}/{len(player.calcs)}"
+
+
+def displayProgress(player, id):
+  assert str(id) in ("1", "2")
+
+  if int(id) != player.role:
+    return
+
+  cLCD.moveTo(8 if player.role == 2 else 0, 1).putString(buildProgress(player).center(8))
+
+
+async def atkBSecondPlayer(player, dom):
+  if player.role == 1:
+    await dom.enableElement(S_HIDE_QR_CODE)
+
+
+async def atkBDrawing(player, dom):
   player.reset()
 
   dom.setValues({i: "&nbsp;" for i in range(4, 10)})
@@ -167,11 +247,70 @@ async def atkBroadcastDrawing(player, dom):
   await updateUIAwait(player, dom)
 
 
-async def atkBroadcastPlaying(player, dom):
-  player.cards = cards
+async def atkBPlaying(player, dom):
+  player.cards = list(cards)
   player.calcState = CS_V1
 
   dom.setValues({i + 4: valeur for i, valeur in enumerate(cards[4:])})
+
+  await updateUIAwait(player, dom)
+
+  displayProgress(player, player.role)
+
+
+async def atkBDisplayProgress(player, dom, id):
+  assert str(id) in ("1", "2")
+
+  if int(id) != player.role:
+    return
+  
+  displayProgress(player, player.role)
+
+
+async def atkBElapsed(player, dom):
+  cLCD.moveTo(8 if player.role == 1 else 0, 1)
+  cLCD.putString((str(evalCalc(player.cards, player.calcs[-1]) if len(player.calcs) else "/")).center(8))
+
+  player.calcState = CS_NONE
+
+  await updateUIAwait(player, dom)
+
+  dom.alert("Finished!!!")
+
+
+async def atk(player, dom, id):
+  global players
+
+  assert (cOLED == None) == (cLCD == None)
+  assert id == "" or id == "Partner"
+
+  if id == "Partner":
+    assert players >= 1
+
+    if players >= 2:
+      dom.alert("No more players allowed!")
+      return
+    
+    dom.inner("", BODY)
+    
+    players = player.role = 2
+
+    atlastk.broadcastAction("BSecondPlayer")
+  else:
+    if players != 0:
+      dom.alert("No more players allowed!")
+      return
+    
+    if not await setHardwareAwait(dom):
+      await dom.inner("", BODY)
+    
+    players = player.role = 1
+
+    url = atlastk.getAppURL(id="Partner")
+
+    dom.end(W_QRCODE, f'<a href="{url}" title="{url}" target="Debug"><img src="https://api.qrserver.com/v1/create-qr-code/?size=125x125&data={urllib.parse.quote(url)}"/></a>')
+
+    dom.disableElement(S_HIDE_QR_CODE)
 
   await updateUIAwait(player, dom)
 
@@ -181,13 +320,15 @@ async def atkNew():
 
   cards = list(OPERATOR_CARDS)
 
-  atlastk.broadcastAction("BroadcastDrawing")
+  atlastk.broadcastAction("BDrawing")
 
   bigs = list(BIGS)
   littles = list(LITTLES)
 
   cOLED.fill(0).show()
+  cLCD.clear()
   cLCD.backlightOn()
+  cRing.fill((0,0,0)).write()
 
   while ( len(bigs) > 2 or len(littles) > 16 ):
     changed = True
@@ -218,7 +359,9 @@ async def atkNew():
   for _ in range( 50 if PROD else 1):
     displayNumber(random.randint(101,999))
 
-  atlastk.broadcastAction("BroadcastPlaying")
+  atlastk.broadcastAction("BPlaying")
+
+  threading.Thread(target=counter).start()
 
 
 async def atkCard(player, dom, id):
@@ -243,6 +386,8 @@ async def atkCard(player, dom, id):
   
   await updateUIAwait(player, dom)
 
+  atlastk.broadcastAction("BDisplayProgress", str(player.role))
+
 
 async def atkOperator(player, dom, id):
   if player.calcState != CS_O:
@@ -255,12 +400,17 @@ async def atkOperator(player, dom, id):
     raise Exception("Unexpected state")
   
   await updateUIAwait(player, dom)
-  
+
+  atlastk.broadcastAction("BDisplayProgress", str(player.role))
+
 
 async def atkDelete(player, dom, id):
   id = int(await dom.getMark(id))
 
-  if id == len(player.calcs) and player.calcState in (CS_NONE, CS_V1):
+  if player.calcState == CS_NONE:
+    return
+
+  if id == len(player.calcs) and player.calcState == CS_V1:
     return
   
   if id in player.usedCards:
@@ -279,4 +429,7 @@ async def atkDelete(player, dom, id):
 
   await updateUIAwait(player, dom)
   
+  atlastk.broadcastAction("BDisplayProgress", str(player.role))
+
+
 ATK_USER = Player

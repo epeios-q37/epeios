@@ -31,7 +31,7 @@ try:
 except:
   UCUQ_PORT_ = int(UCUQ_DEFAULT_PORT_)
 
-UCUQ_SSL_ = CONFIG_["Proxy"]["SSL"] if CONFIG_ and "Proxy" in CONFIG_ and "SSL" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["SSL"] else UCUQ_DEFAULT_SSL_
+UCUQ_SSL_ = CONFIG_["Proxy"]["SSL"] if CONFIG_ and "Proxy" in CONFIG_ and "SSL" in CONFIG_["Proxy"] and CONFIG_["Proxy"]["SSL"] != None else UCUQ_DEFAULT_SSL_
 
 
 PROTOCOL_LABEL_ = "c37cc83e-079f-448a-9541-5c63ce00d960"
