@@ -1,4 +1,4 @@
-import atlastk, ucuq, random, time, threading, urllib
+import atlastk, ucuq, random, time, threading
 
 DIGITS = (
   "708898A8C88870",
@@ -34,7 +34,7 @@ def jauge(oled, v):
 """
 
 
-PROD = False
+PROD = True
 UCUQ = True
 
 if PROD:
@@ -83,11 +83,11 @@ class Player:
     self.calc = [None, None, None]
 
 
-def setHardwareAwait(dom):
+async def setHardwareAwait(dom):
   global cOLED, cLCD,cRing, cRingCount, cRingLimiter, cRingOffset
 
   if UCUQ:
-    infos = ucuq.ATKConnect(dom, BODY)
+    infos =await  ucuq.ATKConnectAwait(dom, BODY)
 
     hardware = ucuq.getKitHardware(infos)
 
@@ -101,7 +101,7 @@ def setHardwareAwait(dom):
     return True
   else:
     cOLED = cLCD = ucuq.Nothing()
-    dom.inner("", BODY)
+    await dom.inner("", BODY)
 
     return False
 
@@ -175,8 +175,8 @@ async def enable(player, dom, wIds, state = True):
   for i in range(11 + len(player.calcs)):
     like[i], opposite[i] = ("enabled", "disabled") if state == (i in wIds) else ("disabled", "enabled")
 
-  dom.addClasses(like)
-  dom.removeClasses(opposite)
+  await dom.addClasses(like)
+  await dom.removeClasses(opposite)
 
 
 patchCard = lambda c: TRUE_OPERATORS[OPERATOR_CARDS.index(c)] if c in OPERATOR_CARDS else c
@@ -242,7 +242,7 @@ async def atkBSecondPlayer(player, dom):
 async def atkBDrawing(player, dom):
   player.reset()
 
-  dom.setValues({i: "&nbsp;" for i in range(4, 10)})
+  await dom.setValues({i: "&nbsp;" for i in range(4, 10)})
 
   await updateUIAwait(player, dom)
 
@@ -251,7 +251,7 @@ async def atkBPlaying(player, dom):
   player.cards = list(cards)
   player.calcState = CS_V1
 
-  dom.setValues({i + 4: valeur for i, valeur in enumerate(cards[4:])})
+  await dom.setValues({i + 4: valeur for i, valeur in enumerate(cards[4:])})
 
   await updateUIAwait(player, dom)
 
@@ -275,7 +275,17 @@ async def atkBElapsed(player, dom):
 
   await updateUIAwait(player, dom)
 
-  dom.alert("Finished!!!")
+  await dom.alert("Finished!!!")
+
+
+# BEGIN_PYH
+import urllib
+encode = lambda t: urllib.parse.quote(t)
+# END_PYH
+# BEGIN BRY
+import browser
+encode = lambda t: browser.window.encodeURIComponent(t)
+# END BRY
 
 
 async def atk(player, dom, id):
@@ -288,17 +298,17 @@ async def atk(player, dom, id):
     assert players >= 1
 
     if players >= 2:
-      dom.alert("No more players allowed!")
+      await dom.alert("No more players allowed!")
       return
     
-    dom.inner("", BODY)
+    await dom.inner("", BODY)
     
     players = player.role = 2
 
     atlastk.broadcastAction("BSecondPlayer")
   else:
     if players != 0:
-      dom.alert("No more players allowed!")
+      await dom.alert("No more players allowed!")
       return
     
     if not await setHardwareAwait(dom):
@@ -308,9 +318,9 @@ async def atk(player, dom, id):
 
     url = atlastk.getAppURL(id="Partner")
 
-    dom.end(W_QRCODE, f'<a href="{url}" title="{url}" target="Debug"><img src="https://api.qrserver.com/v1/create-qr-code/?size=125x125&data={urllib.parse.quote(url)}"/></a>')
+    await dom.end(W_QRCODE, f'<a href="{url}" title="{url}" target="Debug"><img src="https://api.qrserver.com/v1/create-qr-code/?size=125x125&data={encode(url)}"/></a>')
 
-    dom.disableElement(S_HIDE_QR_CODE)
+    await dom.disableElement(S_HIDE_QR_CODE)
 
   await updateUIAwait(player, dom)
 
@@ -361,7 +371,7 @@ async def atkNew():
 
   atlastk.broadcastAction("BPlaying")
 
-  threading.Thread(target=counter).start()
+  threading.Thread(target=counter).run()
 
 
 async def atkCard(player, dom, id):
