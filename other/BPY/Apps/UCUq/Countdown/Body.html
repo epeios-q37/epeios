@@ -16,11 +16,16 @@
     <td xdh:event="Operator" xdh:onevent="Operator" id="3">÷</td>
   </tr>
 </table>
+<fieldset>
+  <output id="Output">&nbsp;</output>
+</fieldset>
+<div style="display: flex; justify-content: center; margin: 5px;">
+  <button id="New" xdh:onevent="New">New</button>
+</div>
 <table id="Calculations" style="width: 100%;">
 </table>
-<button xdh:onevent="New">New</button>
 <fieldset id="QRCode">
-  <legend>Awaiting second player…</legend>
+  <legend>To scan by second player…</legend>
 </fieldset>
-<br/>
+<br />
 <iframe style="width: 100%; border: none;height: inherit" name="Debug"></iframe>

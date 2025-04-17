@@ -1,5 +1,9 @@
 import atlastk, ucuq, random, time, threading
 
+# BEGIN BRY
+from browser import aio
+# END BRY
+
 DIGITS = (
   "708898A8C88870",
   "20602020202070",
@@ -36,6 +40,7 @@ def jauge(oled, v):
 
 PROD = True
 UCUQ = True
+CHEAT = True
 
 if PROD:
   DELAY = 45
@@ -56,10 +61,12 @@ TRUE_OPERATORS = ("+", "-", "*", "//")
 
 # Widgets
 W_OPERATORS = tuple(range(4))
-W_QRCODE = "QRCode"
+W_QR_CODE = "QRCode"
+W_OUTPUT = "Output"
 
 # Styles
 S_HIDE_QR_CODE = "HideQRCode"
+S_HIDE_NEW_BUTTON = "HideNewButton"
 
 cOLED = None
 cLCD = None
@@ -69,6 +76,8 @@ cRingLimiter = 0
 cRingOffset = 9
 cards = []
 players = 0 # Amount of players.
+toFind = 0
+winner = 0 # if != 0, the role of the player which wins.
 
 class Player:
   def __init__(self):
@@ -87,7 +96,7 @@ async def setHardwareAwait(dom):
   global cOLED, cLCD,cRing, cRingCount, cRingLimiter, cRingOffset
 
   if UCUQ:
-    infos =await  ucuq.ATKConnectAwait(dom, BODY)
+    infos = await  ucuq.ATKConnectAwait(dom, BODY)
 
     hardware = ucuq.getKitHardware(infos)
 
@@ -111,12 +120,17 @@ def displayDigit(n,offset):
 
 
 def displayNumber(n):
-  try:
+  cOLED.fill(0)
+
+  if n >= 100:
     displayDigit(n // 100, 8)
+
+
+  if n >= 10:
     displayDigit(n // 10 % 10, 48)
-    displayDigit(n % 10, 88)
-  except:
-    cOLED.fill(0)
+
+  displayDigit(n % 10, 88)
+
   cOLED.show()
   
 
@@ -136,20 +150,21 @@ def ringCounter(v):
   cRing.write()
 
 
-def counter():
+async def counterAwait():
   ucuq.addCommand("start = time.ticks_ms()")
 
   start = time.monotonic()
 
-  while((elapsed := time.monotonic() - start) < DELAY ):
+  while not winner and ( (elapsed := time.monotonic() - start) < DELAY ):
     ucuq.addCommand(f"jauge({cOLED.getObject()}, ({DELAY * 1000} - time.ticks_diff(time.ticks_ms(), start)) / {DELAY * 1000})")
     ringCounter(elapsed / DELAY)
-    time.sleep(1.5)
+    await ucuq.sleepAwait(1.5)
 
   ucuq.addCommand(f"jauge({cOLED.getObject()}, 0)")
   ringCounter(1)
 
-  atlastk.broadcastAction("BElapsed")
+  if not winner:
+    atlastk.broadcastAction("BElapsed")
 
 
 def displayCardsOnLCD(cards, center = True):
@@ -237,6 +252,8 @@ def displayProgress(player, id):
 async def atkBSecondPlayer(player, dom):
   if player.role == 1:
     await dom.enableElement(S_HIDE_QR_CODE)
+    await dom.disableElement(S_HIDE_NEW_BUTTON)
+    await dom.setValue(W_OUTPUT, "Click 'New'.")
 
 
 async def atkBDrawing(player, dom):
@@ -245,6 +262,8 @@ async def atkBDrawing(player, dom):
   await dom.setValues({i: "&nbsp;" for i in range(4, 10)})
 
   await updateUIAwait(player, dom)
+
+  await dom.setValue(W_OUTPUT, "Waiting for cards to be dealt…")
 
 
 async def atkBPlaying(player, dom):
@@ -257,6 +276,8 @@ async def atkBPlaying(player, dom):
 
   displayProgress(player, player.role)
 
+  await dom.setValue(W_OUTPUT, "Let's play!")
+
 
 async def atkBDisplayProgress(player, dom, id):
   assert str(id) in ("1", "2")
@@ -268,14 +289,28 @@ async def atkBDisplayProgress(player, dom, id):
 
 
 async def atkBElapsed(player, dom):
-  cLCD.moveTo(8 if player.role == 1 else 0, 1)
-  cLCD.putString((str(evalCalc(player.cards, player.calcs[-1]) if len(player.calcs) else "/")).center(8))
+  cLCD.moveTo(0 if player.role == 1 else 8, 1)
+
+  cLCD.putString((
+      ( "> " if player.role == winner else "" )
+      + str(evalCalc(player.cards, player.calcs[-1]) if len(player.calcs) else "/")
+      + ( " <" if player.role == winner else "") )
+    .center(8))
 
   player.calcState = CS_NONE
 
   await updateUIAwait(player, dom)
 
-  await dom.alert("Finished!!!")
+  if winner == 0:
+    await dom.setValue(W_OUTPUT, "Time elapsed!!!")
+  elif player.role == winner:
+    await dom.setValue(W_OUTPUT, "Well done!")
+  else:
+    await dom.setValue(W_OUTPUT, "Other player wins!")
+
+  if player.role == 1:
+    await dom.disableElement(S_HIDE_NEW_BUTTON)
+
 
 
 # BEGIN_PYH
@@ -318,15 +353,20 @@ async def atk(player, dom, id):
 
     url = atlastk.getAppURL(id="Partner")
 
-    await dom.end(W_QRCODE, f'<a href="{url}" title="{url}" target="Debug"><img src="https://api.qrserver.com/v1/create-qr-code/?size=125x125&data={encode(url)}"/></a>')
+    await dom.end(W_QR_CODE, f'<a href="{url}" title="{url}" target="Debug"><img src="https://api.qrserver.com/v1/create-qr-code/?size=125x125&data={encode(url)}"/></a>')
 
     await dom.disableElement(S_HIDE_QR_CODE)
+
+    await dom.setValue(W_OUTPUT, "Waiting for second player…")
 
   await updateUIAwait(player, dom)
 
 
-async def atkNew():
-  global cards
+async def atkNew(player, dom):
+  global cards, toFind, winner
+
+  if player.role == 1:
+    await dom.enableElement(S_HIDE_NEW_BUTTON)
 
   cards = list(OPERATOR_CARDS)
 
@@ -351,8 +391,11 @@ async def atkNew():
 
     if changed:
       displayCardsOnLCD(cards, False)
+      displayNumber(cards[-1])
       if PROD:
         ucuq.sleep(1)
+
+  toFind = cards[-1] + cards[-2] + cards[-3]
 
   cards = cards[:4] + sorted(cards[4:])
 
@@ -366,15 +409,30 @@ async def atkNew():
   if PROD:
     ucuq.sleepAwait(6.5)
 
-  for _ in range( 50 if PROD else 1):
+  for _ in range( 50 if PROD else 0):
     displayNumber(random.randint(101,999))
+
+  if PROD and not CHEAT:
+    toFind = random.randint(101,999)
+  
+  displayNumber(toFind)
+
+  winner = 0
 
   atlastk.broadcastAction("BPlaying")
 
-  threading.Thread(target=counter).run()
+# BEGIN PYH
+  threading.Thread(target=counterAwait).start()
+# END PYH
+
+# BEGIN BRY
+  aio.run(counterAwait())
+# END BRY
 
 
 async def atkCard(player, dom, id):
+  global winner
+
   if player.calcState not in (CS_V1, CS_V2):
     return
 
@@ -388,7 +446,9 @@ async def atkCard(player, dom, id):
     player.usedCards.append(id)
     player.calc[2] = id
     player.calcs.append(player.calc)
-    player.cards.append(evalCalc(player.cards, player.calc))
+    player.cards.append(result := evalCalc(player.cards, player.calc))
+    if result == toFind:
+      winner = player.role
     player.calc =  [None, None, None]
     player.calcState = CS_V1
   else:
@@ -396,7 +456,10 @@ async def atkCard(player, dom, id):
   
   await updateUIAwait(player, dom)
 
-  atlastk.broadcastAction("BDisplayProgress", str(player.role))
+  if winner != 0:
+    atlastk.broadcastAction("BElapsed", str(player.role))
+  else:
+    atlastk.broadcastAction("BDisplayProgress", str(player.role))
 
 
 async def atkOperator(player, dom, id):

@@ -117,7 +117,7 @@ ATK_BODY_ = """
 <div style="display: flex; justify-content: center;" class="ucuq">
   <h3>'BRACES' (<em>BRACES</em>)</h3>
 </div>
-<div id="ucuq_body" style="display: flex; justify-content: center;">
+<div id="ucuq_body" style_="display: flex; justify-content: center;">
 </div>
 """.replace("{", "{{").replace("}", "}}").replace("BRACES", "{}")
 
