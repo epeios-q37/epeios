@@ -114,7 +114,7 @@ namespace {
 
     Gates.Store(&Gate, Row);
 
-    Gate.Set(*Row, Driver, &Switch);
+    Gate.Set((faas::sId)*Row, Driver, &Switch);
   qRR
     if ( Row != qNIL )
       Gates.Remove(Row);

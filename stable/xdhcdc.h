@@ -57,7 +57,7 @@ namespace xdhcdc {
 			const char *Language,
 			const str::dString &Token) = 0;// If empty, SlfH session, else token used for the FaaS session.
 		virtual bso::bool__ XDHCDCHandle(
-      const str::dString &Id,
+      const str::dString &IdOrExtra,
       const str::dString &Action) = 0;
 	public:
 		qCALLBACK( Single );
@@ -69,10 +69,10 @@ namespace xdhcdc {
 			return XDHCDCInitialize(Callback, Language, Token);
 		}
 		bso::bool__ Handle(
-      const str::dString &Id,
+      const str::dString &IdOrExtra,
       const str::dString &Action)
 		{
-			return XDHCDCHandle(Id, Action);
+			return XDHCDCHandle(IdOrExtra, Action);
 		}
 	};
 
@@ -173,7 +173,6 @@ namespace xdhcdc {
 	};
 
 	typedef cGlobal *(retrieve)( void );
-
 }
 
 #endif

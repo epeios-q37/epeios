@@ -37,7 +37,7 @@ UCUQ_SSL_ = CONFIG_["Proxy"]["SSL"] if CONFIG_ and "Proxy" in CONFIG_ and "SSL" 
 PROTOCOL_LABEL_ = "c37cc83e-079f-448a-9541-5c63ce00d960"
 PROTOCOL_VERSION_ = "0"
 
-_writeLock = threading.Lock()
+writeLock_ = threading.Lock()
 
 # Request
 R_EXECUTE_ = "Execute_1"
@@ -141,7 +141,7 @@ def init_():
 
 
 def handshake_(socket):
-  with _writeLock:
+  with writeLock_:
     writeString_(socket, PROTOCOL_LABEL_)
     writeString_(socket, PROTOCOL_VERSION_)
     writeString_(socket, "Remote")
@@ -160,8 +160,9 @@ def handshake_(socket):
 
 
 def ignition_(socket, token, deviceId, errorAsException):
-  writeString_(socket, token)
-  writeString_(socket, deviceId)
+  with writeLock_:
+    writeString_(socket, token)
+    writeString_(socket, deviceId)
 
   error = readString_(socket)
 
@@ -258,14 +259,16 @@ class Device_:
     return self.proxy.socket != None
   
   def upload_(self, modules):
-    writeString_(self.proxy.socket, R_UPLOAD_)
-    writeStrings_(self.proxy.socket, modules)
+    with writeLock_:
+      writeString_(self.proxy.socket, R_UPLOAD_)
+      writeStrings_(self.proxy.socket, modules)
 
   def execute_(self, script, expression = ""):
     if self.proxy.socket:
-      writeString_(self.proxy.socket, R_EXECUTE_)
-      writeString_(self.proxy.socket, script)
-      writeString_(self.proxy.socket, expression)
+      with writeLock_:
+        writeString_(self.proxy.socket, R_EXECUTE_)
+        writeString_(self.proxy.socket, script)
+        writeString_(self.proxy.socket, expression)
 
       if expression:
         self.proxy.resultBegin.wait()

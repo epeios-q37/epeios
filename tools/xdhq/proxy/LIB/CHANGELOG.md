@@ -1,5 +1,9 @@
 # *XDHq* *CHANGELOG*
 
+## 2025-04-19
+
+- adapation to modifications of underlying libraries;
+
 ## 2022-07-05
 - fixing dead lock issue,
 

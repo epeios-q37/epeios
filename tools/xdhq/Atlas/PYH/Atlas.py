@@ -24,7 +24,7 @@ SOFTWARE.
 
 import XDHq, XDHqSHRD
 from threading import Thread, Lock
-import inspect, time, socket, signal, sys, os
+import inspect, types, socket, signal, sys, os
 
 from XDHq import set_supplier, get_app_url, l
 
@@ -78,13 +78,21 @@ def createXML(root_tag):
 
 create_XML = createXML	
 
-
 def createHTML(root_tag=""):	# If 'root_tag' is empty, there will be no root tag in the tree.
 	return XDHq.XML(root_tag)
 
 create_HTML = createHTML
 
-broadcastAction = XDHq.broadcastAction
+removePattern_ = lambda string, pattern: string[len(pattern):] if string.startswith(pattern) else string
+
+def broadcastAction(action, id = ""):
+	assert isinstance(action, (str, types.FunctionType))
+
+	if isinstance(action, types.FunctionType):
+		action = removePattern_(action.__name__, options_[O_CALLBACKS_PREFIX_])
+
+	return XDHq.broadcastAction(action, id)
+
 broadcast_action = broadcastAction
 
 
@@ -142,6 +150,9 @@ def worker(userCallback, dom, callbacks, callingGlobals):
 
 			if XDHqSHRD.isDev():
 				dom.debugLog(True)
+
+			dom.language = id[:id.find(';')]
+			id = id[id.find(';')+1:]
 
 		if action == ""\
 			or not options_[O_PREPROCESS_ACTION_NAME_] in callbacks\

@@ -73,7 +73,7 @@ namespace {
 			sclc::Display("ConnectingTo", cio::COut, ProxyHostService);
 			cio::COut.Commit();
 
-			if (!Proxy.Init(ProxyHostService.Convert(Buffer), SCK__DEFAULT_TIMEOUT, qRPU))
+			if (!Proxy.Init(ProxyHostService.Convert(Buffer), qRPU))
 				sclc::ReportAndAbort("UnableToConnectTo", ProxyHostService);
 
 			sclc::Display("ConnectedTo", cio::COut, ProxyHostService);

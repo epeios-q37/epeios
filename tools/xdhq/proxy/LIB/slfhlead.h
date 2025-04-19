@@ -26,10 +26,8 @@
 # include "logq.h"
 
 namespace slfhlead {
-	bso::sBool InitializeCore(
-			const char *HostService,
+	bso::sBool InitializeCore(const char *HostService,
 			bso::uint__ PingDelay,
-			sck::duration__ Timeout,
 			csdmnc::cLog *LogCallback = NULL );
 
 	bso::sBool CoreIsInitialized(void);

@@ -52,7 +52,6 @@ namespace csdmnc {
 	{
 	private:
 		qCBUFFERh HostService_;
-		sck::duration__ Timeout_;
 		rDriver_ *DriverAsPointer_( void *UP )
 		{
 			if ( UP == NULL )
@@ -72,7 +71,7 @@ namespace csdmnc {
 			if ( Driver == NULL )
 				qRAlc();
 
-			if ( !Driver->Init( HostService_, Timeout_, err::hUserDefined ) ) {
+			if ( !Driver->Init( HostService_, err::hUserDefined ) ) {
 				delete Driver;
 				Driver = NULL;
 			}
@@ -93,17 +92,12 @@ namespace csdmnc {
 		}
 	public:
 		void reset( bso::sBool = true )
-		{
-			Timeout_ = sck::NoTimeout;
-		}
+		{}
 		E_CVDTOR( rCallback );
-		void Init(
-			const char *HostService,
-			sck::duration__ Timeout )
+		void Init(const char *HostService)
 		{
 			HostService_.Calloc( strlen( HostService ) + 1 );
 			strcpy( HostService_, HostService );
-			Timeout_ = Timeout;
 		}
 	};
 
@@ -126,20 +120,18 @@ namespace csdmnc {
 		bso::sBool Init(
 			const char *HostService,
 			bso::uint__ PingDelay,
-			sck::duration__ Timeout,
 			cLog *LogCallback = NULL )
 		{
-			Callback_.Init( HostService, Timeout );
+			Callback_.Init( HostService );
 
 			return rCore_::Init( Callback_, PingDelay, LogCallback );
 		}
 		bso::bool__ Init(
 			const char *HostService,
 			bso::uint__ PingDelay,
-			sck::duration__ Timeout,
 			cLog &LogCallback )
 		{
-			return Init( HostService, PingDelay, Timeout, &LogCallback );
+			return Init( HostService, PingDelay, &LogCallback );
 		}
 	};
 

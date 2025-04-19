@@ -71,17 +71,17 @@ namespace {
 
 		struct rData {
 			eState_ State;
-			str::wString Token, UserId;
+			str::wString Token, Extra;
 			void reset( bso::sBool P = true )
 			{
 				State = s_Undefined;
-				tol::reset(P, Token, UserId);
+				tol::reset(P, Token, Extra);
 			}
 			qCDTOR(rData);
 			void Init(void)
 			{
 				State = s_Undefined;
-				tol::Init(Token, UserId);
+				tol::Init(Token, Extra);
 			}
 		};
 
@@ -89,7 +89,7 @@ namespace {
 			void HandleProlog_(
 				xdhups::rAgent &Agent,
 				fdr::rRWDriver &Driver,
-				rData &Data )
+				const rData &Data )
 			{
 			qRH
 				qCBUFFERh Buffer;
@@ -145,7 +145,7 @@ namespace {
 					fdr::rRWDriver &Driver,
 					xdhcdc::cSingle &Callback,
 					const str::dString &Token,
-					const str::dString &UserId)
+					const str::dString &Extra)
 				{
 				qRH
 					websck::rFlow Flow;
@@ -166,7 +166,7 @@ namespace {
 							if ( !websck::GetMessage(Flow, Digest) )
 								break;
 							Flow.Dismiss();
-							if ( !Session.Handle(Digest.Convert(Buffer), UserId) )
+							if ( !Session.Handle(Digest.Convert(Buffer), Extra) )
 								break;
 							Flow.Write(ss_::standby::Label, ss_::standby::Size);
 							Flow.Commit();
@@ -181,7 +181,7 @@ namespace {
 			void HandleRegular_(
 				xdhups::rAgent &Agent,
 				fdr::rRWDriver &Driver,
-				rData &Data)
+				const rData &Data)
 			{
 			qRH
 				xdhcdc::cSingle *Callback = NULL;
@@ -191,7 +191,7 @@ namespace {
 				if ( Callback == NULL )
 					qRGnr();
 
-				HandleRegular_(Agent, Driver, *Callback, Data.Token, Data.UserId);
+				HandleRegular_(Agent, Driver, *Callback, Data.Token, Data.Extra);
 			qRR
 			qRT
 				if ( Callback != NULL )
@@ -225,10 +225,10 @@ namespace {
 				if ( websck::Handshake(*Driver, Header) ) {
 					Flow.Init(*Driver, websck::mWithTerminator);	// Second time: uses the WebSocket initiated below.
 					websck::GetMessage(Flow, Data->Token);
-					websck::GetMessage(Flow, Data->UserId);
+					websck::GetMessage(Flow, Data->Extra);
 					Data->State = sRegular;
 				} else if ( Header.FirstLine == "XDH web prolog" ) {
-					if ( websck::GetValue(str::wString("Token"), Header, Data->Token) )	// First time: launch PHP program which initiates the WebSocket
+					if ( websck::GetValue(str::wString("Token"), Header, Data->Token) )	// First time: launches PHP program which initiates the WebSocket
 						Data->State = sProlog;
 				} else {
 					Data->State = s_Undefined;
@@ -245,7 +245,7 @@ namespace {
 				if ( UP == NULL )
 					qRGnr();
 
-				rData &Data = *(rData *)UP;
+				const rData &Data = *(rData *)UP;
 
 
 				switch ( Data.State ) {

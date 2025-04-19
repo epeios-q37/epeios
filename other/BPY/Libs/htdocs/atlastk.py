@@ -1,4 +1,4 @@
-import javascript, inspect
+import javascript, inspect, types
 from collections import OrderedDict
 from browser import aio
 
@@ -63,8 +63,15 @@ def _unsplit(keys,values):
 
   return keysAndValues
 
+removePattern_ = lambda string, pattern: string[len(pattern):] if string.startswith(pattern) else string
+
 def broadcastAction(action, id = ""):
-  atlastkjs.broadcastAction(action, id)  
+	assert isinstance(action, (str, types.FunctionType))
+
+	if isinstance(action, types.FunctionType):
+		action = removePattern_(action.__name__, options_[O_CALLBACKS_PREFIX_])
+
+	return atlastkjs.broadcastAction(action, id)  
 
 def call_(instance, command, type, callback, *args):
   atlastkjs.call(instance, command, type, callback, *args)
@@ -474,6 +481,10 @@ async def callCallback_(callback, bundle):
 
 async def handleCallbackBundle(userCallbacks, callingGlobals, bundle):
   action = bundle.action
+
+  if action == "":
+    bundle.instance.language = bundle.id[:bundle.id.find(';')]
+    bundle.id =  bundle.id[bundle.id.find(';') + 1:]
 
   if action == ""\
     or not options_[O_PREPROCESS_ACTION_NAME_] in userCallbacks\

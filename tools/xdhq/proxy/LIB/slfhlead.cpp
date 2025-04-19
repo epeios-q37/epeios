@@ -26,16 +26,14 @@ namespace {
 	bso::sBool CoreIsInitialized_ = false;
 }
 
-bso::sBool slfhlead::InitializeCore(
-		const char *HostService,
-		bso::uint__ PingDelay,
-		sck::duration__ Timeout,
-		csdmnc::cLog *LogCallback)
+bso::sBool slfhlead::InitializeCore(const char *HostService,
+	bso::uint__ PingDelay,
+	csdmnc::cLog *LogCallback)
 {
-		if ( CoreIsInitialized_ )
+	if ( CoreIsInitialized_ )
 			qRFwk();
 
-		if ( Core_.Init(HostService, PingDelay, Timeout, LogCallback) ) {
+		if ( Core_.Init(HostService, PingDelay,LogCallback) ) {
 			CoreIsInitialized_ = true;
 			return true;
 		} else

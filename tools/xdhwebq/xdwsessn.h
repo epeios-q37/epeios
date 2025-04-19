@@ -111,9 +111,9 @@ namespace xdwsessn {
 		}
 		bso::sBool Handle(
       const char *EventDigest,
-      const str::dString &UserId)
+      const str::dString &Extra)
 		{
-			return Session_.Handle(EventDigest, UserId);
+			return Session_.Handle(EventDigest, Extra);
 		}
 		bso::sBool Execute(
 			const str::dString &Script,

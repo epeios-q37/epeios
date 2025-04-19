@@ -276,7 +276,7 @@ qRFE(sclm::ErrorDefaultHandling());
 }
 
 bso::bool__ session::rSession::Launch_(
-	const str::dString &Id,
+	const str::dString &IdOrExtra,
 	const str::dString &Action )
 {
 	bso::sBool Cont = true;
@@ -289,7 +289,7 @@ qRH;
 qRB;
 	Flow.Init(D_());
 
-	prtcl::Put(Id, Flow);
+	prtcl::Put(IdOrExtra, Flow);
 	prtcl::Put(Action, Flow);
 	Flow.Commit();
 
@@ -374,13 +374,13 @@ qRE;
 }
 
 bso::bool__ session::rSession::XDHCDCHandle(
-  const str::dString &Id,
+  const str::dString &IdOrExtra,
   const str::dString &Action)
 {
 	bso::sBool Cont = false;
 qRFH;
 qRFB;
-	Cont = Launch_(Id, Action);
+	Cont = Launch_(IdOrExtra, Action);
 qRFR;
 qRFT;
 qRFE(sclm::ErrorDefaultHandling());

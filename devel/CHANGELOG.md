@@ -15,10 +15,15 @@
 - [typo]: typography;
 - [warn]: fixing compiler warning messages;
 
-## 202503-01
+# #2025-04-19
+
+- CSDMNC: [adpt];
+- XDHCDC: the parameter given as id for a connect action is no more only a user id, but contains more parameters;
+
+## 2025-03-01
 
 - SCK:
-    - using 'poll' for *POSIX* instead of 'select' due to 'FD-SETSIZE' limitation;
+    - using 'poll' for *POSIX* instead of 'select' due to 'FD-SETSIZE' limitation,
     - changing handling of the break flag;
 
 ## 2025-02-28

@@ -4,6 +4,75 @@ import atlastk, ucuq, random, time, threading
 from browser import aio
 # END BRY
 
+# Languages
+L_FR = 0
+L_EN = 1
+
+LANGUAGE = None
+
+L10N = (
+  (
+    "Tirage en cours…",
+    "Drawing in progress…"
+  ),
+  (
+    "À vous de jouer !",
+    "It's up to you!"
+  ),
+  (
+    "Un seul maître de jeu autorisé !",
+    "Only one game master allowed!"
+  ),
+  (
+    "Il y a déjà deux joueurs…",
+    "There are already two players…"
+  ),
+  (
+    "En attente du second joueur…",
+    "Waiting for the second player…"
+  ),
+  # 5
+  (
+    "Temps écoulé !",
+    "Time elapsed!"
+  ),
+  (
+    "Bien joué !",
+    "Well done!"
+  ),
+  (
+    "Trop lent !",
+    "Too slow!"
+  ),
+  (
+    "En attente du tirage...",
+    "Waiting for the drawing..."
+  ),
+  (
+    "Nouveau",
+    "New"
+  ),
+  # 10
+  (
+    "Cliquez sur '{new}'.",
+    "Click on '{new}'."
+  ),
+  (
+    "À scanner par le second joueur…",
+    "To be scanned by second player…"
+  ),
+  (
+    "En attente du   second joueur...",
+    "Waiting for the second player..."
+  ),
+  (
+    "En attente du   tirage...       ",
+    "Waiting for the drawing...      "
+  )
+)
+
+getL10N = lambda lang, m, *args, **kwargs: L10N[m][lang].format(*args, **kwargs)
+
 DIGITS = (
   "708898A8C88870",
   "20602020202070",
@@ -28,7 +97,7 @@ HTML_CALCULATION = """
 </tr>
 """
 
-JAUGE_SCRIPT="""
+JAUGE_SCRIPT = """
 def jauge(oled, v):
   l = int(126*v)
   oled.rect(0, 50, 127, 13, 0, True)
@@ -63,6 +132,7 @@ TRUE_OPERATORS = ("+", "-", "*", "//")
 W_OPERATORS = tuple(range(4))
 W_QR_CODE = "QRCode"
 W_OUTPUT = "Output"
+W_CALCULATIONS = "Calculations"
 
 # Styles
 S_HIDE_QR_CODE = "HideQRCode"
@@ -92,11 +162,13 @@ class Player:
     self.calc = [None, None, None]
 
 
-async def setHardwareAwait(dom):
+async def setHardwareAwait(language, dom):
   global cOLED, cLCD,cRing, cRingCount, cRingLimiter, cRingOffset
 
+  body = BODY.format(new=getL10N(language, 9), qrcode=getL10N(language, 11))
+
   if UCUQ:
-    infos = await  ucuq.ATKConnectAwait(dom, BODY)
+    infos = await  ucuq.ATKConnectAwait(dom, body)
 
     hardware = ucuq.getKitHardware(infos)
 
@@ -109,8 +181,8 @@ async def setHardwareAwait(dom):
 
     return True
   else:
-    cOLED = cLCD = ucuq.Nothing()
-    await dom.inner("", BODY)
+    cOLED = cLCD = cRing = ucuq.Nothing()
+    await dom.inner("", body)
 
     return False
 
@@ -140,12 +212,15 @@ def jauge(v): # v: 0 <= v <= 1
 
 
 def ringCounter(v):
-  limit = int((cRingCount - 1) * v)
-  colorCore = int(cRingLimiter * v)
-  color = (colorCore, cRingLimiter - colorCore, 0)
+  limit = int(cRingCount * v)
 
   for l in range(cRingCount):
+    colorCore = int(cRingLimiter * (l / cRingCount))
+    color = (colorCore, cRingLimiter - colorCore, 0)
     cRing.setValue((l + cRingOffset) % cRingCount, color if l <= limit else (0,0,0))
+
+  if v == 1:
+    cRing.fill((cRingLimiter, 0, 0))
 
   cRing.write()
 
@@ -161,10 +236,12 @@ async def counterAwait():
     await ucuq.sleepAwait(1.5)
 
   ucuq.addCommand(f"jauge({cOLED.getObject()}, 0)")
-  ringCounter(1)
-
+  
   if not winner:
-    atlastk.broadcastAction("BElapsed")
+    ringCounter(1)
+    atlastk.broadcastAction(atkBElapsed)
+  else:
+    cRing.fill([0,0,cRingLimiter]).write()
 
 
 def displayCardsOnLCD(cards, center = True):
@@ -222,7 +299,7 @@ def buildCalcs(player):
 
 
 async def updateUIAwait(player, dom):
-  await dom.inner("Calculations", buildCalcs(player))
+  await dom.inner(W_CALCULATIONS, buildCalcs(player))
 
   if player.calcState == CS_NONE:
     await enable(player, dom, ())
@@ -253,7 +330,7 @@ async def atkBSecondPlayer(player, dom):
   if player.role == 1:
     await dom.enableElement(S_HIDE_QR_CODE)
     await dom.disableElement(S_HIDE_NEW_BUTTON)
-    await dom.setValue(W_OUTPUT, "Click 'New'.")
+    await dom.setValue(W_OUTPUT, getL10N(player.language, 10, new=getL10N(player.language, 9)))
 
 
 async def atkBDrawing(player, dom):
@@ -263,7 +340,7 @@ async def atkBDrawing(player, dom):
 
   await updateUIAwait(player, dom)
 
-  await dom.setValue(W_OUTPUT, "Waiting for cards to be dealt…")
+  await dom.setValue(W_OUTPUT, getL10N(player.language, 0))
 
 
 async def atkBPlaying(player, dom):
@@ -276,7 +353,7 @@ async def atkBPlaying(player, dom):
 
   displayProgress(player, player.role)
 
-  await dom.setValue(W_OUTPUT, "Let's play!")
+  await dom.setValue(W_OUTPUT, getL10N(player.language, 1))
 
 
 async def atkBDisplayProgress(player, dom, id):
@@ -302,11 +379,11 @@ async def atkBElapsed(player, dom):
   await updateUIAwait(player, dom)
 
   if winner == 0:
-    await dom.setValue(W_OUTPUT, "Time elapsed!!!")
+    await dom.setValue(W_OUTPUT, getL10N(player.language, 5))
   elif player.role == winner:
-    await dom.setValue(W_OUTPUT, "Well done!")
+    await dom.setValue(W_OUTPUT, getL10N(player.language, 6))
   else:
-    await dom.setValue(W_OUTPUT, "Other player wins!")
+    await dom.setValue(W_OUTPUT, getL10N(player.language, 7))
 
   if player.role == 1:
     await dom.disableElement(S_HIDE_NEW_BUTTON)
@@ -326,27 +403,29 @@ encode = lambda t: browser.window.encodeURIComponent(t)
 async def atk(player, dom, id):
   global players
 
-  assert (cOLED == None) == (cLCD == None)
+  player.language = LANGUAGE if LANGUAGE != None else L_FR if dom.language.startswith("fr") else L_EN
+
   assert id == "" or id == "Partner"
 
   if id == "Partner":
-    assert players >= 1
-
     if players >= 2:
-      await dom.alert("No more players allowed!")
+      await dom.alert(getL10N(player.language, 2))
       return
     
     await dom.inner("", BODY)
     
     players = player.role = 2
 
-    atlastk.broadcastAction("BSecondPlayer")
+    await dom.setValue(W_OUTPUT, getL10N(player.language, 8))
+
+    atlastk.broadcastAction(atkBSecondPlayer)
+    cLCD.moveTo(0,0).putString(getL10N(player.language, 13))
   else:
     if players != 0:
-      await dom.alert("No more players allowed!")
+      await dom.alert(getL10N(player.language, 3))
       return
     
-    if not await setHardwareAwait(dom):
+    if not await setHardwareAwait(player.language, dom):
       await dom.inner("", BODY)
     
     players = player.role = 1
@@ -357,7 +436,8 @@ async def atk(player, dom, id):
 
     await dom.disableElement(S_HIDE_QR_CODE)
 
-    await dom.setValue(W_OUTPUT, "Waiting for second player…")
+    await dom.setValue(W_OUTPUT, getL10N(player.language, 4))
+    cLCD.moveTo(0,0).putString(getL10N(player.language, 12)).backlightOn()
 
   await updateUIAwait(player, dom)
 
@@ -370,15 +450,14 @@ async def atkNew(player, dom):
 
   cards = list(OPERATOR_CARDS)
 
-  atlastk.broadcastAction("BDrawing")
+  atlastk.broadcastAction(atkBDrawing)
 
   bigs = list(BIGS)
   littles = list(LITTLES)
 
   cOLED.fill(0).show()
-  cLCD.clear()
-  cLCD.backlightOn()
   cRing.fill((0,0,0)).write()
+  cLCD.moveTo(0,1).putString("".ljust(16))
 
   while ( len(bigs) > 2 or len(littles) > 16 ):
     changed = True
@@ -391,6 +470,8 @@ async def atkNew(player, dom):
 
     if changed:
       displayCardsOnLCD(cards, False)
+      cOLED.fill(0).show()
+      ucuq.sleep(0.1)
       displayNumber(cards[-1])
       if PROD:
         ucuq.sleep(1)
@@ -419,7 +500,7 @@ async def atkNew(player, dom):
 
   winner = 0
 
-  atlastk.broadcastAction("BPlaying")
+  atlastk.broadcastAction(atkBPlaying)
 
 # BEGIN PYH
   threading.Thread(target=counterAwait).start()
@@ -457,9 +538,9 @@ async def atkCard(player, dom, id):
   await updateUIAwait(player, dom)
 
   if winner != 0:
-    atlastk.broadcastAction("BElapsed", str(player.role))
+    atlastk.broadcastAction(atkBElapsed, str(player.role))
   else:
-    atlastk.broadcastAction("BDisplayProgress", str(player.role))
+    atlastk.broadcastAction(atkBDisplayProgress, str(player.role))
 
 
 async def atkOperator(player, dom, id):
@@ -474,7 +555,7 @@ async def atkOperator(player, dom, id):
   
   await updateUIAwait(player, dom)
 
-  atlastk.broadcastAction("BDisplayProgress", str(player.role))
+  atlastk.broadcastAction(atkBDisplayProgress, str(player.role))
 
 
 async def atkDelete(player, dom, id):
@@ -502,7 +583,7 @@ async def atkDelete(player, dom, id):
 
   await updateUIAwait(player, dom)
   
-  atlastk.broadcastAction("BDisplayProgress", str(player.role))
+  atlastk.broadcastAction(atkBDisplayProgress, str(player.role))
 
 
 ATK_USER = Player

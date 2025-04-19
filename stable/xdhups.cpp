@@ -605,7 +605,7 @@ namespace {
 
 bso::bool__ xdhups::sEventSession::Handle(
   const char *EventDigest,
-  const str::dString &UserId)
+  const str::dString &Extra)
 {
 	bso::sBool Cont = true;
 qRH;
@@ -614,7 +614,7 @@ qRB;
 	tol::Init(Id, Action);
 
 	if ( ( EventDigest == NULL ) || ( !EventDigest[0] ) )
-		Cont = C_().Handle(UserId, str::Empty);
+		Cont = C_().Handle(Extra, str::Empty);
 	else if ( xdhutl::Extract(str::wString(EventDigest), Id, Action) )
 		Cont = C_().Handle(Id, Action);
 qRR;

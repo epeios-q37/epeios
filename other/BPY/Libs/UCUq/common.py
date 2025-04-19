@@ -268,7 +268,19 @@ async def ATKConnectAwait(dom, body, demo = False, *, device = None):
   if not KITS_:
     raise Exception("No kits defined!")
 
-  await dom.inner("", "<h3>Connecting…</h3>")
+  await dom.inner("", """
+  <style>
+    @keyframes ucuq_connection {
+        0%, 100% {
+            opacity: 1; /* Opacité pleine */
+        }
+        50% {
+            opacity: 0; /* Transparent */
+        }
+    }
+  </style>
+  <h2 style='animation: ucuq_connection 1s infinite;'>💻…📡…🛰️…<span style='display: inline-block;transform: scaleX(-1)';>📡</span>…🤖</h2>
+  """)
   
   if device or CONFIG_:
     device = getDevice_(device)
