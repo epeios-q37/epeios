@@ -1,4 +1,4 @@
-import zlib, base64
+import zlib, base64, time
 
 ITEMS_ = "i_"
 
@@ -127,11 +127,14 @@ CB_MANUAL = 1
 
 defaultCommitBehavior_ = CB_AUTO
 
-def testCommit_(behavior = None):
-  if behavior == None:
-    behavior = defaultCommitBehavior_
+def testCommit_(commit, behavior = None):
+  if commit == None:
+    if behavior == None:
+      behavior = defaultCommitBehavior_
 
-  return behavior == CB_AUTO
+    return behavior == CB_AUTO
+  else:
+    return commit
 
 class Device(Device_):
   def __init__(self, *, id = None, token = None, callback = None):
@@ -145,8 +148,8 @@ class Device(Device_):
   def __del__(self):
     self.commit()
 
-  def testCommit_(self):
-    return testCommit_(self.commitBehavior)
+  def testCommit_(self, commit):
+    return testCommit_(commit, self.commitBehavior)
 
   def addModule(self, module):
     if not module in self.pendingModules_ and not module in self.handledModules_:
@@ -159,10 +162,10 @@ class Device(Device_):
       for module in modules:
         self.addModule(module)
 
-  def addCommand(self, command, commit = False):
+  def addCommand(self, command, commit = None):
     self.commands_.append(command)
 
-    if commit or self.testCommit_():
+    if self.testCommit_(commit):
       self.commit()
 
     return self
@@ -270,16 +273,39 @@ async def ATKConnectAwait(dom, body, demo = False, *, device = None):
 
   await dom.inner("", """
   <style>
-    @keyframes ucuq_connection {
-        0%, 100% {
-            opacity: 1; /* Opacité pleine */
-        }
-        50% {
-            opacity: 0; /* Transparent */
-        }
+    .ucuq-connection {
+      display: inline-block;
+      /* Pour éviter les retours à la ligne */
+      white-space: nowrap;
+      /* Pour que le texte ne déborde pas */
+      overflow: hidden;
+      /* Animation en continu */
+      animation: ucuq-connection 1s linear infinite;
+      /* Masque linéaire horizontal */
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 50%, transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0%, black 50%, transparent 100%);
+      -webkit-mask-size: 200% 100%;
+      mask-size: 200% 100%;
+      -webkit-mask-position: 0% 0%;
+      mask-position: 0% 0%;
+    }
+
+    @keyframes ucuq-connection {
+      100% {
+        -webkit-mask-position: 0% 0%;
+        mask-position: 0% 0%;
+      }
+      50% {
+        -webkit-mask-position: 100% 0%;
+        mask-position: 100% 0%;
+      }
+      0% {
+        -webkit-mask-position: 200% 0%;
+        mask-position: 200% 0%;
+      }
     }
   </style>
-  <h2 style='animation: ucuq_connection 1s infinite;'>💻…📡…🛰️…<span style='display: inline-block;transform: scaleX(-1)';>📡</span>…🤖</h2>
+  <h2 class="ucuq-connection">💻…📡…🛰️…<span style='display: inline-block;transform: scaleX(-1)';>📡</span>…🤖</h2>
   """)
   
   if device or CONFIG_:
@@ -292,7 +318,13 @@ async def ATKConnectAwait(dom, body, demo = False, *, device = None):
     raise SystemExit("Unable to connect to a device!")
   
   setDevice(device = device)
+
+  start = time.monotonic()
   infos = await getInfosAwait(device)
+
+  if ( elapsed := time.monotonic() - start ) < 3:
+    print("Elapsed: ", elapsed)
+    await sleepAwait(3 - elapsed)
 
   deviceId =  getDeviceId(infos)
 
@@ -328,8 +360,8 @@ def getDevice():
   return device_
 
 
-def addCommand(command, /,device = None):
-  getDevice_(device).addCommand(command)
+def addCommand(command, commit = False, /,device = None):
+  getDevice_(device).addCommand(command, commit)
 
 
 # does absolutely nothing whichever method is called.

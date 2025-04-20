@@ -104,6 +104,19 @@ def jauge(oled, v):
   oled.rect(0, 50, l, 13, 1, True)
   oled.rect(l, 50, 127-l, 13, 1, False)
   oled.show()
+
+async def counter_():
+  global elapsed
+
+  elapsed = 0
+
+  start = time.ticks_ms()
+
+  while not stop and ( elapsed := time.ticks_diff(time.ticks_ms(), start) ) < {delay}:
+    jauge({oled}, 1- (elapsed / {delay}))
+    {lcd}.move_to(13,1)
+    {lcd}.putstr("{{:>3}}".format(({delay} - elapsed)//1000))
+    {aw} asyncio.sleep(0)
 """
 
 
@@ -177,7 +190,7 @@ async def setHardwareAwait(language, dom):
     cLCD = ucuq.HD44780_I2C(ucuq.I2C(*ucuq.getHardware(hardware, "LCD", ("SDA", "SCL", "Soft"))), 2, 16).backlightOff()
     pin, cRingCount, cRingLimiter, cRingOffset = ucuq.getHardware(hardware, "Ring", ("Pin", "Count", "Limiter", "Offset"))
     cRing = ucuq.WS2812(pin, cRingCount).fill((0,0,0)).write()
-    ucuq.addCommand(JAUGE_SCRIPT)
+    ucuq.addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=cOLED.getObject(),lcd=cLCD.getObject()))
 
     return True
   else:
@@ -212,28 +225,32 @@ def jauge(v): # v: 0 <= v <= 1
 
 
 def ringCounter(v):
-  limit = int(cRingCount * v)
+  if v < 1:
+    limit = round(0.5 + cRingCount * v)
 
-  for l in range(cRingCount):
-    colorCore = int(cRingLimiter * (l / cRingCount))
-    color = (colorCore, cRingLimiter - colorCore, 0)
-    cRing.setValue((l + cRingOffset) % cRingCount, color if l <= limit else (0,0,0))
+    print(v, limit)
 
-  if v == 1:
+    for l in range(cRingCount):
+      colorCore = int(cRingLimiter * (l / cRingCount))
+      color = (colorCore, 0, cRingLimiter - colorCore)
+      cRing.setValue((l + cRingOffset) % cRingCount, color if l < limit else (0,0,0))
+  else:
     cRing.fill((cRingLimiter, 0, 0))
 
   cRing.write()
 
 
 async def counterAwait():
-  ucuq.addCommand("start = time.ticks_ms()")
+  ucuq.addCommand("elapsed = 0\nstop = False\nasyncio.create_task(counter_())")
 
-  start = time.monotonic()
+  elapsed = 0
 
-  while not winner and ( (elapsed := time.monotonic() - start) < DELAY ):
-    ucuq.addCommand(f"jauge({cOLED.getObject()}, ({DELAY * 1000} - time.ticks_diff(time.ticks_ms(), start)) / {DELAY * 1000})")
+  while not winner and elapsed <= DELAY:
     ringCounter(elapsed / DELAY)
-    await ucuq.sleepAwait(1.5)
+    elapsed = await ucuq.commitAwait("elapsed") / 1000
+
+  if winner:
+    ucuq.addCommand("stop = True")
 
   ucuq.addCommand(f"jauge({cOLED.getObject()}, 0)")
   
@@ -323,7 +340,7 @@ def displayProgress(player, id):
   if int(id) != player.role:
     return
 
-  cLCD.moveTo(8 if player.role == 2 else 0, 1).putString(buildProgress(player).center(8))
+  cLCD.moveTo(7 if player.role == 2 else 0, 1).putString(buildProgress(player))
 
 
 async def atkBSecondPlayer(player, dom):
@@ -366,13 +383,12 @@ async def atkBDisplayProgress(player, dom, id):
 
 
 async def atkBElapsed(player, dom):
-  cLCD.moveTo(0 if player.role == 1 else 8, 1)
+  cLCD.moveTo(0 if player.role == 1 else 7, 1)
 
   cLCD.putString((
       ( "> " if player.role == winner else "" )
-      + str(evalCalc(player.cards, player.calcs[-1]) if len(player.calcs) else "/")
-      + ( " <" if player.role == winner else "") )
-    .center(8))
+      + str(evalCalc(player.cards, player.calcs[-1]) if len(player.calcs) else "/") )
+    .center(6))
 
   player.calcState = CS_NONE
 
@@ -488,10 +504,13 @@ async def atkNew(player, dom):
   displayCardsOnLCD(cards)
 
   if PROD:
-    ucuq.sleepAwait(6.5)
+    ucuq.sleepAwait(8)
 
-  for _ in range( 50 if PROD else 0):
+  for c in range( 50 if PROD else 0):
     displayNumber(random.randint(101,999))
+    for l in range(cRingCount):
+      cRing.setValue((l + c) % cRingCount, (0, 0, l * cRingLimiter // (cRingCount - 1)))
+    cRing.write()
 
   if PROD and not CHEAT:
     toFind = random.randint(101,999)
