@@ -6,16 +6,16 @@
     <div id="Y" xdh:onevent="Click"></div>
     <div id="B" xdh:onevent="Click"></div>
     <div id="inner-circle" style="display: flex;justify-content: center;align-items: center; flex-direction: column;">
-      <div>
-        <button xdh:onevent="New">New</button>
-      </div>
-      <div>
-        <button xdh:onevent="Repeat">Repeat</button>
-      </div>
       <label style="display: flex; background-color: white; margin-top: 1px;">
-        <span>🎵:</span>
+        <span style="font-size: large;">🎵:</span>
         <input type="checkbox" xdh:onevent="SwitchSound" checked="">
       </label>
+      <div>
+        <button xdh:onevent="New">{new}</button>
+      </div>
+      <div>
+        <button xdh:onevent="Repeat">{repeat}</button>
+      </div>
     </div>
   </div>
 </fieldset>

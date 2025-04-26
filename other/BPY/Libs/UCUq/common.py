@@ -323,7 +323,6 @@ async def ATKConnectAwait(dom, body, demo = False, *, device = None):
   infos = await getInfosAwait(device)
 
   if ( elapsed := time.monotonic() - start ) < 3:
-    print("Elapsed: ", elapsed)
     await sleepAwait(3 - elapsed)
 
   deviceId =  getDeviceId(infos)
@@ -436,10 +435,8 @@ class GPIO(Core_):
 
     super().init("GPIO-1", f"GPIO({self.pin})", device)
 
-
   def high(self, value = True):
     self.addMethods(f"high({value})")
-
 
   def low(self):
     self.high(False)
@@ -539,7 +536,6 @@ class HT16K33(Core_):
   
   def rect(self, x0, y0, x1, y1, ink = True):
     return self.addMethods(f"rect({x0}, {y0}, {x1}, {y1}, ink={1 if ink else 0})")  
-
 
   def show(self):
     return self.addMethods(f"render()")
@@ -851,6 +847,9 @@ class SSD1306(Core_):
     if width % 4:
       raise Exception("'width' must be a multiple of 4!")
     return self.addMethods(f"draw('{pattern}',{width},{ox},{oy},{mul})")
+
+  def rotate(self, rotate = True):
+    return self.addMethods(f"rotate({rotate})")
 
 
 class SSD1306_I2C(SSD1306):

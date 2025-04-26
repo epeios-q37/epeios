@@ -91,7 +91,6 @@ def removeGame(token, player):
   if token in games:
     game = games[token]
 
-    print(game.available, player)
     if game.available == 1 or player != 0:
       del games[token]
       if debug():

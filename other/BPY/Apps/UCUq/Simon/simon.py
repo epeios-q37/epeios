@@ -11,27 +11,42 @@ ringCount = 0
 ringOffset = 0
 ringLimiter = 0
 
-EN = {
-  0: "Welcome to",
-  1: "Simon's game!",
-  2: "Reproduce the",
-  3: "sequence...",
-  4: "Well done!",
-  5: "Game over! Click",
-  6: "New to restart!",
-}
+L_FR = 0
+L_EN = 1
 
-FR = {
-  0: "Bienvenue au jeu",
-  1: "'Simon' !",
-  2: "Reproduire la",
-  3: "sequence...",
-  4: "Bravo !",
-  5: "Perdu ! 'New'",
-  6: "pour rejouer !",
-}
+LANGUAGE = None # If None, uses the language of the browser.
 
-STRINGS = EN
+L10N = (
+  (
+    'Bienvenue au jeu', 
+    'Welcome to'
+  ), (
+    "'Simon' !",
+    "Simon's game!"
+  ), (
+    'Reproduire la',
+    'Reproduce the'
+  ), (
+    'sequence...',
+    'sequence...'
+  ), (
+    'Bravo !',
+    'Well done!'
+  ), ( # 5
+    "Perdu ! 'New'",
+    'Game over! Click'
+  ), (
+    'pour rejouer !',
+    'New to restart!'
+  ),
+  (
+    "Nouveau",
+    "New"
+  ),
+  ( "Répéter",
+    "Repeat"
+  )
+)
 
 DIGITS = (
   "708898A8C88870",
@@ -53,6 +68,8 @@ OLED_COEFF = 8
 
 seq = ""
 userSeq = ""
+
+getL10N = lambda m, *args, **kwargs: L10N[m][language].format(*args, **kwargs)
 
 
 def getValuesOfVarsBeginningWith(prefix):
@@ -188,7 +205,11 @@ def turnOLEDOn(hardware):
 
 
 async def atk(dom):
-  infos = await ucuq.ATKConnectAwait(dom, BODY)
+  global language
+
+  language = LANGUAGE if LANGUAGE != None else L_FR if dom.language.startswith("fr") else L_EN
+
+  infos = await ucuq.ATKConnectAwait(dom, BODY.format(new=getL10N(7), repeat=getL10N(8)))
 
   hardware = ucuq.getKitHardware(infos)
 
@@ -240,16 +261,16 @@ async def atkNew():
   cLCD.clear()\
   .backlightOn()\
   .moveTo(0,0)\
-  .putString(STRINGS[0])\
+  .putString(getL10N(0))\
   .moveTo(0,1)\
-  .putString(STRINGS[1])
+  .putString(getL10N(1))
 
   playJingle(LAUNCH_JINGLE)
   ucuq.sleep(0.5)
   cLCD.clear()
 
   seq = random.choice("RGBY")
-  cLCD.clear().moveTo(0,0).putString(STRINGS[2]).moveTo(0,1).putString(STRINGS[3])
+  cLCD.clear().moveTo(0,0).putString(getL10N(2)).moveTo(0,1).putString(getL10N(3))
   number(0)
   ucuq.sleep(.75)
   play(seq)
@@ -269,7 +290,7 @@ async def atkClick(dom, id):
 
   if seq.startswith(userSeq):
     if len(seq) <= len(userSeq):
-      cLCD.moveTo(0,0).putString(STRINGS[4])
+      cLCD.moveTo(0,0).putString(getL10N(4))
       number(None)
       cOLED.draw(HAPPY_MOTIF, 16, mul=4, ox=32).show()
       playJingle(SUCCESS_JINGLE)
@@ -278,7 +299,7 @@ async def atkClick(dom, id):
       ucuq.commit()
       userSeq = ""
       seq += random.choice("RGBY")
-      cLCD.clear().moveTo(0,0).putString(STRINGS[2]).moveTo(0,1).putString(STRINGS[3])
+      cLCD.clear().moveTo(0,0).putString(getL10N(2)).moveTo(0,1).putString(getL10N(3))
       number(None)
       ucuq.commit()
       number(0)
@@ -287,7 +308,7 @@ async def atkClick(dom, id):
     else:
       cLCD.backlightOff()
   else:
-    cLCD.moveTo(0,0).putString(STRINGS[5]).moveTo(0,1).putString(STRINGS[6])
+    cLCD.moveTo(0,0).putString(getL10N(5)).moveTo(0,1).putString(getL10N(6))
     number(len(seq))
     cBuzzer.setFreq(30).setU16(50000)
     number(None)

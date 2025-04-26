@@ -228,8 +228,6 @@ def ringCounter(v):
   if v < 1:
     limit = round(0.5 + cRingCount * v)
 
-    print(v, limit)
-
     for l in range(cRingCount):
       colorCore = int(cRingLimiter * (l / cRingCount))
       color = (colorCore, 0, cRingLimiter - colorCore)
