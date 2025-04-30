@@ -21,7 +21,7 @@ L10N = (
     'Bienvenue au jeu', 
     'Welcome to'
   ), (
-    "'Simon' !",
+    "'Simon'!",
     "Simon's game!"
   ), (
     'Reproduire la',
@@ -30,14 +30,14 @@ L10N = (
     'sequence...',
     'sequence...'
   ), (
-    'Bravo !',
+    'Bravo!',
     'Well done!'
   ), ( # 5
-    "Perdu ! 'New'",
-    'Game over! Click'
+    "Perdu! 'Nouveau'",
+    "Game over! 'New'"
   ), (
-    'pour rejouer !',
-    'New to restart!'
+    'pour rejouer!',
+    'to play again!'
   ),
   (
     "Nouveau",
@@ -209,7 +209,9 @@ async def atk(dom):
 
   language = LANGUAGE if LANGUAGE != None else L_FR if dom.language.startswith("fr") else L_EN
 
-  infos = await ucuq.ATKConnectAwait(dom, BODY.format(new=getL10N(7), repeat=getL10N(8)))
+  body =  BODY.format(new=getL10N(7), repeat=getL10N(8))
+
+  infos = await ucuq.ATKConnectAwait(dom, body)
 
   hardware = ucuq.getKitHardware(infos)
 
