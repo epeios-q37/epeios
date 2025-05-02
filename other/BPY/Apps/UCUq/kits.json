@@ -34,7 +34,7 @@
         }
       ]
     },
-    "devices": [ "Golf", "Alpha" ]
+    "devices": [ "Alpha", "Golf", "India" ]
   }, {
     "_comment": "ESP8266",
     "brand": "q37.info",
