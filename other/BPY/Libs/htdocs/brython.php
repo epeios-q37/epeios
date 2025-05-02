@@ -2,12 +2,12 @@
 $sourceCode = str_replace("</script>", "_BrythonWorkaroundForClosingScriptTag_", $_REQUEST['code']);
 
 // Si modifié, adapter '/themes/hugo-book/layouts/_default/baseof.html' de atlastk.org et zelbinium.q37.info.
-$brython_version = "3.13.1";
-$eruda_version="3.4.1";
+const BRYTHON_VERSION = "3.13.1";
+const ERUDA_VERSION = "3.4.1";
 
-if (!empty($_REQUEST['brython'])) {
-  $brython_version = $_REQUEST['brython'];
-}
+$brython_version = $_REQUEST['brython'] ?? BRYTHON_VERSION;
+$eruda_version = $_REQUEST['eruda'] ?? ERUDA_VERSION;
+$use_ucuq_demo_devices = isset($_REQUEST["useUCUqDemoDevices"]) ? "true" : "false";
 
 if ( $brython_version == "dev") {
  $brython = <<< EOS
@@ -31,6 +31,8 @@ echo <<< EOD
   $brython
   <script src="https://cdn.jsdelivr.net/npm/eruda@$eruda_version/eruda.min.js"></script>
   <script type="text/javascript">
+    var useUCUqDemoDevices_ = $use_ucuq_demo_devices;
+
     function launchApp(url) {
       app = document.getElementById("App");
       app.src = url;
@@ -39,7 +41,7 @@ echo <<< EOD
 
     function onLoad() {
       eruda.init();
-      console.log("Brython version ('brython' URL parameter): $brython_version; eruda version: $eruda_version");
+      console.log("Brython version: $brython_version; eruda version: $eruda_version");
       brython();
     }
   </script>

@@ -9,7 +9,7 @@
       "Ring": [ {
           "Pin": 20,
           "Count": 8,
-          "Offset": 0,
+          "Offset": 2,
           "Limiter": 30
         }
       ],

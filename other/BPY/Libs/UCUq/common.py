@@ -265,7 +265,7 @@ async def getInfosAwait(device):
   return infos
 
 
-async def ATKConnectAwait(dom, body, demo = False, *, device = None):
+async def ATKConnectAwait(dom, body, *, device = None):
   await getKitsAwait()
   
   if not KITS_:
@@ -310,8 +310,8 @@ async def ATKConnectAwait(dom, body, demo = False, *, device = None):
   
   if device or CONFIG_:
     device = getDevice_(device)
-  elif demo:
-    device = await getDemoDeviceAwait()
+  elif useUCUqDemoDevices():
+    device = getDemoDevice()
 
   if not device:
     await dom.inner("", "<h3>ERROR: Please launch the 'Config' application!</h3>")
@@ -348,8 +348,11 @@ def getDevice_(device = None, *, id = None, token = None):
     if token or id:
       device_ = Device(id = id, token = token)
     elif device_ == None:
-      device_ = Device()
-      device_.connect()
+      if useUCUqDemoDevices():
+        device_ = getDemoDevice()
+      else:
+        device_ = Device()
+        device_.connect()
     return device_
   else:
     return device

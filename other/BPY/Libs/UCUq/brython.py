@@ -9,6 +9,8 @@ LIB_VERSION = "0.0.1"
 
 CONFIG_ITEM_ = "ucuq-config"
 
+useUCUqDemoDevices = ucuqjs.useUCUqDemoDevices
+
 try:
   CONFIG_ = json.loads(storage[CONFIG_ITEM_])
 except:
@@ -157,7 +159,7 @@ def ignitionCallback(data, answer, errorMessage):
   return "" if success else errorMessage
 
 
-async def getDemoDeviceAwait():
+async def getDemoDeviceAwaitOld():
   data = {
     "lock": Lock_()
   }
@@ -172,6 +174,10 @@ async def getDemoDeviceAwait():
     return device
   else:
     return None
+
+
+def getDemoDevice():
+  return Device(token = ONE_DEVICE_VTOKEN, callback = lambda answer: "Please launch the 'Config' application!" if len(answer) else "")
 
 
 async def getWebFileContentAwait(url):

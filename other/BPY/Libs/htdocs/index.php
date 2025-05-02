@@ -2,6 +2,7 @@
 
 $demo = $_REQUEST["demo"] ?? "";
 $brython_version = $_REQUEST["brython"] ?? $_REQUEST["version"];  // 'version' parameter is deprecated!
+$eruda_version = $_REQUEST["eruda"];
 $code = $_REQUEST["code"] ?? "";
 $url = $_REQUEST["url"] ?? "";
 $cursor = $_REQUEST["cursor"] ?? "";
@@ -10,6 +11,10 @@ $go = isset($_REQUEST["go"]) ? "true" : "false";
 $collapse = $_REQUEST["collapse"] ?? ( ( $go == "false" or strtolower($_REQUEST["go"]) == "collapse" ) ? "true" : "false" );
 $use_ucuq_demo_devices = isset($_REQUEST["useUCUqDemoDevices"]) ? "true" : "false";
 $collapse = strtolower($collapse) == "true" ? "true" : "false";
+
+$brython_field = $brython_version ? "<input type='hidden' name='brython' value='$brython_version' />\n" : '';
+$eruda_field = $eruda_version ? "<input type='hidden' name='eruda' value='$eruda_version' />\n" : '';
+$use_ucuq_demo_devices_field = $use_ucuq_demo_devices === "true"? "<input type='hidden' name='useUCUqDemoDevices' value='' />\n" : '';
 
 echo <<<BODY
 <html>
@@ -126,7 +131,9 @@ echo <<<BODY
     </div>
     <form style="display: none;" action="/brython/brython.php" name="Brython" method="post" target="Brython">
       <input type="hidden" name="code" id="Code" />
-      <input type="hidden" name="brython" value="$brython_version" />
+      $brython_field
+      $eruda_field
+      $use_ucuq_demo_devices_field
     </form>
     <iframe name="Brython" src="" id="Brython" width="100%"
       style="display: none; height: calc(100% - 50px); border: 0px;">

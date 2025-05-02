@@ -8,21 +8,11 @@ function go() {
   run = false;
 }
 
-
-function patch_(code) {
-  if ( useUCUqDemoDevices )
-    return code.replace(/ATKConnectAwait\(([^)]*)\)/g, (match, args) => {
-      return `ATKConnectAwait(${args}, True)`;
-    });
-  else
-    return code;
-}
-
 function fetchCodeFromURL(url, callback) {
   fetch(url).then(function (response) {
     return response.text();
   }).then(function (data) {
-    callback(patch_(data));
+    callback(data);
   }).catch(function (err) {
     console.warn(`Unable to fetch '${url}'`, err);
   });
@@ -75,7 +65,7 @@ function fillDemosList() {
     if ( code !== "" ) {
       select.value="None"
       code = code.replaceAll('_BrythonWorkaroundForBackQuote_', '`').replaceAll('_BrythonWorkaroundForSingleQuote_', "'")
-      editor.session.setValue(patch_(code));
+      editor.session.setValue(code);
 
       old = code
 

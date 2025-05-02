@@ -209,9 +209,7 @@ async def atk(dom):
 
   language = LANGUAGE if LANGUAGE != None else L_FR if dom.language.startswith("fr") else L_EN
 
-  body =  BODY.format(new=getL10N(7), repeat=getL10N(8))
-
-  infos = await ucuq.ATKConnectAwait(dom, body)
+  infos = await ucuq.ATKConnectAwait(dom, BODY.format(new=getL10N(7), repeat=getL10N(8)))
 
   hardware = ucuq.getKitHardware(infos)
 

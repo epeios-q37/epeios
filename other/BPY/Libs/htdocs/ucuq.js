@@ -299,10 +299,15 @@ function toASCII(text) {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+function useUCUqDemoDevices() {
+  return useUCUqDemoDevices_;
+}
+
 // ATTENTION: si modification, mettre script 'Build' à jour !!!
 module.exports = {
 launch,
 upload,
 execute,
 toASCII,
+useUCUqDemoDevices
 }

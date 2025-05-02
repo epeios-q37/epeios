@@ -51,6 +51,7 @@ A_ERROR_ = 2
 A_PUZZLED_ = 3
 A_DISCONNECTED_ = 4
 
+useUCUqDemoDevices = lambda: False
 
 def recv_(socket, size):
   buffer = bytes()
