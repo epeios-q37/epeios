@@ -1,6 +1,8 @@
 # À propos de ce répertoire
 
-NOTA : il n'y a pas encore de dépôt dédiés pout *Blocky*.
+NOTA : il n'y a pas de dépôt dédié pout *Blocky*.
+
+## Description
 
 Ce répertoire contient les fichiers de l'environnement *Blockly* pour manipuler des fichier.
 Lien vers l'environnement en local : <http://localhost/blockly?lang=fr>.
@@ -16,3 +18,8 @@ Resources :
 - à propos des *shadow blocks* : <http://bekawestberg.me/blog/shadows-1/>
   - le lien vers le point 3 pointe vers le point 2 ; il faut taper le `3` dans l'URL,
 - *Blockly* en ligne : <https://blockly-demo.appspot.com/static/demos/code/index.html>.
+
+## Code XML
+
+Le code source d'un « programme » *Blockly* est au format *XML* (peut aussi être du *JSON*). Il est passé compressé/base64/URI (voir le paramètre *code* de *BPY* pour plus de détail).
+NOTA : le code source au format *XML* se compresse mieux que celui au format *JSON*.

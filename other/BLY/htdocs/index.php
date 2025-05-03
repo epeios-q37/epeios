@@ -20,7 +20,7 @@ echo <<<BODY
   <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
   <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
   <script src="https://unpkg.com/blockly/python_compressed.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.11/pako.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <!--script src="https://unpkg.com/blockly/php_compressed.js"></script-->
   <!--script src="https://unpkg.com/blockly/lua_compressed.js"></script-->
   <!--script src="https://unpkg.com/blockly/dart_compressed.js"></script-->
@@ -35,7 +35,7 @@ echo <<<BODY
   <script src="ucuq.js"></script>
   <script type="text/javascript">
     function launchCode(code) {
-      document.getElementById("code").value = code;
+      document.getElementById("code").value = pack(code);
       document.getElementById('brython').submit();
     }
     ucuq = require("ucuq");

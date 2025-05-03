@@ -99,7 +99,7 @@ Code.getURL = function() {
 
 // NOTA: the XML param value is compressed.
 Code.getXML = function() {
-  return CXML === "" ? "" : unpackXMLCode(decodeURIComponent(CXML));
+  return CXML === "" ? "" : unpack(CXML);
 };
 
 

@@ -21,19 +21,27 @@ function stringOrInt(input) {
   return isNaN(asInt) ? `"${input}"` : asInt;
 }
 
-// XML Blockly code compressed with 'Q_Compress'.
-function unpackXMLCode(base64CompressedCode) {
-
-  // Décoder le base64  
-  const binaryString = atob(base64CompressedCode);
+function pack(originalString) {
+  const compressed = pako.deflate(originalString, { to: 'string' });
   
-  // Convertir la chaîne binaire en tableau d'octets  
+  let binaryString = '';
+
+  for (let i = 0; i < compressed.length; i++) {
+      binaryString += String.fromCharCode(compressed[i]);
+  }
+  
+  return encodeURIComponent(btoa(binaryString));
+}
+
+function unpack(packedCode) {
+  const binaryString = atob(decodeURIComponent(packedCode));
+  
   const len = binaryString.length;
   const bytes = new Uint8Array(len);
+
   for (let i = 0; i < len; i++) {
       bytes[i] = binaryString.charCodeAt(i);
   }
 
-  // Décompresser les données  
   return pako.inflate(bytes, { to: 'string' });
 }

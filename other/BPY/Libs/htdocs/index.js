@@ -31,7 +31,20 @@ function fetchDemoCode(demo) {
   collapse = true;
   document.getElementById("Brython").style["display"] = "none";
   fetchCodeFromURL(`https://raw.githubusercontent.com/epeios-q37/brython/main/${demo}.py`, execute)
-}  
+}
+
+function unpack(packedCode) {
+  const binaryString = atob(decodeURIComponent(packedCode));
+  
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+
+  for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return pako.inflate(bytes, { to: 'string' });
+}
 
 function fillDemosList() {
   fetch('https://raw.githubusercontent.com/epeios-q37/brython/main/Demos.json').then(function (response) {
@@ -60,7 +73,7 @@ function fillDemosList() {
       select.append(optgroup);
     }
 
-    let code = decodeURIComponent(encodedCode);
+    let code = packedCode ? unpack(packedCode) : "";
     
     if ( code !== "" ) {
       select.value="None"

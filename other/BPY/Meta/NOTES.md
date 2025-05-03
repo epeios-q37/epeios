@@ -7,12 +7,46 @@ Pour lancer la version *Python* : `BPYP_Launch <app_dir>`.
 
 ## Paramètre `useUCUqDemoDevices`
 
-Le paramètre `useUCUqDemoDevices` de *Libs/htdocs/index.php* permet de rajouter *True* comme dernier arguments d'un appel à *ucuq.ATKConnect(…)*, ce qui permet d'utiliser les kits définis dans *ATK_Admin* lorsque le fichier de configuration utilisé par *UCUq* n'est pas défini.
+Le paramètre `useUCUqDemoDevices` de *Libs/htdocs/index.php* est passé à *Libs/htdocs/brython.php* lorsqu'il est présent.
+Lors du lancement d'une application *Brython* utilisant *UCUq*, lorsque le dispositif à utiliser n'est pas configuré, c'est le dispositif de démonstration qui est utilisé. Si *useUCUqDemoDevices* n'est pas présent, un message s'affiche demandant de lancer l'application *Config*.
 
-Utilisé dans les d"mos de la page consacré à *UCUq* pour le site *ng.q37.info* (voir *ucuq.js*).
+Utilisé dans les démos de la page consacré à *UCUq* pour le site *ng.q37.info* (voir *ucuq.js*). Permet de ne pas avoir à lancer l'application *Config*.
 
-## Aide pour générer les macros pour la'application *Servos*
+## Passage du code source en paramètre
+
+À l'instar du code XML pour *Blockly*, le code source passé à *Brython*, via le paramètre *code*, est compressé puis encodé en base 64 et en paramètre d'URL. La (dé)compression se fait à l'aide des scripts *Q_(un)packURI*.
+
+Codes JS équivalent (s'appuie sur [*pako*](https://cdnjs.com/libraries/pako)) :
+
+```js
+function pack(originalString) {
+    const compressed = pako.deflate(originalString, { to: 'string' });
+    
+    let binaryString = '';
+
+    for (let i = 0; i < compressed.length; i++) {
+        binaryString += String.fromCharCode(compressed[i]);
+    }
+    
+    return encodeURIComponent(btoa(binaryString));
+}
+
+function unpack(packedCode) {
+  const binaryString = atob(decodeURIComponent(packedCode));
+  
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+
+  for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  return pako.inflate(bytes, { to: 'string' });
+}
+```
+
+## Aide pour générer les macros pour l'application *Servos*
 
 Sélectionner les macros et puis sélectionner *Run Command* à partir du menu contextuel.
 
-LEs scripts sont gérés par l'extension *VSCode* *Command runner* et définis dans le *workspace* du projet.
+Les scripts sont gérés par l'extension *VSCode* *Command runner* et définis dans le *workspace* du projet.

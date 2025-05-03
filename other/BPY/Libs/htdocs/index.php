@@ -26,13 +26,14 @@ echo <<<BODY
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/mode-python.min.js"
       integrity="sha512-DUdq0nHbbCHQMqQNALNivk5tAdpFWOpm3mplXDwBqIpXD6/vfgXp8fESbfsnePQT3jZKVI3mCbEQumz/S4IHPA=="
       crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha512-g2TeAWw5GPnX7z0Kn8nFbYfeHcvAu/tx6d6mrLe/90mkCxO+RcptyYpksUz35EO337F83bZwcmUyHiHamspkfg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="text/javascript">
       var editor = undefined;
       var run = $go;
       var collapse = $collapse;
       var useUCUqDemoDevices = $use_ucuq_demo_devices;
       var cursor = '$cursor';
-      var encodedCode = `$code`;
+      var packedCode = `$code`;
       var demo = `$demo`;
       var url = `$url`;
       var id = `$id`;
