@@ -4,6 +4,9 @@ $lang = $_REQUEST["lang"] ?? "";
 $demo = $_REQUEST["demo"] ?? "";
 $code = $_REQUEST["code"] ?? "";
 $cxml = $_REQUEST["xml"] ?? ""; // Compressed with 'Q_COMPRESS'!!!
+$use_ucuq_demo_devices = isset($_REQUEST["useUCUqDemoDevices"]) ? "true" : "false";
+
+$use_ucuq_demo_devices_field = $use_ucuq_demo_devices === "true"? "<input type='hidden' name='useUCUqDemoDevices' value='' />\n" : '';
 
 
 echo <<<BODY
@@ -29,6 +32,7 @@ echo <<<BODY
     const DEMO = `$demo`;
     const CODE = `$code`;
     const CXML = `$cxml`;
+    const USE_UCUQ_DEMO_DEVICES = $use_ucuq_demo_devices;
   </script>
   <script src="tools.js"></script>
   <script src="code.js"></script>
@@ -481,6 +485,7 @@ echo <<<BODY
   <form id="brython" action="https://faas.q37.info/brython/index.php" method="POST" target="brython_result">
     <input type="hidden" name="go" value="collapse">
     <input type="hidden" id="code" name="code">
+    $use_ucuq_demo_devices_field
   </form>
   <iframe name="brython_result"></iframe>
 </body>

@@ -2,8 +2,8 @@
 {
     "_comment": "ESP32-C3",
     "brand": "q37.info",
-    "model": "DIY",
-    "variant": "Displays",
+    "model": "Displays",
+    "variant": "SSD1306",
     "hardware": {
       "OnBoardLed": [ 8, false ],
       "Ring": [ {
@@ -38,8 +38,8 @@
   }, {
     "_comment": "ESP8266",
     "brand": "q37.info",
-    "model": "DIY",
-    "variant": "Servos",
+    "model": "Servos",
+    "variant": "180°",
     "hardware": {
       "OnBoardLed": [ 8, false ],
       "Servo": [
