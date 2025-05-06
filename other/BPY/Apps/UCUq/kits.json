@@ -140,7 +140,7 @@
       "Ring": [
         {
           "Pin": 15,
-          "Count": 16,
+          "Count": 8,
           "Offset": 9,
           "Limiter": 255
         }
