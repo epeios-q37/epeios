@@ -439,10 +439,10 @@ class GPIO(Core_):
     super().init("GPIO-1", f"GPIO({self.pin})", device)
 
   def high(self, value = True):
-    self.addMethods(f"high({value})")
+    return self.addMethods(f"high({value})")
 
   def low(self):
-    self.high(False)
+    return self.high(False)
 
 
 class WS2812(Core_):

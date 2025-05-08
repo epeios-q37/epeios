@@ -121,7 +121,7 @@ async def counter_():
 
 
 PROD = True
-UCUQ = True
+UCUq = True
 CHEAT = True
 
 if PROD:
@@ -156,7 +156,7 @@ cLCD = None
 cRing = None
 cRingCount = 0
 cRingLimiter = 0
-cRingOffset = 9
+cRingOffset = 0
 cards = []
 players = 0 # Amount of players.
 toFind = 0
@@ -180,7 +180,7 @@ async def setHardwareAwait(language, dom):
 
   body = BODY.format(new=getL10N(language, 9), qrcode=getL10N(language, 11))
 
-  if UCUQ:
+  if UCUq:
     infos = await  ucuq.ATKConnectAwait(dom, body)
 
     hardware = ucuq.getKitHardware(infos)

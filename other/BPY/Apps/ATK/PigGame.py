@@ -302,7 +302,7 @@ async def computerTurn(game, dom):
 
   await disableGameControls(dom)
 
-  await atlastk.sleep(1000)
+  await atlastk.sleep(1)
 
   while True:
     game.dice = random.randint(1, 6)
@@ -321,7 +321,7 @@ async def computerTurn(game, dom):
       break
 
     await display(dom, game, 1)
-    await atlastk.sleep(2500)    
+    await atlastk.sleep(2.5)    
 
     if not botDecision(game.scores[2], game.turn, game.scores[1], timesThrown):
       game.scores[2] += game.turn

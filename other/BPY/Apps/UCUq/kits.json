@@ -139,36 +139,36 @@
       "OnBoardLed": [ 2, true ],
       "Ring": [
         {
-          "Pin": 15,
+          "Pin": 20,
           "Count": 8,
-          "Offset": 9,
+          "Offset": 0,
           "Limiter": 255
         }
       ],
       "OLED": [
         {
           "Soft": false,
-          "SDA": 21,
-          "SCL": 22
+          "SDA": 8,
+          "SCL": 9
         }
       ],
       "LCD": [
         {
           "Soft": true,
-          "SDA": 25,
-          "SCL": 26
+          "SDA": 6,
+          "SCL": 7
         }
       ],
       "Buzzer": [
         {
           "Mode": "Straight",
-          "Pin": 32
+          "Pin": 5
         }
       ],
       "Servo": [
         {
           "Mode": "Straight",
-          "Pin": 33
+          "Pin": 21
         }
       ]
     }

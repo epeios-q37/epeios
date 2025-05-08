@@ -231,7 +231,7 @@ async def atkSubmit(core, dom, id):
       cOLED.draw(HAPPY_PATTERN, 16, mul=4, ox=32).show()
       for _ in range(3):
         for l in range(ringCount):
-          cRing.setValue(patchRingIndex(l),[randint(0,ringLimiter // 3),randint(0,ringLimiter // 3),randint(0,ringLimiter // 3)]).write()
+          cRing.setValue(patchRingIndex(l),tuple(map(lambda _: randint(0,ringLimiter // 3), range(3)))).write()
           ucuq.sleep(0.075)
       await dom.alert(getL10N(4))
       await reset(core, dom)
