@@ -6,9 +6,11 @@ Python library for easy prototyping of assemblies based on microcontrollers such
 
 ## How to use it
 
+> Above link gives access to an *ESP32* simulation with *UCUq* installed on it and can be very helpful understanding how to do this on your own microcontroler.
+
 ### On the microcontroller
 
-1. Install *Micropython* on the microcontroller;
+1. Install [*Micropython*](https://micropython.org/) on the microcontroller;
 2. create an *ucuq.json* file with below content;
 3. rename *ucuq_device.py* as *main.py*;
 4. put both *ucuq.json* and *main.py* on the microcontroller;

@@ -50,3 +50,23 @@ function unpack(packedCode) {
 Sélectionner les macros et puis sélectionner *Run Command* à partir du menu contextuel.
 
 Les scripts sont gérés par l'extension *VSCode* *Command runner* et définis dans le *workspace* du projet.
+
+## Publication de la version *Python* sur *Pypi* (*ucuq-python*)
+
+- Mettre à jour, dans `setup.py` :
+  - le numéro de version,
+  - éventuellement la description.
+- mettre à jour le dépôt *Github*.
+
+**Attention** : vérifier que la version de *wheel* (`pip3 show wheel`) est >= 31.0, sinon mettre à jour (`pip3 install --user --upgrade wheel`), faute de quoi la description en *markdown* n'est pas affichée correctement (mettre à jour *twine* et/ou *setuptools* peut aussi être nécessaire).
+
+Dans `RTW/ucuq-python` :
+
+```bash
+rm -rf atlastk.zip ucuq_device.py demos
+mkdir ucuq;mv * ucuq;mv ucuq/setup.py .
+echo -e 'name="ucuq"\nfrom ucuq import *' >ucuq/__init__.py
+python3 setup.py sdist bdist_wheel
+```
+
+`python3 -m twine upload dist/*` (le *token* se trouve dans le fichier *Comptes.md*).

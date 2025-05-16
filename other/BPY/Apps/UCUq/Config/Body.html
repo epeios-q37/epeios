@@ -1,6 +1,6 @@
 <fieldset>
   <details id="Proxy">
-    <summary style="cursor: pointer">Show/hide proxy settings</summary>
+    <summary style="cursor: pointer">{proxy}</summary>
     <fieldset>
       <legend>Proxy</legend>
       <label style="display: flex; justify-content: space-between; margin: 5px;">
@@ -29,10 +29,10 @@
     </label>
   </fieldset>
   <div style="display: flex; justify-content: space-around; margin: 5px;">
-    <button xdh:onevent="Save">Save</button>
-    <button xdh:onevent="Delete">Delete</button>
+    <button xdh:onevent="Save">{save}</button>
+    <button xdh:onevent="Delete">{delete}</button>
   </div>
   <fieldset>
-    <output id="Output">Enter token and/or id.</output>
+    <output id="Output">{hint}</output>
   </fieldset>
 </fieldset>

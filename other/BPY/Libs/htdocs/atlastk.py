@@ -133,7 +133,33 @@ class DOM:
     else:
       raise Exception("Unknown return type !!!")  
 
-    lock.release() 
+    lock.release()
+
+  def getL10n(self, *args, **kwargs):
+    if not _l10n:
+      return ""
+		
+    lang = self.language
+
+    indice = _l10n[0].index(lang) if lang in _l10n[0] else None
+
+    if indice == None:
+      lang = lang[:2]
+      
+      indice = _l10n[0].index(lang) if lang in _l10n[0] else 0
+      
+
+    if len(args):
+      if len(kwargs):
+        raise Exception("getL10n() accepts either args or kwargs, not both.")
+
+      if len(args) == 1:
+        return _l10n[args[0]][indice]
+      else:
+        return [_l10n[arg][indice] for arg in args]
+    elif len(kwargs):
+      return {key: _l10n[value][indice] for key, value in kwargs.items()}	
+
     
   def get_action(self):
     return self._dom.getAction()
@@ -528,11 +554,13 @@ def retrieve_(var, id, globals):
   return var
 
 def launch(callbacks = None, *, userCallback = None, globals = None, headContent = None):
+  global _l10n
 
   if globals != None:
     callbacks = retrieve_(callbacks, "ATK_CALLBACKS", globals)
     userCallback = retrieve_(userCallback, "ATK_USER", globals)
     headContent = retrieve_(headContent, "ATK_HEAD", globals)
+    _l10n = retrieve_(None, "ATK_L10N", globals)
 
   if headContent == None:
     headContent = ""

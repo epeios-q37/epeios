@@ -818,7 +818,7 @@ class Servo(Core_):
     return self.pwm.setU16(self.angleToDuty(angle))
   
 
-class SSD1306(Core_):
+class OLED_(Core_):
   def show(self):
     return self.addMethods("show()")
 
@@ -851,9 +851,11 @@ class SSD1306(Core_):
       raise Exception("'width' must be a multiple of 4!")
     return self.addMethods(f"draw('{pattern}',{width},{ox},{oy},{mul})")
 
+
+class SSD1306(OLED_):
   def rotate(self, rotate = True):
     return self.addMethods(f"rotate({rotate})")
-
+  
 
 class SSD1306_I2C(SSD1306):
   def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False):
@@ -868,6 +870,25 @@ class SSD1306_I2C(SSD1306):
       
   def init(self, width, height, i2c, /, external_vcc = False, addr = None):
     super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice())
+
+
+class SH1106(OLED_):
+  pass
+
+class SH1106_I2C(SH1106):
+  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False):
+    super().__init__()
+
+    if bool(width) != bool(height) != bool(i2c):
+      raise Exception("All or none of width/height/i2c must be given!")
+    elif width:
+      self.init(width, height, i2c, external_vcc = external_vcc, addr= addr)
+    elif addr:
+      raise Exception("addr can not be given without i2c!")
+      
+  def init(self, width, height, i2c, /, external_vcc = False, addr = None):
+    super().init(("SH1106-1", "SH1106_I2C-1"), f"SH1106_I2C({width}, {height}, {i2c.getObject()}, addr={addr}, external_vcc={external_vcc})", i2c.getDevice())
+
 
 
 def pwmJumps(jumps, step = 100, delay = 0.05):

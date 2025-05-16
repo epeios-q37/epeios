@@ -222,7 +222,7 @@ if _is_jupyter():
 			_thread = None
 
 
-def _launch(callbacks, callingGlobals, userCallback, headContent):
+def _launch(callbacks, callingGlobals, userCallback, headContent, l10n):
 	if callbacks == None:
 		callbacks = {}
 
@@ -230,7 +230,7 @@ def _launch(callbacks, callingGlobals, userCallback, headContent):
 		callingGlobals = {}
 
 	try:
-		XDHq.launch(_callback, userCallback, callbacks, callingGlobals, headContent)
+		XDHq.launch(_callback, userCallback, callbacks, callingGlobals, headContent, l10n)
 	except socket.timeout:
 		pass
 
@@ -247,6 +247,7 @@ def launch(callbacks = None, *, globals = None,  userCallback = None, headConten
 		callbacks = retrieve_(callbacks, "ATK_CALLBACKS", globals)
 		userCallback = retrieve_(userCallback, "ATK_USER", globals)
 		headContent = retrieve_(headContent, "ATK_HEAD", globals)
+		l10n = retrieve_(None, "ATK_L10N", globals)
 
 	if _is_jupyter():
 		global _intraLock, _thread
@@ -254,7 +255,7 @@ def launch(callbacks = None, *, globals = None,  userCallback = None, headConten
 		terminate()
 		
 		_intraLock.acquire()
-		_thread = Thread(target=_launch, args=(callbacks, globals, userCallback, headContent))
+		_thread = Thread(target=_launch, args=(callbacks, globals, userCallback, headContent, l10n))
 		_thread.daemon = True
 		_thread.start()
 
@@ -264,7 +265,7 @@ def launch(callbacks = None, *, globals = None,  userCallback = None, headConten
 		_intraLock.release()
 		return iframe
 	else:
-		_launch(callbacks, globals, userCallback, headContent)
+		_launch(callbacks, globals, userCallback, headContent, l10n)
 
 def options(options = None):
   if options != None:

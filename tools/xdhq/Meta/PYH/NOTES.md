@@ -68,7 +68,7 @@ provoque l'erreur suivante :
   - `XDHqFaaS.py` ;
   - `Tags` (uniquement `<majeur>.<mineur>`) ;
 - effacer les affichages de sortie des *notebooks* *Jupyter* ;
-- mettre à jour le dépôt *Github*. 
+- mettre à jour le dépôt *Github*.
 
 ### Packaging
 

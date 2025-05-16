@@ -300,12 +300,7 @@ class Device_:
     return result
 
 def getDemoDevice():
-  device = Device()
-
-  if device.connect(token = ONE_DEVICE_VTOKEN, errorAsException = False):
-    return device
-  else:
-    return None 
+  return None
 
 def getWebFileContent(url):
   parsedURL = urllib.parse.urlparse(url)

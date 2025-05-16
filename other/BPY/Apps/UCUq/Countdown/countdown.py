@@ -10,68 +10,68 @@ L_EN = 1
 
 LANGUAGE = None
 
-L10N = (
+ATK_L10N = (
   (
-    "Tirage en cours…",
-    "Drawing in progress…"
+    "en",
+    "fr"
   ),
   (
-    "À vous de jouer !",
-    "It's up to you!"
+    "Drawing in progress…",
+    "Tirage en cours…"
   ),
   (
-    "Un seul maître de jeu autorisé !",
-    "Only one game master allowed!"
+    "It's up to you!",
+    "À vous de jouer !"
   ),
   (
-    "Il y a déjà deux joueurs…",
-    "There are already two players…"
+    "Only one game master allowed!",
+    "Un seul maître de jeu autorisé !"
   ),
   (
-    "En attente du second joueur…",
-    "Waiting for the second player…"
-  ),
-  # 5
-  (
-    "Temps écoulé !",
-    "Time elapsed!"
+    "There are already two players…",
+    "Il y a déjà deux joueurs…"
   ),
   (
-    "Bien joué !",
-    "Well done!"
+    "Waiting for the second player…",
+    "En attente du second joueur…"
   ),
   (
-    "Trop lent !",
-    "Too slow!"
+    "Time elapsed!",
+    "Temps écoulé !"
   ),
   (
-    "En attente du tirage...",
-    "Waiting for the drawing..."
+    "Well done!",
+    "Bien joué !"
   ),
   (
-    "Nouveau",
-    "New"
-  ),
-  # 10
-  (
-    "Cliquez sur '{new}'.",
-    "Click on '{new}'."
+    "Too slow!",
+    "Trop lent !"
   ),
   (
-    "À scanner par le second joueur…",
-    "To be scanned by second player…"
+    "Waiting for the drawing...",
+    "En attente du tirage..."
   ),
   (
-    "En attente du   second joueur...",
-    "Waiting for the second player..."
+    "New",
+    "Nouveau"
   ),
   (
-    "En attente du   tirage...       ",
-    "Waiting for the drawing...      "
+    "Click on '{new}'.",
+    "Cliquez sur '{new}'."
+  ),
+  (
+    "To be scanned by second player…",
+    "À scanner par le second joueur…"
+  ),
+  (
+    "Waiting for the second player...",
+    "En attente du   second joueur..."
+  ),
+  (
+    "Waiting for the drawing...      ",
+    "En attente du   tirage...       "
   )
 )
-
-getL10N = lambda lang, m, *args, **kwargs: L10N[m][lang].format(*args, **kwargs)
 
 DIGITS = (
   "708898A8C88870",
@@ -151,16 +151,110 @@ W_CALCULATIONS = "Calculations"
 S_HIDE_QR_CODE = "HideQRCode"
 S_HIDE_NEW_BUTTON = "HideNewButton"
 
-cOLED = None
-cLCD = None
-cRing = None
-cRingCount = 0
-cRingLimiter = 0
-cRingOffset = 0
+hw = None
 cards = []
 players = 0 # Amount of players.
 toFind = 0
 winner = 0 # if != 0, the role of the player which wins.
+
+class HW():
+  def __init__(self, hwDesc):
+    self.oled = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware
+    (hwDesc, "OLED", ("SDA", "SCL", "Soft"))))
+    self.lcd = ucuq.HD44780_I2C(ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ("SDA", "SCL", "Soft"))), 2, 16).backlightOff()
+    pin, self.ringCount, self.ringLimiter, self.ringOffset = ucuq.getHardware(hwDesc, "Ring", ("Pin", "Count", "Limiter", "Offset"))
+    self.ring = ucuq.WS2812(pin, self.ringCount).fill((0,0,0)).write()
+    ucuq.addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled.getObject(),lcd=self.lcd.getObject()))
+
+  def reset(self):
+    self.oled.fill(0).show()
+    self.ring.fill((0,0,0)).write()
+    self.lcd.clear()
+    
+  def oledDisplayDigit_(self, n, offset):
+    self.oled.draw(DIGITS[n], 8, offset, mul=6)
+
+  def oledDisplayNumber(self, n):
+    self.oled.fill(0)
+
+    if n >= 100:
+      self.oledDisplayDigit_(n // 100, 8)
+
+    if n >= 10:
+      self.oledDisplayDigit_(n // 10 % 10, 48)
+
+    self.oledDisplayDigit_(n % 10, 88)
+
+    self.oled.show()
+
+  def ringDisplayCounter(self, v):
+    if v < 1:
+      limit = round(0.5 + self.ringCount * v)
+
+      for l in range(self.ringCount):
+        colorCore = int(self.ringLimiter * (l / self.ringCount))
+        color = (colorCore, 0, self.ringLimiter - colorCore)
+        self.ring.setValue((l + self.ringOffset) % self.ringCount, color if l < limit else (0,0,0))
+    else:
+      self.ring.fill((self.ringLimiter, 0, 0))
+
+    self.ring.write()
+
+  def oledJauge(self, v): # v: 0 <= v <= 1
+    l = int(126*v)
+    self.oled.rect(0,50,127,13,0).rect(0, 50, l, 13, 1).rect(l, 50, 127-l, 13, 1, False).show()
+
+  async def counterAwait(self, winner):
+    ucuq.addCommand("elapsed = 0\nstop = False\nasyncio.create_task(counter_())")
+    elapsed = 0
+
+    while not winner() and elapsed <= DELAY:
+      self.ringDisplayCounter(elapsed / DELAY)
+      elapsed = await ucuq.commitAwait("elapsed") / 1000
+
+    if winner():
+      ucuq.addCommand("stop = True")
+
+    ucuq.addCommand(f"jauge({self.oled.getObject()}, 0)")
+
+    if not winner():
+      self.ringDisplayCounter(1)
+      atlastk.broadcastAction(atkBElapsed)
+    else:
+      self.ring.fill([0,0,self.ringLimiter]).write()
+
+  def lcdDisplayCards(self, cards, center = True):
+    text = ""
+
+    for c in cards[4:]:
+      text += " " + str(c)
+
+    text = text[1:]
+
+    if center:
+      text = text.center(16)
+    else:
+      text = text.ljust(16)
+
+    self.lcd.moveTo(0,0).putString(text)
+
+  def oledClear(self):
+    self.oled.fill(0).show()
+
+  def lcdPutString(self, x, y, text):
+    self.lcd.moveTo(x,y).putString(text).backlightOn()
+
+  def ringSetRing(self, index, colors):
+    self.ring.setValue((index + self.ringOffset) % self.ringCount, tuple(int(color * self.ringLimiter) for color in colors))
+
+  def ringWrite(self):
+    self.ring.write()
+
+  def ringFading(self, index, colors):
+    for l in range(self.ringCount):
+      self.ringSetRing(l + index, tuple(color * l / ( self.ringCount -1 ) for color in colors))
+    self.ringWrite()
+
 
 class Player:
   def __init__(self):
@@ -176,104 +270,22 @@ class Player:
 
 
 async def setHardwareAwait(language, dom):
-  global cOLED, cLCD,cRing, cRingCount, cRingLimiter, cRingOffset
+  global hw
 
-  body = BODY.format(new=getL10N(language, 9), qrcode=getL10N(language, 11))
+  body = BODY.format(**dom.getL10n(new=10, qrcode=12))
 
   if UCUq:
-    infos = await  ucuq.ATKConnectAwait(dom, body)
-
-    hardware = ucuq.getKitHardware(infos)
-
-    cOLED = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware
-    (hardware, "OLED", ("SDA", "SCL", "Soft"))))
-    cLCD = ucuq.HD44780_I2C(ucuq.I2C(*ucuq.getHardware(hardware, "LCD", ("SDA", "SCL", "Soft"))), 2, 16).backlightOff()
-    pin, cRingCount, cRingLimiter, cRingOffset = ucuq.getHardware(hardware, "Ring", ("Pin", "Count", "Limiter", "Offset"))
-    cRing = ucuq.WS2812(pin, cRingCount).fill((0,0,0)).write()
-    ucuq.addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=cOLED.getObject(),lcd=cLCD.getObject()))
+    if hw == None:
+      infos = await ucuq.ATKConnectAwait(dom, body)
+      hardware = ucuq.getKitHardware(infos)
+      hw = HW(hardware)
 
     return True
   else:
-    cOLED = cLCD = cRing = ucuq.Nothing()
+    hw = ucuq.Nothing()
     await dom.inner("", body)
 
     return False
-
-
-def displayDigit(n,offset):
-  cOLED.draw(DIGITS[n], 8, offset, mul=6)
-
-
-def displayNumber(n):
-  cOLED.fill(0)
-
-  if n >= 100:
-    displayDigit(n // 100, 8)
-
-
-  if n >= 10:
-    displayDigit(n // 10 % 10, 48)
-
-  displayDigit(n % 10, 88)
-
-  cOLED.show()
-  
-
-def jauge(v): # v: 0 <= v <= 1
-  l = int(126*v)
-  cOLED.rect(0,50,127,13,0).rect(0, 50, l, 13, 1).rect(l, 50, 127-l, 13, 1, False).show()
-
-
-def ringCounter(v):
-  if v < 1:
-    limit = round(0.5 + cRingCount * v)
-
-    for l in range(cRingCount):
-      colorCore = int(cRingLimiter * (l / cRingCount))
-      color = (colorCore, 0, cRingLimiter - colorCore)
-      cRing.setValue((l + cRingOffset) % cRingCount, color if l < limit else (0,0,0))
-  else:
-    cRing.fill((cRingLimiter, 0, 0))
-
-  cRing.write()
-
-
-async def counterAwait():
-  ucuq.addCommand("elapsed = 0\nstop = False\nasyncio.create_task(counter_())")
-
-  elapsed = 0
-
-  while not winner and elapsed <= DELAY:
-    ringCounter(elapsed / DELAY)
-    elapsed = await ucuq.commitAwait("elapsed") / 1000
-
-  if winner:
-    ucuq.addCommand("stop = True")
-
-  ucuq.addCommand(f"jauge({cOLED.getObject()}, 0)")
-  
-  if not winner:
-    ringCounter(1)
-    atlastk.broadcastAction(atkBElapsed)
-  else:
-    cRing.fill([0,0,cRingLimiter]).write()
-
-
-def displayCardsOnLCD(cards, center = True):
-  text = ""
-
-  for c in cards[4:]:
-    text += " " + str(c)
-
-  text = text[1:]
-
-  if center:
-    text = text.center(16)
-  else:
-    text = text.ljust(16)
-
-  cLCD.moveTo(0,0).putString(text)
-
 
 async def enable(player, dom, wIds, state = True):
   like = {}
@@ -337,15 +349,15 @@ def displayProgress(player, id):
 
   if int(id) != player.role:
     return
-
-  cLCD.moveTo(7 if player.role == 2 else 0, 1).putString(buildProgress(player))
+  
+  hw.lcdPutString(7 if player.role == 2 else 0, 1,buildProgress(player))
 
 
 async def atkBSecondPlayer(player, dom):
   if player.role == 1:
     await dom.enableElement(S_HIDE_QR_CODE)
     await dom.disableElement(S_HIDE_NEW_BUTTON)
-    await dom.setValue(W_OUTPUT, getL10N(player.language, 10, new=getL10N(player.language, 9)))
+    await dom.setValue(W_OUTPUT, dom.getL10n(11).format(**dom.getL10n(new=10)))
 
 
 async def atkBDrawing(player, dom):
@@ -355,7 +367,7 @@ async def atkBDrawing(player, dom):
 
   await updateUIAwait(player, dom)
 
-  await dom.setValue(W_OUTPUT, getL10N(player.language, 0))
+  await dom.setValue(W_OUTPUT, dom.getL10n(1))
 
 
 async def atkBPlaying(player, dom):
@@ -368,7 +380,7 @@ async def atkBPlaying(player, dom):
 
   displayProgress(player, player.role)
 
-  await dom.setValue(W_OUTPUT, getL10N(player.language, 1))
+  await dom.setValue(W_OUTPUT, dom.getL10n(2))
 
 
 async def atkBDisplayProgress(player, dom, id):
@@ -381,9 +393,7 @@ async def atkBDisplayProgress(player, dom, id):
 
 
 async def atkBElapsed(player, dom):
-  cLCD.moveTo(0 if player.role == 1 else 7, 1)
-
-  cLCD.putString((
+  hw.lcdPutString(0 if player.role == 1 else 7, 1,(
       ( "> " if player.role == winner else "" )
       + str(evalCalc(player.cards, player.calcs[-1]) if len(player.calcs) else "/") )
     .center(6))
@@ -393,21 +403,21 @@ async def atkBElapsed(player, dom):
   await updateUIAwait(player, dom)
 
   if winner == 0:
-    await dom.setValue(W_OUTPUT, getL10N(player.language, 5))
+    await dom.setValue(W_OUTPUT, dom.getL10n(6))
   elif player.role == winner:
-    await dom.setValue(W_OUTPUT, getL10N(player.language, 6))
+    await dom.setValue(W_OUTPUT, dom.getL10n(7))
   else:
-    await dom.setValue(W_OUTPUT, getL10N(player.language, 7))
+    await dom.setValue(W_OUTPUT, dom.getL10n(8))
 
   if player.role == 1:
     await dom.disableElement(S_HIDE_NEW_BUTTON)
 
 
 
-# BEGIN_PYH
+# BEGIN PYH
 import urllib
 encode = lambda t: urllib.parse.quote(t)
-# END_PYH
+# END PYH
 # BEGIN BRY
 import browser
 encode = lambda t: browser.window.encodeURIComponent(t)
@@ -423,24 +433,23 @@ async def atk(player, dom, id):
 
   if id == "Partner":
     if players >= 2:
-      await dom.alert(getL10N(player.language, 2))
+      await dom.alert(dom.getL10n(3))
       return
     
     await dom.inner("", BODY)
     
     players = player.role = 2
 
-    await dom.setValue(W_OUTPUT, getL10N(player.language, 8))
+    await dom.setValue(W_OUTPUT, dom.getL10n(9))
 
     atlastk.broadcastAction(atkBSecondPlayer)
-    cLCD.moveTo(0,0).putString(getL10N(player.language, 13))
+    hw.lcdPutString(0,0,dom.getL10n(14))
   else:
     if players != 0:
-      await dom.alert(getL10N(player.language, 3))
+      await dom.alert(dom.getL10n(4))
       return
     
-    if not await setHardwareAwait(player.language, dom):
-      await dom.inner("", BODY)
+    await setHardwareAwait(player.language, dom)
     
     players = player.role = 1
 
@@ -450,8 +459,8 @@ async def atk(player, dom, id):
 
     await dom.disableElement(S_HIDE_QR_CODE)
 
-    await dom.setValue(W_OUTPUT, getL10N(player.language, 4))
-    cLCD.moveTo(0,0).putString(getL10N(player.language, 12)).backlightOn()
+    await dom.setValue(W_OUTPUT, dom.getL10n(5))
+    hw.lcdPutString(0,0,dom.getL10n(13))
 
   await updateUIAwait(player, dom)
 
@@ -469,9 +478,7 @@ async def atkNew(player, dom):
   bigs = list(BIGS)
   littles = list(LITTLES)
 
-  cOLED.fill(0).show()
-  cRing.fill((0,0,0)).write()
-  cLCD.moveTo(0,1).putString("".ljust(16))
+  hw.reset()
 
   while ( len(bigs) > 2 or len(littles) > 16 ):
     changed = True
@@ -483,10 +490,10 @@ async def atkNew(player, dom):
       changed = False
 
     if changed:
-      displayCardsOnLCD(cards, False)
-      cOLED.fill(0).show()
+      hw.lcdDisplayCards(cards, False)
+      hw.oledClear()
       ucuq.sleep(0.1)
-      displayNumber(cards[-1])
+      hw.oledDisplayNumber(cards[-1])
       if PROD:
         ucuq.sleep(1)
 
@@ -494,37 +501,36 @@ async def atkNew(player, dom):
 
   cards = cards[:4] + sorted(cards[4:])
 
-  cLCD.moveTo(0,0).putString("".center(16))
+  hw.lcdPutString(0,0,"".center(16))
 
   if PROD:
     ucuq.sleep(0.5)
 
-  displayCardsOnLCD(cards)
+  hw.lcdDisplayCards(cards)
 
   if PROD:
     ucuq.sleepAwait(8)
 
   for c in range( 50 if PROD else 0):
-    displayNumber(random.randint(101,999))
-    for l in range(cRingCount):
-      cRing.setValue((l + c) % cRingCount, (0, 0, l * cRingLimiter // (cRingCount - 1)))
-    cRing.write()
+    hw.oledDisplayNumber(random.randint(101,999))
+    hw.ringFading(c, (1,0,1))
 
   if PROD and not CHEAT:
     toFind = random.randint(101,999)
   
-  displayNumber(toFind)
+  hw.oledDisplayNumber(toFind)
 
   winner = 0
 
   atlastk.broadcastAction(atkBPlaying)
 
 # BEGIN PYH
-  threading.Thread(target=counterAwait).start()
+  threading.Thread(target=hw.counterAwait, args=(lambda: winner != 0,)).start()
 # END PYH
 
 # BEGIN BRY
-  aio.run(counterAwait())
+  aio.run(await hw.counterAwait(lambda: winner != 0)
+())
 # END BRY
 
 

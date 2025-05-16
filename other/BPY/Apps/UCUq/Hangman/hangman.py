@@ -12,35 +12,36 @@ L_EN = 1
 
 LANGUAGE = None
 
-L10N = (
+ATK_L10N = (
   (
-    "Vous êtes à court d'essais !",
+    "en",
+    "fr"
+  ),
+  (
     "You've run out of guesses!",
+    "Vous êtes à court d'essais !",
   ),
   (
+    "You had {errors} errors and {correct} correct guesses.",
     "Vous avez fait {errors} erreurs et trouvé {correct} bonnes lettres.",
-    "You had {errors} errors and {correct} correct guesses."
   ),
   (
+    "The world was '{}'.",
     "Le mot était '{}'.",
-    "The world was '{}'."
   ),
   (
+    "Congratulations!",
     "Bravo !",
-    "Congratulations!"
   ),
   (
+    "You've won! Congratulations!",
     "Vous avez gagné ! Félicitations !",
-    "You've won! Congratulations!"
   ),
-  # 5
   (
+    "Restart",
     "Recommencer",
-    "Restart"
   )
 )
-
-getL10N = lambda m, *args, **kwargs: L10N[m][language].format(*args, **kwargs)
 
 DICTIONARY_EN = (
   "apple", "banana", "grape", "orange", "mango", "peach", "pineapple", "strawberry",
@@ -182,7 +183,7 @@ async def showWord(dom, secretWord, correctGuesses):
 
 async def reset(core, dom):
   core.reset()
-  await dom.inner("", BODY.format(restart=getL10N(5)))
+  await dom.inner("", BODY.format(**dom.getL10n(restart=6)))
   core.secretWord = randword(DICTIONNARIES[language])
   print(core.secretWord)
   cOLED.fill(0).draw(START_PATTERN, 48, ox=47).show()
@@ -227,13 +228,13 @@ async def atkSubmit(core, dom, id):
     await showWord(dom, core.secretWord, core.correctGuesses)
 
     if correct == len(core.secretWord):
-      cLCD.moveTo(0,1).putString(getL10N(3))
+      cLCD.moveTo(0,1).putString(dom.getL10n(4))
       cOLED.draw(HAPPY_PATTERN, 16, mul=4, ox=32).show()
       for _ in range(3):
         for l in range(ringCount):
           cRing.setValue(patchRingIndex(l),tuple(map(lambda _: randint(0,ringLimiter // 3), range(3)))).write()
           ucuq.sleep(0.075)
-      await dom.alert(getL10N(4))
+      await dom.alert(dom.getL10n(5))
       await reset(core, dom)
       return
   else:
@@ -248,13 +249,13 @@ async def atkSubmit(core, dom, id):
   if core.errors >= len(HANGED_MAN):
     await dom.removeClass("Face", "hidden")
     await showWord(dom, core.secretWord, core.secretWord)
-    await dom.alert(f"{getL10N(0)}\n{getL10N(1, errors=core.errors, correct=len(core.correctGuesses))}\n\n{getL10N(2,core.secretWord)}")
+    await dom.alert(f"{dom.getL10n(1)}\n{dom.getL10n(2).format(errors=core.errors, correct=len(core.correctGuesses))}\n\n{dom.getL10n(2).format(core.secretWord)}")
     await reset(core, dom)
 
 
 async def atkRestart(core, dom):
   if (core.secretWord != "" ):
-    await dom.alert(f"{getL10N(1, errors=core.errors, correct=len(core.correctGuesses))}\n\n{getL10N(2,core.secretWord)}")
+    await dom.alert(f"{dom.getL10n(2).format( errors=core.errors, correct=len(core.correctGuesses))}\n\n{dom.getL10n(3).format(core.secretWord)}")
 
   await reset(core, dom)
 
