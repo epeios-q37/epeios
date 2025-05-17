@@ -1,4 +1,4 @@
-import zlib, base64, time
+import zlib, base64, time, uuid
 
 ITEMS_ = "i_"
 
@@ -10,17 +10,23 @@ K_DEVICE_ID = "Id"
 ONE_DEVICE_VTOKEN = "%ONE_DEVICE_VTOKEN%"
 ALL_DEVICES_VTOKEN = "%ALL_DEVICES_VTOKEN%"
 
-uuid_ = 0
+FLASH_DELAY_ = 0
+
+objectCounter_ = 0
 device_ = None
 
 unpack_ = lambda data : zlib.decompress(base64.b64decode(data)).decode()
 
-def GetUUID_():
-  global uuid_
+def getObjectIndice_():
+  global objectCounter_
 
-  uuid_ += 1
+  objectCounter_ += 1
 
-  return uuid_
+  return objectCounter_
+
+
+def getObject_(id):
+  return f"{ITEMS_}[{id}]"
 
 
 def displayMissingConfigMessage_():
@@ -136,15 +142,34 @@ def testCommit_(commit, behavior = None):
   else:
     return commit
 
+  
+def sleepStart():
+  return getDevice_().sleepStart()
+
+
+def sleepWait(id, secs):
+  return getDevice_().sleepWait(id, secs)
+
+  
+def sleep(secs):
+  return getDevice_().sleep(secs)
+
+
 class Device(Device_):
   def __init__(self, *, id = None, token = None, callback = None):
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
-    self.commands_ = []
+    self.commands_ = ["""
+def sleepWait(start, us):
+  elapsed = time.ticks_us() - start
+  
+  if elapsed < us:
+    time.sleep_us(int(us - elapsed))
+"""]
     self.commitBehavior = None
 
     super().__init__(id=id, token=token, callback=callback)
-  
+
   def __del__(self):
     self.commit()
 
@@ -170,8 +195,18 @@ class Device(Device_):
 
     return self
 
+  def sleepStart(self):
+    id = getObjectIndice_()
+
+    self.addCommand(f"{getObject_(id)} = time.ticks_us()")
+
+    return id
+  
+  def sleepWait(self, id, secs):
+    self.addCommand(f"sleepWait({getObject_(id)}, {secs * 1000000})")
+  
   def sleep(self, secs):
-    self.addCommand(f"time.sleep({secs})")
+    self.addCommand(f"time.sleep_us({int(secs * 1000000)})")
 
 
 async def getBaseInfosAwait_(device = None):
@@ -366,12 +401,27 @@ def addCommand(command, commit = False, /,device = None):
   getDevice_(device).addCommand(command, commit)
 
 
-# does absolutely nothing whichever method is called.
-# 'if Nothing()' returns 'False'.
+# does absolutely nothing whichever method is called but returns 'self'.
+# for the handling of the 'extra' parameter in the init method, which handles extra initialisation.
 class Nothing:
   def __getattr__(self, name):
     def doNothing(*args, **kwargs):
       return self
+    return doNothing
+  
+  def __bool__(self):
+    return False
+  
+
+# does absolutely nothing whichever method is called.
+# 'if Nothing()' returns 'False'.
+class Nothing_:
+  def __init__(self, object):
+    self.object = object
+
+  def __getattr__(self, name):
+    def doNothing(*args, **kwargs):
+      return self.object
     return doNothing
   
   def __bool__(self):
@@ -393,8 +443,8 @@ class Core_:
   def getId(self):
     return self.id
   
-  def init(self, modules, instanciation, device,*,before=""):
-    self.id = GetUUID_()
+  def init(self, modules, instanciation, device, extra, *, before=""):
+    self.id = getObjectIndice_()
 
     if self.device_:
         if device and device != self.device_:
@@ -411,8 +461,10 @@ class Core_:
     if instanciation:
       self.addCommand(f"{self.getObject()} = {instanciation}")
 
+    return self if extra else Nothing_(self)
+
   def getObject(self):
-    return f"{ITEMS_}[{self.id}]"
+    return getObject_(self.id)
 
   def addCommand(self, command):
     self.device_.addCommand(command)
@@ -427,16 +479,16 @@ class Core_:
                          
 
 class GPIO(Core_):
-  def __init__(self, pin = None, device = None):
+  def __init__(self, pin = None, device = None, extra = True):
     super().__init__(device)
 
     if pin:
-      self.init(pin, device)
+      self.init(pin, device, extra)
 
-  def init(self, pin, device = None):
+  def init(self, pin, device = None, extra = True):
     self.pin = f'"{pin}"' if isinstance(pin,str) else pin
 
-    super().init("GPIO-1", f"GPIO({self.pin})", device)
+    super().init("GPIO-1", f"GPIO({self.pin})", device, extra)
 
   def high(self, value = True):
     return self.addMethods(f"high({value})")
@@ -446,17 +498,17 @@ class GPIO(Core_):
 
 
 class WS2812(Core_):
-  def __init__(self, pin = None, n = None, device = None):
+  def __init__(self, pin = None, n = None, device = None, extra = True):
     super().__init__(device)
 
     if (pin == None) != (n == None):
       raise Exception("Both or none of 'pin'/'n' must be given")
 
     if pin != None:
-      self.init(pin, n)
+      self.init(pin, n, device = device, extra = extra)
 
-  def init(self, pin, n, device = None):
-    super().init("WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device)
+  def init(self, pin, n, device = None, extra = True):
+    super().init("WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device, extra).flash()
 
   async def lenAwait(self):
     return int(await self.callMethodAwait("__len__()"))
@@ -478,6 +530,11 @@ class WS2812(Core_):
     self.addMethods(f"write()")
     return self
   
+  def flash(self):
+    self.fill((255, 255, 255)).write()
+    self.getDevice().sleep(FLASH_DELAY_)
+    return self.fill((0, 0, 0)).write()
+  
 
 class I2C_Core_(Core_):
   def __init__(self, sda = None, scl = None, soft = None, *, device = None):
@@ -493,11 +550,11 @@ class I2C_Core_(Core_):
 
 
 class I2C(I2C_Core_):
-  def init(self, sda, scl, soft = None, *, device = None):
+  def init(self, sda, scl, soft = None, *, device = None, extra = True):
     if soft == None:
       soft = False
 
-    super().init("I2C-1", f"machine.{'Soft' if soft else ''}I2C({'0,' if not soft else ''} sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device = device)
+    super().init("I2C-1", f"machine.{'Soft' if soft else ''}I2C({'0,' if not soft else ''} sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device = device, extra = extra)
 
 
 class SoftI2C(I2C):
@@ -509,17 +566,19 @@ class SoftI2C(I2C):
 
 
 class HT16K33(Core_):
-  def __init__(self, i2c = None, /, addr = None):
+  def __init__(self, i2c = None, /, addr = None, extra = True):
     super().__init__()
 
     if i2c:
-      self.init(i2c)
+      self.init(i2c, addr = addr, extra = extra)
 
-  def init(self, i2c, addr = None):
-    super().init("HT16K33-1", f"HT16K33({i2c.getObject()}, {addr})", i2c.getDevice())
-
-    return self.addMethods(f"set_brightness(0)")
-
+  def init(self, i2c, addr = None, extra = True):
+    return super().init("HT16K33-1", f"HT16K33({i2c.getObject()}, {addr})", i2c.getDevice(), extra).setBrightness(15).flash().setBrightness(0)
+  
+  def flash(self):
+    self.draw("ffffffffffffffffffffffffffffffff")
+    self.getDevice().sleep(FLASH_DELAY_)
+    return self.draw("")
 
   def setBlinkRate(self, rate):
     return self.addMethods(f"set_blink_rate({rate})")
@@ -552,16 +611,16 @@ def getParam(label, value):
 
 
 class PWM(Core_):
-  def __init__(self, pin = None, *, freq = None, ns = None, u16 = None, device = None):
+  def __init__(self, pin = None, *, freq = None, ns = None, u16 = None, device = None, extra = True):
     super().__init__(device)
 
     if pin != None:
-      self.init(pin, freq = freq, u16 = u16, ns = ns, device = device)
+      self.init(pin, freq = freq, u16 = u16, ns = ns, device = device, extra = extra)
 
 
-  def init(self, pin, *, freq = None, u16 = None, ns = None, device = None):
+  def init(self, pin, *, freq = None, u16 = None, ns = None, device = None, extra = True):
     command = f"machine.PWM(machine.Pin({pin}, machine.Pin.OUT){getParam('freq', freq)}{getParam('duty_u16', u16)}{getParam('duty_ns', ns)})"
-    super().init("PWM-1", command, device, before=f"{command}.deinit()")
+    super().init("PWM-1", command, device, extra, before=f"{command}.deinit()")
 
 
   async def getU16Await(self):
@@ -680,16 +739,16 @@ class PWM_PCA9685(Core_):
   
 
 class HD44780_I2C(Core_):
-  def __init__(self, i2c, num_lines, num_columns,/,addr = None):
+  def __init__(self, num_columns, num_lines, i2c, /, addr = None, extra  = True):
     super().__init__()
 
     if i2c:
-      self.init(i2c, num_lines, num_columns, addr = addr)
+      self.init(num_columns, num_lines, i2c, addr = addr, extra = extra)
     elif addr != None:
       raise Exception("addr can not be given without i2c!")
 
-  def init(self, i2c, num_lines, num_columns, addr = None):
-    return super().init("HD44780_I2C-1", f"HD44780_I2C({i2c.getObject()},{num_lines},{num_columns},{addr})", i2c.getDevice())
+  def init(self, num_columns, num_lines, i2c, addr = None, extra = True):
+    return super().init("HD44780_I2C-1", f"HD44780_I2C({i2c.getObject()},{num_lines},{num_columns},{addr})", i2c.getDevice(), extra).flash()
 
   def moveTo(self, x, y):
     return self.addMethods(f"move_to({x},{y})")
@@ -723,6 +782,11 @@ class HD44780_I2C(Core_):
 
   def backlightOff(self):
     return self.backlightOn(False)
+  
+  def flash(self):
+    self.backlightOn()
+    self.getDevice().sleep(FLASH_DELAY_)
+    return self.backlightOff()
 
   
 
@@ -850,6 +914,11 @@ class OLED_(Core_):
     if width % 4:
       raise Exception("'width' must be a multiple of 4!")
     return self.addMethods(f"draw('{pattern}',{width},{ox},{oy},{mul})")
+  
+  def flash(self):
+    self.fill(1).show()
+    self.getDevice().sleep(FLASH_DELAY_)
+    return self.fill(0).show()
 
 
 class SSD1306(OLED_):
@@ -858,36 +927,36 @@ class SSD1306(OLED_):
   
 
 class SSD1306_I2C(SSD1306):
-  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False):
+  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False, extra = True):
     super().__init__()
 
     if bool(width) != bool(height) != bool(i2c):
       raise Exception("All or none of width/height/i2c must be given!")
     elif width:
-      self.init(width, height, i2c, external_vcc = external_vcc, addr= addr)
+      self.init(width, height, i2c, external_vcc = external_vcc, addr= addr, extra = True)
     elif addr:
       raise Exception("addr can not be given without i2c!")
       
-  def init(self, width, height, i2c, /, external_vcc = False, addr = None):
-    super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice())
+  def init(self, width, height, i2c, /, external_vcc = False, addr = None, extra = True):
+    super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice(), extra).flash()
 
 
 class SH1106(OLED_):
   pass
 
 class SH1106_I2C(SH1106):
-  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False):
+  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False, extra = True):
     super().__init__()
 
     if bool(width) != bool(height) != bool(i2c):
       raise Exception("All or none of width/height/i2c must be given!")
     elif width:
-      self.init(width, height, i2c, external_vcc = external_vcc, addr= addr)
+      self.init(width, height, i2c, external_vcc = external_vcc, addr= addr, extra = extra)
     elif addr:
       raise Exception("addr can not be given without i2c!")
       
-  def init(self, width, height, i2c, /, external_vcc = False, addr = None):
-    super().init(("SH1106-1", "SH1106_I2C-1"), f"SH1106_I2C({width}, {height}, {i2c.getObject()}, addr={addr}, external_vcc={external_vcc})", i2c.getDevice())
+  def init(self, width, height, i2c, /, external_vcc = False, addr = None, extra = True):
+    super().init(("SH1106-1", "SH1106_I2C-1"), f"SH1106_I2C({width}, {height}, {i2c.getObject()}, addr={addr}, external_vcc={external_vcc})", i2c.getDevice(), extra)
 
 
 

@@ -6,8 +6,6 @@ import atlastk
 L_FR = 0
 L_EN = 1
 
-LANGUAGE = None
-
 ATK_L10N = (
   (
     "en",
@@ -189,10 +187,6 @@ async def updateUI(dom):
 
 
 async def atk(dom):
-  global language
-
-  language = LANGUAGE if LANGUAGE != None else L_FR if dom.language.startswith("fr") else L_EN
-
   await dom.inner("", BODY.format(**dom.getL10n(proxy=1, save=2, delete=3, hint=4)))
 
 # BEGIN PYH

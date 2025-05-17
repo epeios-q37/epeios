@@ -6,7 +6,7 @@ python.pythonGenerator.forBlock['hd44780_init'] = function (block, generator) {
   const value_cols = generator.valueToCode(block, 'COLS', python.Order.ATOMIC);
   const value_rows = generator.valueToCode(block, 'ROWS', python.Order.ATOMIC);
 
-  const code = `${string2Id(text_label)} = ucuq.HD44780_I2C(ucuq.I2C(${value_sda},${value_scl},soft=${value_soft}),${value_rows},${value_cols})\n`;
+  const code = `${string2Id(text_label)} = ucuq.HD44780_I2C(${value_cols},${value_rows},ucuq.I2C(${value_sda},${value_scl},soft=${value_soft})).backlightOn()\n`;
 
   return code;
 }

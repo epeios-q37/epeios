@@ -110,7 +110,7 @@ def turnOnLCD(hardware):
     sda = hardware["SDA"]
     scl = hardware["SCL"]
 
-    lcd = ucuq.HD44780_I2C(ucuq.I2C(sda, scl, soft=soft), 2, 16).backlightOn()
+    lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(sda, scl, soft=soft)).backlightOn()
   else:
     lcd = ucuq.Nothing()
 

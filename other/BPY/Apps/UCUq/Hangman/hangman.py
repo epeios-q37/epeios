@@ -149,10 +149,6 @@ def patchRingIndex(index):
 
 
 async def showHanged(dom, errors):
-  if (errors):
-    cOLED.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
-    await dom.removeClass(HANGED_MAN[errors-1], "hidden")
-
   for e in range(errors+1):
     for l in COUNTER_LEDS[isWokwi()][e-1]:
       cRing.setValue(patchRingIndex(l), [ringLimiter, 0, 0])
@@ -165,6 +161,10 @@ async def showHanged(dom, errors):
     cRing.setValue(patchRingIndex(l), [ringLimiter * errors // 6, 0, ringLimiter * ( 6 - errors ) // 6])
 
   cRing.write()
+
+  if (errors):
+    cOLED.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
+    await dom.removeClass(HANGED_MAN[errors-1], "hidden")
 
 
 async def showWord(dom, secretWord, correctGuesses):
@@ -201,11 +201,12 @@ async def atk(core, dom):
   infos = await ucuq.ATKConnectAwait(dom, "")
   hardware = ucuq.getKitHardware(infos)
 
-  cLCD = ucuq.HD44780_I2C(ucuq.I2C(*ucuq.getHardware(hardware, "LCD", ["SDA", "SCL", "Soft"])), 2, 16)
+  cLCD = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hardware, "LCD", ["SDA", "SCL", "Soft"])))
   cOLED =  ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hardware, "OLED", ["SDA", "SCL", "Soft"])))
   cBuzzer = ucuq.PWM(*ucuq.getHardware(hardware, "Buzzer", ["Pin"]), freq=50, u16 = 0).setNS(0)
   pin, ringCount, ringOffset, ringLimiter = ucuq.getHardware(hardware, "Ring", ["Pin", "Count", "Offset", "Limiter"])
   cRing = ucuq.WS2812(pin, ringCount)
+  cLCD.backlightOn()
 
   await reset(core,dom)
 
@@ -239,17 +240,18 @@ async def atkSubmit(core, dom, id):
       return
   else:
     core.errors += 1
-    await showHanged(dom, core.errors)
-    cLCD.moveTo(0,1).putString(normalize(''.join([char for char in core.chosen if char not in core.correctGuesses])))
     cBuzzer.setFreq(30).setU16(50000)
-    ucuq.sleep(0.5)
+    id = ucuq.sleepStart()
+    cLCD.moveTo(0,1).putString(normalize(''.join([char for char in core.chosen if char not in core.correctGuesses])))
+    await showHanged(dom, core.errors)
+    ucuq.sleepWait(id, 0.5)
     cBuzzer.setU16(0)
 
   
   if core.errors >= len(HANGED_MAN):
     await dom.removeClass("Face", "hidden")
     await showWord(dom, core.secretWord, core.secretWord)
-    await dom.alert(f"{dom.getL10n(1)}\n{dom.getL10n(2).format(errors=core.errors, correct=len(core.correctGuesses))}\n\n{dom.getL10n(2).format(core.secretWord)}")
+    await dom.alert(f"{dom.getL10n(1)}\n{dom.getL10n(2).format(errors=core.errors, correct=len(core.correctGuesses))}\n\n{dom.getL10n(3).format(core.secretWord)}")
     await reset(core, dom)
 
 

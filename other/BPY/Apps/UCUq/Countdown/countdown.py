@@ -8,8 +8,6 @@ from browser import aio
 L_FR = 0
 L_EN = 1
 
-LANGUAGE = None
-
 ATK_L10N = (
   (
     "en",
@@ -119,7 +117,6 @@ async def counter_():
     {aw} asyncio.sleep(0)
 """
 
-
 PROD = True
 UCUq = True
 CHEAT = True
@@ -131,12 +128,12 @@ else:
 
 # Calculation states
 CS_NONE = 0
-CS_V1 = 1
-CS_O = 2
-CS_V2 = 3
+CS_VALUE_1 = 1
+CS_OPERATOR = 2
+CS_VALUE_2 = 3
 
-BIGS = (25, 50, 75, 100)
-LITTLES = tuple( x for x in range(1, 11) for _ in range(2))
+BIG_CARDS = (25, 50, 75, 100)
+LITTLE_CARDS = tuple( x for x in range(1, 11) for _ in range(2))
 
 OPERATOR_CARDS=("+", "-", "×", "÷")
 TRUE_OPERATORS = ("+", "-", "*", "//")
@@ -159,12 +156,12 @@ winner = 0 # if != 0, the role of the player which wins.
 
 class HW():
   def __init__(self, hwDesc):
-    self.oled = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware
-    (hwDesc, "OLED", ("SDA", "SCL", "Soft"))))
-    self.lcd = ucuq.HD44780_I2C(ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ("SDA", "SCL", "Soft"))), 2, 16).backlightOff()
+    self.oled = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ("SDA", "SCL", "Soft"))))
+    self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ("SDA", "SCL", "Soft"))))
     pin, self.ringCount, self.ringLimiter, self.ringOffset = ucuq.getHardware(hwDesc, "Ring", ("Pin", "Count", "Limiter", "Offset"))
-    self.ring = ucuq.WS2812(pin, self.ringCount).fill((0,0,0)).write()
+    self.ring = ucuq.WS2812(pin, self.ringCount)
     ucuq.addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled.getObject(),lcd=self.lcd.getObject()))
+    self.reset()
 
   def reset(self):
     self.oled.fill(0).show()
@@ -269,7 +266,7 @@ class Player:
     self.calc = [None, None, None]
 
 
-async def setHardwareAwait(language, dom):
+async def setHardwareAwait(dom):
   global hw
 
   body = BODY.format(**dom.getL10n(new=10, qrcode=12))
@@ -320,7 +317,7 @@ def buildCalcs(player):
     html += buildCalc(i, player.cards, c, 10 + i not in player.usedCards and player.calcState != CS_NONE)
 
   if len(cards) >= 10:
-    html += buildCalc(len(player.calcs), player.cards, player.calc, player.calcState not in (CS_V1, CS_NONE))
+    html += buildCalc(len(player.calcs), player.cards, player.calc, player.calcState not in (CS_VALUE_1, CS_NONE))
 
   return html + "</tr>"
 
@@ -330,9 +327,9 @@ async def updateUIAwait(player, dom):
 
   if player.calcState == CS_NONE:
     await enable(player, dom, ())
-  elif player.calcState in (CS_V1, CS_V2):
+  elif player.calcState in (CS_VALUE_1, CS_VALUE_2):
     await enable(player, dom, list(W_OPERATORS) + player.usedCards + [len(player.calcs) + 10], False)
-  elif player.calcState == CS_O:
+  elif player.calcState == CS_OPERATOR:
     await enable(player, dom, W_OPERATORS)
   else:
     raise Exception("Unknown state")
@@ -372,7 +369,7 @@ async def atkBDrawing(player, dom):
 
 async def atkBPlaying(player, dom):
   player.cards = list(cards)
-  player.calcState = CS_V1
+  player.calcState = CS_VALUE_1
 
   await dom.setValues({i + 4: valeur for i, valeur in enumerate(cards[4:])})
 
@@ -427,8 +424,6 @@ encode = lambda t: browser.window.encodeURIComponent(t)
 async def atk(player, dom, id):
   global players
 
-  player.language = LANGUAGE if LANGUAGE != None else L_FR if dom.language.startswith("fr") else L_EN
-
   assert id == "" or id == "Partner"
 
   if id == "Partner":
@@ -449,7 +444,7 @@ async def atk(player, dom, id):
       await dom.alert(dom.getL10n(4))
       return
     
-    await setHardwareAwait(player.language, dom)
+    await setHardwareAwait(dom)
     
     players = player.role = 1
 
@@ -475,8 +470,8 @@ async def atkNew(player, dom):
 
   atlastk.broadcastAction(atkBDrawing)
 
-  bigs = list(BIGS)
-  littles = list(LITTLES)
+  bigs = list(BIG_CARDS)
+  littles = list(LITTLE_CARDS)
 
   hw.reset()
 
@@ -509,7 +504,7 @@ async def atkNew(player, dom):
   hw.lcdDisplayCards(cards)
 
   if PROD:
-    ucuq.sleepAwait(8)
+    await ucuq.sleepAwait(8)
 
   for c in range( 50 if PROD else 0):
     hw.oledDisplayNumber(random.randint(101,999))
@@ -529,24 +524,23 @@ async def atkNew(player, dom):
 # END PYH
 
 # BEGIN BRY
-  aio.run(await hw.counterAwait(lambda: winner != 0)
-())
+  aio.run(hw.counterAwait(lambda: winner != 0))
 # END BRY
 
 
 async def atkCard(player, dom, id):
   global winner
 
-  if player.calcState not in (CS_V1, CS_V2):
+  if player.calcState not in (CS_VALUE_1, CS_VALUE_2):
     return
 
   id = int(id)
 
-  if player.calcState == CS_V1:
+  if player.calcState == CS_VALUE_1:
     player.usedCards.append(id)
     player.calc[0] = id
-    player.calcState = CS_O
-  elif player.calcState == CS_V2:
+    player.calcState = CS_OPERATOR
+  elif player.calcState == CS_VALUE_2:
     player.usedCards.append(id)
     player.calc[2] = id
     player.calcs.append(player.calc)
@@ -554,7 +548,7 @@ async def atkCard(player, dom, id):
     if result == toFind:
       winner = player.role
     player.calc =  [None, None, None]
-    player.calcState = CS_V1
+    player.calcState = CS_VALUE_1
   else:
     raise Exception("Unexpected state")
   
@@ -567,12 +561,12 @@ async def atkCard(player, dom, id):
 
 
 async def atkOperator(player, dom, id):
-  if player.calcState != CS_O:
+  if player.calcState != CS_OPERATOR:
     return
 
-  if player.calcState == CS_O:
+  if player.calcState == CS_OPERATOR:
     player.calc[1] = int(id)
-    player.calcState = CS_V2
+    player.calcState = CS_VALUE_2
   else:
     raise Exception("Unexpected state")
   
@@ -587,7 +581,7 @@ async def atkDelete(player, dom, id):
   if player.calcState == CS_NONE:
     return
 
-  if id == len(player.calcs) and player.calcState == CS_V1:
+  if id == len(player.calcs) and player.calcState == CS_VALUE_1:
     return
   
   if id in player.usedCards:
@@ -602,7 +596,7 @@ async def atkDelete(player, dom, id):
   else:
     player.usedCards.remove(player.calc[0])
     player.calc = [None, None, None]
-    player.calcState = CS_V1
+    player.calcState = CS_VALUE_1
 
   await updateUIAwait(player, dom)
   

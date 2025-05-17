@@ -188,11 +188,10 @@ def connect_(token, deviceId, errorAsException):
 class Error(Exception):
   pass
 
+
 def commit(expression=""):
   return getDevice_().commit(expression)
 
-def sleep(secs):
-  return getDevice_().sleep(secs)
 
 def displayExitMessage_(Message):
   raise Error(Message)

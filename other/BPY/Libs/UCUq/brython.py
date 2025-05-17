@@ -33,9 +33,6 @@ async def commitAwait(expr):
   return await getDevice_().commitAwait(expr)
 
 
-def sleep(secs):
-  getDevice_().sleep(secs)
-
 class Lock_:
   def __init__(self):
     self.locked_ = False

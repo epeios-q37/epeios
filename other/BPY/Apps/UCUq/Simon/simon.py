@@ -175,7 +175,7 @@ def turnRingOn(hardware):
   ringOffset = hardware["Offset"]
   ringLimiter = hardware["Limiter"]
 
-  cRing = ucuq.WS2812(hardware["Pin"], ringCount).fill([0,0,0]).write()  
+  cRing = ucuq.WS2812(hardware["Pin"], ringCount)
 
 
 def getI2C(hardware):
@@ -192,7 +192,7 @@ def turnLCDOn(hardware):
   if not hardware:
     raise Exception("No LCD!")
   
-  cLCD = ucuq.HD44780_I2C(getI2C(hardware), 2, 16).backlightOff()
+  cLCD = ucuq.HD44780_I2C(16, 2, getI2C(hardware))
 
 
 def turnOLEDOn(hardware):
