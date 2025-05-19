@@ -7,10 +7,10 @@ import atlastk, ucuq
 
 from random import randint
 
+UCUQ = True
+
 L_FR = 0
 L_EN = 1
-
-LANGUAGE = None
 
 ATK_L10N = (
   (
@@ -83,10 +83,21 @@ DICTIONARY_FR = (
   "tendance", "terrain", "concert", "tourisme", "travail", "tribunal", "colifichet"
 )
 
-DICTIONNARIES = (
+DICTIONARIES = (
   DICTIONARY_FR,
   DICTIONARY_EN
 )
+
+BUZZER_SCRIPT = f"""
+async def buzz_(buzzer, freq, secs):
+  buzzer.freq(freq)
+  buzzer.duty_u16(50000)
+  {"aw"}{"ait"} asyncio.sleep(secs)
+  buzzer.duty_u16(0)
+
+def buzz(buzzer, freq, secs):
+  asyncio.create_task(buzz_(buzzer, freq, secs))
+"""
 
 HANGED_MAN = "Head Body LeftArm RightArm LeftLeg RightLeg".split()
 
@@ -105,6 +116,55 @@ HANGED_MAN_PATTERNS = (
 
 HAPPY_PATTERN = "03c00c30181820044c32524a80018001824181814812442223c410080c3003c0"
 
+COUNTER_LEDS = (5,6,7,1,2,3)
+
+FIXED_LEDS = (4,0)
+
+normalize = lambda string : string.ljust(16) if len(string) < 16 else string[-16:]
+
+class HW:
+  def __init__(self, hwDesc):
+    self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ["SDA", "SCL", "Soft"]))).backlightOn()
+    self.oled =  ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ["SDA", "SCL", "Soft"])))
+    self.buzzer = ucuq.PWM(*ucuq.getHardware(hwDesc, "Buzzer", ["Pin"]), freq=50, u16 = 0).setNS(0)
+    pin, self.ringCount, self.ringOffset, self.ringLimiter = ucuq.getHardware(hwDesc, "Ring", ["Pin", "Count", "Offset", "Limiter"])
+    self.ring = ucuq.WS2812(pin, self.ringCount)
+
+  def ringPatchIndex_(self, index):
+    return ( index + self.ringOffset ) % self.ringCount
+  
+  def update(self, errors):
+    for e in range(errors+1):
+      self.ring.setValue(self.ringPatchIndex_(COUNTER_LEDS[e-1]), [self.ringLimiter, 0, 0])
+
+    for e in range(errors+1, 7):
+      self.ring.setValue(self.ringPatchIndex_(COUNTER_LEDS[e-1]), [0, self.ringLimiter, 0])
+
+    for l in FIXED_LEDS:
+      self.ring.setValue(self.ringPatchIndex_(l), [self.ringLimiter * errors // 6, 0, self.ringLimiter * ( 6 - errors ) // 6])
+
+    self.ring.write()
+
+    if (errors):
+      self.oled.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
+
+  def lcdPutString(self, x, y, string):
+    self.lcd.moveTo(x,y).putString(string)
+
+  def restart(self):
+    self.oled.fill(0).draw(START_PATTERN, 48, ox=47).show()
+    self.lcdPutString(0,1, normalize(""))
+
+  def success(self, message):
+    self.lcd.moveTo(0,1).putString(message)
+    self.oled.draw(HAPPY_PATTERN, 16, mul=4, ox=32).show()
+    for _ in range(3):
+      for l in range(self.ringCount):
+        self.ring.setValue(self.ringPatchIndex_(l), tuple(map(lambda _: randint(0,self.ringLimiter // 3), range(3)))).write()
+        ucuq.sleep(0.075)
+
+  def buzz(self):
+    ucuq.addCommand(f"buzz({self.buzzer.getObject()}, 50, 0.5)")
 
 class Core:
   def reset(self):
@@ -116,54 +176,16 @@ class Core:
   def __init__(self):
     self.reset()
 
+hw = None
 
 def randword(dictionnary):
   return dictionnary[randint(0, len(dictionnary)-1)]
 
 
-def normalize(string):
-  if len(string) < 16:
-    return string.ljust(16)
-  else:
-    return string[-16:]
-  
-
-def isWokwi():
-  return ringCount == 16
-
-
-COUNTER_LEDS = {
-  True: ((7,9),(6,10),(5,11),(3,13),(2,14),(1,15)),
-  False: ((5,),(6,),(7,),(1,),(2,),(3,))
-}
-
-
-FIXED_LEDS = {
-  True: (0,4,8,12),
-  False: (4,0)
-}
-
-
-def patchRingIndex(index):
-  return ( index + ringOffset ) % ringCount
-
-
-async def showHanged(dom, errors):
-  for e in range(errors+1):
-    for l in COUNTER_LEDS[isWokwi()][e-1]:
-      cRing.setValue(patchRingIndex(l), [ringLimiter, 0, 0])
-
-  for e in range(errors+1, 7):
-    for l in COUNTER_LEDS[isWokwi()][e-1]:
-      cRing.setValue(patchRingIndex(l), [0, ringLimiter, 0])
-
-  for l in FIXED_LEDS[isWokwi()]:
-    cRing.setValue(patchRingIndex(l), [ringLimiter * errors // 6, 0, ringLimiter * ( 6 - errors ) // 6])
-
-  cRing.write()
+async def update(dom, errors):
+  hw.update(errors)
 
   if (errors):
-    cOLED.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
     await dom.removeClass(HANGED_MAN[errors-1], "hidden")
 
 
@@ -174,7 +196,7 @@ async def showWord(dom, secretWord, correctGuesses):
     if secretWord[i] in correctGuesses:
       output = output[:i] + secretWord[i] + output[i + 1:]
 
-  cLCD.moveTo(0,0).putString(output.center(16))
+  hw.lcdPutString(0,0,output.center(16))
 
   html = atlastk.createHTML()
   html.putTagAndValue("h1", output)
@@ -184,29 +206,25 @@ async def showWord(dom, secretWord, correctGuesses):
 async def reset(core, dom):
   core.reset()
   await dom.inner("", BODY.format(**dom.getL10n(restart=6)))
-  core.secretWord = randword(DICTIONNARIES[language])
+  language = L_FR if dom.language.startswith("fr") else L_EN
+  core.secretWord = randword(DICTIONARIES[language])
   print(core.secretWord)
-  cOLED.fill(0).draw(START_PATTERN, 48, ox=47).show()
+  hw.restart()
   await showWord(dom, core.secretWord, core.correctGuesses)
-  cLCD.moveTo(0,1).putString(normalize(""))
-#  cRing.fill([0,0,0]).setValue(0,[0,ringLimiter,0]).write()
-  await showHanged(dom, 0)
+  await update(dom, 0)
 
 
 async def atk(core, dom):
-  global cLCD, cOLED, cRing, cBuzzer, ringCount, ringOffset, ringLimiter, language
+  global hw
 
-  language = LANGUAGE if LANGUAGE != None else L_FR if dom.language.startswith("fr") else L_EN
+  if UCUQ:
+    if not hw:
+      infos = await ucuq.ATKConnectAwait(dom, "")
+      hw = HW(ucuq.getKitHardware(infos))
+  else:
+    hw = ucuq.Nothing()
 
-  infos = await ucuq.ATKConnectAwait(dom, "")
-  hardware = ucuq.getKitHardware(infos)
-
-  cLCD = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hardware, "LCD", ["SDA", "SCL", "Soft"])))
-  cOLED =  ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hardware, "OLED", ["SDA", "SCL", "Soft"])))
-  cBuzzer = ucuq.PWM(*ucuq.getHardware(hardware, "Buzzer", ["Pin"]), freq=50, u16 = 0).setNS(0)
-  pin, ringCount, ringOffset, ringLimiter = ucuq.getHardware(hardware, "Ring", ["Pin", "Count", "Offset", "Limiter"])
-  cRing = ucuq.WS2812(pin, ringCount)
-  cLCD.backlightOn()
+  ucuq.addCommand(BUZZER_SCRIPT)
 
   await reset(core,dom)
 
@@ -229,23 +247,15 @@ async def atkSubmit(core, dom, id):
     await showWord(dom, core.secretWord, core.correctGuesses)
 
     if correct == len(core.secretWord):
-      cLCD.moveTo(0,1).putString(dom.getL10n(4))
-      cOLED.draw(HAPPY_PATTERN, 16, mul=4, ox=32).show()
-      for _ in range(3):
-        for l in range(ringCount):
-          cRing.setValue(patchRingIndex(l),tuple(map(lambda _: randint(0,ringLimiter // 3), range(3)))).write()
-          ucuq.sleep(0.075)
+      hw.success(dom.getL10n(4))
       await dom.alert(dom.getL10n(5))
       await reset(core, dom)
       return
   else:
+    hw.buzz()
     core.errors += 1
-    cBuzzer.setFreq(30).setU16(50000)
-    id = ucuq.sleepStart()
-    cLCD.moveTo(0,1).putString(normalize(''.join([char for char in core.chosen if char not in core.correctGuesses])))
-    await showHanged(dom, core.errors)
-    ucuq.sleepWait(id, 0.5)
-    cBuzzer.setU16(0)
+    hw.lcdPutString(0,1,normalize(''.join([char for char in core.chosen if char not in core.correctGuesses])))
+    await update(dom, core.errors)
 
   
   if core.errors >= len(HANGED_MAN):
