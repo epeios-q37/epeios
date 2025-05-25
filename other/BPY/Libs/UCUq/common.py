@@ -461,7 +461,7 @@ class Core_:
     if instanciation:
       self.addCommand(f"{self.getObject()} = {instanciation}")
 
-    return self if extra else Nothing_(self)
+    return self if not isinstance(extra, bool) or extra else Nothing_(self)
 
   def getObject(self):
     return getObject_(self.id)
@@ -508,7 +508,7 @@ class WS2812(Core_):
       self.init(pin, n, device = device, extra = extra)
 
   def init(self, pin, n, device = None, extra = True):
-    super().init("WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device, extra).flash()
+    super().init("WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device, extra).flash(extra)
 
   async def lenAwait(self):
     return int(await self.callMethodAwait("__len__()"))
@@ -530,9 +530,9 @@ class WS2812(Core_):
     self.addMethods(f"write()")
     return self
   
-  def flash(self):
+  def flash(self, extra = True):
     self.fill((255, 255, 255)).write()
-    self.getDevice().sleep(FLASH_DELAY_)
+    self.getDevice().sleep(FLASH_DELAY_ if isinstance(extra, bool) else extra)
     return self.fill((0, 0, 0)).write()
   
 
@@ -573,11 +573,11 @@ class HT16K33(Core_):
       self.init(i2c, addr = addr, extra = extra)
 
   def init(self, i2c, addr = None, extra = True):
-    return super().init("HT16K33-1", f"HT16K33({i2c.getObject()}, {addr})", i2c.getDevice(), extra).setBrightness(15).flash().setBrightness(0)
+    return super().init("HT16K33-1", f"HT16K33({i2c.getObject()}, {addr})", i2c.getDevice(), extra).setBrightness(15).flash(extra).setBrightness(0)
   
-  def flash(self):
+  def flash(self, extra = True):
     self.draw("ffffffffffffffffffffffffffffffff")
-    self.getDevice().sleep(FLASH_DELAY_)
+    self.getDevice().sleep(FLASH_DELAY_ if isinstance(extra, bool) else extra)
     return self.draw("")
 
   def setBlinkRate(self, rate):
@@ -748,7 +748,7 @@ class HD44780_I2C(Core_):
       raise Exception("addr can not be given without i2c!")
 
   def init(self, num_columns, num_lines, i2c, addr = None, extra = True):
-    return super().init("HD44780_I2C-1", f"HD44780_I2C({i2c.getObject()},{num_lines},{num_columns},{addr})", i2c.getDevice(), extra).flash()
+    return super().init("HD44780_I2C-1", f"HD44780_I2C({i2c.getObject()},{num_lines},{num_columns},{addr})", i2c.getDevice(), extra).flash(extra)
 
   def moveTo(self, x, y):
     return self.addMethods(f"move_to({x},{y})")
@@ -783,9 +783,9 @@ class HD44780_I2C(Core_):
   def backlightOff(self):
     return self.backlightOn(False)
   
-  def flash(self):
+  def flash(self, extra = True):
     self.backlightOn()
-    self.getDevice().sleep(FLASH_DELAY_)
+    self.getDevice().sleep(FLASH_DELAY_ if isinstance(extra, bool) else extra)
     return self.backlightOff()
 
   
@@ -915,9 +915,9 @@ class OLED_(Core_):
       raise Exception("'width' must be a multiple of 4!")
     return self.addMethods(f"draw('{pattern}',{width},{ox},{oy},{mul})")
   
-  def flash(self):
+  def flash(self, extra = True):
     self.fill(1).show()
-    self.getDevice().sleep(FLASH_DELAY_)
+    self.getDevice().sleep(FLASH_DELAY_ if isinstance(extra, bool) else extra)
     return self.fill(0).show()
 
 
@@ -933,12 +933,12 @@ class SSD1306_I2C(SSD1306):
     if bool(width) != bool(height) != bool(i2c):
       raise Exception("All or none of width/height/i2c must be given!")
     elif width:
-      self.init(width, height, i2c, external_vcc = external_vcc, addr= addr, extra = True)
+      self.init(width, height, i2c, external_vcc = external_vcc, addr= addr, extra = extra)
     elif addr:
       raise Exception("addr can not be given without i2c!")
       
   def init(self, width, height, i2c, /, external_vcc = False, addr = None, extra = True):
-    super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice(), extra).flash()
+    super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice(), extra).flash(extra if not isinstance(extra, bool) else 0.15)
 
 
 class SH1106(OLED_):

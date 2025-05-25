@@ -281,7 +281,7 @@ async def atkClick(dom, id):
     else:
       hw.lcd.backlightOff()
   else:
-    hw.failure(lambda m: dom.getL10n(m))
+    hw.failure(lambda *args, **kwargs: dom.getL10n(*args, **kwargs))
     userSeq = ""
     seq = ""
 
