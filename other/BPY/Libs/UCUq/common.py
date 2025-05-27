@@ -1,4 +1,4 @@
-import zlib, base64, time, uuid
+import zlib, base64, time
 
 ITEMS_ = "i_"
 

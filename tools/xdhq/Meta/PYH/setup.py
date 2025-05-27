@@ -1,6 +1,6 @@
 import setuptools
 
-version = "0.13.4"
+version = "0.13.5"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -10,8 +10,8 @@ setuptools.setup(
     version=version,
     author="Claude SIMON",
 #    author_email="author@example.com",
-    description="World's lightest toolkit to quickly and easily add a GUI to your Python programs and bring them online. ",
-    keywords="GUI, web, Atlas toolkit",
+    description="Easily bring your Python applications online with the world's lightest GUI toolkit.",
+    keywords="GUI, web, Atlas toolkit, DOM, HTML, browser, multi-user, online, network, user-interaction, remote-access, instant-access, easy-deploy, Android, Termux, Jupyter, Notebook",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://atlastk.org",

@@ -37,6 +37,9 @@ ATK_L10N = (
   ), (
     "begin the game!",
     "pour commencer !",
+  ), (
+    "RGBY",
+    "RVBJ",
   )
 )
 
@@ -113,11 +116,23 @@ class HW:
       self.oled.fill(0)
     self.oled.show()
 
-  def lcdDisplaySequence(self, seq):
-    self.lcd.clear().moveTo(0,0).putString(seq).backlightOn()
+  def lcdClear(self):
+    self.lcd.clear()
+    return self
+
+  def lcdDisplay(self, line, text):
+    self.lcd.moveTo(0, line).putString(text.ljust(16))
+    return self
+  
+  def lcdBacklightOn(self):
+    self.lcd.backlightOn()
+    return self
+  
+  def lcdDisplaySequence(self, seq, l10n):
+    self.lcdClear().lcdDisplay(0, ''.join(l10n(12)["RGBY".index(char)] for char in seq)).lcdBacklightOn()
 
   def begin(self, l10n):
-    self.lcd.clear().moveTo(0,0).putString(l10n(10).format(**l10n(new=8))).moveTo(0,1).putString(l10n(11))
+    self.lcdClear().lcdDisplay(0, l10n(10).format(**l10n(new=8))).lcdDisplay(1, l10n(11))
     self.oledNumber(None)
     ucuq.commit()
 
@@ -125,7 +140,7 @@ class HW:
 
   def new(self, seq, l10n):
     self.oledNumber(None)
-    self.lcd.clear().moveTo(0,0).putString(l10n(3)).moveTo(0,1).putString(l10n(4))
+    self.lcdClear().lcdDisplay(0, l10n(3)).lcdDisplay(1, l10n(4))
     self.oledNumber(0)
     ucuq.sleep(.75)
     self.play(seq)
@@ -134,12 +149,10 @@ class HW:
   def restart(self, seq, l10n):
     self.oledNumber(None)
 
-    self.lcd.clear()\
-    .backlightOn()\
-    .moveTo(0,0)\
-    .putString(l10n(1))\
-    .moveTo(0,1)\
-    .putString(l10n(2))
+    self.lcdClear()\
+    .lcdDisplay(0,l10n(1))\
+    .lcdDisplay(1,l10n(2))\
+    .lcdBacklightOn()
 
     self.playJingle_(LAUNCH_JINGLE)
     ucuq.sleep(0.5)
@@ -147,16 +160,16 @@ class HW:
     self.new(seq, l10n)
 
   def success(self, l10n):
-    self.lcd.moveTo(0,0).putString(l10n(5))
+    self.lcdDisplay(0, l10n(5))
     self.oledNumber(None)
     self.oled.draw(HAPPY_MOTIF, 16, mul=4, ox=32).show()
     self.playJingle_(SUCCESS_JINGLE)
     ucuq.sleep(0.5)
-    self.lcd.clear()
+    self.lcdClear()
     ucuq.commit()
 
   def failure(self, l10n):
-    self.lcd.moveTo(0,0).putString(l10n(6).format(**l10n(new=8))).moveTo(0,1).putString(l10n(7))
+    self.lcdDisplay(0, l10n(6).format(**l10n(new=8))).lcdDisplay(1, l10n(7))
     self.oledNumber(len(seq))
     self.buzzer.setFreq(30).setU16(50000)
     self.oledNumber(None)
@@ -268,7 +281,7 @@ async def atkClick(dom, id):
     return
   
   userSeq += id
-  hw.lcdDisplaySequence(userSeq)
+  hw.lcdDisplaySequence(userSeq, lambda m: dom.getL10n(m))
   hw.oledNumber(len(seq)-len(userSeq))
   hw.displayButton(id)
 

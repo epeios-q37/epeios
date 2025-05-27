@@ -1,4 +1,4 @@
-# Microcontrolers unleashed
+# Microcontrollers unleashed
 
 Python library for easy prototyping of assemblies based on microcontrollers such as *ESP32*, *ESP8266*, *Raspberry Pico (2) W*…
 
@@ -6,7 +6,7 @@ Python library for easy prototyping of assemblies based on microcontrollers such
 
 ## How to use it
 
-> Above link gives access to an *ESP32* simulation with *UCUq* installed on it and can be very helpful understanding how to do this on your own microcontroler.
+> Above link gives access to an *ESP32* simulation with *UCUq* installed on it and can be very helpful understanding how to do this on your own microcontroller.
 
 ### On the microcontroller
 
