@@ -828,8 +828,8 @@ class Servo(Core_):
       self.init(pwm, specs, tweak = tweak, domain = domain)
 
 
-  def init(self, pwm, specs, tweak = None, domain = None):
-    super().init("Servo-1", "", pwm.getDevice())
+  def init(self, pwm, specs, tweak = None, domain = None, extra = True):
+    super().init("Servo-1", "", pwm.getDevice(), extra)
 
     self.test_(specs, tweak, domain)
 
