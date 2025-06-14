@@ -55,8 +55,8 @@ using data::wData;
 void LaunchViewer_(
 	sId RecordId,
 	sId TableId,
-	dpkctx::sBRow LastBox,
-	dpkctx::sBRow ContainingBox,
+	const dpktbl::table_ &Table,
+	const dpkctx::context_ &Context,
 	const str::string_ &RecordLabel,
 	const str::string_ &TableLabel,
 	const str::string &DataFilename,
@@ -74,15 +74,16 @@ qRB
 
 	if ( ( Viewer.Amount() != 0 ) && ( OutputFilename.Amount() != 0 ) ) {
 		TaggedValues.Init();
-		TaggedValues.Append( "RI", bso::Convert( RecordId, IBuffer ) );
-		TaggedValues.Append( "RL", RecordLabel );
-		TaggedValues.Append( "TI", bso::Convert( TableId, IBuffer ) );
-		TaggedValues.Append( "TL", TableLabel);
-		TaggedValues.Append( "LB", bso::Convert( LastBox == qNIL ? 0 : *LastBox + 1, IBuffer ) );
-		TaggedValues.Append( "CB", bso::Convert( ContainingBox == qNIL ? 0 : *ContainingBox + 1, IBuffer ) );
-		TaggedValues.Append( "Data", DataFilename );
-		TaggedValues.Append( "XSL", XSLFilename );
-		TaggedValues.Append( "Output",OutputFilename );
+		TaggedValues.Append("RI", bso::Convert( RecordId, IBuffer ) );
+		TaggedValues.Append("RL", RecordLabel );
+		TaggedValues.Append("TI", bso::Convert( TableId, IBuffer ) );
+		TaggedValues.Append("TL", TableLabel);
+		TaggedValues.Append("TA", bso::Convert(Table.Records.Amount(), IBuffer));
+		TaggedValues.Append("TS", bso::Convert(Table.Skipped(), IBuffer));
+		TaggedValues.Append("SA", bso::Convert(Context.Pool.S_.Session, IBuffer));
+		TaggedValues.Append("Data", DataFilename );
+		TaggedValues.Append("XSL", XSLFilename );
+		TaggedValues.Append("Output",OutputFilename );
 		tagsbs::SubstituteLongTags( Viewer, TaggedValues, '$' );
 		tol::System( Viewer.Convert( SBuffer ) );
 	}
@@ -103,7 +104,6 @@ qRH
 	bso::uint__ SessionMaxDuration = 0;
 	str::string Label, TableLabel;
 	sId Id = 0;
-	dpkctx::sBRow BoxRow = qNIL;
 qRB
 	data::Initialize();
 
@@ -133,7 +133,6 @@ qRB
 
 	Context.Init();
 	context::Retrieve( Context);
-	Context.AdjustBoxesAmount( sclm::OGetS8( registry::BoxesAmount, 0 ) );
 
 	Data.Init();
 	data::Retrieve( DataFilename, Data );
@@ -142,30 +141,11 @@ qRB
 
 	Label.Init();
 	TableLabel.Init();
-	Id = data::Display( Id, Data, XSLFilename, SessionMaxDuration, Label, TableLabel, BoxRow, Context, OutputFilename );
+	Id = data::Display( Id, Data, XSLFilename, SessionMaxDuration, Label, TableLabel, Context, OutputFilename );
 
 	context::Dump( Context );
 
-	LaunchViewer_( Id, *Data.Last() + 1, Context.Boxes.S_.Last, BoxRow, Label, TableLabel, DataFilename, OutputFilename, XSLFilename );
-qRR
-qRT
-qRE
-}
-
-void Demote_( void )
-{
-qRH
-	dpkctx::context Context;
-	sId RecordId = data::Undefined;
-qRB
-	Context.Init();
-	context::Retrieve( Context );
-
-	RecordId = sclm::OGetUInt( registry::Id, 0 );
-
-	Context.Demote( RecordId == 0 ? qNIL : RecordId - 1 );
-
-	context::Dump( Context );
+	LaunchViewer_( Id, *Data.Last() + 1, Data( Data.Last() ), Context, Label, TableLabel, DataFilename, OutputFilename, XSLFilename );
 qRR
 qRT
 qRE
@@ -186,8 +166,7 @@ qRB
 		PrintHeader_();
 	else if ( Command == "License" )
 		epsmsc::PrintLicense( NAME_MC );
-	C( Process );
-	C( Demote );
+		C( Process );
 	else
 		qRGnr();
 

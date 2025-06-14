@@ -28,10 +28,6 @@
     <Translation language="fr">Traite les données.</Translation>
     <Translation language="en">Process data.</Translation>
    </Translations>
-   <Translations text="DemoteCommandDescription">
-    <Translation language="fr">Rétrograde un enregistrement.</Translation>
-    <Translation language="en">Demote a record.</Translation>
-   </Translations>
    <!-- Flags -->
 			<!-- Options -->
 			<Translations text="NamespaceOptionDescription">
@@ -59,35 +55,21 @@
     <Translation language="fr">id (process)</Translation>
     <Translation language="en">id (process)</Translation>
    </Translations>
-   <Translations text="DemoteIdArgumentDescription">
-    <Translation language="fr">Identifiant de fiche ('0' ou absent: la dernière piochée).</Translation>
-    <Translation language="en">Record id ('0' or missing: the last picked).</Translation>
-   </Translations>
-   <Translations text="DemoteIdArgumentLabel">
-    <Translation language="fr">id (demote)</Translation>
-    <Translation language="en">id (demote)</Translation>
-   </Translations>
   </Locale>
 		<Arguments>
 			<xpp:expand select="CLI_Arguments"/>
 			<!-- Commands -->
    <Argument id="ProcessCommand" Description="ProcessCommandDescription" long="process" short="p" Value="Process" Usage="[%NamespaceOption%] %ProjectFilenameArgument% [%ProcessIdArgument%]"/>
-   <Argument id="DemoteCommand" Description="DemoteCommandDescription" long="demote" short="d" Value="Demote" Usage="[%NamespaceOption%] %ProjectFilenameArgument% [%DemoteIdArgument%]"/>
    <!-- Flags -->
 			<!-- Options -->
 			<Argument id="NamespaceOption" Description="NamespaceOptionDescription" long="namespace" short="n" Path="Namespace/Label" Label="NamespaceOptionLabel"/>
 			<!-- Arguments -->
 			<Argument id="ProjectFilenameArgument" Description="ProjectFilenameArgumentDescription" Label="ProjectFilenameArgumentLabel" Path="Project[Type=&quot;Remote&quot;]"/>
    <Argument id="ProcessIdArgument" Description="ProcessIdArgumentDescription" Label="ProcessIdArgumentLabel" Path="Id"/>
-   <Argument id="DemoteIdArgument" Description="DemoteIdArgumentDescription" Label="DemoteIdArgumentLabel" Path="Id"/>
    <Layouts>
     <Layout command="Process">
      <Link index="0" Target="ProjectFilenameArgument"/>
      <Link index="1" Target="ProcessIdArgument"/>
-    </Layout>
-    <Layout command="Demote">
-     <Link index="0" Target="ProjectFilenameArgument"/>
-     <Link index="1" Target="DemoteIdArgument"/>
     </Layout>
    </Layouts>
 		</Arguments>

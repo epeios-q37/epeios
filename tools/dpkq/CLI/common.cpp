@@ -1,6 +1,3 @@
-#include "common.h"
-#include "common.h"
-#include "common.h"
 /*
 	Copyright (C) 2010-2015 Claude SIMON (http://q37.info/contact/).
 

@@ -33,14 +33,6 @@ qW( Grid );
 #define CONTEXT_TAG_NAME				"Context"
 #define CONTEXTE_TARGET_ATTRIBUTE_NAME	"target"
 
-#define BOXES_TAG_NAME			"Boxes"
-#define BOXES_AMOUT_ATTRIBUTE	"Amount"
-#define BOXES_LAST_ATTRIBUTE	"Last"
-
-#define BOX_TAG_NAME				"Box"
-#define BOX_RECORDS_AMOUT_ATTRIBUTE	"RecordsAmount"
-
-
 #define POOL_TAG_NAME	"Pool"
 
 #define POOL_AMOUNT_ATTRIBUTE_NAME			"Amount"
@@ -115,44 +107,10 @@ static void Dump_(
 	Writer.PopTag();
 }
 
-namespace {
-	void Dump_(
-		const dBox &Box,
-		xml::rWriter &Writer )
-	{
-		Writer.PushTag( BOX_TAG_NAME );
-		Writer.PutAttribute( BOX_RECORDS_AMOUT_ATTRIBUTE, Box.Amount() );
-
-		DumpRecords_( *Box, Writer );
-
-		Writer.PopTag();
-	}
-
-	void Dump_(
-		const dBoxes &Boxes,
-		xml::rWriter &Writer )
-	{
-		sBRow Row = Boxes.First();
-
-		Writer.PushTag( BOXES_TAG_NAME );
-		Writer.PutAttribute( BOXES_AMOUT_ATTRIBUTE, Boxes.Amount() );
-		Writer.PutAttribute( BOXES_LAST_ATTRIBUTE, *Boxes.S_.Last, qNIL );
-
-		while ( Row != qNIL ) {
-			Dump_( Boxes( Row ), Writer );
-
-			Row = Boxes.Next( Row );
-		}
-
-		Writer.PopTag();
-	}
-}
-
 void dpkctx::Dump(
 	const context_ &Context,
 	xml::rWriter &Writer )
 {
-	Dump_( Context.Boxes, Writer );
 	Dump_( Context.Pool, Writer );
 }
 
@@ -160,17 +118,17 @@ namespace {
 	namespace {
 		void RetrieveRecords_(
 			xml::parser___ &Parser,
-			dRRows &Records )
+			dRRows &Records)
 		{
 			bso::bool__ Continue = true;
 
 			while ( Continue ) {
-				switch ( Parser.Parse( xml::tfObvious ) ) {
+				switch ( Parser.Parse(xml::tfObvious) ) {
 				case xml::tStartTag:
 					if ( Parser.TagName() != RECORD_TAG_NAME )
 						qRGnr();
 
-					Records.Append( RetrieveRecordId_( Parser ) );
+					Records.Append(RetrieveRecordId_(Parser));
 					break;
 				case xml::tEndTag:
 					Continue = false;
@@ -185,12 +143,12 @@ namespace {
 
 	void Retrieve_(
 		xml::rParser &Parser,
-		dPool &Pool )
+		dPool &Pool)
 	{
 		bso::sBool Continue = true;
 
 		while ( Continue ) {
-			switch ( Parser.Parse( xml::tfObvious | xml::tfStartTagClosed ) ) {
+			switch ( Parser.Parse(xml::tfObvious | xml::tfStartTagClosed) ) {
 			case xml::tAttribute:
 				if ( Parser.AttributeName() == POOL_SESSION_AMOUNT_ATTRIBUTE_NAME )
 					Pool.S_.Session = Parser.Value().ToUInt();
@@ -198,76 +156,11 @@ namespace {
 					Pool.S_.Cycle = Parser.Value().ToUInt();
 				else if ( Parser.AttributeName() == POOL_TIMESTAMP_ATTRIBUTE_NAME )
 					Pool.S_.TimeStamp = Parser.Value().ToUInt();
-				else if( Parser.AttributeName() != POOL_AMOUNT_ATTRIBUTE_NAME )
+				else if ( Parser.AttributeName() != POOL_AMOUNT_ATTRIBUTE_NAME )
 					qRGnr();
 				break;
 			case xml::tStartTagClosed:
-				RetrieveRecords_( Parser, Pool );
-				Continue = false;
-				break;
-			default:
-				qRGnr();
-				break;
-			}
-		}
-	}
-
-	namespace {
-		void RetrieveBoxesContent_(
-			xml::rParser &Parser,
-			dBoxes &Boxes )
-		{
-		qRH
-			wBox Box;
-			bso::sBool Continue = true;
-		qRB
-			Box.Init();
-
-			while ( Continue ) {
-				switch ( Parser.Parse( xml::tfObvious | xml::tfStartTagClosed ) ) {
-				case xml::tStartTag:
-					if ( Parser.TagName() != BOX_TAG_NAME )
-						qRGnr();
-					Box.Init();
-					break;
-				case xml::tAttribute:
-					if ( Parser.AttributeName() != BOX_RECORDS_AMOUT_ATTRIBUTE )
-						qRGnr();
-					break;
-				case xml::tStartTagClosed:
-					RetrieveRecords_( Parser, Box );
-					Boxes.Append( Box );
-					break;
-				case xml::tEndTag:
-					Continue = false;
-					break;
-				default:
-					qRGnr();
-					break;
-				}
-			}
-		qRR
-		qRT
-		qRE
-		}
-	}
-
-	void Retrieve_(
-		xml::rParser &Parser,
-		dBoxes &Boxes )
-	{
-		bso::sBool Continue = true;
-
-		while ( Continue ) {
-			switch ( Parser.Parse( xml::tfObvious | xml::tfStartTagClosed | xml::tfEndTag ) ) {
-			case xml::tAttribute:
-				if ( Parser.AttributeName() == BOXES_LAST_ATTRIBUTE )
-					Boxes.S_.Last = Parser.Value().ToRow();
-				else if ( Parser.AttributeName() != BOXES_AMOUT_ATTRIBUTE )
-					qRGnr();
-				break;
-			case xml::tStartTagClosed:
-				RetrieveBoxesContent_( Parser, Boxes );
+				RetrieveRecords_(Parser, Pool);
 				Continue = false;
 				break;
 			default:
@@ -287,9 +180,7 @@ static void Retrieve_(
 	while ( Continue ) {
 		switch ( Parser.Parse( xml::tfStartTag | xml::tfEndTag ) ) {
 		case xml::tStartTag:
-			if ( Parser.TagName() == BOXES_TAG_NAME )
-				Retrieve_( Parser, Context.Boxes );
-			else if ( Parser.TagName() == POOL_TAG_NAME )
+			if ( Parser.TagName() == POOL_TAG_NAME )
 				Retrieve_( Parser, Context.Pool );
 			else
 				qRGnr();
@@ -374,307 +265,7 @@ static inline bso::bool__ IsNewSession_(
 		return difftime( time( NULL ), TimeStamp ) > ( Duration * 60 );
 }
 
-void dpkctx::context_::MoveToBox_(
-	const dRRows &Records,
-	dBox &Box )
-{
-	sdr::sRow Row = Records.First();
-
-	while ( Row != qNIL )
-	{
-		Box.Append( Records( Row ) );
-
-		Row = Records.Next( Row );
-	}
-}
-
-void dpkctx::context_::MoveRecordsToBox_(
-	sBRow Source,
-	sBRow Target )
-{
-	ctn::qCITEMs( dBox, sBRow ) Box;
-
-	Box.Init( Boxes );
-
-	MoveToBox_( Box( Source ), Boxes( Target ) );
-
-	Box.Flush();
-
-	Boxes( Source ).Init();
-}
-
-void dpkctx::context_::BringBackRecordsToBox_( sBRow Target )
-{
-	sBRow Row = Boxes.Last();
-
-	while ( ( Row != qNIL  ) && ( Row != Target ) )
-	{
-		MoveRecordsToBox_( Row, Target );
-		Row = Boxes.Previous( Row );
-	}
-
-	if ( Row == qNIL )
-		qRGnr();
-}
-
-void dpkctx::context_::AdjustBoxesAmount( amount__ Amount )
-{
-	switch ( Amount ) {
-	case 0:
-	case 1:
-		Boxes.Init();
-		break;
-	default:
-		if ( Boxes.Amount() > ( Amount - 1 ) )
-			BringBackRecordsToBox_( Amount - 2 );
-
-		if ( Boxes.Amount() != ( Amount - 1 ) )
-			Boxes.Allocate( Amount - 1 );
-
-		break;
-	}
-}
-
-namespace {
-	namespace {
-		namespace {
-			sdr::sRow Get_(
-				sRRow Record,
-				dRRows &Records )
-			{
-				sdr::sRow Row = Records.First();
-
-				while ( ( Row != qNIL ) && ( Records( Row ) != Record ) )
-					Row = Records.Next( Row );
-
-				return Row;
-			}
-		}
-
-		sBRow Get_(
-			sRRow Record,
-			dBoxes_ &Boxes,
-			sdr::sRow &RowInBox )	// Contains th row of 'Record' in the box at returned row (if != 'qNIL').
-		{
-			sBRow Row = Boxes.First();
-
-			while ( ( Row != qNIL ) && ( ( RowInBox = Get_( Record, Boxes( Row ) ) ) == qNIL ) )
-				Row = Boxes.Next( Row );
-
-			return Row;
-		}
-	}
-
-	bso::sBool IsIncluded_(
-		sRRow Record,
-		dBoxes &Boxes,
-		sBRow Last )
-	{
-		sdr::sRow Dummy = qNIL;
-		sBRow BoxRow = Get_( Record, Boxes, Dummy );
-
-		if ( BoxRow == qNIL )
-			return true;
-		else if ( Last == qNIL )
-			return BoxRow == qNIL;
-		else
-			return *BoxRow <= *Last;
-	}
-
-	// Return the row of the box where 'Record' is moved from.
-	sBRow Commit_(
-		sRRow Record,
-		dBoxes_ &Boxes )
-	{
-		sdr::sRow RowInBox = qNIL;
-
-		sBRow OldBoxRow = Get_( Record, Boxes, RowInBox ), NewBoxRow = qNIL;
-
-		if ( OldBoxRow == qNIL )
-			NewBoxRow = Boxes.First();
-		else {
-			if ( RowInBox == qNIL )
-				qRGnr();
-
-			Boxes( OldBoxRow ).Remove( RowInBox );
-			NewBoxRow = Boxes.Next( OldBoxRow );
-
-			if ( NewBoxRow == qNIL )
-				NewBoxRow = Boxes.Last();
-		}
-
-		if ( NewBoxRow != qNIL )
-			Boxes( NewBoxRow ).Append( Record );
-
-		return OldBoxRow;
-	}
-}
-
-namespace {
-	namespace {
-		void PurgeBox_(
-			dBox &Box,
-			amount__ Amount )
-		{
-			sdr::sRow Row = Box.First();
-
-			while ( ( Row != qNIL ) && Box.Exists( Row ) ) {
-				if ( *Box( Row ) >= Amount )
-					Box.Remove( Row );
-				else
-					Row = Box.Next( Row );
-			}
-		}
-	}
-
-	// Remove records which doesn't exist anymore.
-	void PurgeBoxes_(
-		dBoxes_ &Boxes,
-		amount__ Amount )
-	{
-		sBRow Row = Boxes.First();
-
-		while ( Row != qNIL ) {
-			PurgeBox_( Boxes( Row ), Amount );
-
-			Row = Boxes.Next( Row );
-		}
-	}
-
-#if 0
-	namespace {
-		void Remove_(
-			const dRRows &Rows,
-			dGrid &Grid )
-		{
-			sdr::sRow Row = Rows.First();
-
-			while ( Row != qNIL ) {
-				Grid.Store( false, Rows( Row ) );
-
-				Row = Rows.Next( Row );
-			}
-		}
-	}
-
-	void RemoveBoxesContent_(
-		sBRow Row,
-		const dBoxes_ &Boxes,
-		dGrid &Grid )
-	{
-		if ( Row == qNIL )
-			Row = Boxes.First();
-		else
-			Row = Boxes.Next( Row );
-
-		while ( Row != qNIL ) {
-			Remove_( Boxes( Row ), Grid );
-
-			Row = Boxes.Next( Row );
-		}
-	}
-
-	amount__ GetExcludedBoxesAmountOfRecords_(
-		const dBoxes_ &Boxes,
-		sBRow Row )
-	{
-		amount__ Amount = 0;
-
-		if ( Row == qNIL )
-			Row = Boxes.First();
-		else
-			Row = Boxes.Next( Row );
-
-		while ( Row != qNIL ) {
-			Amount += Boxes( Row ).Amount();
-
-			Row = Boxes.Next( Row );
-		}
-
-		return Amount;
-	}
-#endif
-}
-
-
-/*
 sRRow dpkctx::context_::Pick(
-	amount__ TotalAmount,
-	bso::uint__ Duration )
-{
-	sRRow Row = qNIL;
-qRH
-	wGrid Grid;
-	amount__ ToExclude = 0;	// Amount of last picked records to exclude.
-	amount__ AvailableAmount = 0;
-qRB
-	if ( TotalAmount == 0 )
-		qRGnr();
-
-	Grid.Init();
-	Grid.Allocate( TotalAmount );
-
-	Grid.Reset( true );
-
-	PurgeBoxes_( Boxes, TotalAmount );
-
-	while ( TotalAmount <= GetExcludedBoxesAmountOfRecords_( Boxes, Boxes.S_.Last ) ) {
-		Pool.S_.Cycle = 0;
-
-		if ( Boxes.S_.Last == qNIL )
-			Boxes.S_.Last = Boxes.First();
-		else
-			Boxes.S_.Last = Boxes.Next( Boxes.S_.Last );
-	}
-
-	AvailableAmount = TotalAmount - GetExcludedBoxesAmountOfRecords_( Boxes, Boxes.S_.Last );
-
-	if ( ( Pool.S_.Session >= AvailableAmount ) || IsNewSession_( Pool.S_.TimeStamp, Duration ) ) {
-		if ( ( Pool.S_.Session < AvailableAmount ) && ( Pool.S_.Session > Pool.S_.Cycle ) )
-			Pool.S_.Cycle = Pool.S_.Session;
-		Pool.S_.Session = 0;
-	}
-
-	if ( Pool.S_.Cycle >= AvailableAmount )
-		Pool.S_.Cycle = Pool.S_.Session;
-
-	ToExclude = TotalAmount / 3;
-
-	ToExclude = ( ToExclude > Pool.S_.Session ? ToExclude : Pool.S_.Session );
-
-	ToExclude = ( ToExclude > Pool.S_.Cycle ? ToExclude : Pool.S_.Cycle );
-
-	if ( ( Pool.S_.Cycle == 0 ) && ( Pool.S_.Session == 0 ) )
-		ToExclude = 0;
-
-	ToExclude = Remove_( Pool, ToExclude, TotalAmount, Grid );
-
-	if ( Pool.Amount() > ToExclude )
-		Pool.Remove( Pool.First(), Pool.Amount() - ToExclude );
-	else
-		Pool.Init();
-
-	RemoveBoxesContent_( Boxes.S_.Last, Boxes, Grid );
-
-	Row = Pick_( Grid );
-
-	Pool.Append( Row );
-
-	Pool.S_.TimeStamp = time( NULL );
-
-	if ( *Commit_( Row, Boxes ) <= *Boxes.S_.Last ) {
-		Pool.S_.Session++;
-		Pool.S_.Cycle++;
-	}
-
-qRR
-qRT
-qRE
-	return Row;
-}
-*/
-
-sRRow dpkctx::context_::Pick_(
 	amount__ Amount,
 	bso::uint__ Duration )
 {
@@ -696,11 +287,6 @@ qRB
 
 	if ( Pool.S_.Cycle >= Amount ) {
 		Pool.S_.Cycle = 0;
-
-		if ( Boxes.S_.Last == qNIL )
-			Boxes.S_.Last = Boxes.First();
-		else
-			Boxes.S_.Last = Boxes.Next( Boxes.S_.Last );
 	}
 
 
@@ -729,62 +315,3 @@ qRT
 qRE
 	return Row;
 }
-
-sRRow dpkctx::context_::Pick(
-	amount__ Amount,
-	bso::uint__ Duration,
-	sBRow &BoxRow )
-{
-	sRRow Row = qNIL;
-
-	PurgeBoxes_( Boxes, Amount );
-
-	do {
-		Row = Pick_( Amount, Duration );
-	} while ( !IsIncluded_( Row, Boxes, Boxes.S_.Last ) );
-
-	BoxRow = Commit_( Row, Boxes );
-
-	return Row;
-}
-
-namespace {
-	sBRow Demote_(
-		sRRow Record,
-		dBoxes_ &Boxes )
-	{
-		sdr::sRow Row = qNIL;
-
-		sBRow BoxRow = Get_( Record, Boxes, Row );
-
-		if ( Row != qNIL )
-			Boxes( BoxRow ).Remove( Row );
-
-		return BoxRow;
-	}
-
-	void Demote_(
-		sRRow Record,
-		context_ &Context )
-	{
-		sBRow BoxRow = Demote_( Record, Context.Boxes );
-
-		if ( *BoxRow <= *Context.Boxes.S_.Last ) {
-			Context.Pool.S_.Session++;
-			Context.Pool.S_.Cycle++;
-		}
-	}
-}
-
-
-void context_::Demote( sRRow Record )
-{
-	if ( Record == qNIL )
-		if ( Pool.Amount() != 0 )
-			Record = Pool( Pool.Last() );
-
-	if ( Record != qNIL )
-		Demote_( Record, *this );
-
-}
-

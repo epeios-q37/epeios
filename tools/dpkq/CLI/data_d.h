@@ -44,7 +44,6 @@ namespace data_d {
 		bso::uint__ SessionMaxDuration,
 		str::string_ &Label,
 		str::string_ &TableLabel,
-		dpkctx::sBRow &BoxRow,
 		dpkctx::context_ &Context,
 		const str::string_ &OutputFileName );
 }
