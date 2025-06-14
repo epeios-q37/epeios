@@ -29,17 +29,17 @@ entry___ registry::NamespaceLabel( "Label", Namespace_ );
 entry___ registry::NamespaceURI( "URI", Namespace_ );
 
 
-entry___ registry::Data( "Data", sclrgstry::Parameters );
-entry___ registry::Output( "Output", sclrgstry::Parameters );
-entry___ registry::XSL( "XSL", sclrgstry::Parameters );
-entry___ registry::Context( "Context", sclrgstry::Parameters );
-entry___ registry::Viewer( "Viewer", sclrgstry::Parameters );
-entry___ registry::BoxesAmount( "BoxesAmount", sclrgstry::Parameters );
-entry___ registry::SessionMaxDuration( "SessionMaxDuration", sclrgstry::Parameters );
+entry___ registry::Data( "Data", sclr::Parameters );
+entry___ registry::Output( "Output", sclr::Parameters );
+entry___ registry::XSL( "XSL", sclr::Parameters );
+entry___ registry::Context( "Context", sclr::Parameters );
+entry___ registry::Viewer( "Viewer", sclr::Parameters );
+entry___ registry::BoxesAmount( "BoxesAmount", sclr::Parameters );
+entry___ registry::SessionMaxDuration( "SessionMaxDuration", sclr::Parameters );
 
-entry___ registry::Id( "Id", sclrgstry::Parameters );
+entry___ registry::Id( "Id", sclr::Parameters );
 
-static entry___ FreeRandom_( "Random", sclrgstry::Parameters );
+static entry___ FreeRandom_( "Random", sclr::Parameters );
 entry___ registry::RandomName( "@Name", FreeRandom_ );
 static entry___ TaggedRandom_( RGSTRY_TAGGING_ATTRIBUTE( "Name" ), FreeRandom_ );
 entry___ registry::TaggedRandomLimit( "@Limit", TaggedRandom_ );

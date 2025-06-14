@@ -21,7 +21,7 @@
 
 #include "registry.h"
 
-#include "sclmisc.h"
+#include "sclm.h"
 
 using namespace data_c;
 
@@ -33,6 +33,6 @@ void data_c::Initialize( void )
 		qRChk();
 
 	NamespaceLabel.Init();
-	sclmisc::MGetValue( registry::NamespaceLabel, NamespaceLabel );
+	sclm::MGetValue( registry::NamespaceLabel, NamespaceLabel );
 	NamespaceLabel.Append( ':' );
 }

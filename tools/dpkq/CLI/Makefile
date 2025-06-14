@@ -33,13 +33,14 @@ mods += fil flf flsq flw flx
 mods += fnm ias idsq iof iop 
 mods += lcl lck lst lstbch lstcrt 
 mods += lstctn mns mtk mtx ntvstr 
-mods += que rgstry sdr stkbse stkbch 
-mods += stkcrt stkctn str strng stsfsm 
-mods += tagsbs tht thtsub tol txf 
-mods += tys uys utf xml xpp 
-mods += xtf llio dlbrry plgn plgncore 
-mods += sclargmnt sclmisc sclerror scllocale sclrgstry 
-mods += scltool 
+mods += osd que rgstry rnd sdr 
+mods += stkbse stkbch stkcrt stkctn str 
+mods += strng stsfsm tagsbs tht thtsub 
+mods += tol txf tys uys utf 
+mods += xml xpp xtf llio dlbrry 
+mods += plgn plgncore 
+mods += scla scli sclm scle scll 
+mods += sclr sclt 
 mods += dpkals dpkbsc dpkctx dpkrcd dpktbl 
 mods += data_c data_d data_r 
 mods += common context data registry 
@@ -73,12 +74,13 @@ AMD64=x64
 Cygwin=Cygwin
 MinGW=Msys
 GNULinux=GNU/Linux
+FreeBSD=FreeBSD
 Linux=Linux
 MacOS=Darwin
 Android=Android
 os=$(shell uname -o 2>/dev/null || uname -s)
 mach=$(shell uname -m)
-ifdef EPEIOS_SRC
+ifdef Q37_EPEIOS
 endif
 
 
@@ -119,10 +121,23 @@ endif
 #############################
 
 ifeq ("$(os)","$(GNULinux)")
-
+# By default, 'CXX' is set to 'g++'.
+# 	CXX = clang++
 endif
 
 #############################
+	
+
+###########################
+# For FreeBSD environment #
+###########################
+
+ifeq ("$(os)","$(FreeBSD)")
+# By default, 'CXX' is set to 'clang++'.
+# 	CXX = g++
+endif
+
+###########################
 	
 
 #########################
@@ -293,6 +308,35 @@ endif
 #############################
 		
 
+###########################
+# For FreeBSD environment #
+###########################
+
+ifeq ("$(os)","$(FreeBSD)")
+ 
+	co += -std=gnu++11 -DUNICODE -D_FILE_OFFSET_BITS=64
+	
+	mods += $(pmods)
+	
+	libs += -lpthread -ldl -lrt
+
+	ifeq ("$(target)","$(IA_32)")
+		co += -m32
+		lo += -m32
+	else # 'ifeq' on other line due to GNU 3.80 (Maemo on N900).
+		ifeq ("$(target)","$(AMD64)")
+			co += -m64
+			lo += -m64
+		endif
+	endif
+	binary=$(name)
+
+	dest=/home/csimon/bin/
+endif
+
+###########################
+		
+
 #########################
 # For Linux environment #
 #########################
@@ -358,8 +402,8 @@ ifeq ("$(os)","$(Android)")
 	mods += $(pmods)
 
 	libs += -lpthread -ldl -lrt
-	
-	ifeq ("$(target)","$(IA_32)")
+
+    ifeq ("$(target)","$(IA_32)")
 		co += -m32
 		lo += -m32
 	else # 'ifeq' on other line due to GNU 3.80 (Maemo on N900).
@@ -379,15 +423,15 @@ ifeq ("$(target)","$(Android)")
 	rm -rf *.d
 endif
 
-copt += -DVERSION=\""20171008"\"
+copt += -DVERSION=\""20250614"\"
 copt += -DCOPYRIGHT_YEARS=\""2010-2017"\"
 copt += -DIDENTIFIER=\""394fda6e-03c2-4770-b819-57852b649521"\"
 
-ifndef EPEIOS_SRC
+ifndef Q37_EPEIOS
 	src += :src:src/epeios
 	out = ./
 else
-	src += :$(EPEIOS_SRC)
+	src += :$(Q37_EPEIOS)/stable
 	out = $(dest)
 endif
 
@@ -407,7 +451,7 @@ objs = $(name).$(ox) $(mods:=.$(ox))
 
 $(binary): $(objs)
 	$(CXX) $(lo) $(libs) $(LDFLAGS)
-ifdef EPEIOS_SRC			
+ifdef Q37_EPEIOS			
 	mkdir -p $(out)
 	cp $(binary) $(out)
 endif

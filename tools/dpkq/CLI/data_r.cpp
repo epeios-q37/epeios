@@ -23,10 +23,11 @@
 
 #include "common.h"
 
-#include "sclmisc.h"
+#include "sclm.h"
 
 #include "lcl.h"
 #include "xpp.h"
+#include "rnd.h"
 
 using namespace data_r;
 
@@ -856,9 +857,9 @@ namespace {
 	void ProcessGenericAlias_(
 		const records_ &Records,
 		trow__ TableRow,
-		const str::string_ &GenericAliasLabel,
-		const str::strings_ &CommonTags,
-		const str::strings_ &CommonValues,
+		const str::dString &GenericAliasLabel,
+		const str::dStrings &CommonTags,
+		const str::dStrings &CommonValues,
 		xpp::preprocessing_iflow___ &IFlow,
 		record_aliases_ &Aliases )
 	{
@@ -866,8 +867,8 @@ namespace {
 		record_alias Alias;
 		ctn::qCITEMs( record_, sRRow ) Record;
 		sRRow Row = qNIL;
-		str::string AliasLabel;
-		str::strings Tags, Values;
+		str::wString AliasLabel;
+		str::wStrings Tags, Values;
 		bso::integer_buffer__ Buffer;
 	qRB
 		Tags.Init();
@@ -889,7 +890,7 @@ namespace {
 			AliasLabel.Init();
 			AliasLabel = GenericAliasLabel;
 
-			if ( !tagsbs::SubstituteLongTags( AliasLabel, Tags, Values ) )
+			if ( !tagsbs::SubstituteLongTags(AliasLabel, Tags, Values, tagsbs::DefaultTagMarker) )
 				common::ReportAndAbort( _( BadGenericRecordLabelAlias ), IFlow );
 
 			if ( AliasLabel == GenericAliasLabel )
@@ -914,7 +915,7 @@ namespace {
 	{
 	qRH
 		ctn::qCITEMs( table_, trow__ ) Table;
-		str::strings Tags, Values;
+		str::wStrings Tags, Values;
 		bso::integer_buffer__ Buffer;
 	qRB
 		Tags.Init();
@@ -928,8 +929,7 @@ namespace {
 		Tags.Append(str::string("TL" ) );
 		Values.Append( Table( TableRow ).Label );
 
-
-		ProcessGenericAlias_( Table( TableRow ).Records, TableRow, GenericAliasLabel, Tags, Values, IFlow, Aliases );
+		ProcessGenericAlias_(Table( TableRow ).Records, TableRow, GenericAliasLabel, Tags, Values, IFlow, Aliases);
 	qRR
 	qRT
 	qRE
@@ -1139,7 +1139,7 @@ qRH
 	fnm::name___ Location;
 qRB
 	if ( FFlow.Init( DataFileName, err::hUserDefined ) != tol::rSuccess )
-		sclmisc::ReportFileOpeningErrorAndAbort( DataFileName );
+		sclm::ReportFileOpeningErrorAndAbort( DataFileName );
 
 	XFlow.Init( FFlow, utf::f_Default );
 
@@ -1167,7 +1167,7 @@ qRB
 			break;
 		case xml::t_Processed:
 			if ( !DataDetected )
-				sclmisc::ReportAndAbort( _( NoDataError ), DataFileName );
+				sclm::ReportAndAbort( _( NoDataError ), DataFileName );
 			else
 				Continue = false;
 			break;
@@ -1180,7 +1180,7 @@ qRB
 		}
 	}
 
-	tol::InitializeRandomGenerator();
+	rnd::InitializeRandomGenerator();
 qRR
 qRT
 qRE

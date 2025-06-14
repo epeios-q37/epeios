@@ -21,6 +21,7 @@
 
 #include "bitbch.h"
 #include "dte.h"
+#include "rnd.h"
 
 using namespace dpkctx;
 
@@ -335,10 +336,10 @@ static sRRow Pick_( const dGrid &Grid )
 {
 	sRRow Row = qNIL;
 
-	tol::InitializeRandomGenerator();
+	rnd::InitializeRandomGenerator();
 
 	do {
-		Row = rand() % Grid.Amount();
+		Row = rnd::Rand() % Grid.Amount();
 	} while ( Grid.Get( Row ) == false );
 
 	return Row;

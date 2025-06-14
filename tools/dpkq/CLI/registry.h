@@ -23,7 +23,7 @@
 # include "sclr.h"
 
 namespace registry {
-	using namespace sclrgstry;
+	using namespace sclr;
 
 	namespace {
 		using rgstry::entry___;

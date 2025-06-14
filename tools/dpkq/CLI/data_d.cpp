@@ -20,14 +20,14 @@
 #include "dpkq.h"
 
 #include "data_d.h"
-
 #include "data_c.h"
 
 #include "registry.h"
 
-#include "sclmisc.h"
+#include "sclm.h"
 
 #include "cio.h"
+#include "rnd.h"
 
 using namespace data_d;
 
@@ -98,7 +98,7 @@ namespace {
 			Tags.Init();
 			Tags.Append( Name );
 
-			Limit = sclmisc::MGetUInt( rgstry::tentry__( registry::TaggedRandomLimit, Tags ), RAND_MAX );
+			Limit = sclm::MGetUInt( rgstry::tentry__( registry::TaggedRandomLimit, Tags ), RAND_MAX );
 		qRR
 		qRT
 		qRE
@@ -132,10 +132,10 @@ namespace {
 		void GetRandoms_( dRandomValues_ &Randoms )
 		{
 		qRH
-			str::strings Names;
+			str::wStrings Names;
 		qRB
 			Names.Init();
-			sclmisc::GetValues( registry::RandomName, Names );
+			sclm::GetValues( registry::RandomName, Names );
 
 			GetRandoms_( Names, Randoms );
 		qRR
@@ -150,7 +150,7 @@ namespace {
 			Writer.PushTag( "Random" );
 			Writer.PutAttribute( "Name", Random.Name );
 			xml::PutAttribute( "Limit", Random.Limit(), Writer );
-			xml::PutAttribute( "Value", rand() % Random.GetLimit(), Writer );
+			xml::PutAttribute( "Value", rnd::Rand() % Random.GetLimit(), Writer );
 			Writer.PopTag();
 		}
 
@@ -164,7 +164,7 @@ namespace {
 			if ( Randoms.Amount() == 0 )
 				return;
 
-			tol::InitializeRandomGenerator();
+			rnd::InitializeRandomGenerator();
 
 			Random.Init( Randoms );
 
@@ -317,7 +317,7 @@ namespace {
 						Meaning.Init();
 						Meaning.SetValue( "NoRecordOfGivenIdError" );
 						Meaning.AddTag( bso::Convert( Id, Buffer ) );
-						sclmisc::ReportAndAbort( Meaning );
+						sclm::ReportAndAbort( Meaning );
 					} else {
 						Writer.PutAttribute( "Amount", "1" );
 						Row = Id - 1;
@@ -392,7 +392,7 @@ namespace {
 			NS.Truncate();
 
 			URI.Init();
-			sclmisc::MGetValue( registry::NamespaceURI, URI );
+			sclm::MGetValue( registry::NamespaceURI, URI );
 
 			Writer.PutAttribute( NS, URI );
 
@@ -454,7 +454,7 @@ namespace {
 			txf::text_oflow__ TFlow;
 		qRB
 			if ( FFlow.Init( FileName ) != tol::rSuccess )
-				sclmisc::ReportFileOpeningErrorAndAbort( FileName );
+				sclm::ReportFileOpeningErrorAndAbort( FileName );
 
 			TFlow.Init( FFlow );
 
@@ -480,14 +480,14 @@ namespace {
 	qRH
 		bso::bool__ Backuped = false;
 	qRB
-		sclmisc::CreateBackupFile( FileName );
+		sclm::CreateBackupFile( FileName );
 
 		Backuped = true;
 
 		Id = DisplayWithoutBackup_( Id, Data, XSLFileName, SessionMaxDuration, Label, TableLabel, BoxRow, Context, FileName );
 	qRR
 		if ( Backuped )
-			sclmisc::RecoverBackupFile( FileName );
+			sclm::RecoverBackupFile( FileName );
 	qRT
 	qRE
 		return Id;

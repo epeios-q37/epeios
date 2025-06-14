@@ -23,8 +23,9 @@
 #include "data.h"
 #include "registry.h"
 
-#include "scltool.h"
-#include "sclerror.h"
+#include "sclt.h"
+#include "scle.h"
+#include "sclm.h"
 
 #include "err.h"
 #include "cio.h"
@@ -69,7 +70,7 @@ qRH
 	tagsbs::tvalues TaggedValues;
 qRB
 	Viewer.Init();
-	sclmisc::OGetValue( registry::Viewer, Viewer );
+	sclm::OGetValue( registry::Viewer, Viewer );
 
 	if ( ( Viewer.Amount() != 0 ) && ( OutputFilename.Amount() != 0 ) ) {
 		TaggedValues.Init();
@@ -106,7 +107,7 @@ qRH
 qRB
 	data::Initialize();
 
-	Id = sclmisc::OGetUInt( registry::Id, data::All );
+	Id = sclm::OGetUInt( registry::Id, data::All );
 
 	switch ( Id ) {
 	case data::Undefined:
@@ -120,24 +121,24 @@ qRB
 	}
 
 	DataFilename.Init();
-	if ( !sclmisc::BGetValue( registry::Data, DataFilename ) )
-		sclmisc::ReportAndAbort( "DataFileNotSpecifiedError" );
+	if ( !sclm::BGetValue(registry::Data, DataFilename, err::h_Default) )
+		sclm::ReportAndAbort( "DataFileNotSpecifiedError" );
 
 	OutputFilename.Init();
-	if ( !sclmisc::BGetValue( registry::Output, OutputFilename ) )
-		sclmisc::ReportAndAbort( "OutputFileNotSpecifiedError" );
+	if ( !sclm::BGetValue(registry::Output, OutputFilename, err::h_Default) )
+		sclm::ReportAndAbort( "OutputFileNotSpecifiedError" );
 
 	XSLFilename.Init();
-	sclmisc::OGetValue( registry::XSL, XSLFilename );
+	sclm::OGetValue( registry::XSL, XSLFilename );
 
 	Context.Init();
 	context::Retrieve( Context);
-	Context.AdjustBoxesAmount( sclmisc::OGetS8( registry::BoxesAmount, 0 ) );
+	Context.AdjustBoxesAmount( sclm::OGetS8( registry::BoxesAmount, 0 ) );
 
 	Data.Init();
 	data::Retrieve( DataFilename, Data );
 
-	SessionMaxDuration = sclmisc::OGetUInt( registry::SessionMaxDuration, 0 );
+	SessionMaxDuration = sclm::OGetUInt( registry::SessionMaxDuration, 0 );
 
 	Label.Init();
 	TableLabel.Init();
@@ -160,7 +161,7 @@ qRB
 	Context.Init();
 	context::Retrieve( Context );
 
-	RecordId = sclmisc::OGetUInt( registry::Id, 0 );
+	RecordId = sclm::OGetUInt( registry::Id, 0 );
 
 	Context.Demote( RecordId == 0 ? qNIL : RecordId - 1 );
 
@@ -174,9 +175,9 @@ qRE
 	else if ( Command == #name )\
 		name##_()
 
-int scltool::SCLTOOLMain(
+int sclt::SCLTMain(
 	const str::string_ &Command,
-	const scltool::oddities__ &Oddities )
+	const sclt::oddities__ &Oddities )
 {
 	int ExitValue = EXIT_FAILURE;
 qRH
@@ -197,7 +198,7 @@ qRE
 	return ExitValue;
 }
 
-const scli::sInfo &scltool::SCLTOOLInfo( void )
+const scli::sInfo &sclt::SCLTInfo( void )
 {
 	return dpkq::Info;
 }

@@ -24,8 +24,8 @@
 
 #include "registry.h"
 
-#include "sclerror.h"
-#include "sclmisc.h"
+#include "scle.h"
+#include "sclm.h"
 
 using namespace common;
 
@@ -63,7 +63,7 @@ qRB
 
 	Error.AddTag( XPPError );
 
-	sclerror::SetMeaning( Error );
+	scle::SetMeaning( Error );
 
 	qRAbort();
 qRR
@@ -91,7 +91,7 @@ qRB
 
 	GenericMeaning.AddTag( MeaningBuffer );
 
-	sclmisc::ReportAndAbort( GenericMeaning );
+	sclm::ReportAndAbort( GenericMeaning );
 qRR
 qRT
 qRE

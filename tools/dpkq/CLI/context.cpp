@@ -24,7 +24,7 @@
 
 #include "dpkq.h"
 
-#include "sclmisc.h"
+#include "sclm.h"
 
 using namespace context;
 
@@ -88,14 +88,14 @@ namespace {
 		xtf::extended_text_iflow__ XFlow;
 	qRB
 		if ( fil::Exists( FileName ) ) {
-            if ( FFlow.Init( FileName ) != tol::rSuccess )
-                    sclmisc::ReportFileOpeningErrorAndAbort( FileName );
+      if ( FFlow.Init( FileName ) != tol::rSuccess )
+				sclm::ReportFileOpeningErrorAndAbort( FileName );
 
-            XFlow.Init( FFlow, utf::f_Default );
+      XFlow.Init( FFlow, utf::f_Default );
 
-            Parser.Init( XFlow, xml::eh_Default );
+      Parser.Init( XFlow, xml::eh_Default );
 
-            Retrieve_( Parser, NAME_LC, Context );
+      Retrieve_( Parser, NAME_LC, Context );
 		} else {
 			//		COut << "Unable to find context file '" << FileName << "'! It will be created at exit." << txf::nl;
 		}
@@ -112,8 +112,8 @@ qRH
 qRB
 	Filename.Init();
 
-	if ( !sclmisc::BGetValue( registry::Context, Filename ) )
-		sclmisc::ReportAndAbort( "ContextFileNotSpecifiedError" );
+	if ( !sclm::BGetValue(registry::Context, Filename, err::h_Default) )
+		sclm::ReportAndAbort( "ContextFileNotSpecifiedError" );
 
 	Retrieve_( Filename, Context );
 qRR
@@ -149,7 +149,7 @@ namespace {
 		xml::rWriter Writer;
 	qRB
 		if ( FFlow.Init( FileName ) != tol::rSuccess )
-			sclmisc::ReportFileOpeningErrorAndAbort( FileName );
+			sclm::ReportFileOpeningErrorAndAbort( FileName );
 
 		TFlow.Init( FFlow );
 
@@ -170,14 +170,14 @@ namespace {
 	qRH
 		bso::bool__ Backuped = false;
 	qRB
-		sclmisc::CreateBackupFile( FileName );
+		sclm::CreateBackupFile( FileName );
 
 		Backuped = true;
 
 		DumpWithoutBackup_( Context, FileName );
 	qRR
 		if ( Backuped )
-			sclmisc::RecoverBackupFile( FileName );
+			sclm::RecoverBackupFile( FileName );
 	qRT
 	qRE
 	}
@@ -190,8 +190,8 @@ qRH
 qRB
 	Filename.Init();
 
-	if ( !sclmisc::BGetValue( registry::Context, Filename ) )
-		sclmisc::ReportAndAbort( "ContextFileNotSpecifiedError" );
+	if ( !sclm::BGetValue(registry::Context, Filename, err::h_Default) )
+		sclm::ReportAndAbort( "ContextFileNotSpecifiedError" );
 
 	Dump_( Context, Filename );
 qRR
