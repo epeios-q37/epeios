@@ -92,7 +92,7 @@ def ucuqStructToDict(obj):
 
 def ucuqGetInfos():
   infos = {{
-    "{IK_DEVICE_ID_}": getIdentificationId(CONFIG_IDENTIFICATION),
+    "{IK_DEVICE_ID_}": getIdentificationId(CONFIG_IDENTIFICATION if 'CONFIG_IDENTIFICATION' in globals() else _CONFIG_IDENTIFICATION),
     "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
   }}
 
@@ -932,7 +932,7 @@ class SH1106_I2C(SH1106):
       raise Exception("addr can not be given without i2c!")
       
   def init(self, width, height, i2c, /, external_vcc = False, addr = None, extra = True):
-    super().init(("SH1106-1", "SH1106_I2C-1"), f"SH1106_I2C({width}, {height}, {i2c.getObject()}, addr={addr}, external_vcc={external_vcc})", i2c.getDevice(), extra)
+    super().init(("SH1106-1", "SH1106_I2C-1"), f"SH1106_I2C({width}, {height}, {i2c.getObject()}, addr={addr}, external_vcc={external_vcc})", i2c.getDevice(), extra).flash(extra if not isinstance(extra, bool) else 0.15)
 
 
 

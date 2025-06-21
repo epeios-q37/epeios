@@ -1,6 +1,29 @@
 [
   {
+    "_comment": "ESP32-S3",
+    "devices": [ "Hotel"],
+    "brand": "q37.info",
+    "model": "Displays",
+    "variant": "SH1106",
+    "hardware": {
+      "OnBoardLed": [ 48, true ],
+      "OLED": [
+        {
+          "Soft": false,
+          "SDA": 8,
+          "SCL": 9
+        }
+      ],
+      "Buzzer": [
+        {
+          "Mode": "Straight",
+          "Pin": 5
+        }
+      ]
+    }
+  }, {
     "_comment": "ESP32-C3",
+    "devices": [ "Alpha", "Golf", "India" ],
     "brand": "q37.info",
     "model": "Displays",
     "variant": "SSD1306",
@@ -33,10 +56,10 @@
           "Pin": 5
         }
       ]
-    },
-    "devices": [ "Alpha", "Golf", "India" ]
+    }
   }, {
     "_comment": "ESP8266",
+    "devices": [ "Delta" ],
     "brand": "q37.info",
     "model": "Servos",
     "variant": "180°",
@@ -60,9 +83,10 @@
           "Pin": 15
         }
       ]
-    },
-    "devices": [ "Delta" ]
+    }
   }, {
+    "_comment": "Freenove Bipedal (RPI Pico W)",
+    "devices": [ "Charlie", "Echo" ],
     "brand": "Freenove",
     "model": "Bipedal",
     "variant": "RPiPico(2)W",
@@ -113,9 +137,10 @@
           "Pin": 13
         }
       ]
-    },
-    "devices": [ "Charlie", "Echo" ]
+    }
   }, {
+    "_comment": "Freenove Dog (ESP32-WROOM32)",
+    "devices": [ "Foxtrot" ],
     "brand": "Freenove",
     "model": "Dog",
     "variant": "ESP32",
@@ -128,8 +153,7 @@
           "Limiter": 30,
           "Offset": 0
         }
-      ],
-      "devices": [ "Foxtrot" ]
+      ]
     }
   }, {
     "brand": "q37.info",
