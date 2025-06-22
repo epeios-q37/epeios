@@ -5,6 +5,14 @@ Contient les applications qui sont communes à *Brython* et *Python*.
 Pour lancer la version *Brython* : `BPYB_Launch <app_dir>`.
 Pour lancer la version *Python* : `BPYP_Launch <app_dir>`.
 
+## Utilisation des version de développement
+
+### Version Python
+
+Modifier *ucuq.json*.
+
+Si utilisation version *Linux*, couper *stunnem*.
+
 ## Paramètre `useUCUqDemoDevices`
 
 Le paramètre `useUCUqDemoDevices` de *Libs/htdocs/index.php* est passé à *Libs/htdocs/brython.php* lorsqu'il est présent.

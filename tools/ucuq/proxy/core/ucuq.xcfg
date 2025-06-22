@@ -31,7 +31,7 @@
       </xpp:bloc>
     </xpp:define>
     <ModulesFileName>
-      <xpp:expand select="LinuxModulesFile"/>
+      <xpp:expand select="WindowsModulesFile"/>
     </ModulesFileName>
   </Parameters>
   <Definitions>

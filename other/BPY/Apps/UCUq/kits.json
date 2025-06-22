@@ -139,7 +139,7 @@
       ]
     }
   }, {
-    "_comment": "Freenove Dog (ESP32-WROOM32)",
+    "_comment": "Freenove Dog (ESP32-WROVER)",
     "devices": [ "Foxtrot" ],
     "brand": "Freenove",
     "model": "Dog",

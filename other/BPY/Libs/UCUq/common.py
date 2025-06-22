@@ -620,6 +620,7 @@ class PWM(Core_):
 
 
   def setFreq(self, freq):
+    print(freq)
     return self.addMethods(f"freq({freq})")
 
 
