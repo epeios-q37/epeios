@@ -246,19 +246,23 @@ def exit(message=None):
   sys.exit(-1)
 
 
-def init(callback):
+async def init_async(callback):
   global proxy
+
   proxyParam = getParams(_CONFIG_PROXY, getIdentificationId(_CONFIG_IDENTIFICATION), getParams(_CONFIG_PROXY, "_default", _DEFAULT_PROXY))
 
   callback(_S_UCUQ, 0)
 
   try:
-    proxy = asyncio.run(asyncio.open_connection(proxyParam[0], proxyParam[1], proxyParam[2]))
-  except:
-    return False
-  else:
+    proxy = await asyncio.open_connection(proxyParam[0], proxyParam[1], proxyParam[2])
     return True
+  except OSError:
+    return False
   
+  
+def init(callback):
+    return asyncio.run(init_async(callback))  
+
 
 def getDeviceLabel():
   return uos.uname().sysname

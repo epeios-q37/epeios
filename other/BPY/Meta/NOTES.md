@@ -11,7 +11,7 @@ Pour lancer la version *Python* : `BPYP_Launch <app_dir>`.
 
 Modifier *ucuq.json*.
 
-Si utilisation version *Linux*, couper *stunnem*.
+Si utilisation version *Linux*, couper *stunnel*.
 
 ## Paramètre `useUCUqDemoDevices`
 
