@@ -308,6 +308,7 @@ async def serve():
       expression = await readString()
       returned = ""
       try:
+        print(script)
         exec(script)
         if expression:
           returned = json.dumps(eval(expression))

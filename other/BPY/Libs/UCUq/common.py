@@ -143,6 +143,14 @@ def testCommit_(commit, behavior = None):
     return commit
 
   
+def sleepStart():
+  return getDevice_().sleepStart()
+
+
+def sleepWait(id, secs):
+  return getDevice_().sleepWait(id, secs)
+
+  
 def sleep(secs):
   return getDevice_().sleep(secs)
 
@@ -151,7 +159,13 @@ class Device(Device_):
   def __init__(self, *, id = None, token = None, callback = None):
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
-    self.commands_ = []
+    self.commands_ = ["""
+def sleepWait(start, us):
+  elapsed = time.ticks_us() - start
+                      
+  if elapsed < us:
+    time.sleep_us(int(us - elapsed))
+"""]
     self.commitBehavior = None
 
     super().__init__(id=id, token=token, callback=callback)
@@ -181,6 +195,16 @@ class Device(Device_):
 
     return self
 
+  def sleepStart(self):
+    id = getObjectIndice_()
+
+    self.addCommand(f"{getObject_(id)} = time.ticks_us()")
+
+    return id
+  
+  def sleepWait(self, id, secs):
+    self.addCommand(f"sleepWait({getObject_(id)}, {secs * 1000000})")
+  
   def sleep(self, secs):
     self.addCommand(f"time.sleep_us({int(secs * 1000000)})")
 

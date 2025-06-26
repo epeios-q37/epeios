@@ -172,12 +172,9 @@ async def atkMirror(dom, id):
 
   if  (await dom.getValue(id)) == "true":
     if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      device = ucuq.Device(id="Alpha")
+      device = ucuq.Device(id="Hotel")
 
-      mirror = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(await ucuq.getInfosAwait(device)), "OLED", ["SDA", "SCL", "Soft"]), device=device ))
-      mirror.fill(1).show()
-      await ucuq.sleepAwait(0.5)
-      mirror.fill(0).show()
+      mirror = ucuq.SH1106_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(await ucuq.getInfosAwait(device)), "OLED", ["SDA", "SCL", "Soft"]), device=device ))
     else:
       await dom.setValue(id, "false")
   else:

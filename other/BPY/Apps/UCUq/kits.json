@@ -17,7 +17,15 @@
       "Buzzer": [
         {
           "Mode": "Straight",
-          "Pin": 5
+          "Pin": 2
+        },
+        {
+          "Mode": "Straight",
+          "Pin": 7
+        },
+        {
+          "Mode": "Straight",
+          "Pin": 13
         }
       ]
     }

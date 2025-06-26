@@ -19,6 +19,7 @@ $use_ucuq_demo_devices_field = $use_ucuq_demo_devices === "true"? "<input type='
 echo <<<BODY
 <html>
   <head>
+    <meta name="google" content="notranslate">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.min.js" type="text/javascript"
