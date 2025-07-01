@@ -29,11 +29,6 @@ $out = str_replace(array("\r", "\n", "\t"), '',<<<MLS
       <!-- Below both scripts are for DEV environment. -->
       <script src="xdhtml.js"></script>
       <script src="xdhwebq.js"></script>
-      <!-- Below both scripts are for PROD environment. -->
-      <script src="xdhtml_2025.js"></script>
-      <script src="xdhwebq_2025.js"></script>
-      <script data-goatcounter="https://faas.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-      <!--link rel="stylesheet" href="https://unpkg.com/marx-css/css/marx.min.css"-->
       <style id="XDHStyle">
         html, body {
           margin: 0;

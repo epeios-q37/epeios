@@ -128,8 +128,6 @@ def exit_(message=None):
 
 def init_():
   print("Connection to UCUq server…", end="", flush=True)
-  print(UCUQ_PORT_, UCUQ_HOST_, UCUQ_SSL_ )
-
 
   try:
     s = socket.create_connection((UCUQ_HOST_, UCUQ_PORT_))
