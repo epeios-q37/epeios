@@ -26,7 +26,6 @@ $out = str_replace(array("\r", "\n", "\t"), '',<<<MLS
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
       <meta http-equiv="Cache-Control" content="no-cache"/>
       <meta name="viewport" content="width=device-width, initial-scale=1"/>
-      <!-- Below both scripts are for DEV environment. -->
       <script src="xdhtml.js"></script>
       <script src="xdhwebq.js"></script>
       <style id="XDHStyle">
