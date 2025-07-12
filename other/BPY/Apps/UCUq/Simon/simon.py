@@ -240,11 +240,12 @@ SUCCESS_JINGLE = [
   7, 10, 19, 15, 17, 22
 ]
 
-def restart(dom):
+async def restartAwait(dom):
   global seq
 
   seq = random.choice("RGBY")
   hw.restart(seq, lambda m: dom.getL10n(m))
+  await dom.setValue("Length", str(len(seq)))
 
 
 async def atk(dom):
@@ -272,7 +273,7 @@ async def atkRepeat():
 
   
 async def atkNew(dom):
-  restart(dom)
+  await restartAwait(dom)
 
 async def atkClick(dom, id):
   global seq, userSeq
@@ -291,6 +292,8 @@ async def atkClick(dom, id):
       userSeq = ""
       seq += random.choice("RGBY")
       hw.new(seq, lambda m: dom.getL10n(m))
+      await ucuq.sleepAwait(1.5)
+      await dom.setValue("Length", str(len(seq)))
     else:
       hw.lcd.backlightOff()
   else:
