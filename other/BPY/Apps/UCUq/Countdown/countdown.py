@@ -524,7 +524,7 @@ async def atkNew(player, dom):
     await ucuq.sleepAwait(8)
 
   for c in range( 40 if PROD else 0):
-    chrono = c + 1000
+    chrono = ucuq.getObjectIndice()
     hw.oled.sleepStart(chrono)
     hw.oledDisplayNumber(random.randint(101,999))
     hw.ringFading(c, (1,0,1))

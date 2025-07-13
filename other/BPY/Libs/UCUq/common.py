@@ -17,7 +17,7 @@ device_ = None
 
 unpack_ = lambda data : zlib.decompress(base64.b64decode(data)).decode()
 
-def getObjectIndice_():
+def getObjectIndice():
   global objectCounter_
 
   objectCounter_ += 1
@@ -222,7 +222,7 @@ def sleepWait(start, us):
 
   def sleepStart(self, id = None):
     if id == None:
-      id = getObjectIndice_()
+      id = getObjectIndice()
 
     self.addCommand(f"{getObject_(id)} = time.ticks_us()")
 
@@ -470,7 +470,7 @@ class Core_:
     return self.id
   
   def init(self, modules, instanciation, device, extra, *, before=""):
-    self.id = getObjectIndice_()
+    self.id = getObjectIndice()
 
     if self.device_:
         if device and device != self.device_:
