@@ -143,8 +143,8 @@ def testCommit_(commit, behavior = None):
     return commit
 
   
-def sleepStart():
-  return getDevice_().sleepStart()
+def sleepStart(id = None):
+  return getDevice_().sleepStart(id)
 
 
 def sleepWait(id, secs):
@@ -153,6 +153,31 @@ def sleepWait(id, secs):
   
 def sleep(secs):
   return getDevice_().sleep(secs)
+
+
+class Multi:
+  def __init__(self, objet):
+    self.objets = [objet]
+
+  def add(self, objet):
+    self.objets.append(objet)
+
+  def __getattr__(self, methodName):
+    def wrapper(*args, **kwargs):
+      for obj in self.objets:
+        getattr(obj, methodName)(*args, **kwargs)
+      return self
+    return wrapper
+  
+  def __getitem__(self, index):
+    if index < len(self.objets):
+      return self.objets[index]
+    else:
+      raise IndexError("Index out of range for Multi object.")
+  
+  # Workaround for Brython (https://github.com/brython-dev/brython/issues/2590)
+  def __bool__(self):
+    return True
 
 
 class Device(Device_):
@@ -195,8 +220,9 @@ def sleepWait(start, us):
 
     return self
 
-  def sleepStart(self):
-    id = getObjectIndice_()
+  def sleepStart(self, id = None):
+    if id == None:
+      id = getObjectIndice_()
 
     self.addCommand(f"{getObject_(id)} = time.ticks_us()")
 
@@ -468,7 +494,6 @@ class Core_:
 
   def addCommand(self, command):
     self.device_.addCommand(command)
-
     return self
 
   def addMethods(self, methods):
@@ -476,6 +501,17 @@ class Core_:
 
   def callMethodAwait(self, method):
     return self.device_.commitAwait(f"{self.getObject()}.{method}")
+  
+  def sleepStart(self, id = None):
+    return self.device_.sleepStart(id)
+  
+  def sleepWait(self, id, secs):
+    self.device_.sleepWait(id, secs)
+    return self
+  
+  def sleep(self, secs):
+    self.device_.sleep(secs)
+    return self
                          
 
 class GPIO(Core_):
@@ -908,7 +944,7 @@ class OLED_(Core_):
     return self.addMethods(f"text('{string}',{x}, {y}, {col})")
   
   def rect(self, x, y, w, h, col, fill=True):
-    return self.addMethods(f"rect({x},{y},{w},{h},{col},{fill})")
+    return self.addMethods(f"{'fill_' if fill else ''}rect({x},{y},{w},{h},{col})")
 
   def draw(self, pattern, width, ox = 0, oy = 0, mul = 1):
     if width % 4:

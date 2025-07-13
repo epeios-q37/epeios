@@ -1,7 +1,32 @@
 import ucuq, atlastk, binascii
 
-ht16k33 = None
-mirror = None
+matrix = None
+
+class SH1106:
+  def __init__(self, sh1106):
+    self.sh1106 = sh1106
+
+  def plot(self, x, y):
+    return self.sh1106.rect(x*8, y*8, 8, 8, 1)
+  
+  def show(self):
+    return self.sh1106.show()
+  
+  def clear(self):
+    return self.sh1106.fill(0).show()
+
+  def rect(self, x0, y0, x1, y1):
+    return self.sh1106.rect(x0, y0, 8*(x1-x0+1), 8*(y1-y0+1), 1)
+  
+  def draw(self, motif):
+    return self.sh1106.fill(0).draw(motif, 16, mul=8)
+  
+  def setBrightness(self, b):
+    return self
+  
+  def setBlinkRate(self, b):
+    return self
+  
 
 pattern = "0" * 32
 
@@ -10,29 +35,29 @@ TEST_DELAY = 0.05
 def test():
   for y in range(8):
     for x in range(16):
-      ht16k33.plot(x,y)
-    ht16k33.show()
+      matrix.plot(x,y)
+    matrix.show()
     ucuq.sleep(TEST_DELAY)
-    ht16k33.clear()
+    matrix.clear()
 
   for x in range(16):
     for y in range(8):
-      ht16k33.plot(x,y)
-    ht16k33.show()
+      matrix.plot(x,y)
+    matrix.show()
     ucuq.sleep(TEST_DELAY)
-    ht16k33.clear()
+    matrix.clear()
 
-  ht16k33.rect(0, 0, 15, 7).show()
+  matrix.rect(0, 0, 15, 7).show()
 
   for b in range(0, 16):
-    ht16k33.setBrightness(b)
+    matrix.setBrightness(b)
     ucuq.sleep(TEST_DELAY)
 
   for b in range(15, -1, -1):
-    ht16k33.setBrightness(b)
+    matrix.setBrightness(b)
     ucuq.sleep(TEST_DELAY)
 
-  ht16k33.clear().show()
+#  matrix.clear().show()
 
 
 async def drawOnGUIAwait(dom, motif = pattern):
@@ -73,11 +98,8 @@ async def setHexaAwait(dom, motif = pattern):
 
 
 def drawOnMatrix(motif = pattern):
-  if ht16k33:
-    ht16k33.draw(motif).show()
-
-    if mirror:
-      mirror.fill(0).draw(motif, 16, mul=8).show()
+  if matrix:
+    matrix.draw(motif).show()
 
 
 async def drawAwait(dom, motif = pattern):
@@ -93,21 +115,21 @@ async def drawAwait(dom, motif = pattern):
 
 
 def turnOnMain(hardware):
-  global ht16k33
+  global matrix
 
   if not hardware:
     raise Exception("Kit has no ht16k33 component!")
   
-  ht16k33 = ucuq.HT16K33(ucuq.I2C(*ucuq.getHardware(hardware, "Matrix", ["SDA", "SCL", "Soft"])))
-  ht16k33.clear().show()
-  ht16k33.setBrightness(0)
-  ht16k33.setBlinkRate(0)
+  matrix = ucuq.Multi(ucuq.HT16K33(ucuq.I2C(*ucuq.getHardware(hardware, "Matrix", ["SDA", "SCL", "Soft"]))))
+  matrix.clear().show()
+  matrix.setBrightness(0)
+  matrix.setBlinkRate(0)
 
 
 async def atk(dom):
   infos = await ucuq.ATKConnectAwait(dom, BODY)
 
-  if not ht16k33:
+  if not matrix:
     turnOnMain(ucuq.getKitHardware(infos))
 
   await drawAwait(dom, "")
@@ -156,11 +178,11 @@ async def atkAll(dom):
 
 
 async def atkBrightness(dom, id):
-  ht16k33.setBrightness(int(await dom.getValue(id)))
+  matrix.setBrightness(int(await dom.getValue(id)))
 
 
 async def atkBlinkRate(dom, id):
-  ht16k33.setBlinkRate(float(await dom.getValue(id)))
+  matrix.setBlinkRate(float(await dom.getValue(id)))
 
 
 async def atkDraw(dom, id):
@@ -168,17 +190,13 @@ async def atkDraw(dom, id):
 
 
 async def atkMirror(dom, id):
-  global mirror
-
   if  (await dom.getValue(id)) == "true":
     if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
       device = ucuq.Device(id="Hotel")
 
-      mirror = ucuq.SH1106_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(await ucuq.getInfosAwait(device)), "OLED", ["SDA", "SCL", "Soft"]), device=device ))
+      matrix.add(SH1106(ucuq.SH1106_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(await ucuq.getInfosAwait(device)), "OLED", ["SDA", "SCL", "Soft"]), device=device ))))
     else:
       await dom.setValue(id, "false")
-  else:
-    mirror = None
   
 MATRICES = (
   "0FF0300C4002866186614002300C0FF",

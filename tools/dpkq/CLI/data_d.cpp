@@ -35,6 +35,37 @@ using namespace data_c;
 
 using namespace dpkrcd;
 
+dpkbsc::counter__ data_d::GetSkippedAmount(
+	dpkctx::amount__ SessionAmount,
+	const dRRows &RecordRows,
+	const records_ &Records)
+{
+	dpkbsc::counter__ Skipped = 0;
+	sdr::row__ Row = RecordRows.Last();
+	sRRow RecordRow = qNIL;
+	ctn::qCITEMs(record_, sRRow) Record;
+
+	Record.Init(Records);
+
+	while ( ( Row != qNIL ) && ( SessionAmount-- ) ) {
+		RecordRow = RecordRows(Row);
+
+		if ( Records.Exists(RecordRow) )
+			if ( Record(RecordRow).Skip() ) {
+				if ( Skipped == DPKBSC_COUNTER_MAX )
+					qRLmt();
+				Skipped++;
+			}
+
+		Row = RecordRows.Previous(Row);
+	}
+
+	return Skipped;
+
+}
+
+
+
 namespace {
 	namespace {
 		class dRandomValue_
@@ -236,36 +267,6 @@ namespace {
 			}
 		}
 
-		dpkbsc::counter__ GetSkippedAmount_(
-			dpkctx::amount__ SessionAmount,
-			const dRRows &RecordRows,
-			const records_ &Records )
-		{
-			dpkbsc::counter__ Skipped = 0;
-			sdr::row__ Row = RecordRows.Last();
-			sRRow RecordRow = qNIL;
-			ctn::qCITEMs( record_, sRRow ) Record;
-
-			Record.Init( Records );
-
-			while ( ( Row != qNIL ) && ( SessionAmount-- ) ) {
-				RecordRow = RecordRows( Row );
-
-				if ( Records.Exists( RecordRow ) )
-					if ( Record( RecordRow ).Skip() ) {
-						if ( Skipped == DPKBSC_COUNTER_MAX )
-							qRLmt();
-						Skipped++;
-					}
-
-				Row = RecordRows.Previous( Row );
-			}
-
-			return Skipped;
-
-		}
-
-
 		sId  Display_(
 			sId Id,
 			dpkbsc::counter__ Skipped,
@@ -306,10 +307,10 @@ namespace {
 					}
 
 					xml::PutAttribute( "SessionAmount", Context.Pool.S_.Session, Writer );
-					xml::PutAttribute( "SessionSkippedAmount", GetSkippedAmount_( Context.Pool.S_.Session, Context.Pool, Records ), Writer );
+					xml::PutAttribute( "SessionSkippedAmount", GetSkippedAmount( Context.Pool.S_.Session, Context.Pool, Records ), Writer );
 
 					xml::PutAttribute( "CycleAmount", Context.Pool.S_.Cycle, Writer );
-					xml::PutAttribute( "CycleSkippedAmount", GetSkippedAmount_( Context.Pool.S_.Cycle, Context.Pool, Records ), Writer );
+					xml::PutAttribute( "CycleSkippedAmount", GetSkippedAmount( Context.Pool.S_.Cycle, Context.Pool, Records ), Writer );
 
 				} else {
 					if ( Id > Records.Amount() ) {

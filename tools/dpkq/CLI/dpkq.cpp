@@ -81,6 +81,9 @@ qRB
 		TaggedValues.Append("TA", bso::Convert(Table.Records.Amount(), IBuffer));
 		TaggedValues.Append("TS", bso::Convert(Table.Skipped(), IBuffer));
 		TaggedValues.Append("SA", bso::Convert(Context.Pool.S_.Session, IBuffer));
+		TaggedValues.Append("CA", bso::Convert(Context.Pool.S_.Cycle, IBuffer));
+		TaggedValues.Append("SS", bso::Convert(data_d::GetSkippedAmount(Context.Pool.S_.Session, Context.Pool, Table.Records), IBuffer));
+		TaggedValues.Append("CS", bso::Convert(data_d::GetSkippedAmount(Context.Pool.S_.Cycle, Context.Pool, Table.Records), IBuffer));
 		TaggedValues.Append("Data", DataFilename );
 		TaggedValues.Append("XSL", XSLFilename );
 		TaggedValues.Append("Output",OutputFilename );

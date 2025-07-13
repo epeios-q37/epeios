@@ -125,10 +125,13 @@ normalize = lambda string : string.ljust(16) if len(string) < 16 else string[-16
 class HW:
   def __init__(self, hwDesc):
     self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ["SDA", "SCL", "Soft"]))).backlightOn()
-    self.oled =  ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ["SDA", "SCL", "Soft"])))
+    self.oled =  ucuq.Multi(ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ["SDA", "SCL", "Soft"]))))
     self.buzzer = ucuq.PWM(*ucuq.getHardware(hwDesc, "Buzzer", ["Pin"]), freq=50, u16 = 0).setNS(0)
     pin, self.ringCount, self.ringOffset, self.ringLimiter = ucuq.getHardware(hwDesc, "Ring", ["Pin", "Count", "Offset", "Limiter"])
     self.ring = ucuq.WS2812(pin, self.ringCount)
+
+  def activateMirror(self, device, infos):
+      self.oled.add(ucuq.SH1106_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(infos), "OLED", ["SDA", "SCL", "Soft"]), device=device )))
 
   def ringPatchIndex_(self, index):
     return ( index + self.ringOffset ) % self.ringCount
@@ -147,6 +150,8 @@ class HW:
 
     if (errors):
       self.oled.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
+    else:
+      self.oled.fill(0).draw(START_PATTERN, 48, ox=47).show()
 
   def lcdPutString(self, x, y, string):
     self.lcd.moveTo(x,y).putString(string)
@@ -227,6 +232,17 @@ async def atk(core, dom):
   ucuq.addCommand(BUZZER_SCRIPT)
 
   await reset(core,dom)
+
+
+async def atkMirror(core, dom, id):
+  if  (await dom.getValue(id)) == "true":
+    if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
+      device = ucuq.Device(id="Hotel")
+
+      hw.activateMirror(device, await ucuq.getInfosAwait(device))
+      await update(dom, core.errors)
+    else:
+      await dom.setValue(id, "false")  
 
 
 async def atkSubmit(core, dom, id):

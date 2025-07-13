@@ -35,6 +35,11 @@ namespace data_d {
 	qCDEF( sId, All, bso::UIntMax );
 	qCDEF( sId, Undefined, All );
 
+	dpkbsc::counter__ GetSkippedAmount(
+		dpkctx::amount__ SessionAmount,
+		const dpkbsc::dRRows &RecordRows,
+		const dpkrcd::records_ &Records);
+
 	void Initialize( void );
 
 	sId Display(
