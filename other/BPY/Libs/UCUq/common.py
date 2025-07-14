@@ -71,13 +71,14 @@ def setDevice(id = None, *, device = None, token = None):
       raise Exception("'device' can not be given together with 'id' or 'token'!")
     device_ = device
   else:    
-    getDevice_(id = id, token = token)
+    getDevice(id = id, token = token)
 
 
 # Infos keys and subkeys
 IK_DEVICE_ID_ = "DeviceId"
 IK_DEVICE_UNAME_ = "uname"
 IK_HARDWARE = "Hardware"
+IK_FEATURES = "Features"
 IK_KIT_LABEL = "KitLabel"
 
 # Kits keys
@@ -144,15 +145,32 @@ def testCommit_(commit, behavior = None):
 
   
 def sleepStart(id = None):
-  return getDevice_().sleepStart(id)
+  return getDevice().sleepStart(id)
 
 
 def sleepWait(id, secs):
-  return getDevice_().sleepWait(id, secs)
+  return getDevice().sleepWait(id, secs)
 
   
 def sleep(secs):
-  return getDevice_().sleep(secs)
+  return getDevice().sleep(secs)
+
+
+patchKeys_ = lambda keys: keys if keys else []
+
+
+class Auto:
+  def __new__(cls, bit, infos, item, hardwareKeys, featuresKeys, **kwargs):
+    hardware = getKitHardware(infos)
+    features = getKitFeatures(infos)
+
+    if not hasHardware(hardware, item) and not hasFeatures(features, item):
+      return Nothing()
+
+    hardwareKeys = patchKeys_(hardwareKeys)
+    featuresKeys = patchKeys_(featuresKeys)
+
+    return bit(*getFeatures(features, item, featuresKeys), *getHardware(hardware, item, hardwareKeys), **kwargs)
 
 
 class Multi:
@@ -236,7 +254,7 @@ def sleepWait(start, us):
 
 
 async def getBaseInfosAwait_(device = None):
-  device = getDevice_(device)
+  device = getDevice(device)
 
   device.addCommand(INFO_SCRIPT_, False)
 
@@ -284,32 +302,53 @@ def getKit_(infosOrLabel):
   return getKitFromLabel_(infosOrLabel)
 
 
-def getKitHardware(infosOrLabel):
+def getKitDesc_(infosOrLabel, descLabel):
   kit = getKit_(infosOrLabel)
 
   if kit:
-    return kit["hardware"]
+    return kit[descLabel]
   else:
     return "Undefined"
   
+def getKitHardware(infosOrLabel):
+  return getKitDesc_(infosOrLabel, "hardware")
 
-getHardware_ = lambda hardware, key, index: hardware[key][index] if key in hardware and index < len(hardware[key]) else None
+
+def getKitFeatures(infosOrLabel):
+  return getKitDesc_(infosOrLabel, "features")
+  
+
+getDescItems_ = lambda desc, key, index: desc[key][index] if key in desc and index < len(desc[key]) else None
 
 
-def getHardware(kitHardware, stringOrList, keys=None, *, index = 0):
+def getDescItems(kitDesc, stringOrList, keys=None, *, index = 0):
   if type(stringOrList) == str:
-    hardware = getHardware_(kitHardware, stringOrList, index)
+    items = getDescItems_(kitDesc, stringOrList, index)
   else:
     for key in stringOrList:
-      if hardware := getHardware_(kitHardware, key, index):
+      if items := getDescItems_(kitDesc, key, index):
         break
 
-  if hardware and keys:
-    result = (hardware[key] for key in keys)
+  if items and ( keys or keys == [] ):
+    result = tuple(items[keys] if type(keys) == str else (items[key] for key in keys))
+  elif items:
+    result = items
   else:
-    result = hardware
+    result = (())
 
   return result
+
+getHardware = getDescItems
+
+getFeatures = getDescItems
+
+
+def hasHardware(kitHardware, item):
+  return bool(getHardware(kitHardware, item))
+  
+
+def hasFeatures(kitFeatures, item):
+  return bool(getFeatures(kitFeatures, item))
   
 
 def getDeviceId(infos):
@@ -322,6 +361,7 @@ async def getInfosAwait(device):
   if not IK_KIT_LABEL in infos:
     infos[IK_KIT_LABEL] = getKitLabelFromDeviceId_(getDeviceId(infos))
   infos[IK_HARDWARE] = getKitHardware(infos)
+  infos[IK_FEATURES] = getKitFeatures(infos)
 
   return infos
 
@@ -370,7 +410,7 @@ async def ATKConnectAwait(dom, body, *, device = None):
   """)
   
   if device or CONFIG_:
-    device = getDevice_(device)
+    device = getDevice(device)
   elif useUCUqDemoDevices():
     device = getDemoDevice()
 
@@ -399,7 +439,7 @@ async def ATKConnectAwait(dom, body, *, device = None):
   return infos
 
 
-def getDevice_(device = None, *, id = None, token = None):
+def getDevice(device = None, *, id = None, token = None):
   if device and ( token or id ):
     displayExitMessage_("'device' can not be given together with 'token' or 'id'!")
 
@@ -419,12 +459,8 @@ def getDevice_(device = None, *, id = None, token = None):
     return device
 
 
-def getDevice():
-  return device_
-
-
-def addCommand(command, commit = False, /,device = None):
-  getDevice_(device).addCommand(command, commit)
+def addCommand(command, commit=False, /,device=None):
+  getDevice(device).addCommand(command, commit)
 
 
 # does absolutely nothing whichever method is called but returns 'self'.
@@ -434,10 +470,7 @@ class Nothing:
     def doNothing(*args, **kwargs):
       return self
     return doNothing
-  
-  def __bool__(self):
-    return False
-  
+
 
 # does absolutely nothing whichever method is called.
 # 'if Nothing()' returns 'False'.
@@ -449,9 +482,6 @@ class Nothing_:
     def doNothing(*args, **kwargs):
       return self.object
     return doNothing
-  
-  def __bool__(self):
-    return False
 
 
 class Core_:
@@ -476,7 +506,7 @@ class Core_:
         if device and device != self.device_:
           raise Exception("'device' already given!")
     else:
-      self.device_ = getDevice_(device)
+      self.device_ = getDevice(device)
 
     if modules:
       self.device_.addModules(modules)
@@ -534,16 +564,16 @@ class GPIO(Core_):
 
 
 class WS2812(Core_):
-  def __init__(self, pin = None, n = None, device = None, extra = True):
+  def __init__(self, n = None, pin = None, device = None, extra = True):
     super().__init__(device)
 
     if (pin == None) != (n == None):
       raise Exception("Both or none of 'pin'/'n' must be given")
 
     if pin != None:
-      self.init(pin, n, device = device, extra = extra)
+      self.init(n, pin, device = device, extra = extra)
 
-  def init(self, pin, n, device = None, extra = True):
+  def init(self, n, pin, device = None, extra = True):
     super().init("WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device, extra).flash(extra)
 
   async def lenAwait(self):
@@ -602,7 +632,7 @@ class SoftI2C(I2C):
 
 
 class HT16K33(Core_):
-  def __init__(self, i2c = None, /, addr = None, extra = True):
+  def __init__(self, i2c=None, addr=None, extra=True):
     super().__init__()
 
     if i2c:
@@ -688,7 +718,7 @@ class PWM(Core_):
 
 
 class PCA9685(Core_):
-  def __init__(self, i2c = None, *, addr = None):
+  def __init__(self, i2c=None, *, addr = None):
     super().__init__()
 
     if i2c:
@@ -775,7 +805,7 @@ class PWM_PCA9685(Core_):
   
 
 class HD44780_I2C(Core_):
-  def __init__(self, num_columns, num_lines, i2c, /, addr = None, extra  = True):
+  def __init__(self, num_columns, num_lines, /, i2c, addr=None, extra=True):
     super().__init__()
 
     if i2c:
@@ -855,7 +885,7 @@ class Servo(Core_):
         raise Exception("'domain' can not be given without 'specs'!")
 
 
-  def __init__(self, pwm = None, specs = None, /, *, tweak = None, domain = None):
+  def __init__(self, pwm=None, specs=None, /, *, tweak=None, domain=None):
     super().__init__()
 
     self.test_(specs, tweak, domain)
@@ -963,7 +993,7 @@ class SSD1306(OLED_):
   
 
 class SSD1306_I2C(SSD1306):
-  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False, extra = True):
+  def __init__(self, width=None, height=None, /, i2c=None, addr=None, external_vcc=False, extra=True):
     super().__init__()
 
     if bool(width) != bool(height) != bool(i2c):
@@ -973,7 +1003,7 @@ class SSD1306_I2C(SSD1306):
     elif addr:
       raise Exception("addr can not be given without i2c!")
       
-  def init(self, width, height, i2c, /, external_vcc = False, addr = None, extra = True):
+  def init(self, width, height, /, i2c, external_vcc=False, addr=None, extra=True):
     super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice(), extra).flash(extra if not isinstance(extra, bool) else 0.15)
 
 
@@ -981,7 +1011,7 @@ class SH1106(OLED_):
   pass
 
 class SH1106_I2C(SH1106):
-  def __init__(self, width = None, height = None, i2c = None, /, addr = None, external_vcc = False, extra = True):
+  def __init__(self, width=None, height=None, /, i2c=None, addr=None, external_vcc=False, extra=True):
     super().__init__()
 
     if bool(width) != bool(height) != bool(i2c):
@@ -991,9 +1021,20 @@ class SH1106_I2C(SH1106):
     elif addr:
       raise Exception("addr can not be given without i2c!")
       
-  def init(self, width, height, i2c, /, external_vcc = False, addr = None, extra = True):
+  def init(self, width, height, /, i2c, external_vcc=False, addr=None, extra=True):
     super().init(("SH1106-1", "SH1106_I2C-1"), f"SH1106_I2C({width}, {height}, {i2c.getObject()}, addr={addr}, external_vcc={external_vcc})", i2c.getDevice(), extra).flash(extra if not isinstance(extra, bool) else 0.15)
 
+OD_SH1106_ = "SH1106"
+OD_SSD1306_ = "SSD1306"
+
+class OLED_I2C():
+  def __new__(cls, driver, *args, **kwargs):
+    if driver == OD_SH1106_:
+      return SH1106_I2C(*args, **kwargs)
+    elif driver == OD_SSD1306_:
+      return SSD1306_I2C(*args, **kwargs)
+    else:
+      raise Exception(f"Unknown OLED driver {driver}!")
 
 
 def pwmJumps(jumps, step = 100, delay = 0.05):

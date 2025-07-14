@@ -123,18 +123,19 @@ FIXED_LEDS = (4,0)
 normalize = lambda string : string.ljust(16) if len(string) < 16 else string[-16:]
 
 class HW:
-  def __init__(self, hwDesc):
-    self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ["SDA", "SCL", "Soft"]))).backlightOn()
-    self.oled =  ucuq.Multi(ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ["SDA", "SCL", "Soft"]))))
-    self.buzzer = ucuq.PWM(*ucuq.getHardware(hwDesc, "Buzzer", ["Pin"]), freq=50, u16 = 0).setNS(0)
-    pin, self.ringCount, self.ringOffset, self.ringLimiter = ucuq.getHardware(hwDesc, "Ring", ["Pin", "Count", "Offset", "Limiter"])
-    self.ring = ucuq.WS2812(pin, self.ringCount)
+  def __init__(self, infos, device = None):
+    self.lcd = ucuq.Auto(ucuq.HD44780_I2C, infos, "LCD", None, ["Width", "Height"], i2c=ucuq.Auto(ucuq.I2C, infos, "LCD", ["SDA", "SCL", "Soft"], None, device=device)).backlightOn() 
+    self.oled =  ucuq.Auto(ucuq.OLED_I2C, infos, "OLED", None, ["Driver", "Width", "Height"], i2c=ucuq.Auto(ucuq.I2C, infos, "OLED", ["SDA", "SCL", "Soft"], None, device=device))
+    self.buzzer = ucuq.Auto(ucuq.PWM, infos, "Buzzer", ["Pin"], None, device=device, freq=50, u16=0).setNS(0).addCommand(BUZZER_SCRIPT)
+    self.ring = ucuq.Auto(ucuq.WS2812, infos, "Ring", ["Pin"], ["Count"], device=device)
+    
+    self.ringLimiter = 255
+    self.ringCount = 8
+    self.ringOffset = 0
 
-  def activateMirror(self, device, infos):
-      self.oled.add(ucuq.SH1106_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(infos), "OLED", ["SDA", "SCL", "Soft"]), device=device )))
 
   def ringPatchIndex_(self, index):
-    return ( index + self.ringOffset ) % self.ringCount
+    return ( index + self.ringOffset ) % self.ringCount if self.ring else 0
   
   def update(self, errors):
     for e in range(errors+1):
@@ -166,10 +167,10 @@ class HW:
     for _ in range(3):
       for l in range(self.ringCount):
         self.ring.setValue(self.ringPatchIndex_(l), tuple(map(lambda _: randint(0,self.ringLimiter // 3), range(3)))).write()
-        ucuq.sleep(0.075)
+        self.ring.sleep(0.075)
 
   def buzz(self):
-    ucuq.addCommand(f"buzz({self.buzzer.getObject()}, 50, 0.5)")
+    self.buzzer.addCommand(f"buzz({self.buzzer.getObject()}, 50, 0.5)")
 
 class Core:
   def reset(self):
@@ -224,12 +225,9 @@ async def atk(core, dom):
 
   if UCUQ:
     if not hw:
-      infos = await ucuq.ATKConnectAwait(dom, "")
-      hw = HW(ucuq.getKitHardware(infos))
+      hw = ucuq.Multi(HW(await ucuq.ATKConnectAwait(dom, "")))
   else:
     hw = ucuq.Nothing()
-
-  ucuq.addCommand(BUZZER_SCRIPT)
 
   await reset(core,dom)
 
@@ -237,12 +235,10 @@ async def atk(core, dom):
 async def atkMirror(core, dom, id):
   if  (await dom.getValue(id)) == "true":
     if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      device = ucuq.Device(id="Hotel")
-
-      hw.activateMirror(device, await ucuq.getInfosAwait(device))
+      await dom.executeVoid("document.getElementById('Mirror').showModal();")
       await update(dom, core.errors)
     else:
-      await dom.setValue(id, "false")  
+      await dom.setValue(id, "false")
 
 
 async def atkSubmit(core, dom, id):
@@ -286,5 +282,16 @@ async def atkRestart(core, dom):
     await dom.alert(f"{dom.getL10n(2).format( errors=core.errors, correct=len(core.correctGuesses))}\n\n{dom.getL10n(3).format(core.secretWord)}")
 
   await reset(core, dom)
+
+
+async def atkMirrorOK(code, dom):
+  await dom.executeVoid("document.getElementById('Mirror').close();")
+  device = ucuq.Device(id = await dom.getValue("MirrorId"), token = await dom.getValue("MirrorToken"))
+
+  hw.add(HW(await ucuq.getInfosAwait(device), device))
+
+
+async def atkMirrorCancel(code, dom):
+  await dom.executeVoid("document.getElementById('Mirror').close();")
 
 ATK_USER = Core

@@ -28,6 +28,15 @@
           "Pin": 13
         }
       ]
+    },
+    "features": {
+      "OLED": [
+        {
+          "Driver": "SH1106",
+          "Width": 128,
+          "Height": 64
+        }
+      ]
     }
   }, {
     "_comment": "ESP32-C3",
@@ -38,10 +47,7 @@
     "hardware": {
       "OnBoardLed": [ 8, false ],
       "Ring": [ {
-          "Pin": 20,
-          "Count": 8,
-          "Offset": 2,
-          "Limiter": 30
+          "Pin": 20
         }
       ],
       "OLED": [
@@ -62,6 +68,28 @@
         {
           "Mode": "Straight",
           "Pin": 5
+        }
+      ]
+    },
+    "features": {
+      "OLED": [
+        {
+          "Driver": "SSD1306",
+          "Width": 128,
+          "Height": 64
+        }
+      ],
+      "LCD": [
+        {
+          "Width": 16,
+          "Height": 2
+        }
+      ],
+      "Ring": [
+        {
+          "Count": 8,
+          "Offset": 2,
+          "Limiter": 30
         }
       ]
     }
@@ -164,6 +192,7 @@
       ]
     }
   }, {
+    "_comment": "Wokwi simulator",
     "brand": "q37.info",
     "model": "Wokwi",
     "variant": "Displays",
@@ -171,10 +200,7 @@
       "OnBoardLed": [ 2, true ],
       "Ring": [
         {
-          "Pin": 20,
-          "Count": 8,
-          "Offset": 0,
-          "Limiter": 255
+          "Pin": 20
         }
       ],
       "OLED": [
@@ -201,6 +227,28 @@
         {
           "Mode": "Straight",
           "Pin": 21
+        }
+      ]
+    },
+    "features": {
+      "OLED": [
+        {
+          "Driver": "SSD1306",
+          "Width": 128,
+          "Height": 64
+        }
+      ],
+      "LCD": [
+        {
+          "Width": 16,
+          "Height": 2
+        }
+      ],
+      "Ring": [
+        {
+          "Count": 8,
+          "Offset": 0,
+          "Limiter": 255
         }
       ]
     }
