@@ -31,7 +31,7 @@ class HW:
       count = hwDesc["Count"]
       self.ledsLimiter = hwDesc["Limiter"]
 
-      self.leds = ucuq.WS2812(pin, count)
+      self.leds = ucuq.WS2812(count, pin)
     else:
       raise("Kit has no ws2812!")
   

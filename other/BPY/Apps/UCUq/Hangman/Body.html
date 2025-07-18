@@ -533,24 +533,4 @@
     <button xdh:onevent="Restart">{restart}</button>
     <input xdh:onevent="Mirror" type="checkbox" />
   </div>
-  <dialog id="Mirror">
-    <fieldset>
-      <legend>Device</legend>
-      <label style="display: flex; justify-content: space-between; margin: 5px;">
-        <span>Token:&nbsp;</span>
-        <input id="MirrorToken">
-      </label>
-      <label style="display: flex; justify-content: space-between; margin: 5px;">
-        <span>Id:&nbsp;</span>
-        <input id="MirrorId">
-      </label>
-    </fieldset>
-    <div style="display: flex; justify-content: space-around; margin: 5px;">
-      <button xdh:onevent="MirrorOK">OK</button>
-      <button xdh:onevent="MirrorCancel">Cancel</button>
-    </div>
-    <fieldset>
-      <output id="Output">Hint</output>
-    </fieldset>
-  </dialog>
 </fieldset>

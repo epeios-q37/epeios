@@ -75,7 +75,7 @@ class HW:
     self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ["SDA", "SCL", "Soft"]))).backlightOn()
     self.oled =  ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ["SDA", "SCL", "Soft"])))
     pin, self.ringCount, self.ringOffset, self.ringLimiter = ucuq.getHardware(hwDesc, "Ring", ["Pin", "Count", "Offset", "Limiter"])
-    self.ring = ucuq.WS2812(pin, self.ringCount)
+    self.ring = ucuq.WS2812(self.ringCount, pin)
 
   def buzzerBeep_(self, note, delay = 0.29, sleep = 0.01):
     self.buzzer.setFreq(pitches[note]).setU16(30000)

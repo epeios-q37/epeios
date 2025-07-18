@@ -39,6 +39,8 @@ PROTOCOL_VERSION_ = "0"
 
 writeLock_ = threading.Lock()
 
+Lock_ = threading.Lock
+
 # Request
 R_EXECUTE_ = "Execute_1"
 R_UPLOAD_ = "Upload_1"

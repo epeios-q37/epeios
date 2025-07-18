@@ -162,7 +162,7 @@ class HW():
     self.oled = ucuq.Multi(ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ("SDA", "SCL", "Soft")))))
     self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ("SDA", "SCL", "Soft"))))
     pin, self.ringCount, self.ringLimiter, self.ringOffset = ucuq.getHardware(hwDesc, "Ring", ("Pin", "Count", "Limiter", "Offset"))
-    self.ring = ucuq.WS2812(pin, self.ringCount)
+    self.ring = ucuq.WS2812(self.ringCount, self)
     self.oled[0].addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled[0].getObject(),lcdAvailable="True",lcd=self.lcd.getObject()))
     self.reset()
 

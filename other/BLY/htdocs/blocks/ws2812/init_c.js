@@ -4,7 +4,7 @@ python.pythonGenerator.forBlock['ws2812_init'] = function (block, generator) {
   const value_count = generator.valueToCode(block, 'COUNT', python.Order.ATOMIC);
 
   // TODO: Assemble python into the code variable.
-  code = `${string2Id(text_label)} = ucuq.WS2812(${value_pin},${value_count})\n`
+  code = `${string2Id(text_label)} = ucuq.WS2812(${value_count},${value_pin})\n`
   return code;
 }  
 

@@ -129,6 +129,63 @@ ATK_BODY_ = """
 """.replace("{", "{{").replace("}", "}}").replace("BRACES", "{}")
 
 
+ATK_XDEVICE_ = """
+<script>
+var ucuq_xdevice_response = undefined;
+
+function ucuq_xdevice_get_response() {
+  if ( ucuq_xdevice_response === undefined ) {
+    return "";
+  }
+
+  let response = String(ucuq_xdevice_response);
+  ucuq_xdevice_response = undefined;
+
+  return response;
+}
+
+function ucuq_xdevice_close(response) {
+  ucuq_xdevice_response = response;
+
+  document.getElementById("ucuq_xdevice").close();
+
+  document.remove("ucuq_xdevice");
+}
+</script>
+<dialog id="ucuq_xdevice">
+  <fieldset>
+    <legend>Device</legend>
+    <label style="display: flex; justify-content: space-between; margin: 5px;">
+      <span>Token:&nbsp;</span>
+      <input id="ucuq_xdevice_token">
+    </label>
+    <label style="display: flex; justify-content: space-between; margin: 5px;">
+      <span>Id:&nbsp;</span>
+      <input id="ucuq_xdevice_id">
+    </label>
+  </fieldset>
+  <div style="display: flex; justify-content: space-around; margin: 5px;">
+    <button onclick="ucuq_xdevice_close(true);">OK</button>
+    <button onclick="ucuq_xdevice_close(false);">Cancel</button>
+  </div>
+  <fieldset>
+    <output id="Output">Hint</output>
+  </fieldset>
+</dialog>
+"""
+
+async def ATKgetXDevice(dom):
+  await dom.executeVoid(f"document.body.innerHTML +=`{ATK_XDEVICE_}`;document.getElementById('ucuq_xdevice').showModal();")
+
+  while ( ( response := dom.executeString("ucuq_xdevice_get_response();") ) == "" ):
+    await dom.sleep(0.1)
+
+  if response == "false":
+    return None
+  
+  return Device(id = await dom.getValue("ucuq_xdevice_id"), token = await dom.getValue("ucuq_xdevice_token"))
+
+
 CB_AUTO = 0
 CB_MANUAL = 1
 
@@ -158,19 +215,42 @@ def sleep(secs):
 
 patchKeys_ = lambda keys: keys if keys else []
 
+B_LCD = "LCD"
+B_OLED = "OLED"
+B_BUZZER = "Buzzer"
+B_RING = "Ring"
 
 class Auto:
   def __new__(cls, bit, infos, item, hardwareKeys, featuresKeys, **kwargs):
-    hardware = getKitHardware(infos)
-    features = getKitFeatures(infos)
+    hardware = getKitHardware_(infos)
+    features = getKitFeatures_(infos)
 
-    if not hasHardware(hardware, item) and not hasFeatures(features, item):
+    if not hasHardware_(hardware, item) and not hasFeatures_(features, item):
       return Nothing()
 
     hardwareKeys = patchKeys_(hardwareKeys)
     featuresKeys = patchKeys_(featuresKeys)
 
-    return bit(*getFeatures(features, item, featuresKeys), *getHardware(hardware, item, hardwareKeys), **kwargs)
+    return bit(*getFeatures_(features, item, featuresKeys), *getHardware_(hardware, item, hardwareKeys), **kwargs)
+
+
+def getBits(infos, *bitLabels, device=None):
+  bits = []
+
+  for label in bitLabels:
+    match label:
+      case "LCD":
+        bits.append(Auto(HD44780_I2C, infos, "LCD", None, ["Width", "Height"], i2c=Auto(I2C, infos, "LCD", ["SDA", "SCL", "Soft"], None, device=device)))
+      case "OLED":
+        bits.append(Auto(OLED_I2C, infos, "OLED", None, ["Driver", "Width", "Height"], i2c=Auto(I2C, infos, "OLED", ["SDA", "SCL", "Soft"], None, device=device)))
+      case "Buzzer":
+        bits.append(Auto(PWM, infos, "Buzzer", ["Pin"], None, device=device))
+      case "Ring": 
+        bits.append(Auto(WS2812, infos, "Ring", ["Pin"], ["Count"], device=device))
+      case _:
+        raise Exception(f"Unknown bit label: {label}")
+      
+  return bits
 
 
 class Multi:
@@ -310,11 +390,11 @@ def getKitDesc_(infosOrLabel, descLabel):
   else:
     return "Undefined"
   
-def getKitHardware(infosOrLabel):
+def getKitHardware_(infosOrLabel):
   return getKitDesc_(infosOrLabel, "hardware")
 
 
-def getKitFeatures(infosOrLabel):
+def getKitFeatures_(infosOrLabel):
   return getKitDesc_(infosOrLabel, "features")
   
 
@@ -338,17 +418,26 @@ def getDescItems(kitDesc, stringOrList, keys=None, *, index = 0):
 
   return result
 
-getHardware = getDescItems
+getHardware_ = getDescItems
 
-getFeatures = getDescItems
+getFeatures_ = getDescItems
 
 
-def hasHardware(kitHardware, item):
-  return bool(getHardware(kitHardware, item))
+def hasHardware_(kitHardware, item):
+  return bool(getHardware_(kitHardware, item))
   
 
-def hasFeatures(kitFeatures, item):
-  return bool(getFeatures(kitFeatures, item))
+def hasFeatures_(kitFeatures, item):
+  return bool(getFeatures_(kitFeatures, item))
+
+
+def getFeatures(infosOrLabel, item, keys=None, *, index = 0):
+  kitFeatures = getKitFeatures_(infosOrLabel)
+
+  if not kitFeatures:
+    return ()
+
+  return getFeatures_(kitFeatures, item, keys, index = index)
   
 
 def getDeviceId(infos):
@@ -360,8 +449,8 @@ async def getInfosAwait(device):
 
   if not IK_KIT_LABEL in infos:
     infos[IK_KIT_LABEL] = getKitLabelFromDeviceId_(getDeviceId(infos))
-  infos[IK_HARDWARE] = getKitHardware(infos)
-  infos[IK_FEATURES] = getKitFeatures(infos)
+  infos[IK_HARDWARE] = getKitDesc_(infos, "hardware")
+  infos[IK_FEATURES] = getKitDesc_(infos, "features")
 
   return infos
 
@@ -470,6 +559,9 @@ class Nothing:
     def doNothing(*args, **kwargs):
       return self
     return doNothing
+  
+  def __bool__(self):
+    return False
 
 
 # does absolutely nothing whichever method is called.
@@ -482,6 +574,9 @@ class Nothing_:
     def doNothing(*args, **kwargs):
       return self.object
     return doNothing
+  
+  def __bool__(self):
+    return False
 
 
 class Core_:
