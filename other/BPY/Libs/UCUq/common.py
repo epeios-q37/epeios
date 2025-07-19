@@ -1,4 +1,4 @@
-import zlib, base64, time
+import zlib, base64, time, atlastk
 
 ITEMS_ = "i_"
 
@@ -130,28 +130,6 @@ ATK_BODY_ = """
 
 
 ATK_XDEVICE_ = """
-<script>
-var ucuq_xdevice_response = undefined;
-
-function ucuq_xdevice_get_response() {
-  if ( ucuq_xdevice_response === undefined ) {
-    return "";
-  }
-
-  let response = String(ucuq_xdevice_response);
-  ucuq_xdevice_response = undefined;
-
-  return response;
-}
-
-function ucuq_xdevice_close(response) {
-  ucuq_xdevice_response = response;
-
-  document.getElementById("ucuq_xdevice").close();
-
-  document.remove("ucuq_xdevice");
-}
-</script>
 <dialog id="ucuq_xdevice">
   <fieldset>
     <legend>Device</legend>
@@ -165,8 +143,8 @@ function ucuq_xdevice_close(response) {
     </label>
   </fieldset>
   <div style="display: flex; justify-content: space-around; margin: 5px;">
-    <button onclick="ucuq_xdevice_close(true);">OK</button>
-    <button onclick="ucuq_xdevice_close(false);">Cancel</button>
+    <button xdh:onevent="ucuq_xdevice_ok"/>OK</button>
+    <button xdh:onevent="ucuq_xdevice_cancel">Cancel</button>
   </div>
   <fieldset>
     <output id="Output">Hint</output>
@@ -174,16 +152,35 @@ function ucuq_xdevice_close(response) {
 </dialog>
 """
 
-async def ATKgetXDevice(dom):
-  await dom.executeVoid(f"document.body.innerHTML +=`{ATK_XDEVICE_}`;document.getElementById('ucuq_xdevice').showModal();")
+async def handleXDevice_(dom, response):
+  assert xDeviceCallback_ is not None
 
-  while ( ( response := dom.executeString("ucuq_xdevice_get_response();") ) == "" ):
-    await dom.sleep(0.1)
+  print("toto")
 
-  if response == "false":
-    return None
-  
-  return Device(id = await dom.getValue("ucuq_xdevice_id"), token = await dom.getValue("ucuq_xdevice_token"))
+  if response:
+    await xDeviceCallback_(dom, Device(id = await dom.getValue("ucuq_xdevice_id"), token = await dom.getValue("ucuq_xdevice_token")))
+
+  await dom.executeVoid("element = document.getElementById('ucuq_xdevice'); element.close(); element.remove()")
+
+
+async def handleXDeviceOK_(user, dom, id):
+  await handleXDevice_(dom, True)
+
+
+async def handleXDeviceCancel_(user, dom, id):
+  await handleXDevice_(dom, False)
+
+
+async def ATKgetXDevice(dom, callback):
+  global xDeviceCallback_
+
+  xDeviceCallback_ = callback
+
+  await dom.end("", ATK_XDEVICE_)
+  atlastk.addCallback("ucuq_xdevice_ok", handleXDeviceOK_)
+  atlastk.addCallback("ucuq_xdevice_cancel", handleXDeviceCancel_)
+
+  await dom.executeVoid(f"document.getElementById('ucuq_xdevice').showModal();")
 
 
 CB_AUTO = 0

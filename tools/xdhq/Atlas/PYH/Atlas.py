@@ -26,7 +26,7 @@ import XDHq, XDHqSHRD
 from threading import Thread, Lock
 import inspect, types, socket, signal, sys, os
 
-from XDHq import set_supplier, get_app_url, l
+from XDHq import set_supplier, get_app_url, l, addCallback
 
 setSupplier = set_supplier
 getAppURL = get_app_url

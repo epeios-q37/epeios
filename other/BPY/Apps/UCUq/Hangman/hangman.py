@@ -231,19 +231,12 @@ async def atk(core, dom):
   await reset(core,dom)
 
 
+async def setXDevice(dom, device):
+  hw.add(HW(await ucuq.getInfosAwait(device), device))
+
+
 async def atkMirror(core, dom, id):
-  device = await ucuq.ATKgetXDevice(dom)
-
-  if device:
-    hw.add(HW(await ucuq.getInfosAwait(device), device))
-
-  return
-  if  (await dom.getValue(id)) == "true":
-    if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      await dom.executeVoid("document.getElementById('Mirror').showModal();")
-      await update(dom, core.errors)
-    else:
-      await dom.setValue(id, "false")
+  ucuq.ATKgetXDevice(dom, setXDevice)
 
 
 async def atkSubmit(core, dom, id):

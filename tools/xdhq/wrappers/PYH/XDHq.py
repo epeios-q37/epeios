@@ -25,7 +25,7 @@ SOFTWARE.
 """
 
 import XDHqFaaS,XDHqSHRD,XDHqXML
-from XDHqFaaS import set_supplier, get_app_url, setBye, l
+from XDHqFaaS import set_supplier, get_app_url, setBye, l, addCallback
 
 import os,sys
 from collections import OrderedDict
@@ -47,13 +47,14 @@ _STRING = XDHqSHRD.RT_STRING
 _STRINGS = XDHqSHRD.RT_STRINGS
 XML = XDHqXML.XML
 
+
 def launch(callback, userCallback, callbacks, callingGlobals, headContent, l10n):
 	global _l10n
 
 	_l10n = l10n
 
 	return XDHqFaaS.launch(callback, userCallback, callbacks, callingGlobals, headContent)
-
+ 
 def _split(keysAndValues):
 	keys = []
 	values = []

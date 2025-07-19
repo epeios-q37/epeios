@@ -271,7 +271,13 @@ def _ignition():
 
 		_supply(_url)
 
+callbacks_ = None
+
 def _serve(callback, userCallback, callbacks, callingGlobals):
+	global callbacks_
+
+	callbacks_ = callbacks
+
 	while True:
 		id = readSInt()
 		
@@ -283,7 +289,7 @@ def _serve(callback, userCallback, callbacks, callingGlobals):
 			if id in _instances:
 				_report("Instance of id '" + str(id) + "' exists but should not !")
 
-			_instances[id] = _Instance(lambda instance : callback(userCallback, callbacks, callingGlobals, instance), id)
+			_instances[id] = _Instance(lambda instance : callback(userCallback, callbacks_, callingGlobals, instance), id)
 		elif id == _CLOSING_ID:	# Value instructing that a session is closed.
 			id = readSInt()
 
@@ -330,6 +336,13 @@ def launch(callback, userCallback, callbacks, callingGlobals, headContent):
 	_ignition()
 
 	_serve(callback, userCallback, callbacks, callingGlobals)
+
+
+def addCallback(event, callback):
+	global callbacks_
+
+	callbacks_[event] = callback
+
 
 def get_app_url(id=""):
 	return _url + ("&_id=" + str(id) if id else "") 
