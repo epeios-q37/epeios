@@ -5,45 +5,36 @@ W_TARGET = "Target"
 W_RATIO_SLIDE = "RatioSlide"
 W_RATIO_VALUE = "RatioValue"
 
-pwm = None
+buzzer = None
+loudspeaker = None
+generator = None
 baseFreq = 440.0*math.pow(math.pow(2,1.0/12), -16)
 ratio = 0.5
-target = None
-
-hardware = None
-
-def turnMainOn(hardware):
-  global pwm
-
-  if hardware == None:
-    raise Exception("Kit with no sound component!")
-  
-  pwm = ucuq.PWM(hardware["Pin"], freq=50, u16=0).setNS(0)
-
 
 async def atk(dom):
-  global pwm, target, hardware
+  global buzzer, loudspeaker, generator
 
   infos = await ucuq.ATKConnectAwait(dom, BODY)
 
-  if not pwm:
-    hardware = ucuq.getKitHardware(infos)
+  if not generator:
+    _, buzzer, loudspeaker = ucuq.getBits(infos, ucuq.B_BUZZER, ucuq.B_LOUDSPEAKER)
 
-    turnMainOn(ucuq.getHardware(hardware, "Buzzer"))
+    generator = buzzer
 
-    if "Loudspeaker" in hardware:
+    generator.setNS(0)
+
+  if loudspeaker:
+      loudspeaker.setNS(0)
       await dom.disableElement("HideTarget")
-      target = "Buzzer"
-  elif target: 
-    await dom.setValue(W_TARGET, target)
-    await dom.disableElement("HideTarget")
+
+  await dom.setValue(W_TARGET, "Buzzer" if generator == buzzer else "Loudspeaker")
 
 
 async def atkPlay(dom,id):
   freq = int(baseFreq*math.pow(math.pow(2,1.0/12), int(id)))
-  pwm.setFreq(freq).setU16(int(ratio*65535))
+  generator.setFreq(freq).setU16(int(ratio*65535))
   ucuq.sleep(.5)
-  pwm.setU16(0)
+  generator.setU16(0)
 
 
 async def atkSetRatio(dom, id):
@@ -55,8 +46,5 @@ async def atkSetRatio(dom, id):
 
 
 async def atkSwitchTarget(dom, id):
-  global target
-
-  target = await dom.getValue(id)
-
-  turnMainOn(ucuq.getHardware(hardware, target))
+  global generator
+  generator = buzzer if ( await dom.getValue(id) ) == "Buzzer" else loudspeaker

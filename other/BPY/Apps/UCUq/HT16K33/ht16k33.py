@@ -1,25 +1,37 @@
 import ucuq, atlastk, binascii
 
-matrix = None
+hw = None
 
-class SH1106:
-  def __init__(self, sh1106):
-    self.sh1106 = sh1106
+class OLED:
+  def __init__(self, oled):
+    self.oled = oled
 
   def plot(self, x, y):
-    return self.sh1106.rect(x*8, y*8, 8, 8, 1)
+    # return self.oled.rect(x*8, y*8, 8, 8, 1)
+    return self.oled.ellipse(x*8+3, y*8+3, 3, 3, 1)
   
   def show(self):
-    return self.sh1106.show()
+    return self.oled.show()
   
   def clear(self):
-    return self.sh1106.fill(0).show()
+    return self.oled.fill(0).show()
 
   def rect(self, x0, y0, x1, y1):
-    return self.sh1106.rect(x0, y0, 8*(x1-x0+1), 8*(y1-y0+1), 1)
+    for x in range(x0, x1+1):
+      for y in range(y0, y1+1):
+        self.plot(x,y)
   
   def draw(self, motif):
-    return self.sh1106.fill(0).draw(motif, 16, mul=8)
+    self.oled.fill(0)
+    for pos in range(len(motif)):
+      char = int(motif[pos],16) 
+      y = pos >> 2
+      px = ( pos << 2 ) % 16
+      for offset in range(4):
+        if char & ( 1 << ( 3 - offset) ):
+          self.plot(px + offset, y)
+
+    return self
   
   def setBrightness(self, b):
     return self
@@ -28,6 +40,16 @@ class SH1106:
     return self
   
 
+class HW(ucuq.Multi):
+  def __init__(self, infos, device=None):
+    self.device, matrix, oled = ucuq.getBits(infos, ucuq.B_MATRIX, ucuq.B_OLED, device=device)
+
+    super().__init__(matrix)
+    super().add(OLED(oled))
+
+    self.clear().show().setBrightness(0).setBlinkRate(0)
+
+
 pattern = "0" * 32
 
 TEST_DELAY = 0.05
@@ -35,26 +57,26 @@ TEST_DELAY = 0.05
 def test():
   for y in range(8):
     for x in range(16):
-      matrix.plot(x,y)
-    matrix.show()
+      hw.plot(x,y)
+    hw.show()
     ucuq.sleep(TEST_DELAY)
-    matrix.clear()
+    hw.clear()
 
   for x in range(16):
     for y in range(8):
-      matrix.plot(x,y)
-    matrix.show()
+      hw.plot(x,y)
+    hw.show()
     ucuq.sleep(TEST_DELAY)
-    matrix.clear()
+    hw.clear()
 
-  matrix.rect(0, 0, 15, 7).show()
+  hw.rect(0, 0, 15, 7).show()
 
   for b in range(0, 16):
-    matrix.setBrightness(b)
+    hw.setBrightness(b)
     ucuq.sleep(TEST_DELAY)
 
   for b in range(15, -1, -1):
-    matrix.setBrightness(b)
+    hw.setBrightness(b)
     ucuq.sleep(TEST_DELAY)
 
 #  matrix.clear().show()
@@ -98,8 +120,8 @@ async def setHexaAwait(dom, motif = pattern):
 
 
 def drawOnMatrix(motif = pattern):
-  if matrix:
-    matrix.draw(motif).show()
+  if hw:
+    hw.draw(motif).show()
 
 
 async def drawAwait(dom, motif = pattern):
@@ -114,23 +136,11 @@ async def drawAwait(dom, motif = pattern):
   await setHexaAwait(dom, motif)
 
 
-def turnOnMain(hardware):
-  global matrix
-
-  if not hardware:
-    raise Exception("Kit has no ht16k33 component!")
-  
-  matrix = ucuq.Multi(ucuq.HT16K33(ucuq.I2C(*ucuq.getHardware(hardware, "Matrix", ["SDA", "SCL", "Soft"]))))
-  matrix.clear().show()
-  matrix.setBrightness(0)
-  matrix.setBlinkRate(0)
-
-
 async def atk(dom):
-  infos = await ucuq.ATKConnectAwait(dom, BODY)
+  global hw
 
-  if not matrix:
-    turnOnMain(ucuq.getKitHardware(infos))
+  if not hw:
+    hw = ucuq.Multi(HW(await ucuq.ATKConnectAwait(dom, BODY)))
 
   await drawAwait(dom, "")
 
@@ -178,11 +188,11 @@ async def atkAll(dom):
 
 
 async def atkBrightness(dom, id):
-  matrix.setBrightness(int(await dom.getValue(id)))
+  hw.setBrightness(int(await dom.getValue(id)))
 
 
 async def atkBlinkRate(dom, id):
-  matrix.setBlinkRate(float(await dom.getValue(id)))
+  hw.setBlinkRate(float(await dom.getValue(id)))
 
 
 async def atkDraw(dom, id):
@@ -194,7 +204,7 @@ async def atkMirror(dom, id):
     if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
       device = ucuq.Device(id="Hotel")
 
-      matrix.add(SH1106(ucuq.SH1106_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(await ucuq.getInfosAwait(device)), "OLED", ["SDA", "SCL", "Soft"]), device=device ))))
+      hw.add(OLED(ucuq.SH1106_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(await ucuq.getInfosAwait(device)), "OLED", ["SDA", "SCL", "Soft"]), device=device ))))
     else:
       await dom.setValue(id, "false")
   
@@ -221,3 +231,5 @@ MATRICES = (
   "00003ffc40025ffa2ff417e8081007e",
 )
 
+async def UCUqXDevice(dom, device):
+  hw.add(HW(await ucuq.getInfosAwait(device), device))

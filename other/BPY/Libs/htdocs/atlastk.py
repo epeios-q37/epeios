@@ -505,7 +505,7 @@ def buildArgs(callback, bundle):
 async def callCallback_(callback, bundle):
   return await callback(*buildArgs(callback, bundle))
 
-async def handleCallbackBundle(userCallbacks, callingGlobals, bundle):
+async def handleCallbackBundle(callingGlobals, bundle):
   action = bundle.action
 
   if action == "":
@@ -513,13 +513,13 @@ async def handleCallbackBundle(userCallbacks, callingGlobals, bundle):
     bundle.id =  bundle.id[bundle.id.find(';') + 1:]
 
   if action == ""\
-    or not options_[O_PREPROCESS_ACTION_NAME_] in userCallbacks\
-    or await callCallback_(userCallbacks[options_[O_PREPROCESS_ACTION_NAME_]], bundle) in [None, True]:
+    or not options_[O_PREPROCESS_ACTION_NAME_] in callbacks_\
+    or await callCallback_(callbacks_[options_[O_PREPROCESS_ACTION_NAME_]], bundle) in [None, True]:
 
     callback = None
 
-    if action in userCallbacks:
-      callback = userCallbacks[action]
+    if action in callbacks_:
+      callback = callbacks_[action]
     elif options_[O_CALLBACKS_PREFIX_]:
       callbackName = options_[O_CALLBACKS_PREFIX_] + ( options_[O_CONNECT_ACTION_AFFIX_] if action == "" else action )
 
@@ -529,23 +529,29 @@ async def handleCallbackBundle(userCallbacks, callingGlobals, bundle):
     if callback:
       bundle.instance.callbackReturnValue = await callCallback_(callback, bundle)
 
-      if options_[O_POSTPROCESS_ACTION_NAME_] in userCallbacks:
-        await callCallback_(userCallbacks[options_[O_POSTPROCESS_ACTION_NAME_]],bundle)
+      if options_[O_POSTPROCESS_ACTION_NAME_] in callbacks_:
+        await callCallback_(callbacks_[options_[O_POSTPROCESS_ACTION_NAME_]],bundle)
 
       atlastkjs.standBy(bundle.instance)
     else:
       await bundle.instance.alert(("\tDEV ERROR: missing callback for '" + action + "' action!"))
 
+callbacks_ = None
+
 async def handleCallbackBundles(callbacks, callingGlobals):
+  global callbacks_
+
   if callingGlobals == None:
     callingGlobals = {}
 
   if callbacks == None:
     callbacks = {}
 
+  callbacks_ = callbacks
+
   while True:
     bundle = await atlastkjs.getCallbackBundle()
-    aio.run(handleCallbackBundle(callbacks, callingGlobals, bundle))
+    aio.run(handleCallbackBundle(callingGlobals, bundle))
 
 def retrieve_(var, id, globals):
   if ( var == None ) and ( id in globals ):
@@ -553,10 +559,13 @@ def retrieve_(var, id, globals):
   
   return var
 
-def launch(callbacks = None, *, userCallback = None, globals = None, headContent = None):
-  global _l10n
+userGlobals_ = {}
+
+def launch(callbacks=None, *, userCallback=None, globals=None, headContent=None):
+  global _l10n, userGlobals_
 
   if globals != None:
+    userGlobals_ = globals
     callbacks = retrieve_(callbacks, "ATK_CALLBACKS", globals)
     userCallback = retrieve_(userCallback, "ATK_USER", globals)
     headContent = retrieve_(headContent, "ATK_HEAD", globals)
@@ -568,6 +577,16 @@ def launch(callbacks = None, *, userCallback = None, globals = None, headContent
   atlastkjs.launch(lambda : _callback(userCallback), headContent.replace("_BrythonWorkaroundForClosingScriptTag_","</script>"), LIB_VERSION)
 
   aio.run(handleCallbackBundles(callbacks, globals))
+
+
+def getUserGlobals():
+  return userGlobals_
+
+
+def setCallback(event, callback):
+  global callbacks_
+
+  callbacks_[event] = callback
 
 class XML:
   def _write(self,value):

@@ -1,7 +1,7 @@
 [
   {
     "_comment": "ESP32-S3",
-    "devices": [ "Hotel"],
+    "devices": [ "Hotel" ],
     "brand": "q37.info",
     "model": "Displays",
     "variant": "SH1106",
@@ -46,7 +46,7 @@
     "variant": "SSD1306",
     "hardware": {
       "OnBoardLed": [ 8, false ],
-      "Ring": [ {
+      "SmartRGB": [ {
           "Pin": 20
         }
       ],
@@ -85,7 +85,7 @@
           "Height": 2
         }
       ],
-      "Ring": [
+      "SmartRGB": [
         {
           "Count": 8,
           "Offset": 2,
@@ -128,7 +128,7 @@
     "variant": "RPiPico(2)W",
     "hardware": {
       "OnBoardLed": [ 2, false ],
-      "RGB": [
+      "SmartRGB": [
         {
           "Pin": 16,
           "Count": 4,
@@ -173,6 +173,15 @@
           "Pin": 13
         }
       ]
+    },
+    "features": {
+      "SmartRGB": [
+        {
+          "Count": 4,
+          "Limiter": 30,
+          "Offset": 0
+        }
+      ]
     }
   }, {
     "_comment": "Freenove Dog (ESP32-WROVER)",
@@ -198,7 +207,7 @@
     "variant": "Displays",
     "hardware": {
       "OnBoardLed": [ 2, true ],
-      "Ring": [
+      "SmartRGB": [
         {
           "Pin": 20
         }
@@ -244,7 +253,7 @@
           "Height": 2
         }
       ],
-      "Ring": [
+      "SmartRGB": [
         {
           "Count": 8,
           "Offset": 0,

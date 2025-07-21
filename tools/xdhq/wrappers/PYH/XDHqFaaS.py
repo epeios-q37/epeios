@@ -338,7 +338,7 @@ def launch(callback, userCallback, callbacks, callingGlobals, headContent):
 	_serve(callback, userCallback, callbacks, callingGlobals)
 
 
-def addCallback(event, callback):
+def setCallback(event, callback):
 	global callbacks_
 
 	callbacks_[event] = callback

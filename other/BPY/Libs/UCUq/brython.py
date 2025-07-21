@@ -26,11 +26,11 @@ def launchAsync(func, *args, **kwargs):
 
 
 def commit():
-  getDevice_().commit()
+  getDevice().commit()
 
 
 async def commitAwait(expr):
-  return await getDevice_().commitAwait(expr)
+  return await getDevice().commitAwait(expr)
 
 
 class Lock_:

@@ -25,40 +25,18 @@ SPOKEN_COLORS =  {
 
 
 class HW:
-  def ledsTurnOn_(self, hwDesc):
-    if hwDesc:
-      pin = hwDesc["Pin"]
-      count = hwDesc["Count"]
-      self.ledsLimiter = hwDesc["Limiter"]
+  def __init__(self, infos, device=None):
+    self.device, self.smartRGB, self.lcd, self.matrix = ucuq.getBits(infos, ucuq.B_SMART_RGB, ucuq.B_LCD, ucuq.B_MATRIX, device=device)
 
-      self.leds = ucuq.WS2812(count, pin)
-    else:
-      raise("Kit has no ws2812!")
-  
-  def lcdTurnOn_(self, hwDesc):
-    if hwDesc:
-      soft = hwDesc["Soft"]
-      sda = hwDesc["SDA"]
-      scl = hwDesc["SCL"]
+    self.lcd.backlightOn()
 
-      self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(sda, scl, soft=soft)).backlightOn()
-    else:
-      self.lcd = ucuq.Nothing()
+    self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"])
 
-  def matrixTurnOn_(self, hwDesc):
-    if hwDesc:
-      soft = hwDesc["Soft"]
-      sda = hwDesc["SDA"]
-      scl = hwDesc["SCL"]
+  def sleepStart(self, chrono):
+    self.device.sleepStart(chrono)
 
-      self.matrix = ucuq.HT16K33(ucuq.I2C(sda, scl, soft=soft))
-    else:
-      self.matrix = ucuq.Nothing()
-
-  def __init__(self, hwDesc):
-    self.ledsTurnOn_(ucuq.getHardware(hwDesc, ("Ring", "RGB")))
-    self.matrixTurnOn_(ucuq.getHardware(hwDesc, "Matrix"))
-    self.lcdTurnOn_(ucuq.getHardware(hwDesc, "LCD"))
+  def sleepWait(self, chrono, delay):
+    self.device.sleepWait(chrono, delay)
 
   def matrixDrawBar_(self, x, height):
     y = int(height)
@@ -66,28 +44,33 @@ class HW:
     if y != 0:
       self.matrix.rect(x * 6, 8 - y, x * 6 + 3, 7)
 
-  def update(self, r, g, b, limit = None, color=""):
-    self.leds.fill(list(map(int, [r, g, b]))).write()
+  def update(self, r, g, b, limit = None, *, color=""):
+    if limit is None:
+      limit = self.smartRGBLimiter
+
+    self.smartRGB.fill(list(map(lambda c: limit * int(c) // 255, [r, g, b]))).write()
 
     self.matrix.clear()
-    self.matrixDrawBar_(0, int(r) * 8 / limit)
-    self.matrixDrawBar_(1, int(g) * 8 / limit)
-    self.matrixDrawBar_(2, int(b) * 8 / limit)
+    self.matrixDrawBar_(0, 8 * int(r) // 255)
+    self.matrixDrawBar_(1, 8 * int(g) // 255)
+    self.matrixDrawBar_(2, 8 * int(b) // 255)
     self.matrix.show()
 
     self.lcd.moveTo(0,0)\
-      .putString("RGB: {} {} {}".format(*map(lambda s: str(s).rjust(3), [r, g, b])))\
+      .putString("RGB: {} {} {}".format(*map(lambda c: str(limit * int(c) // 255).rjust(3), [r, g, b])))\
       .moveTo(0,1)\
       .putString(color.center(16))
 
   def rainbow(self):
     v =  random.randint(0, 5)
     i = 0
-    while i < 7 * self.ledsLimiter:
-      self.update(*ucuq.rbShadeFade(v, int(i), self.ledsLimiter), self.ledsLimiter)
-      ucuq.sleep(RB_DELAY)
-      i += self.ledsLimiter / 20
-    self.update(0, 0, 0, self.ledsLimiter)
+    chrono = ucuq.getObjectIndice()
+    while i < 7 * 255:
+      self.sleepStart(chrono)
+      self.update(*ucuq.rbShadeFade(v, int(i), 255))
+      self.sleepWait(chrono, RB_DELAY)
+      i += 255 / 20
+    self.update(0, 0, 0)
 
 
 hw = None
@@ -123,13 +106,13 @@ async def atk(dom):
   global hw
 
   if not hw:
-    infos = await ucuq.ATKConnectAwait(dom, BODY)
-    hw = HW(ucuq.getKitHardware(infos))
+    hw = ucuq.Multi(HW(await ucuq.ATKConnectAwait(dom, BODY)))
   else:
     await dom.inner("", BODY)
 
   await dom.executeVoid("setColorWheel()")
   await dom.executeVoid(f"colorWheel.rgb = [0, 0, 0]")
+
 
 async def atkSelect(dom):
   R, G, B = (await dom.getValues(["rgb-r", "rgb-g", "rgb-b"])).values()
@@ -162,10 +145,10 @@ async def atkDisplay(dom):
   for color in colors:
     color = color.lower()
     if color in SPOKEN_COLORS:
-      r, g, b = [hw.ledsLimiter * c // 255 for c in SPOKEN_COLORS[color]]
+      r, g, b = [c for c in SPOKEN_COLORS[color]]
       await dom.setValues(getAllValues_(r, g, b))
       await dom.executeVoid(f"colorWheel.rgb = [{r},{g},{b}]")
-      hw.update(r, g, b, hw.ledsLimiter, color)
+      hw.update(r, g, b, color=color)
       break
 
 
@@ -176,4 +159,8 @@ async def atkRainbow(dom):
 
 async def atkReset(dom):
   await resetAwait(dom)
+
+
+async def UCUqXDevice(dom, device):
+  hw.add(HW(await ucuq.getInfosAwait(device), device))
 

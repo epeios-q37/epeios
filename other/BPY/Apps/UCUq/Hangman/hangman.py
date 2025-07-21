@@ -124,34 +124,33 @@ normalize = lambda string : string.ljust(16) if len(string) < 16 else string[-16
 
 class HW:
   def __init__(self, infos, device=None):
-    self.lcd, self.oled, self.buzzer, self.ring = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "Ring", device=device)
+    self.device, self.lcd, self.oled, self.buzzer, self.smartRGB = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "SmartRGB", device=device)
     
     self.lcd.backlightOn()
-    self.buzzer.setNS(0).addCommand(BUZZER_SCRIPT)
+    self.buzzer.setNS(0)
+    self.device.addCommand(BUZZER_SCRIPT)
 
-    if self.ring:
-      self.ringLimiter, self.ringCount, self.ringOffset = ucuq.getFeatures(infos, "Ring", ["Limiter", "Count", "Offset"])
+    self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"]) if self.smartRGB else (1,0,0)
 
-
-  def ringPatchIndex_(self, index):
-    return ( index + self.ringOffset ) % self.ringCount if self.ring else 0
+  def smartRGBPatchIndex_(self, index):
+    return ( index + self.smartRGBOffset ) % self.smartRGBCount if self.smartRGB else 0
   
   def update(self, errors):
     for e in range(errors+1):
-      self.ring.setValue(self.ringPatchIndex_(COUNTER_LEDS[e-1]), [self.ringLimiter, 0, 0])
+      self.smartRGB.setValue(self.smartRGBPatchIndex_(COUNTER_LEDS[e-1]), [self.smartRGBLimiter, 0, 0])
 
     for e in range(errors+1, 7):
-      self.ring.setValue(self.ringPatchIndex_(COUNTER_LEDS[e-1]), [0, self.ringLimiter, 0])
+      self.smartRGB.setValue(self.smartRGBPatchIndex_(COUNTER_LEDS[e-1]), [0, self.smartRGBLimiter, 0])
 
     for l in FIXED_LEDS:
-      self.ring.setValue(self.ringPatchIndex_(l), [self.ringLimiter * errors // 6, 0, self.ringLimiter * ( 6 - errors ) // 6])
+      self.smartRGB.setValue(self.smartRGBPatchIndex_(l), [self.smartRGBLimiter * errors // 6, 0, self.smartRGBLimiter * ( 6 - errors ) // 6])
 
-    self.ring.write()
+    self.smartRGB.write()
 
     if (errors):
       self.oled.draw(HANGED_MAN_PATTERNS[errors-1],48, ox=47).show()
     else:
-      self.oled.fill(0).draw(START_PATTERN, 48, ox=47).show()
+      self.oled.draw(START_PATTERN, 48, ox=47).show()
 
   def lcdPutString(self, x, y, string):
     self.lcd.moveTo(x,y).putString(string)
@@ -164,12 +163,12 @@ class HW:
     self.lcd.moveTo(0,1).putString(message)
     self.oled.draw(HAPPY_PATTERN, 16, mul=4, ox=32).show()
     for _ in range(3):
-      for l in range(self.ringCount):
-        self.ring.setValue(self.ringPatchIndex_(l), tuple(map(lambda _: randint(0,self.ringLimiter // 3), range(3)))).write()
-        self.ring.sleep(0.075)
+      for l in range(self.smartRGBCount):
+        self.smartRGB.setValue(self.smartRGBPatchIndex_(l), tuple(map(lambda _: randint(0,self.smartRGBLimiter // 3), range(3)))).write()
+        self.smartRGB.sleep(0.075)
 
   def buzz(self):
-    self.buzzer.addCommand(f"buzz({self.buzzer.getObject()}, 50, 0.5)")
+    self.device.addCommand(f"buzz({self.buzzer.getObject()}, 50, 0.5)")
 
 class Core:
   def reset(self):
@@ -231,14 +230,6 @@ async def atk(core, dom):
   await reset(core,dom)
 
 
-async def setXDevice(dom, device):
-  hw.add(HW(await ucuq.getInfosAwait(device), device))
-
-
-async def atkMirror(core, dom, id):
-  ucuq.ATKgetXDevice(dom, setXDevice)
-
-
 async def atkSubmit(core, dom, id):
   await dom.addClass(id, "chosen")
 
@@ -282,14 +273,8 @@ async def atkRestart(core, dom):
   await reset(core, dom)
 
 
-async def atkMirrorOK(code, dom):
-  await dom.executeVoid("document.getElementById('Mirror').close();")
-  device = ucuq.Device(id = await dom.getValue("MirrorId"), token = await dom.getValue("MirrorToken"))
-
+async def UCUqXDevice(dom, device):
   hw.add(HW(await ucuq.getInfosAwait(device), device))
 
-
-async def atkMirrorCancel(code, dom):
-  await dom.executeVoid("document.getElementById('Mirror').close();")
 
 ATK_USER = Core

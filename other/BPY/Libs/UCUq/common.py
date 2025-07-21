@@ -130,7 +130,7 @@ ATK_BODY_ = """
 
 
 ATK_XDEVICE_ = """
-<dialog id="ucuq_xdevice">
+<dialog id="ucuq_xdevice" style="width: min-content;">
   <fieldset>
     <legend>Device</legend>
     <label style="display: flex; justify-content: space-between; margin: 5px;">
@@ -143,44 +143,58 @@ ATK_XDEVICE_ = """
     </label>
   </fieldset>
   <div style="display: flex; justify-content: space-around; margin: 5px;">
-    <button xdh:onevent="ucuq_xdevice_ok"/>OK</button>
-    <button xdh:onevent="ucuq_xdevice_cancel">Cancel</button>
+    <button xdh:onevent="ucuq_xdevice_ok"/>{}</button>
+    <button xdh:onevent="ucuq_xdevice_cancel">{}</button>
   </div>
-  <fieldset>
-    <output id="Output">Hint</output>
-  </fieldset>
+  <fieldset>{}</fieldset>
 </dialog>
 """
 
-async def handleXDevice_(dom, response):
-  assert xDeviceCallback_ is not None
+UCUQ_XDEVICE_ACTION_ = "UCUqXDevice"
 
-  print("toto")
+async def handleXDevice_(dom, response):
+  await dom.executeVoid("document.getElementById('ucuq_xdevice').close();")
+
 
   if response:
-    await xDeviceCallback_(dom, Device(id = await dom.getValue("ucuq_xdevice_id"), token = await dom.getValue("ucuq_xdevice_token")))
+    await atlastk.getUserGlobals()["UCUqXDevice"](dom, Device(id = await dom.getValue("ucuq_xdevice_id"), token = await dom.getValue("ucuq_xdevice_token")))
 
-  await dom.executeVoid("element = document.getElementById('ucuq_xdevice'); element.close(); element.remove()")
-
-
-async def handleXDeviceOK_(user, dom, id):
-  await handleXDevice_(dom, True)
+  await dom.executeVoid("element = document.getElementById('ucuq_xdevice').remove();")
 
 
-async def handleXDeviceCancel_(user, dom, id):
-  await handleXDevice_(dom, False)
+def getDOM_(dom1, dom2):
+  if isinstance(dom1, atlastk.DOM):
+    return dom1
+  else:
+    return dom2
+  
+UCUQ_XDEVICE_I10N = (
+  ("OK", "Cancel", "Click on ‘Cancel’ unless you know exactly what you're doing!"),
+  ("OK", "Annuler", "Cliquez sur 'Annuler' à moins que vous ne sachiez exactement ce que vous faites !")
+)
 
 
-async def ATKgetXDevice(dom, callback):
-  global xDeviceCallback_
+async def handleXDeviceRetrieving_(dom1, dom2):
+  dom = getDOM_(dom1, dom2)
 
-  xDeviceCallback_ = callback
+  language = dom.language
 
-  await dom.end("", ATK_XDEVICE_)
-  atlastk.addCallback("ucuq_xdevice_ok", handleXDeviceOK_)
-  atlastk.addCallback("ucuq_xdevice_cancel", handleXDeviceCancel_)
+  i10n = UCUQ_XDEVICE_I10N[1 if ( language[:2].upper() if len(language) >= 2 else '' ) == 'FR' else 0]
+
+  await dom.end("", ATK_XDEVICE_.format(*i10n))
+
+  atlastk.setCallback("ucuq_xdevice_ok", handleXDeviceOK_)
+  atlastk.setCallback("ucuq_xdevice_cancel", handleXDeviceCancel_)
 
   await dom.executeVoid(f"document.getElementById('ucuq_xdevice').showModal();")
+
+
+async def handleXDeviceOK_(dom1, dom2):
+  await handleXDevice_(getDOM_(dom1, dom2), True)
+
+
+async def handleXDeviceCancel_(dom1, dom2):
+  await handleXDevice_(getDOM_(dom1, dom2), False)
 
 
 CB_AUTO = 0
@@ -215,7 +229,9 @@ patchKeys_ = lambda keys: keys if keys else []
 B_LCD = "LCD"
 B_OLED = "OLED"
 B_BUZZER = "Buzzer"
-B_RING = "Ring"
+B_LOUDSPEAKER = "Loudspeaker"
+B_SMART_RGB = "SmartRGB"
+B_MATRIX = "Matrix"
 
 class Auto:
   def __new__(cls, bit, infos, item, hardwareKeys, featuresKeys, **kwargs):
@@ -228,22 +244,24 @@ class Auto:
     hardwareKeys = patchKeys_(hardwareKeys)
     featuresKeys = patchKeys_(featuresKeys)
 
-    return bit(*getFeatures_(features, item, featuresKeys), *getHardware_(hardware, item, hardwareKeys), **kwargs)
+    return bit(*getDescItems_(features, item, featuresKeys), *getDescItems_(hardware, item, hardwareKeys), **kwargs)
 
 
 def getBits(infos, *bitLabels, device=None):
-  bits = []
+  bits = [getDevice(device)]
 
   for label in bitLabels:
     match label:
       case "LCD":
-        bits.append(Auto(HD44780_I2C, infos, "LCD", None, ["Width", "Height"], i2c=Auto(I2C, infos, "LCD", ["SDA", "SCL", "Soft"], None, device=device)))
+        bits.append(Auto(HD44780_I2C, infos, label, None, ["Width", "Height"], i2c=Auto(I2C, infos, label, ["SDA", "SCL", "Soft"], None, device=device)))
       case "OLED":
-        bits.append(Auto(OLED_I2C, infos, "OLED", None, ["Driver", "Width", "Height"], i2c=Auto(I2C, infos, "OLED", ["SDA", "SCL", "Soft"], None, device=device)))
-      case "Buzzer":
-        bits.append(Auto(PWM, infos, "Buzzer", ["Pin"], None, device=device))
-      case "Ring": 
-        bits.append(Auto(WS2812, infos, "Ring", ["Pin"], ["Count"], device=device))
+        bits.append(Auto(OLED_I2C, infos, label, None, ["Driver", "Width", "Height"], i2c=Auto(I2C, infos, label, ["SDA", "SCL", "Soft"], None, device=device)))
+      case "Buzzer" | "Loudspeaker":
+        bits.append(Auto(PWM, infos, label, ["Pin"], None, device=device))
+      case "SmartRGB": 
+        bits.append(Auto(WS2812, infos, label, ["Pin"], ["Count"], device=device))
+      case "Matrix":
+        bits.append(Auto(HT16K33, infos, label, None, None, i2c=Auto(I2C, infos, "Matrix", ["SDA", "SCL", "Soft"], None, device=device)))
       case _:
         raise Exception(f"Unknown bit label: {label}")
       
@@ -395,15 +413,15 @@ def getKitFeatures_(infosOrLabel):
   return getKitDesc_(infosOrLabel, "features")
   
 
-getDescItems_ = lambda desc, key, index: desc[key][index] if key in desc and index < len(desc[key]) else None
+subGetDescItems_ = lambda desc, key, index: desc[key][index] if key in desc and index < len(desc[key]) else None
 
 
-def getDescItems(kitDesc, stringOrList, keys=None, *, index = 0):
+def getDescItems_(kitDesc, stringOrList, keys=None, *, index = 0):
   if type(stringOrList) == str:
-    items = getDescItems_(kitDesc, stringOrList, index)
+    items = subGetDescItems_(kitDesc, stringOrList, index)
   else:
     for key in stringOrList:
-      if items := getDescItems_(kitDesc, key, index):
+      if items := subGetDescItems_(kitDesc, key, index):
         break
 
   if items and ( keys or keys == [] ):
@@ -415,17 +433,13 @@ def getDescItems(kitDesc, stringOrList, keys=None, *, index = 0):
 
   return result
 
-getHardware_ = getDescItems
-
-getFeatures_ = getDescItems
-
 
 def hasHardware_(kitHardware, item):
-  return bool(getHardware_(kitHardware, item))
+  return bool(getDescItems_(kitHardware, item))
   
 
 def hasFeatures_(kitFeatures, item):
-  return bool(getFeatures_(kitFeatures, item))
+  return bool(getDescItems_(kitFeatures, item))
 
 
 def getFeatures(infosOrLabel, item, keys=None, *, index = 0):
@@ -434,7 +448,16 @@ def getFeatures(infosOrLabel, item, keys=None, *, index = 0):
   if not kitFeatures:
     return ()
 
-  return getFeatures_(kitFeatures, item, keys, index = index)
+  return getDescItems_(kitFeatures, item, keys, index = index)
+
+  
+def getHardware(infosOrLabel, item, keys=None, *, index = 0):
+  kitHardware = getKitHardware_(infosOrLabel)
+
+  if not kitHardware:
+    return ()
+
+  return getDescItems_(kitHardware, item, keys, index = index)
   
 
 def getDeviceId(infos):
@@ -521,6 +544,8 @@ async def ATKConnectAwait(dom, body, *, device = None):
   await sleepAwait(1.5)
 
   await dom.inner("", body)
+
+  atlastk.setCallback(UCUQ_XDEVICE_ACTION_, handleXDeviceRetrieving_)
 
   return infos
 
@@ -1066,7 +1091,10 @@ class OLED_(Core_):
     return self.addMethods(f"text('{string}',{x}, {y}, {col})")
   
   def rect(self, x, y, w, h, col, fill=True):
-    return self.addMethods(f"{'fill_' if fill else ''}rect({x},{y},{w},{h},{col})")
+    return self.addMethods(f"rect({x},{y},{w},{h},{col},{fill})")
+
+  def ellipse(self, x, y, rx, ry, col, fill=True):
+    return self.addMethods(f"ellipse({x},{y},{rx},{ry},{col}, {fill})")
 
   def draw(self, pattern, width, ox = 0, oy = 0, mul = 1):
     if width % 4:

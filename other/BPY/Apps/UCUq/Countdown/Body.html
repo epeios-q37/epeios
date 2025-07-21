@@ -1,32 +1,34 @@
-<table style="width: 100%;">
-  <tr>
-    <td xdh:onevent="Card" xdh:onevent="Card" id="4">&nbsp;</td>
-    <td xdh:onevent="Card" xdh:onevent="Card" id="5"></td>
-    <td xdh:onevent="Card" xdh:onevent="Card" id="6"></td>
-    <td xdh:onevent="Card" xdh:onevent="Card" id="7"></td>
-    <td xdh:onevent="Card" xdh:onevent="Card" id="8"></td>
-    <td xdh:onevent="Card" xdh:onevent="Card" id="9"></td>
-  </tr>
-</table>
-<table style="width: 100%;">
-  <tr style="font-size: larger;">
-    <td xdh:event="Operator" xdh:onevent="Operator" id="0">+</td>
-    <td xdh:event="Operator" xdh:onevent="Operator" id="1">-</td>
-    <td xdh:event="Operator" xdh:onevent="Operator" id="2">×</td>
-    <td xdh:event="Operator" xdh:onevent="Operator" id="3">÷</td>
-  </tr>
-</table>
 <fieldset>
-  <output id="Output">&nbsp;</output>
+  <legend xdh:onevent="dblclick|UCUqXDevice">Countdown</legend>
+  <table style="width: 100%;">
+    <tr>
+      <td xdh:onevent="Card" xdh:onevent="Card" id="4">&nbsp;</td>
+      <td xdh:onevent="Card" xdh:onevent="Card" id="5"></td>
+      <td xdh:onevent="Card" xdh:onevent="Card" id="6"></td>
+      <td xdh:onevent="Card" xdh:onevent="Card" id="7"></td>
+      <td xdh:onevent="Card" xdh:onevent="Card" id="8"></td>
+      <td xdh:onevent="Card" xdh:onevent="Card" id="9"></td>
+    </tr>
+  </table>
+  <table style="width: 100%;">
+    <tr style="font-size: larger;">
+      <td xdh:event="Operator" xdh:onevent="Operator" id="0">+</td>
+      <td xdh:event="Operator" xdh:onevent="Operator" id="1">-</td>
+      <td xdh:event="Operator" xdh:onevent="Operator" id="2">×</td>
+      <td xdh:event="Operator" xdh:onevent="Operator" id="3">÷</td>
+    </tr>
+  </table>
+  <fieldset>
+    <output id="Output">&nbsp;</output>
+  </fieldset>
+  <div style="display: flex; justify-content: center; margin: 5px;">
+    <button class="starter" xdh:onevent="New">{new}</button>
+  </div>
+  <table id="Calculations" style="width: 100%;">
+  </table>
+  <fieldset id="QRCode">
+    <legend>{qrcode}</legend>
+  </fieldset>
+  <br />
+  <iframe style="width: 100%; border: none;height: inherit" name="Debug"></iframe>
 </fieldset>
-<div style="display: flex; justify-content: center; margin: 5px;">
-  <button class="starter" xdh:onevent="New">{new}</button>
-  <input class="starter" xdh:onevent="Mirror" type="checkbox" />
-</div>
-<table id="Calculations" style="width: 100%;">
-</table>
-<fieldset id="QRCode">
-  <legend>{qrcode}</legend>
-</fieldset>
-<br />
-<iframe style="width: 100%; border: none;height: inherit" name="Debug"></iframe>

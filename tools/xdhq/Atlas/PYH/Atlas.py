@@ -26,7 +26,7 @@ import XDHq, XDHqSHRD
 from threading import Thread, Lock
 import inspect, types, socket, signal, sys, os
 
-from XDHq import set_supplier, get_app_url, l, addCallback
+from XDHq import set_supplier, get_app_url, l, setCallback, DOM
 
 setSupplier = set_supplier
 getAppURL = get_app_url
@@ -241,9 +241,13 @@ def retrieve_(var, id, globals):
   
   return var	
 	
+userGlobals_ = {}
 
-def launch(callbacks = None, *, globals = None,  userCallback = None, headContent = None):
+def launch(callbacks=None, *, globals=None,  userCallback=None, headContent=None):
+	global userGlobals_
+
 	if globals != None:
+		userGlobals_ = globals
 		callbacks = retrieve_(callbacks, "ATK_CALLBACKS", globals)
 		userCallback = retrieve_(userCallback, "ATK_USER", globals)
 		headContent = retrieve_(headContent, "ATK_HEAD", globals)
@@ -281,3 +285,7 @@ def options(options = None):
 
 def isDev():
 	return XDHqSHRD.isDev()
+
+
+def getUserGlobals():
+	return userGlobals_

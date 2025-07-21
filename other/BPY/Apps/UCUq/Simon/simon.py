@@ -65,31 +65,31 @@ seq = ""
 userSeq = ""
 
 class HW:
-  def turnBuzzerOn_(self):
-    self.buzzer = ucuq.PWM(self.buzzerPin, freq=50, u16 = 0).setNS(0)
+  def __init__(self, infos, device=None):
+    self.device, self.lcd, self.oled, self.buzzer, self.smartRGB = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "SmartRGB", device=device)
 
-  def __init__(self, hwDesc):
-    self.buzzerPin, = ucuq.getHardware(hwDesc, "Buzzer", ["Pin"])
-    self.turnBuzzerOn_()
+    self.buzzer.setNS(0)
+    self.lcd.backlightOn()
 
-    self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ["SDA", "SCL", "Soft"]))).backlightOn()
-    self.oled =  ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ["SDA", "SCL", "Soft"])))
-    pin, self.ringCount, self.ringOffset, self.ringLimiter = ucuq.getHardware(hwDesc, "Ring", ["Pin", "Count", "Offset", "Limiter"])
-    self.ring = ucuq.WS2812(self.ringCount, pin)
+    self.trueBuzzer = self.buzzer
+
+    self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"]) if self.smartRGB else (1,0,0)
+
+    self.commit()
 
   def buzzerBeep_(self, note, delay = 0.29, sleep = 0.01):
     self.buzzer.setFreq(pitches[note]).setU16(30000)
-    ucuq.sleep(delay)
+    self.device.sleep(delay)
     self.buzzer.setU16(0)
     if sleep:
-      ucuq.sleep(sleep)
+      self.device.sleep(sleep)
 
-  def ringFlash_(self, button):
-    self.ring.fill([0,0,0])
+  def smartRGBFlash_(self, button):
+    self.smartRGB.fill([0,0,0])
     if button in BUTTONS:
-      for i in range(1 + self.ringCount // 4):
-        self.ring.setValue((list(BUTTONS.keys()).index(button) * self.ringCount // 4 + i + self.ringOffset) % self.ringCount,[self.ringLimiter * item // 255 for item in BUTTONS[button][0]])
-    self.ring.write()
+      for i in range(1 + self.smartRGBCount // 4):
+        self.smartRGB.setValue((list(BUTTONS.keys()).index(button) * self.smartRGBCount // 4 + i + self.smartRGBOffset) % self.smartRGBCount,[self.smartRGBLimiter * item // 255 for item in BUTTONS[button][0]])
+    self.smartRGB.write()
 
   def oledDigit_(self, n, offset):
     self.oled.draw(DIGITS[n], 8, offset, mul=8)
@@ -104,9 +104,9 @@ class HW:
         if ( button != prevButton ) and ( button != prevPrevButton ):
           break
       prevPrevButton = prevButton
-      self.ringFlash_(prevButton := button)
+      self.smartRGBFlash_(prevButton := button)
       self.buzzerBeep_(n, 0.15, 0)
-    self.ringFlash_("")
+    self.smartRGBFlash_("")
 
   def oledNumber(self, n):
     try:
@@ -128,13 +128,17 @@ class HW:
     self.lcd.backlightOn()
     return self
   
+  def lcdBacklightOff(self):
+    self.lcd.backlightOff()
+    return self
+  
   def lcdDisplaySequence(self, seq, l10n):
     self.lcdClear().lcdDisplay(0, ''.join(l10n(12)["RGBY".index(char)] for char in seq)).lcdBacklightOn()
 
   def begin(self, l10n):
     self.lcdClear().lcdDisplay(0, l10n(10).format(**l10n(new=8))).lcdDisplay(1, l10n(11))
     self.oledNumber(None)
-    ucuq.commit()
+    self.commit()
 
     return not isinstance(self.buzzer, ucuq.Nothing)
 
@@ -142,9 +146,9 @@ class HW:
     self.oledNumber(None)
     self.lcdClear().lcdDisplay(0, l10n(3)).lcdDisplay(1, l10n(4))
     self.oledNumber(0)
-    ucuq.sleep(.75)
+    self.device.sleep(.75)
     self.play(seq)
-    ucuq.commit()
+    self.commit()
 
   def restart(self, seq, l10n):
     self.oledNumber(None)
@@ -155,7 +159,7 @@ class HW:
     .lcdBacklightOn()
 
     self.playJingle_(LAUNCH_JINGLE)
-    ucuq.sleep(0.5)
+    self.device.sleep(0.5)
 
     self.new(seq, l10n)
 
@@ -164,9 +168,9 @@ class HW:
     self.oledNumber(None)
     self.oled.draw(HAPPY_MOTIF, 16, mul=4, ox=32).show()
     self.playJingle_(SUCCESS_JINGLE)
-    ucuq.sleep(0.5)
+    self.device.sleep(0.5)
     self.lcdClear()
-    ucuq.commit()
+    self.commit()
 
   def failure(self, l10n):
     self.lcdDisplay(0, l10n(6).format(**l10n(new=8))).lcdDisplay(1, l10n(7))
@@ -174,27 +178,27 @@ class HW:
     self.buzzer.setFreq(30).setU16(50000)
     self.oledNumber(None)
     self.oled.fill(0).draw(SAD_MOTIF, 16, mul=4, ox=32).show()
-    ucuq.sleep(1)
+    self.device.sleep(1)
     self.buzzer.setU16(0)
-    ucuq.commit()
+    self.commit()
 
   def buzzerSwitch(self, status):
     if status:
-      self.turnBuzzerOn_()
+      self.buzzer = self.trueBuzzer
     else:
       self.buzzer = ucuq.Nothing()  
 
   def displayButton(self, button):
-    self.ring.fill([0,0,0])
+    self.smartRGB.fill([0,0,0])
     if button in BUTTONS:
-      for i in range(1 + self.ringCount // 4):
-        self.ring.setValue((list(BUTTONS.keys()).index(button) * self.ringCount // 4 + i + self.ringOffset) % self.ringCount,[self.ringLimiter * item // 255 for item in BUTTONS[button][0]])
-    self.ring.write()
+      for i in range(1 + self.smartRGBCount // 4):
+        self.smartRGB.setValue((list(BUTTONS.keys()).index(button) * self.smartRGBCount // 4 + i + self.smartRGBOffset) % self.smartRGBCount,[self.smartRGBLimiter * item // 255 for item in BUTTONS[button][0]])
+    self.smartRGB.write()
     self.buzzer.setFreq(pitches[BUTTONS[button][2]]).setU16(30000)
-    ucuq.sleep(0.29)
+    self.device.sleep(0.29)
     self.buzzer.setU16(0)
-    self.ring.fill([0,0,0]).write()
-    ucuq.sleep(0.01)
+    self.smartRGB.fill([0,0,0]).write()
+    self.device.sleep(0.01)
 
   def play(self, sequence):
     seq=""
@@ -203,7 +207,10 @@ class HW:
       self.displayButton(s)
       seq += s
       if len(seq) % 5:
-        ucuq.commit()
+        self.commit()
+
+  def commit(self):
+    self.device.commit()
 
 
 hw = None
@@ -254,9 +261,8 @@ async def atk(dom):
   body = BODY.format(**dom.getL10n(new=8, repeat=9))
 
   if not hw:
-    infos = await ucuq.ATKConnectAwait(dom, body)
-    hw = HW(ucuq.getKitHardware(infos))
     ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+    hw= ucuq.Multi(HW(await ucuq.ATKConnectAwait(dom, body)))
   else:
     await dom.inner("", body)
 
@@ -269,11 +275,12 @@ async def atk(dom):
 
 async def atkRepeat():
   hw.play(seq)
-  ucuq.commit()
+  hw.commit()
 
   
 async def atkNew(dom):
   await restartAwait(dom)
+  
 
 async def atkClick(dom, id):
   global seq, userSeq
@@ -295,14 +302,18 @@ async def atkClick(dom, id):
       await ucuq.sleepAwait(1.5)
       await dom.setValue("Length", str(len(seq)))
     else:
-      hw.lcd.backlightOff()
+      hw.lcdBacklightOff()
   else:
     hw.failure(lambda *args, **kwargs: dom.getL10n(*args, **kwargs))
     userSeq = ""
     seq = ""
 
-  ucuq.commit()
+  hw.commit()
 
 
 async def atkSwitchSound(dom, id):
   hw.buzzerSwitch(await dom.getValue(id) == "true")
+
+
+async def UCUqXDevice(dom, device):
+  hw.add(HW(await ucuq.getInfosAwait(device), device))

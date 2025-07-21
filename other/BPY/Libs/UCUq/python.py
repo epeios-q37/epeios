@@ -192,7 +192,7 @@ class Error(Exception):
 
 
 def commit(expression=""):
-  return getDevice_().commit(expression)
+  return getDevice().commit(expression)
 
 
 def displayExitMessage_(Message):

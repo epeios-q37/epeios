@@ -158,21 +158,21 @@ toFind = 0
 winner = 0 # if != 0, the role of the player which wins.
 
 class HW():
-  def __init__(self, hwDesc):
-    self.oled = ucuq.Multi(ucuq.SSD1306_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(hwDesc, "OLED", ("SDA", "SCL", "Soft")))))
-    self.lcd = ucuq.HD44780_I2C(16, 2, ucuq.I2C(*ucuq.getHardware(hwDesc, "LCD", ("SDA", "SCL", "Soft"))))
-    pin, self.ringCount, self.ringLimiter, self.ringOffset = ucuq.getHardware(hwDesc, "Ring", ("Pin", "Count", "Limiter", "Offset"))
-    self.ring = ucuq.WS2812(self.ringCount, self)
-    self.oled[0].addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled[0].getObject(),lcdAvailable="True",lcd=self.lcd.getObject()))
-    self.reset()
+  def __init__(self, infos, device=None):
+    self.device, self.lcd, self.oled, self.buzzer, self.smartRGB = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "SmartRGB", device=device)
+    
+    self.lcd.backlightOn()
+    self.buzzer.setNS(0)
 
-  def activateMirror(self, device, infos):
-    self.oled.add(ucuq.SH1106_I2C(128, 64, ucuq.I2C(*ucuq.getHardware(ucuq.getKitHardware(infos), "OLED", ["SDA", "SCL", "Soft"]), device=device )))
-    self.oled[1].addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled[1].getObject(),lcdAvailable="False",lcd=self.lcd.getObject()))
+    self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"]) if self.smartRGB else (10,0,0)
+
+    self.device.addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled.getObject(),lcdAvailable="True" if self.lcd else "False",lcd=self.lcd.getObject() if self.lcd else "None"))
+
+    self.reset()
 
   def reset(self):
     self.oled.fill(0).show()
-    self.ring.fill((0,0,0)).write()
+    self.smartRGB.fill((0,0,0)).write()
     self.lcd.clear()
     
   def oledDisplayDigit_(self, n, offset):
@@ -191,41 +191,41 @@ class HW():
 
     self.oled.show()
 
-  def ringDisplayCounter(self, v):
+  def smartRGBDisplayCounter(self, v):
     if v < 1:
-      limit = round(0.5 + self.ringCount * v)
+      limit = round(0.5 + self.smartRGBCount * v)
 
-      for l in range(self.ringCount):
-        colorCore = int(self.ringLimiter * (l / self.ringCount))
-        color = (colorCore, 0, self.ringLimiter - colorCore)
-        self.ring.setValue((l + self.ringOffset) % self.ringCount, color if l < limit else (0,0,0))
+      for l in range(self.smartRGBCount):
+        colorCore = int(self.smartRGBLimiter * (l / self.smartRGBCount))
+        color = (colorCore, 0, self.smartRGBLimiter - colorCore)
+        self.smartRGB.setValue((l + self.smartRGBOffset) % self.smartRGBCount, color if l < limit else (0,0,0))
     else:
-      self.ring.fill((self.ringLimiter, 0, 0))
+      self.smartRGB.fill((self.smartRGBLimiter, 0, 0))
 
-    self.ring.write()
+    self.smartRGB.write()
 
   def oledJauge(self, v): # v: 0 <= v <= 1
     l = int(126*v)
     self.oled.rect(0,50,127,13,0).rect(0, 50, l, 13, 1).rect(l, 50, 127-l, 13, 1, False).show()
 
   async def counterAwait(self, winner):
-    hw.oled.addCommand("elapsed = 0\nstop = False\nasyncio.create_task(counter_())")
+    hw.addCommand("elapsed = 0\nstop = False\nasyncio.create_task(counter_())")
     elapsed = 0
 
     while not winner() and elapsed <= DELAY:
-      self.ringDisplayCounter(elapsed / DELAY)
-      elapsed = await ucuq.commitAwait("elapsed") / 1000
+      self.smartRGBDisplayCounter(elapsed / DELAY)
+      elapsed = await self.device.commitAwait("elapsed") / 1000
 
     if winner():
-      hw.oled.addCommand("stop = True")
+      hw.addCommand("stop = True")
 
-    hw.oled.addCommand("jauge(0)")
+    hw.addCommand("jauge(0)")
 
     if not winner():
-      self.ringDisplayCounter(1)
+      self.smartRGBDisplayCounter(1)
       atlastk.broadcastAction(atkBElapsed)
     else:
-      self.ring.fill([0,0,self.ringLimiter]).write()
+      self.smartRGB.fill([0,0,self.smartRGBLimiter]).write()
 
   def lcdDisplayCards(self, cards, center = True):
     text = ""
@@ -248,16 +248,28 @@ class HW():
   def lcdPutString(self, x, y, text):
     self.lcd.moveTo(x,y).putString(text).backlightOn()
 
-  def ringSetRing(self, index, colors):
-    self.ring.setValue((index + self.ringOffset) % self.ringCount, tuple(int(color * self.ringLimiter) for color in colors))
+  def smartRGBSet(self, index, colors):
+    self.smartRGB.setValue((index + self.smartRGBOffset) % self.smartRGBCount, tuple(int(color * self.smartRGBLimiter) for color in colors))
 
-  def ringWrite(self):
-    self.ring.write()
+  def smartRGBWrite(self):
+    self.smartRGB.write()
 
-  def ringFading(self, index, colors):
-    for l in range(self.ringCount):
-      self.ringSetRing(l + index, tuple(color * l / ( self.ringCount -1 ) for color in colors))
-    self.ringWrite()
+  def smartRGBFading(self, index, colors):
+    for l in range(self.smartRGBCount):
+      self.smartRGBSet(l + index, tuple(color * l / ( self.smartRGBCount -1 ) for color in colors))
+    self.smartRGBWrite()
+
+  def sleep(self, delay):
+    self.device.sleep(delay)
+
+  def sleepStart(self, chrono):
+    self.device.sleepStart(chrono)
+
+  def sleepWait(self, chrono, delay):
+    self.device.sleepWait(chrono, delay)
+
+  def addCommand(self, command):
+    self.device.addCommand(command)
 
 
 class Player:
@@ -280,9 +292,7 @@ async def setHardwareAwait(dom):
 
   if UCUq:
     if hw == None:
-      infos = await ucuq.ATKConnectAwait(dom, body)
-      hardware = ucuq.getKitHardware(infos)
-      hw = HW(hardware)
+      hw = ucuq.Multi(HW(await ucuq.ATKConnectAwait(dom, body)))
 
     return True
   else:
@@ -467,16 +477,6 @@ async def atk(player, dom, id):
   await updateUIAwait(player, dom)
 
 
-async def atkMirror(player, dom, id):
-  if  (await dom.getValue(id)) == "true":
-    if ( await dom.confirm("Please do not confirm unless you know exactly what you are doing!") ):
-      device = ucuq.Device(id="Hotel")
-
-      hw.activateMirror(device, await ucuq.getInfosAwait(device))
-    else:
-      await dom.setValue(id, "false")  
-
-
 async def atkNew(player, dom):
   global cards, toFind, winner
 
@@ -504,10 +504,10 @@ async def atkNew(player, dom):
     if changed:
       hw.lcdDisplayCards(cards, False)
       hw.oledClear()
-      hw.oled.sleep(0.1)
+      hw.sleep(0.1)
       hw.oledDisplayNumber(cards[-1])
       if PROD:
-        hw.oled.sleep(1)
+        hw.sleep(1)
 
   toFind = cards[-1] + cards[-2] + cards[-3]
 
@@ -516,19 +516,20 @@ async def atkNew(player, dom):
   hw.lcdPutString(0,0,"".center(16))
 
   if PROD:
-    hw.oled.sleep(0.5)
+    hw.sleep(0.5)
 
   hw.lcdDisplayCards(cards)
 
   if PROD:
     await ucuq.sleepAwait(8)
 
+  chrono = ucuq.getObjectIndice()
+
   for c in range( 40 if PROD else 0):
-    chrono = ucuq.getObjectIndice()
-    hw.oled.sleepStart(chrono)
+    hw.sleepStart(chrono)
     hw.oledDisplayNumber(random.randint(101,999))
-    hw.ringFading(c, (1,0,1))
-    hw.oled.sleepWait(chrono, 0.15)
+    hw.smartRGBFading(c, (1,0,1))
+    hw.sleepWait(chrono, 0.15)
 
   if PROD and not CHEAT:
     toFind = random.randint(101,999)
@@ -621,6 +622,10 @@ async def atkDelete(player, dom, id):
   await updateUIAwait(player, dom)
   
   atlastk.broadcastAction(atkBDisplayProgress, str(player.role))
+
+
+async def UCUqXDevice(dom, device):
+  hw.add(HW(await ucuq.getInfosAwait(device), device))
 
 
 ATK_USER = Player

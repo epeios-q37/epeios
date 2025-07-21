@@ -11,7 +11,17 @@ Pour lancer la version *Python* : `BPYP_Launch <app_dir>`.
 
 Modifier *ucuq.json*.
 
-Si utilisation version *Linux*, couper *stunnel*.
+Si utilisation version *Linux* (par opposition à la VM *Windows*), couper *stunnel*.
+
+### Version *Brython*
+
+Modifier le script *B/Launch*.
+
+## Mise en œuvre de *UCUqXDevice*
+
+*UCUqXDevice* permet d'ajouter un *device*, servant généralement de mirroir.
+
+Pour cela, placer un `xdh:onevent="dblclick|UCUqXDevice"` sur l'élément qui va servir de déclencheur de l'affichage de l'interface permettant de saisir les paramètre du nouveau *device*, et créer la fonction `async def UCUqXDevice(dom, device):` afin de créer, à partir de `device`, les différents composants utilisés.
 
 ## Paramètre `useUCUqDemoDevices`
 

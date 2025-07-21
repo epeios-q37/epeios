@@ -2,7 +2,7 @@
   <fieldset id="MatrixBox" style="display: flex; justify-content: center;">
     <div class="matrix" id="Matrix"></div>
   </fieldset>
-  <fieldset id="HexaBox" style="display: flex; justify-content: center;">
+  <fieldset id="HexaBox" xdh:onevent="dblclick|UCUqXDevice" style="display: flex; justify-content: center;">
     <input xdh:onevent="input|Hexa" style="font-family: monospace;" id="Hexa" type="text" maxlength="32" minlength="32"
       size="32" pattern="[0-9a-fA-F]+">
   </fieldset>
@@ -22,7 +22,6 @@
         <option value="2">2 Hz</option>
       </select>
     </label>
-    <input xdh:onevent="Mirror" type="checkbox" />
   </fieldset>
   <fieldset id="MatricesBox" style="display: grid; grid-template-columns: auto auto auto auto;">
   </fieldset>

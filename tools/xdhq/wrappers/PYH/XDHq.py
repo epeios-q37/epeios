@@ -25,7 +25,7 @@ SOFTWARE.
 """
 
 import XDHqFaaS,XDHqSHRD,XDHqXML
-from XDHqFaaS import set_supplier, get_app_url, setBye, l, addCallback
+from XDHqFaaS import set_supplier, get_app_url, setBye, l, setCallback
 
 import os,sys
 from collections import OrderedDict
