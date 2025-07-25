@@ -26,10 +26,13 @@
 namespace modules {
   void Load(const fnm::rName & Name);
 
-  bso::sBool GetModule(
-    const str::dString &Label,
-    str::dString &Module,
-    str::dStrings &Dependencies);  // Add a dependency only if no already present.
+  bso::sBool GetModuleContent(
+    const str::dString &Name,
+    str::dString &Content);
+
+  bso::sBool GetModuleDependencies(
+    const str::dString &Name,
+    str::dStrings &Dependencies);  // Add dependencies which are not already present.
 }
 
 #endif

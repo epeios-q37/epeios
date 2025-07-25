@@ -88,3 +88,12 @@ python3 setup.py sdist bdist_wheel
 ```
 
 `python3 -m twine upload dist/*` (le *token* se trouve dans le fichier *Comptes.md*).
+
+## 2.8 TFT ESP32 VROOM
+
+### Firmware d'origine
+
+- lecture `esptool.py --chip esp32 --port /dev/ttyUSB0 read_flash 0x00000 0x400000 backup.bin`
+- écriture : `esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash 0x00000 backup.bin`
+
+

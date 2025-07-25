@@ -272,6 +272,13 @@ class HW():
     self.device.addCommand(command)
 
 
+# 'ucuq.Multi' does not handle coroutines.
+class Multi(ucuq.Multi):
+  async def counterAwait(self, winner):
+    for object in self.objects:
+      await object.counterAwait(winner)
+
+
 class Player:
   def __init__(self):
     self.role = 0
@@ -292,7 +299,7 @@ async def setHardwareAwait(dom):
 
   if UCUq:
     if hw == None:
-      hw = ucuq.Multi(HW(await ucuq.ATKConnectAwait(dom, body)))
+      hw = Multi(HW(await ucuq.ATKConnectAwait(dom, body)))
 
     return True
   else:

@@ -39,6 +39,40 @@
       ]
     }
   }, {
+  {
+    "_comment": "2.8 TFT",
+    "devices": [ "Kilo" ],
+    "brand": "q37.info",
+    "model": "Displays",
+    "variant": "TFT",
+    "hardware": {
+      "OnBoardLed": [ 16, false ],
+      "LED": [
+        {
+          "Pin": 4
+        },
+        {
+          "Pin": 16
+        },
+        {
+          "Pin": 17
+        }
+      ]
+    },
+    "features": {
+      "LED" [
+        {
+          "Color": "Red"
+        },
+        {
+          "Color": "Green"
+        },
+        {
+          "Color": "Blue"
+        }
+      ]
+    }
+  }, {
     "_comment": "ESP32-C3",
     "devices": [ "Alpha", "Golf", "India" ],
     "brand": "q37.info",
@@ -119,7 +153,8 @@
           "Pin": 15
         }
       ]
-    }
+    },
+    "features": {}
   }, {
     "_comment": "Freenove Bipedal (RPI Pico W)",
     "devices": [ "Charlie", "Echo" ],

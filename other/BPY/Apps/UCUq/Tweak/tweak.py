@@ -213,8 +213,8 @@ async def setWidth(width):
   return await getParams()
 
 
-async def updateHardware_(dom, hardware):
-  servo = ucuq.getHardware(hardware, "Servo")
+async def updateHardware_(dom, infos):
+  servo = ucuq.getHardware(infos, "Servo")
 
   if servo:
     await updateSettingsUIFollowingMode_(dom, servo[W_MODE])
@@ -225,7 +225,7 @@ async def updateHardware_(dom, hardware):
 async def atk(dom):
   infos = await ucuq.ATKConnectAwait(dom, BODY)
 
-  await updateHardware_(dom, ucuq.getKitHardware(infos))
+  await updateHardware_(dom,infos)
 
   ucuq.addCommand(MC_INIT)
   

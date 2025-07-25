@@ -33,7 +33,7 @@ namespace {
   rgstry::sRow Root_;
   rgstry::rEntry LooseModule_("Module");
   rgstry::rEntry TaggedModule_(RGSTRY_TAGGING_ATTRIBUTE("name"), LooseModule_);
-  rgstry::rEntry TaggedModuleDependencies_("Dependencies", TaggedModule_);
+  rgstry::rEntry TaggedModuleDependencies_("@Dependencies", TaggedModule_);
   mtx::rMutex Mutex_;
 
   void Load_(const fnm::rName &Name)
@@ -56,13 +56,6 @@ namespace {
 
   namespace {
     namespace {
-      bso::sBool GetModule_(
-        const str::dString &Name,
-        str::dString &Module)
-      {
-        return Modules_.GetValue(rgstry::rTEntry(TaggedModule_, Name), Root_, Module);
-      }
-
       namespace {
         void Split_(
           flw::rRFlow &Flow,
@@ -70,25 +63,25 @@ namespace {
         {
         qRH
           str::wString Item;
-        bso::sChar C = 0;
+          bso::sChar C = 0;
         qRB
           Item.Init();
 
-        while ( !Flow.EndOfFlow() ) {
-          C = Flow.Get();
+          while ( !Flow.EndOfFlow() ) {
+            C = Flow.Get();
 
-          if ( C == ',' ) {
-            if ( Item.Amount() ) {
-              Splitted.Append(Item);
-              Item.Init();
+            if ( C == ',' ) {
+              if ( Item.Amount() ) {
+                Splitted.Append(Item);
+                Item.Init();
+              }
             }
+            else
+              Item.Append(C);
           }
-          else
-            Item.Append(C);
-        }
 
-        if ( Item.Amount() )
-          Splitted.Append(Item);
+          if ( Item.Amount() )
+            Splitted.Append(Item);
         qRR
         qRE
         qRT
@@ -107,28 +100,24 @@ namespace {
       }
     }
 
-    void GetModuleDependencies_(
+    bso::sBool GetModuleDependencies_(
       const str::dString &Name,
       str::dStrings &Dependencies)
     {
+      bso::sBool Exists = false;
+    qRH;
       str::wString RawDependency;
-
+    qRB;
       RawDependency.Init();
 
-      if ( Modules_.GetValue(rgstry::rTEntry(TaggedModuleDependencies_, Name), Root_, RawDependency) ) {
+      if ( Exists = Modules_.GetValue(rgstry::rTEntry(TaggedModuleDependencies_, Name), Root_, RawDependency) ) {
         Split_(RawDependency, Dependencies);
       }
+    qRR;
+    qRT;
+    qRE;
+     return Exists;
     }
-  }
-
-  bso::sBool GetModuleAndDependencies_(
-    const str::dString &Name,
-    str::dString &Module,
-    str::wStrings &Dependencies)
-  {
-    GetModuleDependencies_(Name, Dependencies);
-
-    return GetModule_(Name, Module);
   }
 
   namespace {
@@ -136,8 +125,9 @@ namespace {
       const str::dString &Dependency,
       str::dStrings &Dependencies)
     {
-      if ( str::Search( Dependency, Dependencies) == qNIL )
+      if ( str::Search(Dependency, Dependencies) == qNIL )
         Dependencies.Append(Dependency);
+        Dependencies.Flush();
     }
   }
 
@@ -168,9 +158,15 @@ qRT;
 qRE;
 }
 
-bso::sBool modules::GetModule(
+bso::sBool modules::GetModuleContent(
   const str::dString &Name,
-  str::dString &Module,
+  str::dString &Content)
+{
+  return Modules_.GetValue(rgstry::rTEntry(TaggedModule_, Name), Root_, Content);
+}
+
+bso::sBool modules::GetModuleDependencies(
+  const str::dString &Name,
   str::dStrings &Dependencies)
 {
   bso::sBool Found = false;
@@ -179,7 +175,7 @@ qRH;
 qRB;
   RawDependencies.Init();
 
-  if ( Found = GetModuleAndDependencies_(Name, Module, RawDependencies) )
+  if ( Found = GetModuleDependencies_(Name, RawDependencies) )
     AddAbsentDependencies_(RawDependencies, Dependencies);
 qRR;
 qRT;

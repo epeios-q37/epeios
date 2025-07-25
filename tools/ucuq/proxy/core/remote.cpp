@@ -159,20 +159,37 @@ namespace {
       }
     }
         
-    void GetGlobalModule_(
+    void UploadModulesAndDependencies_(
       str::dStrings &ModuleNames,
-      str::dString &GlobalModule)
+      flw::rWFlow &Device)
     {
+    qRH;
+      str::wString Content;
+    qRB;
       ctn::qCMITEMsl(str::dString) Name;
       sdr::sRow Row = ModuleNames.First();
 
       Name.Init(ModuleNames);
 
       while ( Row != qNIL ) {
-        modules::GetModule(Name(Row), GlobalModule, ModuleNames);
-
+        modules::GetModuleDependencies(Name(Row), ModuleNames);
         Row = ModuleNames.Next(Row);
       }
+
+      Row = ModuleNames.Last();
+
+      while ( Row != qNIL ) {
+        Content.Init();
+        if ( modules::GetModuleContent(Name(Row), Content) )
+          Execute_(Content, str::Empty, Device);
+        else
+          cio::COut << "Nom module named '" << Name(Row) << "'!" << txf::nl << txf::commit;
+
+        Row = ModuleNames.Previous(Row);
+      }
+    qRR;
+    qRT;
+    qRE;
     }
   }
 
@@ -183,7 +200,6 @@ namespace {
     bso::sBool Cont = true;
   qRH;
     str::wStrings ModuleNames;     // Modules to upload.
-    str::wString Module, Returned;
   qRB;
     ModuleNames.Init();
 
@@ -191,11 +207,7 @@ namespace {
 
     EleminateDuplicates_(ModuleNames);
 
-    Module.Init();
-
-    GetGlobalModule_(ModuleNames, Module);
-
-    Execute_(Module, str::Empty, Device);
+    UploadModulesAndDependencies_(ModuleNames, Device);
   qRR;
   qRT;
   qRE;

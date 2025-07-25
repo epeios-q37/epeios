@@ -269,22 +269,22 @@ def getBits(infos, *bitLabels, device=None):
 
 
 class Multi:
-  def __init__(self, objet):
-    self.objets = [objet]
+  def __init__(self, object):
+    self.objects = [object]
 
   def add(self, objet):
-    self.objets.append(objet)
+    self.objects.append(objet)
 
   def __getattr__(self, methodName):
     def wrapper(*args, **kwargs):
-      for obj in self.objets:
+      for obj in self.objects:
         getattr(obj, methodName)(*args, **kwargs)
       return self
     return wrapper
   
   def __getitem__(self, index):
-    if index < len(self.objets):
-      return self.objets[index]
+    if index < len(self.objects):
+      return self.objects[index]
     else:
       raise IndexError("Index out of range for Multi object.")
   
@@ -318,12 +318,16 @@ def sleepWait(start, us):
     if not module in self.pendingModules_ and not module in self.handledModules_:
       self.pendingModules_.append(module)
 
+    return self
+
   def addModules(self, modules):
     if isinstance( modules, str):
       self.addModule(modules)
     else:
       for module in modules:
         self.addModule(module)
+
+    return self
 
   def addCommand(self, command, commit = None):
     self.commands_.append(command)
@@ -680,6 +684,53 @@ class GPIO(Core_):
     return self.high(False)
 
 
+class I2C_Core_(Core_):
+  def __init__(self, sda = None, scl = None, soft = None, *, device = None):
+    super().__init__(device)
+
+    if sda == None != scl == None:
+      raise Exception("None or both of sda/scl must be given!")
+    elif sda != None:
+      self.init(sda, scl, soft = soft, device = device)
+
+  async def scanAwait(self):
+    return (await commitAwait(f"{self.getObject()}.scan()"))
+
+
+class I2C(I2C_Core_):
+  def init(self, sda, scl, soft = None, *, device = None, extra = True):
+    if soft == None:
+      soft = False
+
+    super().init("I2C-1", f"machine.{'Soft' if soft else ''}I2C({'0,' if not soft else ''} sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device = device, extra = extra)
+
+
+class SoftI2C(I2C):
+  def init(self, sda, scl, *, soft = None, device = None):
+    if soft == None:
+      soft = True
+
+    super().init(sda, scl, soft = soft, device = device)
+
+
+class SPI(Core_):
+  def __init__(self, id, sck, mosi, miso, *, baudrate=None, polarity=None, phase=None, bits=None, device=None):
+    super().__init__(device)
+
+    if sck == None != mosi == None or sck == None != miso == None:
+      raise Exception("None or all of sck/ mosi/ miso must be given!")
+    elif sck != None:
+      self.init(id, sck, mosi, miso, baudrate=baudrate, polarity=polarity, phase=phase, bits=bits, device=device)
+
+  def init(self, id, sck, mosi, miso, *, baudrate=None, polarity=None, phase=None, bits=None, device=None, extra=True):
+    super().init(None, f"machine.{'Soft' if not id else ''}SPI({str(id) + ', ' if id else ''}sck=machine.Pin({sck}), mosi=machine.Pin({mosi}), miso=machine.Pin({miso}){getParam('baudrate', baudrate)}{getParam('polarity', polarity)}{getParam('phase', phase)}{getParam('bits', bits)})", device=device, extra=extra)
+
+
+class SoftSPI(SPI):
+  def __init__(self, sck, mosi, miso, *, id=None, baudrate=None, polarity=None, phase=None, bits=None, device=None):
+    super().__init__(id, sck, mosi, miso, baudrate=baudrate, polarity=polarity, phase=phase, bits=bits, device=device)
+
+
 class WS2812(Core_):
   def __init__(self, n = None, pin = None, device = None, extra = True):
     super().__init__(device)
@@ -718,35 +769,6 @@ class WS2812(Core_):
     self.getDevice().sleep(FLASH_DELAY_ if isinstance(extra, bool) else extra)
     return self.fill((0, 0, 0)).write()
   
-
-class I2C_Core_(Core_):
-  def __init__(self, sda = None, scl = None, soft = None, *, device = None):
-    super().__init__(device)
-
-    if sda == None != scl == None:
-      raise Exception("None or both of sda/scl must be given!")
-    elif sda != None:
-      self.init(sda, scl, soft = soft, device = device)
-
-  async def scanAwait(self):
-    return (await commitAwait(f"{self.getObject()}.scan()"))
-
-
-class I2C(I2C_Core_):
-  def init(self, sda, scl, soft = None, *, device = None, extra = True):
-    if soft == None:
-      soft = False
-
-    super().init("I2C-1", f"machine.{'Soft' if soft else ''}I2C({'0,' if not soft else ''} sda=machine.Pin({sda}), scl=machine.Pin({scl}))", device = device, extra = extra)
-
-
-class SoftI2C(I2C):
-  def init(self, sda, scl, *, soft = None, device = None):
-    if soft == None:
-      soft = True
-
-    super().init(sda, scl, soft = soft, device = device)
-
 
 class HT16K33(Core_):
   def __init__(self, i2c=None, addr=None, extra=True):
@@ -991,7 +1013,6 @@ class Servo(Core_):
       self.min = u16_min
       self.max = u16_max
 
-
   def test_(self, specs, tweak, domain):
     if tweak:
       if not specs:
@@ -1001,7 +1022,6 @@ class Servo(Core_):
       if not specs:
         raise Exception("'domain' can not be given without 'specs'!")
 
-
   def __init__(self, pwm=None, specs=None, /, *, tweak=None, domain=None):
     super().__init__()
 
@@ -1009,7 +1029,6 @@ class Servo(Core_):
 
     if pwm:
       self.init(pwm, specs, tweak = tweak, domain = domain)
-
 
   def init(self, pwm, specs, tweak = None, domain = None, extra = True):
     super().init("Servo-1", "", pwm.getDevice(), extra)
@@ -1030,7 +1049,6 @@ class Servo(Core_):
 
     self.reset()
 
-
   def angleToDuty(self, angle):
     if self.tweak.invert:
       angle = -angle
@@ -1043,7 +1061,6 @@ class Servo(Core_):
       u16 = self.domain.min
 
     return int(u16)
-  
 
   def dutyToAngle(self, duty):
     angle = self.specs.range * ( duty - self.tweak.offset - self.specs.min ) / ( self.specs.mas - self.specs.min )
@@ -1053,10 +1070,8 @@ class Servo(Core_):
 
     return angle - self.tweak.angle
 
-
   def reset(self):
     self.setAngle(0)
-
 
   async def getAngleAwait(self):
     return self.dutyToAngle(await self.pwm.getU16Await())
@@ -1156,6 +1171,63 @@ class OLED_I2C():
     else:
       raise Exception(f"Unknown OLED driver {driver}!")
 
+c_ = lambda color: f"color565({color})"
+f_ = lambda function, fill: f"{'fill_' if fill else 'draw_'}{function}"
+
+class ILI9341(Core_):
+  def __init__(self, width, height, /, rotation = 0, spi=None, dc=None, cs=None, rst=None, extra=True):
+    super().__init__()
+
+    if bool(width) != bool(height) != bool(spi) != bool(dc) != bool(cs) != bool(rst):
+      raise Exception("All or none of width/height/spi/dc/cs/rst must be given!")
+    elif width:
+      self.init(width, height, rotation=rotation, spi=spi, dc=dc, cs=cs, rst=rst, extra=extra)
+
+  def init(self, width, height, /, rotation = 0, spi=None, dc=None, cs=None, rst=None, extra=True):
+    super().init(None, f"ILI9341X({spi.getObject()}, machine.Pin({cs}), machine.Pin({dc}), machine.Pin({rst}), {width}, {height}, {rotation})", spi.getDevice(), extra)
+
+  def on(self, value=True):
+    return self.addMethods(f"display_{'on' if value else 'off'}()")
+  
+  def off(self):
+    return self.on(False)
+
+  def clear(self, color=0):
+    return self.addMethods(f"clear(color565({color}))")
+
+  def cleanup(self):
+    return self.addMethods("cleanup()")
+  
+  def pixel(self, x, y, color):
+    return self.addMethods(f"draw_pixel({x}, {y}, {c_(color)})")
+  
+  def hline(self, x, y, w, color):
+    return self.addMethods(f"draw_hline({x}, {y}, {w}, {c_(color)})")
+
+  def vline(self, x, y, h, color):
+    return self.addMethods(f"draw_vline({x}, {y}, {h}, {c_(color)})")
+  
+  def line(self, x0, y0, x1, y1, color):
+    return self.addMethods(f"draw_line({x0}, {y0}, {x1}, {y1}, {c_(color)})")
+
+  def lines(self, coords, color):
+    return self.addMethods(f"draw_lines([tuple(map(int, pair.split(','))) for pair in '{';'.join(f"{x},{y}" for x,y in coords)}'.split(';')], {c_(color)})")
+
+  def rect(self, x, y, w, h, color, fill=True):
+    return self.addMethods(f"{f_('rectangle', fill)}({x}, {y}, {w}, {h}, {c_(color)})")
+  
+  def poly(self, sides, x0, y0, r, color, rotate=0, fill=True):
+    return self.addMethods(f"{f_('polygon', fill)}({sides}, {x0}, {y0}, {r}, {c_(color)}, {rotate})")
+
+  def circle(self, x, y, r, color, fill=True):
+    return self.addMethods(f"{f_('circle', fill)}({x}, {y}, {r}, {c_(color)})")
+  
+  def ellipse(self, x, y, rx, ry, color, fill=True):
+    return self.addMethods(f"{f_('ellipse', fill)}({x}, {y}, {rx}, {ry}, {c_(color)})")
+  
+  def text(self, x, y, text, color=255, bgcolor = 0, rotate=0):
+    return self.addMethods(f"draw_text8x8({x}, {y}, '{text}', {c_(color)}, {c_(bgcolor)}, {rotate})")    
+
 
 def pwmJumps(jumps, step = 100, delay = 0.05):
   command = "pwmJumps([\n"
@@ -1196,6 +1268,7 @@ def servoMoves(moves, step = 100, delay = 0.05):
     for command in commands[key]:
       execute_(command, devices[key])
 
+
 def rbShade(variant, i, max):
   match int(variant) % 6:
     case 0:
@@ -1211,6 +1284,7 @@ def rbShade(variant, i, max):
     case 5:
       return [max, 0, max - i]
       
+
 def rbFade(variant, i, max, inOut):
   if not inOut:
     i = max - i
@@ -1236,7 +1310,8 @@ def rbShadeFade(variant, i, max):
     return rbFade((variant + 5 ) % 6, i % max, max, False)
   else:
     return rbShade(variant + int( (i - max) / max ), i % max, max)
-    
+
+
 def setCommitBehavior(behavior):
   global defaultCommitBehavior_
 
