@@ -1,4 +1,4 @@
-import zlib, base64, time, atlastk
+import zlib, base64, time, atlastk, binascii
 
 ITEMS_ = "i_"
 
@@ -232,6 +232,7 @@ B_BUZZER = "Buzzer"
 B_LOUDSPEAKER = "Loudspeaker"
 B_SMART_RGB = "SmartRGB"
 B_MATRIX = "Matrix"
+B_TFT = "TFT"
 
 class Auto:
   def __new__(cls, bit, infos, item, hardwareKeys, featuresKeys, **kwargs):
@@ -262,6 +263,8 @@ def getBits(infos, *bitLabels, device=None):
         bits.append(Auto(WS2812, infos, label, ["Pin"], ["Count"], device=device))
       case "Matrix":
         bits.append(Auto(HT16K33, infos, label, None, None, i2c=Auto(I2C, infos, "Matrix", ["SDA", "SCL", "Soft"], None, device=device)))
+      case "TFT":
+        bits.append(Auto(ILI9341, infos, label, ["DC", "CS", "RST"], ["Width", "Height", "Rotation"], spi=Auto(SPI, infos, label, ["Id", "SCK", "MOSI", "MISO", "Baudrate"], None, device=device))) 
       case _:
         raise Exception(f"Unknown bit label: {label}")
       
@@ -714,7 +717,7 @@ class SoftI2C(I2C):
 
 
 class SPI(Core_):
-  def __init__(self, id, sck, mosi, miso, *, baudrate=None, polarity=None, phase=None, bits=None, device=None):
+  def __init__(self, id, sck, mosi, miso, baudrate=None, *, polarity=None, phase=None, bits=None, device=None):
     super().__init__(device)
 
     if sck == None != mosi == None or sck == None != miso == None:
@@ -1174,8 +1177,32 @@ class OLED_I2C():
 c_ = lambda color: f"color565({color})"
 f_ = lambda function, fill: f"{'fill_' if fill else 'draw_'}{function}"
 
+def zoom_rgb565_(raw_data, width, height, hzoom, vzoom):
+  zoomed_width = width * hzoom
+  zoomed_height = height * vzoom
+
+  zoomed_data = bytearray(zoomed_width * zoomed_height * 2)
+
+  for y in range(height):
+    for x in range(width):
+      idx_src = (y * width + x) * 2
+      pixel = raw_data[idx_src:idx_src+2]  # 2 octets RGB565
+      
+      x_start = x * hzoom
+      y_start = y * vzoom
+      
+      for dy in range(vzoom):
+        for dx in range(hzoom):
+          x_dst = x_start + dx
+          y_dst = y_start + dy
+          idx_dst = (y_dst * zoomed_width + x_dst) * 2
+          zoomed_data[idx_dst:idx_dst+2] = pixel
+
+  return bytes(zoomed_data)
+
+
 class ILI9341(Core_):
-  def __init__(self, width, height, /, rotation = 0, spi=None, dc=None, cs=None, rst=None, extra=True):
+  def __init__(self, width, height, /, rotation = 0, dc=None, cs=None, rst=None, spi=None, extra=True):
     super().__init__()
 
     if bool(width) != bool(height) != bool(spi) != bool(dc) != bool(cs) != bool(rst):
@@ -1184,7 +1211,7 @@ class ILI9341(Core_):
       self.init(width, height, rotation=rotation, spi=spi, dc=dc, cs=cs, rst=rst, extra=extra)
 
   def init(self, width, height, /, rotation = 0, spi=None, dc=None, cs=None, rst=None, extra=True):
-    super().init(None, f"ILI9341X({spi.getObject()}, machine.Pin({cs}), machine.Pin({dc}), machine.Pin({rst}), {width}, {height}, {rotation})", spi.getDevice(), extra)
+    super().init("ILI9341-1", f"ILI9341({spi.getObject()}, machine.Pin({cs}), machine.Pin({dc}), machine.Pin({rst}), {width}, {height}, {rotation})", spi.getDevice(), extra)
 
   def on(self, value=True):
     return self.addMethods(f"display_{'on' if value else 'off'}()")
@@ -1197,6 +1224,9 @@ class ILI9341(Core_):
 
   def cleanup(self):
     return self.addMethods("cleanup()")
+  
+  def invert(self, value=True):
+    return self.addMethods(f"invert({value})")
   
   def pixel(self, x, y, color):
     return self.addMethods(f"draw_pixel({x}, {y}, {c_(color)})")
@@ -1228,6 +1258,19 @@ class ILI9341(Core_):
   def text(self, x, y, text, color=255, bgcolor = 0, rotate=0):
     return self.addMethods(f"draw_text8x8({x}, {y}, '{text}', {c_(color)}, {c_(bgcolor)}, {rotate})")    
 
+  def draw(self, flow, width, height, speed=1, hzoom=1, vzoom=0):
+    if vzoom == 0:
+      vzoom = hzoom
+
+    for i in range(height // speed):
+      data = flow.read(width * 2 * speed)
+      self.addMethods(f"draw('{base64.b64encode(zoom_rgb565_(data, width, speed, hzoom, vzoom)).decode('ascii')}',0, {i*speed*vzoom}, {width*hzoom}, {speed*vzoom})")
+
+    if remainder := height % speed:
+      data = flow.read(width * 2 * remainder)
+      self.addMethods(f"draw('{base64.b64encode(zoom_rgb565_(data, width, speed, hzoom, vzoom)).decode('ascii')}',0, {(height // speed) * speed*vzoom}, {width*hzoom}, {remainder*vzoom})")
+
+    return self
 
 def pwmJumps(jumps, step = 100, delay = 0.05):
   command = "pwmJumps([\n"
