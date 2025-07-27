@@ -133,6 +133,32 @@ function getFirstBrowserLanguage() {
 	return 'en'
 }
 
+function sendInChunks(ws, data, chunkSize = 64 * 1024) {
+  let buffer;
+  if (typeof data === 'string') {
+    buffer = new TextEncoder().encode(data);
+  } else if (data instanceof Uint8Array) {
+    buffer = data;
+  } else {
+    throw new Error("Le data doit être une string ou un Uint8Array");
+  }
+
+  let offset = 0;
+
+  function sendChunk() {
+    if (offset < buffer.length) {
+      const size = Math.min(chunkSize, buffer.length - offset);
+      const chunk = buffer.subarray(offset, offset + size);
+      ws.send(chunk);
+      offset += size;
+
+      setTimeout(sendChunk, 10);
+    }
+  }
+
+  sendChunk();
+}
+
 function connect(token, id) {
 	let location = window.location;
 	let pathname = location.pathname;
@@ -155,7 +181,8 @@ function connect(token, id) {
 				let result = geval(event.data);
 
 				if ((typeof result !== "undefined") && (typeof result !== "object"))	// 'typeof result !== "object"' == 'result != null' !!!!
-					socket.send(result);
+					sendInChunks(socket, result);	// Send result back to the server in chunks.
+					// socket.send(result);
 			}
 		} else if (queryQueue.length) {
 			log("Unqueued:", queryQueue[0]);

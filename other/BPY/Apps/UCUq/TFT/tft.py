@@ -1,10 +1,4 @@
-import os, sys, json, ucuq
-
-from PIL import Image
-import base64
-import io
-
-import atlastk
+import ucuq, base64, io, atlastk, json
 
 class HW:
   def __init__(self, infos, device=None):
@@ -23,31 +17,9 @@ class HW:
   def sleep(self, delay = 0.75):
     self.device.sleep(delay)
 
-  def draw(self, dataurl):
+  def draw(self, picture, width, height):
     self.tft.clear()
-    header, base64_data = dataurl.split(',', 1)
-    
-    image_data = base64.b64decode(base64_data)
-    
-    image = Image.open(io.BytesIO(image_data))
-    
-    width, height = image.size
-    
-    rgb_image = image.convert('RGB')
-    
-    rgb565_bytes = bytearray()
-    
-    for y in range(height):
-      for x in range(width):
-        r, g, b = rgb_image.getpixel((x, y))
-        r5 = (r >> 3) & 0x1F
-        g6 = (g >> 2) & 0x3F
-        b5 = (b >> 3) & 0x1F
-        rgb565 = (r5 << 11) | (g6 << 5) | b5
-        rgb565_bytes.append((rgb565 >> 8) & 0xFF)
-        rgb565_bytes.append(rgb565 & 0xFF)
-    
-    self.tft.draw(io.BytesIO(bytes(rgb565_bytes)), width, height)
+    self.tft.draw(picture, width, height)
 
 
 hw = None
@@ -62,44 +34,62 @@ async def atk(dom):
 
 
 async def atkSmile(dom, id):
+  await dom.disableElement(id)
   await dom.executeVoid("Go();allowCamera();")
-  await dom.disableElements((id, "HidePhoto"))
+
+
+async def atkCamera(dom, id):
+  cameras = json.loads(base64.b64decode(id).decode('utf-8'))
+
+  html = ""
+
+  for camera in cameras:
+    html += f'<option value="{camera["deviceId"]}">{camera["label"]}</option>'
+
+  await dom.inner("cameras", html)
+  await dom.executeVoid("document.getElementById('camera').showModal();")
+
+
+async def atkCameraOk(dom):
+  deviceId = await dom.getValue("cameras")
+  if deviceId:
+    await dom.executeVoid(f"launchCamera('{deviceId}');")
+    await dom.disableElement("HidePhoto")
+  else:
+    await dom.enableElement("Smile")
+
+  await dom.executeVoid("document.getElementById('camera').close();document.getElementById('camera').remove();")
+
+
+async def atkCameraCancel(dom):
+  await dom.executeVoid("document.getElementById('camera').close()")
+  await dom.enableElement("Smile")
 
 
 async def atkShoot(dom):
+  # 'dom.executeStrings(…)' does not work with Google Chrome.
+  # width, height, picture = await dom.executeStrings("takePicture();")
+
+  # result = await dom.executeString("takePicture();")
+
   await dom.executeVoid("takePicture();")
-  photo = await dom.getAttribute("photo", "src")
-  hw.draw(photo)
+
+  result = ""
+
+  while True:
+    partial = await dom.executeString("getNextChunk(10000);")
+
+    if not partial:
+      break
+    
+    result += partial
+
+  width, height, picture = result.split(',')
+  hw.draw(io.BytesIO(base64.b64decode(picture)), int(width), int(height))
 
 
 async def atkTest(dom):
   test()
-
-
-def dataurl_to_rgb565(dataurl):
-  header, base64_data = dataurl.split(',', 1)
-  
-  image_data = base64.b64decode(base64_data)
-  
-  image = Image.open(io.BytesIO(image_data))
-  
-  width, height = image.size
-  
-  rgb_image = image.convert('RGB')
-  
-  rgb565_bytes = bytearray()
-  
-  for y in range(height):
-    for x in range(width):
-      r, g, b = rgb_image.getpixel((x, y))
-      r5 = (r >> 3) & 0x1F
-      g6 = (g >> 2) & 0x3F
-      b5 = (b >> 3) & 0x1F
-      rgb565 = (r5 << 11) | (g6 << 5) | b5
-      rgb565_bytes.append((rgb565 >> 8) & 0xFF)
-      rgb565_bytes.append(rgb565 & 0xFF)
-  
-  hw.draw(io.BytesIO(bytes(rgb565_bytes)), width, height)
 
 def test():
   hw.clear((0,0,255))
@@ -128,7 +118,7 @@ def test():
 
   hw.clear()
 
-  hw.poly(7, 120, 286, 30, (0, 64, 255), rotate=15, fill=False)
+  hw.poly(5, 120, 286, 30, (0, 64, 255), rotate=15, fill=False)
   hw.sleep()
 
   hw.poly(9, 180, 186, 40, (255, 64, 0), rotate=15)

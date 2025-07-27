@@ -1,144 +1,202 @@
 <style>
-button {
-  display: block;
-  margin-block: 1rem;
-}
+  button {
+    display: block;
+    margin-block: 1rem;
+  }
 
-.camera > button {
-  position: relative;
-  margin: auto;
-  bottom: 32px;
-  background-color: rgb(0 150 0 / 50%);
-  border: 1px solid rgb(255 255 255 / 70%);
-  box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 20%);
-  font-size: 14px;
-  color: rgb(255 255 255 / 100%);
-}
+  .camera>button {
+    position: relative;
+    margin: auto;
+    bottom: 32px;
+    background-color: rgb(0 150 0 / 50%);
+    border: 1px solid rgb(255 255 255 / 70%);
+    box-shadow: 0px 0px 1px 2px rgb(0 0 0 / 20%);
+    font-size: 14px;
+    color: rgb(255 255 255 / 100%);
+  }
 
-#video,
-#photo {
-  border: 1px solid black;
-  box-shadow: 2px 2px 3px black;
-  width: 100%;
-  height: auto;
-}
+  #video,
+  #photo {
+    border: 1px solid black;
+    box-shadow: 2px 2px 3px black;
+    width: 100%;
+    height: auto;
+  }
 
-#canvas {
-  display: none;
-}
+  #canvas {
+    display: none;
+  }
 
-.camera,
-.output {
-  display: inline-block;
-  width: 49%;
-  height: auto;
-}
+  .camera,
+  .output {
+    display: inline-block;
+    width: 49%;
+    height: auto;
+  }
 
-.output {
-  vertical-align: top;
-}
+  .output {
+    vertical-align: top;
+  }
 
-code {
-  background-color: lightgrey;
-}
+  code {
+    background-color: lightgrey;
+  }
 </style>
 <script>
 
-const width = 320;
-let height = 0;
+  const width = 320;
+  let height = 0;
 
-let streaming = false;
+  let streaming = false;
 
-var video;
-var canvas;
-var photo;
-var startButton;
-var allowButton;
+  var video;
+  var canvas;
+  var photo;
+  var startButton;
+  var allowButton;
 
-function Go() {
-  video = document.getElementById("video");
-  canvas = document.getElementById("canvas");
-  photo = document.getElementById("photo");
-  video.addEventListener(
-    "canplay",
-    (ev) => {
-      if (!streaming) {
-        height = video.videoHeight / (video.videoWidth / width);
+  function Go() {
+    video = document.getElementById("video");
+    canvas = document.getElementById("canvas");
+    photo = document.getElementById("photo");
+    video.addEventListener(
+      "canplay",
+      (ev) => {
+        if (!streaming) {
+          height = video.videoHeight / (video.videoWidth / width);
 
-        video.setAttribute("width", width);
-        video.setAttribute("height", height);
-        canvas.setAttribute("width", width);
-        canvas.setAttribute("height", height);
-        streaming = true;
-      }
-    },
-    false,
-  );
-}
+          video.setAttribute("width", width);
+          video.setAttribute("height", height);
+          canvas.setAttribute("width", width);
+          canvas.setAttribute("height", height);
+          streaming = true;
+        }
+      },
+      false,
+    );
+  }
 
-function allowCamera() {
-  navigator.mediaDevices
+  function allowCamera() {
+    navigator.mediaDevices
       .getUserMedia({ video: true, audio: false })
       .then((stream) => {
-        video.srcObject = stream;
-        video.play();
+        navigator.mediaDevices.enumerateDevices()
+          .then(function (devices) {
+            const cameras = devices.filter(device => device.kind === 'videoinput');
+            launchEvent(`${btoa(unescape(encodeURIComponent(JSON.stringify(cameras))))}|BUTTON|click||(Camera)`);
+          })
+          .catch(function (err) {
+            console.error(err.name + ": " + err.message);
+          });
       })
       .catch((err) => {
         console.error(`An error occurred: ${err}`);
       });
-  
-}
-
-function clearPhoto() {
-  const context = canvas.getContext("2d");
-  context.fillStyle = "#AAA";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  const data = canvas.toDataURL("image/png");
-  photo.setAttribute("src", data);
-}
-
-clearPhoto();
-
-function resizeCanvasImageToJPEG(canvas, maxWidth = 240, maxHeight = 320, quality = 0.92) {
-  const ctx = canvas.getContext('2d');
-  const originalWidth = canvas.width;
-  const originalHeight = canvas.height;
-
-  const scaleWidth = maxWidth / originalWidth;
-  const scaleHeight = maxHeight / originalHeight;
-  const scale = Math.min(scaleWidth, scaleHeight, 1);
-
-  const newWidth = Math.floor(originalWidth * scale);
-  const newHeight = Math.floor(originalHeight * scale);
-
-  const resizedCanvas = document.createElement('canvas');
-  resizedCanvas.width = newWidth;
-  resizedCanvas.height = newHeight;
-  const resizedCtx = resizedCanvas.getContext('2d');
-
-  resizedCtx.drawImage(canvas, 0, 0, originalWidth, originalHeight, 0, 0, newWidth, newHeight);
-
-  const jpegDataURL = resizedCanvas.toDataURL('image/jpeg', quality);
-
-  return jpegDataURL;
-}
-
-function takePicture() {
-  const context = canvas.getContext("2d");
-  if (width && height) {
-    canvas.width = width;
-    canvas.height = height;
-    context.drawImage(video, 0, 0, width, height);
-
-/*    const data = canvas.toDataURL("image/png"); */
-    const data = resizeCanvasImageToJPEG(canvas, 240, 320, 0.92);
-
-    photo.setAttribute("src", data);
-  } else {
-    clearPhoto();
   }
-}
+
+  function launchCamera(id) {
+    navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: id } }
+    }).then(function (stream) {
+      video.srcObject = stream;
+      video.play();
+    }).catch(function (err) {
+      console.error("Erreur d'accès caméra :", err);
+    });
+  }
+
+
+  function clearPhoto() {
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#AAA";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    const data = canvas.toDataURL("image/png");
+    photo.setAttribute("src", data);
+  }
+
+  clearPhoto();
+
+  var picture = "";
+  var globalConsumeIndex = 0;
+
+  function resizeCanvasAndConvertToRGB565Base64(originalCanvas, maxWidth = 240, maxHeight = 320) {
+    const originalWidth = originalCanvas.width;
+    const originalHeight = originalCanvas.height;
+    const scale = Math.min(maxWidth / originalWidth, maxHeight / originalHeight, 1);
+    const newWidth = Math.floor(originalWidth * scale);
+    const newHeight = Math.floor(originalHeight * scale);
+
+    const resizedCanvas = document.createElement('canvas');
+    resizedCanvas.width = newWidth;
+    resizedCanvas.height = newHeight;
+    const ctx = resizedCanvas.getContext('2d');
+
+    ctx.drawImage(originalCanvas, 0, 0, originalWidth, originalHeight, 0, 0, newWidth, newHeight);
+
+    const imageData = ctx.getImageData(0, 0, newWidth, newHeight);
+    const pixels = imageData.data;
+
+    const rgb565Buffer = new Uint8Array(newWidth * newHeight * 2);
+
+    let offset = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+
+      const rgb565 = (r & 0xF8) << 8 | (g & 0xFC) << 3 | b >> 3;
+
+      rgb565Buffer[offset++] = (rgb565 >> 8) & 0xFF;
+      rgb565Buffer[offset++] = rgb565 & 0xFF;
+    }
+
+    function uint8ToBase64(u8Arr) {
+      let binary = '';
+      for (let i = 0; i < u8Arr.length; i++) {
+        binary += String.fromCharCode(u8Arr[i]);
+      }
+      return btoa(binary);
+    }
+
+    const base64String = uint8ToBase64(rgb565Buffer);
+
+    picture = `${newWidth},${newHeight},${base64String}`;
+    globalConsumeIndex = 0;
+  }
+
+  function getNextChunk(chunkSize) {
+    if (!picture || chunkSize <= 0) {
+      return "";
+    }
+
+    if (globalConsumeIndex >= picture.length) {
+      return "";
+    }
+
+    const chunk = picture.substring(globalConsumeIndex, globalConsumeIndex + chunkSize);
+
+    globalConsumeIndex += chunk.length;
+
+    return chunk;
+  }
+
+  function takePicture() {
+    const context = canvas.getContext("2d");
+    if (width && height) {
+      canvas.width = width;
+      canvas.height = height;
+      context.drawImage(video, 0, 0, width, height);
+
+      const data = canvas.toDataURL("image/png");
+
+      photo.setAttribute("src", data);
+
+      resizeCanvasAndConvertToRGB565Base64(canvas);
+    } else {
+      clearPhoto();
+    }
+  }
 </script>
 <style id="HidePhoto">
   .photo {

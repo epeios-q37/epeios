@@ -1,8 +1,8 @@
 <fieldset>
   <legend xdh:onevent="UCUqXDevice">TFT</legend>
   <span style="display: flex; justify-content: center; gap: 1rem;">
-    <button xdh:onevent="Smile">Smile!!!</button>
     <button xdh:onevent="Test">Test</button>
+    <button id="Smile" xdh:onevent="Smile">Smile!!!</button>
   </span>
   <span class="photo">
     <div class="camera">
@@ -14,4 +14,13 @@
       <img id="photo" alt="The screen capture will appear in this box." />
     </div>
   </span>
+  <output id="Picture" style="display: none;"></output>
 </fieldset>
+<dialog id="camera">
+  <select id="cameras">
+  </select>
+  <span style="display: flex; justify-content: center; gap: 1rem;">
+    <button xdh:onevent="CameraOk">OK</button>
+    <button xdh:onevent="CameraCancel">Cancel</button>
+  </span>
+</dialog>
