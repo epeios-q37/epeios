@@ -1142,7 +1142,7 @@ class SSD1306_I2C(SSD1306):
       raise Exception("addr can not be given without i2c!")
       
   def init(self, width, height, /, i2c, external_vcc=False, addr=None, extra=True):
-    super().init(("SSD1306-1", "SSD1306_I2C-1"), f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice(), extra).flash(extra if not isinstance(extra, bool) else 0.15)
+    super().init("SSD1306_I2C-1", f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})", i2c.getDevice(), extra).flash(extra if not isinstance(extra, bool) else 0.15)
 
 
 class SH1106(OLED_):
@@ -1160,7 +1160,7 @@ class SH1106_I2C(SH1106):
       raise Exception("addr can not be given without i2c!")
       
   def init(self, width, height, /, i2c, external_vcc=False, addr=None, extra=True):
-    super().init(("SH1106-1", "SH1106_I2C-1"), f"SH1106_I2C({width}, {height}, {i2c.getObject()}, addr={addr}, external_vcc={external_vcc})", i2c.getDevice(), extra).flash(extra if not isinstance(extra, bool) else 0.15)
+    super().init("SH1106_I2C-1", f"SH1106_I2C({width}, {height}, {i2c.getObject()}, addr={addr}, external_vcc={external_vcc})", i2c.getDevice(), extra).flash(extra if not isinstance(extra, bool) else 0.15)
 
 OD_SH1106_ = "SH1106"
 OD_SSD1306_ = "SSD1306"
@@ -1258,16 +1258,16 @@ class ILI9341(Core_):
   def text(self, x, y, text, color=255, bgcolor = 0, rotate=0):
     return self.addMethods(f"draw_text8x8({x}, {y}, '{text}', {c_(color)}, {c_(bgcolor)}, {rotate})")    
 
-  def draw(self, flow, width, height, speed=1, hzoom=1, vzoom=0):
+  def draw(self, stream, width, height, speed=1, hzoom=1, vzoom=0):
     if vzoom == 0:
       vzoom = hzoom
 
     for i in range(height // speed):
-      data = flow.read(width * 2 * speed)
+      data = stream.read(width * 2 * speed)
       self.addMethods(f"draw('{base64.b64encode(zoom_rgb565_(data, width, speed, hzoom, vzoom)).decode('ascii')}',0, {i*speed*vzoom}, {width*hzoom}, {speed*vzoom})")
 
     if remainder := height % speed:
-      data = flow.read(width * 2 * remainder)
+      data = stream.read(width * 2 * remainder)
       self.addMethods(f"draw('{base64.b64encode(zoom_rgb565_(data, width, speed, hzoom, vzoom)).decode('ascii')}',0, {(height // speed) * speed*vzoom}, {width*hzoom}, {remainder*vzoom})")
 
     return self

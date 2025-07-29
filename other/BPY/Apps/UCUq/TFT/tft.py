@@ -19,7 +19,9 @@ class HW:
 
   def draw(self, picture, width, height):
     self.tft.clear()
-    self.tft.draw(picture, width, height)
+    
+    with io.BytesIO(base64.b64decode(picture)) as stream:
+      self.tft.draw(stream, width, height)
 
 
 hw = None
@@ -77,15 +79,15 @@ async def atkShoot(dom):
   result = ""
 
   while True:
-    partial = await dom.executeString("getNextChunk(10000);")
+    partial = await dom.executeString("getNextChunk(30000);")
 
     if not partial:
       break
-    
+
     result += partial
 
   width, height, picture = result.split(',')
-  hw.draw(io.BytesIO(base64.b64decode(picture)), int(width), int(height))
+  hw.draw(picture, int(width), int(height))
 
 
 async def atkTest(dom):
