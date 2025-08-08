@@ -34,10 +34,12 @@ async def atk(dom):
   else:
     await dom.inner("", BODY)
 
+  await dom.executeVoid("Go();")
+
 
 async def atkSmile(dom, id):
   await dom.disableElement(id)
-  await dom.executeVoid("Go();allowCamera();")
+  await dom.executeVoid("allowCamera();")
 
 
 async def atkCamera(dom, id):
@@ -76,10 +78,12 @@ async def atkShoot(dom):
 
   await dom.executeVoid("takePicture();")
 
+
+async def atkDisplay(dom):
   result = ""
 
   while True:
-    partial = await dom.executeString("getNextChunk(30000);")
+    partial = await dom.executeString("getNextChunk(25000);")
 
     if not partial:
       break

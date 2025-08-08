@@ -556,6 +556,13 @@ async def ATKConnectAwait(dom, body, *, device = None):
 
   return infos
 
+_BT_SCRIPTS = """
+
+"""
+
+async def atkBTConnect(dom):
+  await dom.executeVoid(_BT_SCRIPTS.format(s="async",w="await") + f'run("{getConfigToken_()}")')
+
 
 def getDevice(device = None, *, id = None, token = None):
   if device and ( token or id ):

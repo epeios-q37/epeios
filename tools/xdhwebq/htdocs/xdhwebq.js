@@ -43,13 +43,13 @@ const exit = {
 		NONE: `
 		<span>Unknown exit value (<a href="http://q37.info/s/7mdgqk4z" target="_blank">exit message #0</a>)!!!</span>
 		`,	// This one is ued for unknown exit value.
-			TOKEN: `
+		TOKEN: `
 		<span>No (more) application corresponding to given token (<a href="http://q37.info/s/7mdgqk4z" target="_blank">exit message #1</a>)!</span>
 			`,
-			BACKEND: `
+		BACKEND: `
 		<span>Application halted! The backend has been shut down (<a href="http://q37.info/s/7mdgqk4z" target="_blank">exit message #2</a>)!</span>	
 		`,
-			SOCKET: `
+		SOCKET: `
 		<span>You are disconnected from the backend (<a href="http://q37.info/s/7mdgqk4z" target="_blank">exit message #3</a>)!</span>
 		<p></p>
 		<button onclick="window.parent.document.location.reload()">Reload</button>

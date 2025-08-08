@@ -1,13 +1,17 @@
 # MicroController Remote Server (runs on the µcontroller)
 
-import asyncio, sys, uos, time, network, json, binascii, io
+import sys, uos, time, network, json, binascii, io
+import ubluetooth
+import uasyncio as asyncio
 from machine import Pin
 
 _WLAN = "" # Connects to one of the WLAN defined in 'ucuq.json'.
 # _WLAN = "<name>" # Connects to the WLAN <name> as defined in 'ucuq.json'.
 # _WLAN = ("<ssid>","<key>") # Connects to WLAN <ssid> using <key>.
 
-with open("ucuq.json", "r") as config:
+SETTINGS_FILE = "ucuq.json"
+
+with open(SETTINGS_FILE, "r") as config:
   CONFIG = json.load(config)
 
 _K_IDENTIFICATION = "Identification"
@@ -437,7 +441,7 @@ def main():
   ignition()
 
   try:
-    asyncio.run(serve())
+    asyncio.run(loop())
   except Exception as exception:
     try:
       writeUInt(_A_DISCONNECTED_)
@@ -447,5 +451,120 @@ def main():
     getCallback()(_S_DECONNECTION, 0)
     raise exception
 
+
+class BLEServerAsync:
+  def __init__(self, name="MPyServerAsync", rx_callback=None):
+    self._ble = ubluetooth.BLE()
+    self._ble.active(True)
+    self._ble.irq(self._irq)
+    self._connections = set()
+    self._name = name
+    self._rx_callback = rx_callback
+
+    # UUIDs et propriétés
+    self._SERVICE_UUID = ubluetooth.UUID(_CONFIG_IDENTIFICATION[0])
+    self._CHAR_UUID = ubluetooth.UUID("c32c1fb9-e280-43c2-91a0-2968a2e07db5")
+    self._CHAR_FLAGS = ubluetooth.FLAG_WRITE | ubluetooth.FLAG_INDICATE | ubluetooth.FLAG_READ
+
+    ((self._char_handle,),) = self._ble.gatts_register_services((
+      (self._SERVICE_UUID, ((self._CHAR_UUID, self._CHAR_FLAGS),)),
+    ))
+
+    self._rx_buffer = bytearray()
+    print(self._rx_buffer)
+    self._tx_chunks = []
+    self._tx_index = 0
+    self._indicate_event = asyncio.Event()
+
+    self._advertise()
+
+  def _irq(self, event, data):
+    if event == 1:  # Connexion
+      conn_handle, _, _ = data
+      self._connections.add(conn_handle)
+      print("Client connecté:", conn_handle)
+    elif event == 2:  # Déconnexion
+      conn_handle, _, _ = data
+      self._connections.discard(conn_handle)
+      print("Client déconnecté:", conn_handle)
+      self._advertise()
+    elif event == 3:  # Write reçue
+      conn_handle, attr_handle = data
+      if attr_handle == self._char_handle:
+        raw = self._ble.gatts_read(self._char_handle)
+        self._rx_buffer.extend(raw)
+        print(self._rx_buffer)
+    elif event == 20:  # Indication confirmée
+      status = data[1]
+      if status == 0:
+        # Notifier la coroutine qui attend cette confirmation (de thread-safe)
+        asyncio.get_event_loop().call_soon_threadsafe(self._indicate_event.set)
+      else:
+        print("Erreur indication, status:", status)
+
+  def _advertise(self, interval_us=100_000):
+    name_bytes = bytes(self._name, 'utf-8')
+    adv_payload = bytearray([len(name_bytes) + 1, 0x09]) + name_bytes
+    self._ble.gap_advertise(interval_us, adv_data=adv_payload)
+    print("Publicité BLE démarrée :", self._name)
+
+  @staticmethod
+  def contains_zero(buffer):
+    for b in buffer:
+      if b == 0:
+        return True
+    return False
+
+
+  async def process_received(self):
+    # Coroutine qui traite les données reçues, quand '\0' détecté
+    while True:
+      if self.contains_zero(self._rx_buffer):
+        nul_index = self._rx_buffer.index(bytes(str('\0'), "utf-8)"))  # ici travail sur bytearray
+        raw_msg = bytes(self._rx_buffer[:nul_index])
+        text = raw_msg.decode('utf-8')
+        self._rx_buffer = self._rx_buffer[nul_index+1:]
+        print("Message reçu:", text)
+        response = ""
+        if self._rx_callback:
+          response = self._rx_callback(text)
+        await self.send_response(response)
+      else:
+        await asyncio.sleep_ms(50)
+
+  async def send_response(self, response, chunk_size=20):
+    # Préparation des chunks avec '\0' fin de message
+    data = (response + '\0').encode('utf-8')
+    self._tx_chunks = [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
+    self._tx_index = 0
+
+    while self._tx_index < len(self._tx_chunks):
+      chunk = self._tx_chunks[self._tx_index]
+      for conn in self._connections:
+        # Réinitialiser l’Event avant envoi
+        self._indicate_event.clear()
+        self._ble.gatts_indicate(conn, self._char_handle, chunk)
+        # Attendre confirmation indication ou timeout
+        try:
+          await asyncio.wait_for(self._indicate_event.wait(), timeout=5.0)
+        except asyncio.TimeoutError:
+          print("Timeout indication")
+          return
+      self._tx_index += 1
+    print("Envoi réponse complet.")
+
+# Exemple de callback pour traitement du message
+def rx_handler(msg):
+  print("Callback traitement:", msg)
+  with open(SETTINGS_FILE) as f:
+    return f.read()  # Exemple simple: renvoyer message inversé
+
+async def loop():
+  server = BLEServerAsync(name=f"UCUq ({getIdentificationId(_CONFIG_IDENTIFICATION)})", rx_callback=rx_handler)
+  # Lancer la coroutine de traitement BLE + une autre tâche parallèle
+  await asyncio.gather(
+    serve(),
+    server.process_received()
+  )
 
 main()
