@@ -10,8 +10,13 @@ _WLAN = "" # Connects to one of the WLAN defined in 'ucuq.json'.
 
 SETTINGS_FILE = "ucuq.json"
 
-with open(SETTINGS_FILE, "r") as config:
-  CONFIG = json.load(config)
+configOk = False
+
+try:
+  with open(SETTINGS_FILE, "r") as config:
+    CONFIG = json.load(config)
+except:
+  configOK = False
 
 _K_IDENTIFICATION = "Identification"
 _K_ONBOARD_LED = "OnBoardLed"
@@ -20,14 +25,19 @@ _K_WIFI_POWER = "WifiPower"
 
 _DEFAULT_ONBOARD_LED = (None, True)
 _DEFAULT_PROXY = ("ucuq.q37.info", 53800, False)
-_DEFAULT_WIFI_POWER = [None]
+_DEFAULT_WIFI_POWER = (8,)
 
 getConfig = lambda key: CONFIG[key] if key in CONFIG else None
 
-_CONFIG_IDENTIFICATION = CONFIG[_K_IDENTIFICATION]
-_CONFIG_ONBOARD_LED = getConfig(_K_ONBOARD_LED)
-_CONFIG_PROXY = getConfig(_K_PROXY)
-_CONFIG_WIFI_POWER = getConfig(_K_WIFI_POWER)
+if configOk != False:
+  try:
+    _CONFIG_IDENTIFICATION = CONFIG[_K_IDENTIFICATION]
+    _CONFIG_ONBOARD_LED = getConfig(_K_ONBOARD_LED)
+    _CONFIG_PROXY = getConfig(_K_PROXY)
+    _CONFIG_WIFI_POWER = getConfig(_K_WIFI_POWER)
+    configOK = True
+  except:
+    configOk = False
 
 _WLAN_FALLBACK = "q37"
 
@@ -68,8 +78,11 @@ def getMacAddress():
   return binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
 
 
-# NOTA: also used in the script for 'getInfos()'… 
-def getIdentificationId(identification):
+def getIdentificationToken(identification):
+  return identification[0]
+
+# NOTA: also used in remote script for 'getInfos()'… 
+def getDeviceId(identification):
   if isinstance(identification[1], str):
     return identification[1]
   else:
@@ -127,7 +140,7 @@ def wlanDisconnect():
     pass
 
 
-def wlanConnect(wlan, callback):
+def wlanConnect(wlan, wifiPower, callback):
   global wifi
 
   wifi = network.WLAN(network.STA_IF)
@@ -146,15 +159,12 @@ def wlanConnect(wlan, callback):
 
     wifi.active(True)
 
-    id = getIdentificationId(_CONFIG_IDENTIFICATION)
-
     # An ESP32-C3 supermini does not connect to WiFi with default WiFi power when plugged in a breadboard.
     # See https://www.reddit.com/r/arduino/comments/1dl6atc/esp32c3_boards_cant_connect_to_wifi_when_plugged/
     # RPi Pico does not support a float.
-    wifiPowerParams = getParams(_CONFIG_WIFI_POWER, getIdentificationId(_CONFIG_IDENTIFICATION), _DEFAULT_WIFI_POWER)
-
-    if wifiPowerParams[0]:
-      wifi.config(txpower=wifiPowerParams[0])
+  
+    if wifiPower:
+      wifi.config(txpower=wifiPower)
 
     wifi.connect(wlan[0], wlan[1])
 
@@ -249,10 +259,8 @@ def exit(message=None):
   sys.exit(-1)
 
 
-async def init_async(callback):
+async def initAsync(proxyParam, callback):
   global proxy
-
-  proxyParam = getParams(_CONFIG_PROXY, getIdentificationId(_CONFIG_IDENTIFICATION), getParams(_CONFIG_PROXY, "_default", _DEFAULT_PROXY))
 
   callback(_S_UCUQ, 0)
 
@@ -263,8 +271,8 @@ async def init_async(callback):
     return False
   
   
-def init(callback):
-    return asyncio.run(init_async(callback))  
+def init(proxyParam, callback):
+    return asyncio.run(initAsync(proxyParam, callback))  
 
 
 def getDeviceLabel():
@@ -293,8 +301,8 @@ def handshake():
 
 
 def ignition():
-  blockingWriteString(_CONFIG_IDENTIFICATION[0])
-  blockingWriteString(getIdentificationId(_CONFIG_IDENTIFICATION))
+  blockingWriteString(getIdentificationToken(_CONFIG_IDENTIFICATION))
+  blockingWriteString(getDeviceId(_CONFIG_IDENTIFICATION))
 
   error = blockingReadString()
 
@@ -403,7 +411,7 @@ def getParams(paramSet, device, default):
 
 
 def getCallback():
-  onBoardLed = getParams(_CONFIG_ONBOARD_LED, getIdentificationId(_CONFIG_IDENTIFICATION), getParams(_CONFIG_ONBOARD_LED, "_default", _DEFAULT_ONBOARD_LED))
+  onBoardLed = getParams(_CONFIG_ONBOARD_LED, getDeviceId(_CONFIG_IDENTIFICATION), getParams(_CONFIG_ONBOARD_LED, "_default", _DEFAULT_ONBOARD_LED))
 
   if onBoardLed[0]:
     return lambda status, tries: ledCallback(status, tries, onBoardLed[0], onBoardLed[1])
@@ -414,22 +422,26 @@ def getCallback():
 def main():
   callback = getCallback()
 
-  if not wlanConnect(_WLAN, callback):
+  wifiPower = getParams(_CONFIG_WIFI_POWER, getDeviceId(_CONFIG_IDENTIFICATION), _DEFAULT_WIFI_POWER)[0]
+
+  proxyParam = getParams(_CONFIG_PROXY, getDeviceId(_CONFIG_IDENTIFICATION), getParams(_CONFIG_PROXY, "_default", _DEFAULT_PROXY))  
+
+  if not wlanConnect(_WLAN, wifiPower, callback):
     callback(_S_FAILURE, 0)
     exit()
 
-  if not init(callback):
+  if not init(proxyParam, callback):
     if ( _WLAN != "" ):
       callback(_S_FAILURE, 0)
       exit()
 
     wlanDisconnect()
 
-    if not wlanConnect(_WLAN, callback):
+    if not wlanConnect(_WLAN, wifiPower, callback):
       callback(_S_FAILURE, 0)
       exit()
 
-    if not init(callback):
+    if not init(proxyParam, callback):
       callback(_S_FAILURE, 0)
       exit()
 
@@ -450,26 +462,26 @@ def main():
     getCallback()(_S_DECONNECTION, 0)
     raise exception
 
-service = None
-server = None
-
-
 """
-  BLE Part
+BLE Part
 """
 
 btBLE = bluetooth.BLE()
 btBLE.active(True)
 
-BT_SERVICE_UUID = bluetooth.UUID('19b10000-e8f2-537e-4f6c-d104768a1214')
-BT_CHARACTERISTIC_UUID = bluetooth.UUID('19b10002-e8f2-537e-4f6c-d104768a1214')
+_BT_FALLBACK_SERVICE_UUID = bluetooth.UUID("b6000102-1ba1-4916-9493-e4279b6988ac")
+
+
+_BT_SERVICE_UUID = bluetooth.UUID(getIdentificationToken(_CONFIG_IDENTIFICATION)) if configOK else _BT_FALLBACK_SERVICE_UUID
+_BT_CHARACTERISTIC_UUID = bluetooth.UUID_BT_CHARACTERISTIC_UUID = bluetooth.UUID("56562c57-1508-4242-be45-976c42598a95")
 
 btService = (
-  BT_SERVICE_UUID,
+  _BT_SERVICE_UUID,
   (
-    (BT_CHARACTERISTIC_UUID, bluetooth.FLAG_WRITE | bluetooth.FLAG_NOTIFY),
+    (_BT_CHARACTERISTIC_UUID, bluetooth.FLAG_WRITE | bluetooth.FLAG_NOTIFY),
   ),
 )
+
 btServices = (btService,)
 
 btHandles = btBLE.gatts_register_services(btServices)
@@ -540,4 +552,8 @@ btBLE.gap_advertise(100, btAdvData)
 btBLE.irq(btIRQ)
 
 print("Serveur BLE prêt...")
-main()
+
+if configOk:
+  main()
+else:
+  asyncio.get_event_loop().run_forever()
