@@ -527,9 +527,7 @@ async def handleCallbackBundle(callingGlobals, bundle):
         callback = callingGlobals[callbackName]
 
     if callback:
-      bundle.instance.callbackReturnValue = await callCallback_(callback, bundle)
-
-      if options_[O_POSTPROCESS_ACTION_NAME_] in callbacks_:
+      if (await callCallback_(callback, bundle)) != False and options_[O_POSTPROCESS_ACTION_NAME_] in callbacks_:
         await callCallback_(callbacks_[options_[O_POSTPROCESS_ACTION_NAME_]],bundle)
 
       atlastkjs.standBy(bundle.instance)

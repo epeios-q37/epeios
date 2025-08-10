@@ -169,9 +169,7 @@ def worker(userCallback, dom, callbacks, callingGlobals):
 					callback = callingGlobals[callbackName]
 			
 			if callback:
-				dom.callbackReturnValue = _call(callback, userObject, dom, id, action )
-				
-				if options_[O_POSTPROCESS_ACTION_NAME_] in callbacks:
+				if _call(callback, userObject, dom, id, action ) != False and options_[O_POSTPROCESS_ACTION_NAME_] in callbacks:
 					_call(callbacks[options_[O_POSTPROCESS_ACTION_NAME_]],userObject, dom, id, action)
 			else:
 				dom.alert("\tDEV ERROR: missing callback for '" + action + "' action!") 

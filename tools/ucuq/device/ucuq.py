@@ -10,7 +10,7 @@ _WLAN = "" # Connects to one of the WLAN defined in 'ucuq.json'.
 
 SETTINGS_FILE = "ucuq.json"
 
-configOk = False
+configOK = None
 
 try:
   with open(SETTINGS_FILE, "r") as config:
@@ -29,7 +29,7 @@ _DEFAULT_WIFI_POWER = (8,)
 
 getConfig = lambda key: CONFIG[key] if key in CONFIG else None
 
-if configOk != False:
+if configOK != False:
   try:
     _CONFIG_IDENTIFICATION = CONFIG[_K_IDENTIFICATION]
     _CONFIG_ONBOARD_LED = getConfig(_K_ONBOARD_LED)
@@ -37,7 +37,7 @@ if configOk != False:
     _CONFIG_WIFI_POWER = getConfig(_K_WIFI_POWER)
     configOK = True
   except:
-    configOk = False
+    configOK = False
 
 _WLAN_FALLBACK = "q37"
 
@@ -78,11 +78,11 @@ def getMacAddress():
   return binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
 
 
-def getIdentificationToken(identification):
+def getIdentificationToken(identification=_CONFIG_IDENTIFICATION):
   return identification[0]
 
 # NOTA: also used in remote script for 'getInfos()'… 
-def getDeviceId(identification):
+def getDeviceId(identification=_CONFIG_IDENTIFICATION):
   if isinstance(identification[1], str):
     return identification[1]
   else:
@@ -142,6 +142,9 @@ def wlanDisconnect():
 
 def wlanConnect(wlan, wifiPower, callback):
   global wifi
+
+  if wifi != None and wifi.isconnected():
+    wifi.disconnect()
 
   wifi = network.WLAN(network.STA_IF)
 
@@ -301,8 +304,8 @@ def handshake():
 
 
 def ignition():
-  blockingWriteString(getIdentificationToken(_CONFIG_IDENTIFICATION))
-  blockingWriteString(getDeviceId(_CONFIG_IDENTIFICATION))
+  blockingWriteString(getIdentificationToken())
+  blockingWriteString(getDeviceId())
 
   error = blockingReadString()
 
@@ -411,7 +414,7 @@ def getParams(paramSet, device, default):
 
 
 def getCallback():
-  onBoardLed = getParams(_CONFIG_ONBOARD_LED, getDeviceId(_CONFIG_IDENTIFICATION), getParams(_CONFIG_ONBOARD_LED, "_default", _DEFAULT_ONBOARD_LED))
+  onBoardLed = getParams(_CONFIG_ONBOARD_LED, getDeviceId(), getParams(_CONFIG_ONBOARD_LED, "_default", _DEFAULT_ONBOARD_LED))
 
   if onBoardLed[0]:
     return lambda status, tries: ledCallback(status, tries, onBoardLed[0], onBoardLed[1])
@@ -419,14 +422,16 @@ def getCallback():
   return defaultCallback
 
 
-def main():
+def main(wlan=None, wifiPower=None, proxyParam=None):
   callback = getCallback()
 
-  wifiPower = getParams(_CONFIG_WIFI_POWER, getDeviceId(_CONFIG_IDENTIFICATION), _DEFAULT_WIFI_POWER)[0]
+  if wifiPower is None:
+    wifiPower = getParams(_CONFIG_WIFI_POWER, getDeviceId(), _DEFAULT_WIFI_POWER)[0]
 
-  proxyParam = getParams(_CONFIG_PROXY, getDeviceId(_CONFIG_IDENTIFICATION), getParams(_CONFIG_PROXY, "_default", _DEFAULT_PROXY))  
+  if proxyParam is None:
+    proxyParam = getParams(_CONFIG_PROXY, getDeviceId(), getParams(_CONFIG_PROXY, "_default", _DEFAULT_PROXY))  
 
-  if not wlanConnect(_WLAN, wifiPower, callback):
+  if not wlanConnect(_WLAN if wlan is None else wlan, wifiPower, callback):
     callback(_S_FAILURE, 0)
     exit()
 
@@ -472,8 +477,8 @@ btBLE.active(True)
 _BT_FALLBACK_SERVICE_UUID = bluetooth.UUID("b6000102-1ba1-4916-9493-e4279b6988ac")
 
 
-_BT_SERVICE_UUID = bluetooth.UUID(getIdentificationToken(_CONFIG_IDENTIFICATION)) if configOK else _BT_FALLBACK_SERVICE_UUID
-_BT_CHARACTERISTIC_UUID = bluetooth.UUID_BT_CHARACTERISTIC_UUID = bluetooth.UUID("56562c57-1508-4242-be45-976c42598a95")
+_BT_SERVICE_UUID = bluetooth.UUID(getIdentificationToken()) if configOK else _BT_FALLBACK_SERVICE_UUID
+_BT_CHARACTERISTIC_UUID = bluetooth.UUID("56562c57-1508-4242-be45-976c42598a95")
 
 btService = (
   _BT_SERVICE_UUID,
@@ -516,15 +521,8 @@ def btOnWrite(conn):
       message = btBuffer[:index].decode('utf-8').strip()
       btBuffer = btBuffer[index+1:]  # reste du buffer après le message
       print("Message complet reçu :", message)
-      # Exemple traitement : allumer la led si message = "START"
-      if message.startswith("START"):
-        led.value(0)
-        response = "OK"
-      elif message.startswith("STOP"):
-        led.value(1)
-        response = "OK"
-      else:
-        response = "ERR:Cmd"
+      ssid, key = message.split('\n')
+      main((ssid, key), 8, ("ucuq.q37.info", 53843, True))
     except Exception as e:
       print("Erreur décodage :", e)
       response = "ERR:Dec"
@@ -537,7 +535,7 @@ def btOnWrite(conn):
         print("Erreur notif:", e)
 
 def btAdvertisingPayload():
-  name = "ESP32-BLE"
+  name = f"UCUq {getDeviceId() if configOK else '(Undefined)'}"
   name_bytes = bytes(name, "utf8")
   payload = bytearray([
     2, 0x01, 0x06,
@@ -553,7 +551,8 @@ btBLE.irq(btIRQ)
 
 print("Serveur BLE prêt...")
 
-if configOk:
+if configOK:
   main()
 else:
-  asyncio.get_event_loop().run_forever()
+  while True:
+    time.sleep(10)
