@@ -4,40 +4,12 @@ import asyncio, sys, uos, time, network, json, binascii, io
 import bluetooth
 from machine import Pin
 
+import settings
+
 _WLAN = "" # Connects to one of the WLAN defined in 'ucuq.json'.
 # _WLAN = "<name>" # Connects to the WLAN <name> as defined in 'ucuq.json'.
 # _WLAN = ("<ssid>","<key>") # Connects to WLAN <ssid> using <key>.
 
-SETTINGS_FILE = "ucuq.json"
-
-configOK = None
-
-try:
-  with open(SETTINGS_FILE, "r") as config:
-    CONFIG = json.load(config)
-except:
-  configOK = False
-
-_K_IDENTIFICATION = "Identification"
-_K_ONBOARD_LED = "OnBoardLed"
-_K_PROXY = "Proxy"
-_K_WIFI_POWER = "WifiPower"
-
-_DEFAULT_ONBOARD_LED = (None, True)
-_DEFAULT_PROXY = ("ucuq.q37.info", 53800, False)
-_DEFAULT_WIFI_POWER = (8,)
-
-getConfig = lambda key: CONFIG[key] if key in CONFIG else None
-
-if configOK != False:
-  try:
-    _CONFIG_IDENTIFICATION = CONFIG[_K_IDENTIFICATION]
-    _CONFIG_ONBOARD_LED = getConfig(_K_ONBOARD_LED)
-    _CONFIG_PROXY = getConfig(_K_PROXY)
-    _CONFIG_WIFI_POWER = getConfig(_K_WIFI_POWER)
-    configOK = True
-  except:
-    configOK = False
 
 _WLAN_FALLBACK = "q37"
 
@@ -78,24 +50,6 @@ def getMacAddress():
   return binascii.hexlify(network.WLAN(network.STA_IF).config('mac')).decode()
 
 
-def getIdentificationToken(identification=_CONFIG_IDENTIFICATION):
-  return identification[0]
-
-# NOTA: also used in remote script for 'getInfos()'… 
-def getDeviceId(identification=_CONFIG_IDENTIFICATION):
-  if isinstance(identification[1], str):
-    return identification[1]
-  else:
-    mac = getMacAddress()
-
-    if mac in identification[1]:
-      return identification[1][mac]
-    else:
-      raise Exception("Unable to get an id for this device.")
-
-    
-_WLANS = CONFIG["WLAN"]
-
 def wlanIsShortcut(wlan):
   if isinstance(wlan, str):
     return True
@@ -105,7 +59,7 @@ def wlanIsShortcut(wlan):
     raise TypeError("'wlan' parameter can only be a string (shortcut), a list or a tuple of 2 strings (SSID and key)")
 
 
-def wlanGetKnownStation(wifi, callback):
+def wlanGetKnownStation(wifi, wlans, callback):
   known = ""
   tries = 0
 
@@ -119,10 +73,10 @@ def wlanGetKnownStation(wifi, callback):
     for station in wifi.scan():
       if known:
         break
-      for name in _WLANS:
+      for name in wlans:
         if known:
           break
-        if station[0].decode("utf-8") == _WLANS[name][0]:
+        if station[0].decode("utf-8") == wlans[name][0]:
           known = name
 
     tries += 1
@@ -140,23 +94,23 @@ def wlanDisconnect():
     pass
 
 
-def wlanConnect(wlan, wifiPower, callback):
+def wlanConnect(wlan, wifiPower, wlans, callback):
   global wifi
 
-  if wifi != None and wifi.isconnected():
-    wifi.disconnect()
-
   wifi = network.WLAN(network.STA_IF)
+
+  if wifi.active():
+    wifi.active(False)
 
   if not wifi.isconnected():
     if wlanIsShortcut(wlan):
       if wlan == "":
-        wlan = _WLANS[wlanGetKnownStation(wifi, callback)]
+        wlan = wlans[wlanGetKnownStation(wifi, wlans, callback)]
       else:
         try:
-          wlan = _WLANS[wlan]
+          wlan = wlans[wlan]
         except KeyError:
-          wlan = _WLANS[_WLAN_FALLBACK]
+          wlan = wlans[_WLAN_FALLBACK]
 
     tries = 0
 
@@ -303,9 +257,9 @@ def handshake():
     print(notification)
 
 
-def ignition():
-  blockingWriteString(getIdentificationToken())
-  blockingWriteString(getDeviceId())
+def ignition(deviceId):
+  blockingWriteString(settings.getIdentificationToken())
+  blockingWriteString(deviceId)
 
   error = blockingReadString()
 
@@ -413,8 +367,8 @@ def getParams(paramSet, device, default):
     return default
 
 
-def getCallback():
-  onBoardLed = getParams(_CONFIG_ONBOARD_LED, getDeviceId(), getParams(_CONFIG_ONBOARD_LED, "_default", _DEFAULT_ONBOARD_LED))
+def getCallback(deviceId):
+  onBoardLed = settings.getOnboardLed(deviceId)
 
   if onBoardLed[0]:
     return lambda status, tries: ledCallback(status, tries, onBoardLed[0], onBoardLed[1])
@@ -422,31 +376,33 @@ def getCallback():
   return defaultCallback
 
 
-def main(wlan=None, wifiPower=None, proxyParam=None):
-  callback = getCallback()
+def main(deviceId = None, wlan=None, wifiPower=None, proxy=None, wlans=None):
+  deviceId = deviceId or settings.getDeviceId()
 
-  if wifiPower is None:
-    wifiPower = getParams(_CONFIG_WIFI_POWER, getDeviceId(), _DEFAULT_WIFI_POWER)[0]
+  callback = getCallback(deviceId)
 
-  if proxyParam is None:
-    proxyParam = getParams(_CONFIG_PROXY, getDeviceId(), getParams(_CONFIG_PROXY, "_default", _DEFAULT_PROXY))  
+  wifiPower = wifiPower or settings.getWifiPower(deviceId)
 
-  if not wlanConnect(_WLAN if wlan is None else wlan, wifiPower, callback):
+  proxy = proxy or settings.getProxy(deviceId)
+
+  wlan = wlan or _WLAN 
+
+  if not wlanConnect(wlan, wifiPower, wlans, callback):
     callback(_S_FAILURE, 0)
     exit()
 
-  if not init(proxyParam, callback):
+  if not init(proxy, callback):
     if ( _WLAN != "" ):
       callback(_S_FAILURE, 0)
       exit()
 
     wlanDisconnect()
 
-    if not wlanConnect(_WLAN, wifiPower, callback):
+    if not wlanConnect(wlan, wifiPower, wlans, callback):
       callback(_S_FAILURE, 0)
       exit()
 
-    if not init(proxyParam, callback):
+    if not init(proxy, callback):
       callback(_S_FAILURE, 0)
       exit()
 
@@ -454,105 +410,15 @@ def main(wlan=None, wifiPower=None, proxyParam=None):
 
   handshake()
 
-  ignition()
+  ignition(deviceId)
 
   try:
-     asyncio.run(serve())
+    asyncio.run(serve())
   except Exception as exception:
     try:
       writeUInt(_A_DISCONNECTED_)
     except:
       pass
 
-    getCallback()(_S_DECONNECTION, 0)
+    getCallback(deviceId)(_S_DECONNECTION, 0)
     raise exception
-
-"""
-BLE Part
-"""
-
-btBLE = bluetooth.BLE()
-btBLE.active(True)
-
-_BT_FALLBACK_SERVICE_UUID = bluetooth.UUID("b6000102-1ba1-4916-9493-e4279b6988ac")
-
-
-_BT_SERVICE_UUID = bluetooth.UUID(getIdentificationToken()) if configOK else _BT_FALLBACK_SERVICE_UUID
-_BT_CHARACTERISTIC_UUID = bluetooth.UUID("56562c57-1508-4242-be45-976c42598a95")
-
-btService = (
-  _BT_SERVICE_UUID,
-  (
-    (_BT_CHARACTERISTIC_UUID, bluetooth.FLAG_WRITE | bluetooth.FLAG_NOTIFY),
-  ),
-)
-
-btServices = (btService,)
-
-btHandles = btBLE.gatts_register_services(btServices)
-btCharHandle = btHandles[0][0]
-
-led = Pin(8, Pin.OUT)
-
-btConnHandle = None
-btBuffer = bytearray()
-
-def btIRQ(event, data):
-  global btConnHandle
-  if event == 1:  # _IRQ_CENTRAL_CONNECT
-    btConnHandle = data[0]
-  elif event == 2:  # _IRQ_CENTRAL_DISCONNECT
-    btConnHandle = None
-    btBLE.gap_advertise(100, btAdvData)
-  elif event == 3:  # _IRQ_GATTS_WRITE
-    conn, attr_handle = data
-    if attr_handle == btCharHandle:
-      btOnWrite(conn)
-
-def btOnWrite(conn):
-  global btBuffer
-  data = btBLE.gatts_read(btCharHandle)
-  btBuffer.extend(data)
-  # Exemple : fin de message détectée par le caractère \0
-  if b'\0' in btBuffer:
-    try:
-      # Extraire message complet (jusqu’au \n)
-      index = btBuffer.index(b'\0')
-      message = btBuffer[:index].decode('utf-8').strip()
-      btBuffer = btBuffer[index+1:]  # reste du buffer après le message
-      print("Message complet reçu :", message)
-      ssid, key = message.split('\n')
-      main((ssid, key), 8, ("ucuq.q37.info", 53843, True))
-    except Exception as e:
-      print("Erreur décodage :", e)
-      response = "ERR:Dec"
-
-    # Notification d’accusé
-    if btConnHandle is not None:
-      try:
-        btBLE.gatts_notify(btConnHandle, btCharHandle, response.encode())
-      except Exception as e:
-        print("Erreur notif:", e)
-
-def btAdvertisingPayload():
-  name = f"UCUq {getDeviceId() if configOK else '(Undefined)'}"
-  name_bytes = bytes(name, "utf8")
-  payload = bytearray([
-    2, 0x01, 0x06,
-    3, 0x03, 0x00, 0x18,
-    len(name_bytes) + 1, 0x09
-  ])
-  payload.extend(name_bytes)
-  return payload
-
-btAdvData = btAdvertisingPayload()
-btBLE.gap_advertise(100, btAdvData)
-btBLE.irq(btIRQ)
-
-print("Serveur BLE prêt...")
-
-if configOK:
-  main()
-else:
-  while True:
-    time.sleep(10)

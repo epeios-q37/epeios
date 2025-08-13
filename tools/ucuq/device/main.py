@@ -1,0 +1,24 @@
+import settings, ucuq, time
+
+_BLE_FALLBACK_SERVICE_UUID = "b6000102-1ba1-4916-9493-e4279b6988ac"
+_BLE_CHAR_UUID = "56562c57-1508-4242-be45-976c42598a95"
+
+try:
+  import ble
+  _BLE = True
+except Exception as e:
+  raise e
+  _BLE = False
+
+if _BLE:
+  ble.launch(settings.getDeviceId() or "(Undefined)", settings.getIdentificationToken() or _BLE_FALLBACK_SERVICE_UUID, _BLE_CHAR_UUID, lambda message: exec(message))
+
+if settings.available():
+  try:
+    ucuq.main(wlans=settings.getWLANS())
+  except Exception as e:
+#    raise e
+    pass
+
+while True:
+  time.sleep(10)
