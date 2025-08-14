@@ -1,7 +1,4 @@
-# MicroController Remote Server (runs on the µcontroller)
-
 import asyncio, sys, uos, time, network, json, binascii, io
-import bluetooth
 from machine import Pin
 
 import settings
@@ -101,6 +98,7 @@ def wlanConnect(wlan, wifiPower, wlans, callback):
 
   if wifi.active():
     wifi.active(False)
+    wifi = network.WLAN(network.STA_IF)
 
   if not wifi.isconnected():
     if wlanIsShortcut(wlan):

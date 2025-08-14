@@ -59,7 +59,7 @@ def _completeSettings(params, default):
   if params is None:
     return default  
   elif isinstance(params, (int, str, float)):
-    return [params] + default[1:]  
+    return [params] + list(default[1:])  
   elif isinstance(params, (list, tuple)):
     return params + list(default[len(params):])
   else:

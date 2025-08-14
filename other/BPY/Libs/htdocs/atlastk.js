@@ -650,7 +650,7 @@ function call(instance, command, type, callback) {
 function broadcastAction(action, id) {
   if (action === undefined || action === "")
     exit_(
-      "There must be an non-empty action parameter for tha broadcastAction function!",
+      "There must be an non-empty action parameter for the broadcastAction function!",
     );
 
   ws.send(

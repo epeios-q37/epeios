@@ -7,17 +7,23 @@ try:
   import ble
   _BLE = True
 except Exception as e:
-  raise e
+  # raise e
   _BLE = False
 
+def callback(script, expression):
+  exec(script)
+  if expression:
+    return eval(expression)
+
+
 if _BLE:
-  ble.launch(settings.getDeviceId() or "(Undefined)", settings.getIdentificationToken() or _BLE_FALLBACK_SERVICE_UUID, _BLE_CHAR_UUID, lambda message: exec(message))
+  ble.launch(settings.getDeviceId() or "(Undefined)", settings.getIdentificationToken() or _BLE_FALLBACK_SERVICE_UUID, _BLE_CHAR_UUID, lambda message: callback(*message.split('\0')))
 
 if settings.available():
   try:
     ucuq.main(wlans=settings.getWLANS())
   except Exception as e:
-#    raise e
+    raise e
     pass
 
 while True:
