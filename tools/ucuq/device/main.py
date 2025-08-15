@@ -23,7 +23,7 @@ if settings.available():
   try:
     ucuq.main(wlans=settings.getWLANS())
   except Exception as e:
-    raise e
+#    raise e
     pass
 
 while True:
