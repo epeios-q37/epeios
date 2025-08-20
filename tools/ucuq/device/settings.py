@@ -1,3 +1,5 @@
+__version__ = "2025-08-19"
+
 import network, binascii, json
 
 _SETTINGS_FILE = "ucuq.json"
@@ -15,6 +17,7 @@ _K_WLAN = "WLAN"
 _K_ONBOARD_LED = "OnBoardLed"
 _K_PROXY = "Proxy"
 _K_WIFI_POWER = "WifiPower"
+_K_KIT_LABEL = "KitLabel"
 
 _DEFAULT_ONBOARD_LED = (None, True)
 _DEFAULT_PROXY = ("ucuq.q37.info", 53800, False)
@@ -41,10 +44,30 @@ def _getMAC():
 
 
 def getIdentificationToken():
-  return _IDENTIFICATION[0]    
+  if not _settingsOK:
+    return None
+  
+  candidates = _IDENTIFICATION[0]    
+
+  if isinstance(candidates, (list, tuple)):
+    return candidates[0]
+  else:
+    return candidates
+  
+
+def getBLEUUID():
+  if not _settingsOK:
+    return None
+  
+  candidates = _IDENTIFICATION[0]
+
+  if isinstance(candidates, (list, tuple)):
+    return candidates[1]
+  else:
+    return candidates
+
+
 # NOTA: also used in remote script for 'getInfos()'… 
-
-
 def getDeviceId():
   if isinstance(_IDENTIFICATION[1], str):
     return _IDENTIFICATION[1]
@@ -74,7 +97,11 @@ def _getSettings(settings, deviceId, default):
       for devices in settings:
         if deviceId in devices[1]:
           return _completeSettings(devices[0], default)
-    return default    
+    return default
+
+
+def getKitLabel():
+    return _SETTINGS[_K_KIT_LABEL] if _K_KIT_LABEL in _SETTINGS else None
   
 
 def available():

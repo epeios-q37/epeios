@@ -93,12 +93,12 @@ def ucuqStructToDict(obj):
 
 def ucuqGetInfos():
   infos = {{
-    "{IK_DEVICE_ID_}": getIdentificationId(CONFIG_IDENTIFICATION if 'CONFIG_IDENTIFICATION' in globals() else _CONFIG_IDENTIFICATION),
-    "{IK_DEVICE_UNAME_}": ucuqStructToDict(uos.uname())
+    "{IK_DEVICE_ID_}": ucuq.settings.getDeviceId(),
+    "{IK_DEVICE_UNAME_}": ucuqStructToDict(__import__('uos').uname())
   }}
 
-  if "{IK_KIT_LABEL}" in CONFIG:
-    infos["{IK_KIT_LABEL}"] = CONFIG["{IK_KIT_LABEL}"]
+  if kit := ucuq.settings.getKitLabel():
+    infos["{IK_KIT_LABEL}"] = kit
 
   return infos
 """
@@ -717,7 +717,7 @@ class SoftI2C(I2C):
 
 
 class SPI(Core_):
-  def __init__(self, id, sck, mosi, miso, baudrate=None, *, polarity=None, phase=None, bits=None, device=None):
+  def __init__(self, id, sck=None, mosi=None, miso=None, baudrate=None, *, polarity=None, phase=None, bits=None, device=None):
     super().__init__(device)
 
     if sck == None != mosi == None or sck == None != miso == None:
@@ -725,8 +725,8 @@ class SPI(Core_):
     elif sck != None:
       self.init(id, sck, mosi, miso, baudrate=baudrate, polarity=polarity, phase=phase, bits=bits, device=device)
 
-  def init(self, id, sck, mosi, miso, *, baudrate=None, polarity=None, phase=None, bits=None, device=None, extra=True):
-    super().init(None, f"machine.{'Soft' if not id else ''}SPI({str(id) + ', ' if id else ''}sck=machine.Pin({sck}), mosi=machine.Pin({mosi}), miso=machine.Pin({miso}){getParam('baudrate', baudrate)}{getParam('polarity', polarity)}{getParam('phase', phase)}{getParam('bits', bits)})", device=device, extra=extra)
+  def init(self, id, sck=None, mosi=None, miso=None, baudrate=None, polarity=None, phase=None, bits=None, device=None, extra=True):
+    super().init(None, f"machine.{'Soft' if not id else ''}SPI({str(id) + ', ' if id else ''}sck=machine.Pin({sck}){getParam('mosi', mosi, 'machine.Pin({})')}{getParam('miso', miso, 'machine.Pin({})')}{getParam('baudrate', baudrate)}{getParam('polarity', polarity)}{getParam('phase', phase)}{getParam('bits', bits)})", device=device, extra=extra)
 
 
 class SoftSPI(SPI):
@@ -811,9 +811,9 @@ class HT16K33(Core_):
     return self.addMethods(f"render()")
 
 
-def getParam(label, value):
+def getParam(label, value, expr=None):
   if value:
-    return f", {label} = {value}"
+    return f", {label} = {value if expr is None else expr.format(value)}"
   else:
     return ""
 
@@ -1271,6 +1271,16 @@ class ILI9341(Core_):
       self.addMethods(f"draw('{base64.b64encode(zoom_rgb565_(data, width, speed, hzoom, vzoom)).decode('ascii')}',0, {(height // speed) * speed*vzoom}, {width*hzoom}, {remainder*vzoom})")
 
     return self
+  
+
+class SSD1680_SPI(OLED_):
+  def __init__(self, cs, dc, rst, busy, spi, landscape=True):
+    super().__init__()
+    self.init(cs, dc, rst, busy, spi, landscape=landscape)
+
+  def init(self, cs, dc, rst, busy, spi, landscape=False, extra=True):
+    super().init("SSD1680-1", f"SSD1680({spi.getObject()},machine.Pin({cs}, machine.Pin.OUT),machine.Pin({dc}, machine.Pin.OUT),{rst},machine.Pin({busy}, machine.Pin.IN),{landscape})",spi.getDevice(), extra)
+
 
 def pwmJumps(jumps, step = 100, delay = 0.05):
   command = "pwmJumps([\n"

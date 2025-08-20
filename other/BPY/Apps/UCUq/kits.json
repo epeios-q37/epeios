@@ -205,7 +205,7 @@
         }
       ]
     },
-    "features": {}
+    "features": { }
   }, {
     "_comment": "Freenove Bipedal (RPI Pico W)",
     "devices": [ "Charlie", "Echo" ],
@@ -213,7 +213,7 @@
     "model": "Bipedal",
     "variant": "RPiPico(2)W",
     "hardware": {
-      "OnBoardLed": [ 2, false ],
+      "OnBoardLed": [ "LED", true ],
       "SmartRGB": [
         {
           "Pin": 16,

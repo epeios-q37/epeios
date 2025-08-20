@@ -1,3 +1,5 @@
+__version__ = "2025-08-20"
+
 import asyncio, sys, uos, time, network, json, binascii, io
 from machine import Pin
 
@@ -265,7 +267,7 @@ def ignition(deviceId):
     sys.exit(error)
 
 
-async def serve():
+async def serve(callback):
   while True:
     request = await readUInt()
 
@@ -274,9 +276,9 @@ async def serve():
       expression = await readString()
       returned = ""
       try:
-        exec(script)
+        result = callback(script, expression)
         if expression:
-          returned = json.dumps(eval(expression))
+          returned = json.dumps(result)
       except Exception as exception:
         with io.StringIO() as stream:
           sys.print_exception(exception, stream)
@@ -293,7 +295,7 @@ async def serve():
       await writeString("")  # For future use
 
 
-def defaultCallback(status, tries):
+def defaultStatusCallback(status, tries):
   if tries == 0:
     if status != _S_FAILURE:
       print("\r                                                                                \r", end="")
@@ -341,7 +343,7 @@ def ledCallback(status, tries, pin, onValue):
     handleLed(pin, True, onValue)
   elif status == _S_SUCCESS:
     ledBlink(pin, 3, onValue)
-  return defaultCallback(status, tries) and not ( ( status == _S_UCUQ) and ( tries > 5 ) )
+  return defaultStatusCallback(status, tries) and not ( ( status == _S_UCUQ) and ( tries > 5 ) )
 
 
 def completeParam(params, default):
@@ -365,58 +367,58 @@ def getParams(paramSet, device, default):
     return default
 
 
-def getCallback(deviceId):
+def getStatusCallback(deviceId):
   onBoardLed = settings.getOnboardLed(deviceId)
 
   if onBoardLed[0]:
     return lambda status, tries: ledCallback(status, tries, onBoardLed[0], onBoardLed[1])
     
-  return defaultCallback
+  return defaultStatusCallback
 
 
-def main(deviceId = None, wlan=None, wifiPower=None, proxy=None, wlans=None):
-  deviceId = deviceId or settings.getDeviceId()
+def main(callback):
+  if not settings.available():
+    return
 
-  callback = getCallback(deviceId)
+  deviceId = settings.getDeviceId()
+  statusCallback = getStatusCallback(deviceId)
+  wifiPower = settings.getWifiPower(deviceId)
+  proxy = settings.getProxy(deviceId)
+  wlan = _WLAN
+  wlans = settings.getWLANS()
 
-  wifiPower = wifiPower or settings.getWifiPower(deviceId)
-
-  proxy = proxy or settings.getProxy(deviceId)
-
-  wlan = wlan or _WLAN 
-
-  if not wlanConnect(wlan, wifiPower, wlans, callback):
-    callback(_S_FAILURE, 0)
+  if not wlanConnect(wlan, wifiPower, wlans, statusCallback):
+    statusCallback(_S_FAILURE, 0)
     exit()
 
-  if not init(proxy, callback):
+  if not init(proxy, statusCallback):
     if ( _WLAN != "" ):
-      callback(_S_FAILURE, 0)
+      statusCallback(_S_FAILURE, 0)
       exit()
 
     wlanDisconnect()
 
-    if not wlanConnect(wlan, wifiPower, wlans, callback):
-      callback(_S_FAILURE, 0)
+    if not wlanConnect(wlan, wifiPower, wlans, statusCallback):
+      statusCallback(_S_FAILURE, 0)
       exit()
 
-    if not init(proxy, callback):
-      callback(_S_FAILURE, 0)
+    if not init(proxy, statusCallback):
+      statusCallback(_S_FAILURE, 0)
       exit()
 
-  callback(_S_SUCCESS, 0)
+  statusCallback(_S_SUCCESS, 0)
 
   handshake()
 
   ignition(deviceId)
 
   try:
-    asyncio.run(serve())
+    asyncio.run(serve(callback))
   except Exception as exception:
     try:
       writeUInt(_A_DISCONNECTED_)
     except:
       pass
 
-    getCallback(deviceId)(_S_DECONNECTION, 0)
+    getStatusCallback(deviceId)(_S_DECONNECTION, 0)
     raise exception
