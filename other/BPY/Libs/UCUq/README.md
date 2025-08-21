@@ -11,10 +11,9 @@ Python library for easy prototyping of assemblies based on microcontrollers such
 ### On the microcontroller
 
 1. Install [*Micropython*](https://micropython.org/) on the microcontroller;
-2. create an *ucuq.json* file with below content;
-3. rename *ucuq_device.py* as *main.py*;
-4. put both *ucuq.json* and *main.py* on the microcontroller;
-5. restart the microcontroller.
+2. put *main.py*, *ucuq.py* and *settings.py* on the microcontroller;
+3. create an *ucuq.json* file with below content and put it on the microcontroller;
+4. restart the microcontroller.
 
 Content of the *ucuq.json* file to put on the microcontroller:
 
@@ -25,6 +24,9 @@ Content of the *ucuq.json* file to put on the microcontroller:
     "<wlan_name>": ["<wlan_ssid>", "<wlan_key>"]
   },
   "OnBoardLed": [<led_pin>, <led_logic>],
+  "version": {
+    "format": "2025-09-19"
+  }
 }
 ```
 
@@ -38,7 +40,7 @@ Content of the *ucuq.json* file to put on the microcontroller:
 
 The `OnBoardLed` entry is optional.
 
-You can put more then one entry under the `WLAN`; the microcontroller will automatically connect to the first available one. For example, one can be your smartphone's access point, the second your home's WiFi.
+You can put more then one entry under the `WLAN` entry; the microcontroller will automatically connect to the first available one. For example, one can be your smartphone's access point, the second your home's Wi-Fi.
 
 ### On you computer
 
@@ -47,25 +49,25 @@ You can put more then one entry under the `WLAN`; the microcontroller will autom
 3. fill the fields accordingly to the content of the *usuq.json* file described above (`Identification`/`device_token` and `Identification`/`device_id`);
 4. click on *Save* and quit the app.
 
-As an example, to light up a LED connected to your device, create a file with below code and adapt it to your microcrocontroller:
+As an example, try following code which blinks an LED connected to your microcontroller:
 
 ```python
-import ucuq
+import ucuq, time
 
-ucuq.GPIO(<led_pin>).high()
+for i in range(20):
+  ucuq.GPIO(<led_pin>).high(i & 1)
+  time.sleep(0.5)
 ```
 
-Replace `<led_pin>` with the number corresponding of the onboard led pin number or string (or of whichever led connected to your microcontroller). With some controllers, the led lights up when the corresponding pin is at low level, so you have to replace `high()` with `low()`. Launch this program with *python3*.
+Replace *<led_pin>* with the number corresponding of the onboard led pin number or string (or of whichever LED connected to your microcontroller). Launch this program with *python3*.
 
 See the above online demonstrations link for the *API* and examples of use.
 
 ## The daemon
 
-To simplify the use of this library, both the microcontroller and the local computer connects to a free public server.
+Both the microcontroller and the local computer connects to a free public server.
 
-You can use your own server by running the daemon available at: <https://github.com/epeios-q37/ucuq>.
-
-Add also following entry to the *ucuq.json* file of the microcontroller:
+You can use your own server by running the daemon available at <https://github.com/epeios-q37/ucuq>. In this case, add also following entry to the *ucuq.json* file of the microcontroller:
 
 ```json
 {

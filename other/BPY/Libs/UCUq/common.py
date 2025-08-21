@@ -1108,6 +1108,10 @@ class OLED_(Core_):
   def text(self, string, x, y, col=1):
     return self.addMethods(f"text('{string}',{x}, {y}, {col})")
   
+  def hText(self, string, y, col=1, trueWidth = None):
+    trueWidth = trueWidth or f"{self.getObject()}.width"
+    return self.addMethods(f"text('{string}',max(( {trueWidth} - len('{string}' ) * 8) // 2, 0), {y}, {col})")
+  
   def rect(self, x, y, w, h, col, fill=True):
     return self.addMethods(f"rect({x},{y},{w},{h},{col},{fill})")
 
@@ -1280,6 +1284,9 @@ class SSD1680_SPI(OLED_):
 
   def init(self, cs, dc, rst, busy, spi, landscape=False, extra=True):
     super().init("SSD1680-1", f"SSD1680({spi.getObject()},machine.Pin({cs}, machine.Pin.OUT),machine.Pin({dc}, machine.Pin.OUT),{rst},machine.Pin({busy}, machine.Pin.IN),{landscape})",spi.getDevice(), extra)
+
+  def hText(self, *args, **kargs):
+    return super().hText(*args, **kargs, trueWidth=250)
 
 
 def pwmJumps(jumps, step = 100, delay = 0.05):

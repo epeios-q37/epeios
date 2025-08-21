@@ -1,6 +1,6 @@
 [
   {
-    "_comment": "ESP32-S3",
+    "_comment": "ESP32-S3 with display and buzzers",
     "devices": [ "Hotel" ],
     "brand": "q37.info",
     "model": "Displays",
@@ -39,13 +39,13 @@
       ]
     }
   }, {
-    "_comment": "2.8 TFT ILI9431",
+    "_comment": "2.8 LCD TFT ILI9431",
     "devices": [ "Kilo" ],
     "brand": "q37.info",
     "model": "Display",
     "variant": "TFT",
     "hardware": {
-      "OnBoardLed": [ 16, false ],
+      "OnBoardLed": [ 17, false ],
       "LED": [
         {
           "Pin": 4
@@ -124,8 +124,8 @@
       ]
     }
   }, {
-    "_comment": "ESP32-C3",
-    "devices": [ "Alpha", "Golf", "India" ],
+    "_comment": "ESP32-C3 with displays",
+    "devices": [ "Alpha", "Golf" ],
     "brand": "q37.info",
     "model": "Displays",
     "variant": "SSD1306",
@@ -346,6 +346,28 @@
           "Limiter": 255
         }
       ]
+    }
+  }, {
+    "_comment": "Bare ESP32-C3",
+    "devices": [ "India" ],
+    "brand": "q37.info",
+    "model": "Bare",
+    "variant": "ESP32-C3°",
+    "hardware": {
+      "OnBoardLed": [ 8, false ]
+    }
+  }, {
+    "_comment": "ESP32-C3 with e-paper (WeAct 2.13)",
+    "devices": [ "Juliett" ],
+    "brand": "q37.info",
+    "model": "Display",
+    "variant": "E-paper",
+    "hardware": {
+      "OnBoardLed": [ 8, false ]
+    },
+    "features":
+    {
+
     }
   }
 ]

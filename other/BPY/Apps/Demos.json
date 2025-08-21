@@ -23,6 +23,7 @@
     "Countdown",
     "Servos",
     "TFT",
+    "QRCode",
     "Boilerplate"
   ]
 }

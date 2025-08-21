@@ -1,0 +1,57 @@
+<script>
+  async function generateQrHexStringBrowser(data) {
+    const url = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(data)}`;
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+
+    const imageLoadPromise = new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = reject;
+    });
+    img.src = url;
+    await imageLoadPromise;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+
+    const binaryPixels = [];
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+      binaryPixels.push(luminance < 128 ? 1 : 0);
+    }
+
+    const width = canvas.width;
+    if (width % 4 !== 0) {
+      throw new Error("La largeur du QR code n'est pas un multiple de 4 pixels.");
+    }
+
+    let hexString = "";
+    for (let i = 0; i < binaryPixels.length; i += 4) {
+      let val = 0;
+      for (let j = 0; j < 4; j++) {
+        val |= (binaryPixels[i + j] << (3 - j));
+      }
+      hexString += val.toString(16);
+    }
+
+    return { hexString, width };
+  }
+
+  function generate(text) {
+    generateQrHexStringBrowser(text)
+      .then(({ hexString, width }) => {
+        launchEvent(`${hexString}|BUTTON|click||(Display)`);
+      })
+      .catch(e => console.error(e));
+  }
+
+</script>

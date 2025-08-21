@@ -1,4 +1,4 @@
-__version__ = "2025-08-20"
+__version__ = "2025-08-21"
 
 import asyncio, sys, uos, time, network, json, binascii, io
 from machine import Pin
@@ -370,7 +370,7 @@ def getParams(paramSet, device, default):
 def getStatusCallback(deviceId):
   onBoardLed = settings.getOnboardLed(deviceId)
 
-  if onBoardLed[0]:
+  if onBoardLed[0] is not None:
     return lambda status, tries: ledCallback(status, tries, onBoardLed[0], onBoardLed[1])
     
   return defaultStatusCallback
