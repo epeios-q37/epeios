@@ -10,7 +10,7 @@ async def atkSubmit(dom):
   name = await dom.getValue("Input")
   await dom.setValue("Input", "")
   await dom.focus("Input")
-  atlastk.broadcastAction("Refresh")
+  atlastk.broadcastAction(atkRefresh)
 
 
 async def atkRefresh(dom):

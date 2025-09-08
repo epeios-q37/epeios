@@ -158,12 +158,12 @@ async def atkSubmit(dom, id):
 
   playerTurn = makeMove(gameBoard, playerTurn, response)
 
-  atlastk.broadcastAction("Display")      
+  atlastk.broadcastAction(atkDisplay)      
 
 
 async def atkNew(dom):
   newGame()
-  atlastk.broadcastAction("Display")
+  atlastk.broadcastAction(atkDisplay)
 
 
 async def atkDisplay(dom):

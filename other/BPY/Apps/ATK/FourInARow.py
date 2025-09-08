@@ -159,12 +159,12 @@ async def atkSubmit(dom, id):
   elif playerTurn == PLAYER_O:
     playerTurn = PLAYER_X
 
-  atlastk.broadcastAction("Display")
+  atlastk.broadcastAction(atkDisplay)
 
 
 async def atkNew():
   newGame()
-  atlastk.broadcastAction("Display")
+  atlastk.broadcastAction(atkDisplay)
 
 
 ATK_HEAD = """

@@ -134,12 +134,12 @@ async def atkSubmit(dom,id):
     changeTile(int(await dom.getAttribute(id, "data-tile")), gameBoard, 0, 0)
     movesLeft -= 1
 
-  atlastk.broadcastAction("Display")
+  atlastk.broadcastAction(atkDisplay)
 
 
 async def atkNew(dom):
   newGame()
-  atlastk.broadcastAction("Display")
+  atlastk.broadcastAction(atkDisplay)
 
 
 async def atkDisplay(dom):

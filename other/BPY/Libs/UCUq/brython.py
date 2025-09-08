@@ -205,4 +205,4 @@ async def getWebFileContentAwait(url):
 async def getKitsAwait():
   global KITS_
 
-  KITS_ = json.loads(await getWebFileContentAwait("https://raw.githubusercontent.com/epeios-q37/ucuq-python/refs/heads/main/demos/kits.json"))
+  KITS_ = json.loads(await getWebFileContentAwait("https://raw.githubusercontent.com/epeios-q37/ucuq-python/refs/heads/main/demos/assets/kits.json"))

@@ -1,7 +1,7 @@
 import atlastk, html, re
 
 """
-From here and up to and including the 'acConnect' function,
+From here and up to and including the 'atk' function,
 to simplify the writing of the program, there are a lot of quirks
 which should not be used in regular applications.
 """

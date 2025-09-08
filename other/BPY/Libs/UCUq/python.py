@@ -3,7 +3,7 @@ from inspect import getframeinfo, stack
 
 
 CONFIG_FILE_ = ( "/home/csimon/q37/epeios/other/BPY/Apps/UCUq/" if "Q37_EPEIOS" in os.environ else "../" ) + "ucuq.json"
-KITS_FILE_ = ( "/home/csimon/epeios/other/BPY/Apps/UCUq/" if "Q37_EPEIOS" in os.environ else "../" ) + "kits.json"
+KITS_FILE_ = ( "/home/csimon/epeios/other/BPY/Apps/UCUq/assets/" if "Q37_EPEIOS" in os.environ else "../assets/" ) + "kits.json"
 
 try:
   with open(CONFIG_FILE_, "r") as config:

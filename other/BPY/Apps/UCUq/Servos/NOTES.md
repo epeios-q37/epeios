@@ -2,9 +2,9 @@
 
 ## Application *Servos*
 
-### *servos.xml*
+### *assets/servos.xml*
 
-Le fichier *servos.xml* est utilisé pour générer le fichier *servos.json* (script *BPYP_Make*).
+Le fichier *assets/servos.xml* est utilisé pour générer le fichier *assets/servos.json* (script *BPYP_Make*).
 
 ### *IA*
 

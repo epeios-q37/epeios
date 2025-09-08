@@ -285,6 +285,8 @@
           "Offset": 0
         }
       ]
+    },
+    "features": {
     }
   }, {
     "_comment": "Wokwi simulator",

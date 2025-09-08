@@ -457,14 +457,14 @@ def handleSetupsKits(setups, infos):
 async def getServosSetups(target, infos):
 # BEGIN PYH
 
-  with open("servos.json", "r") as file:
+  with open(( "/home/csimon/epeios/other/BPY/Apps/UCUq/assets/" if "Q37_EPEIOS" in os.environ else "../assets/" ) + "servos.json", "r") as file:
     config = json.load(file)[target]
 
 # END PYH
 
 # BEGIN BRY
 
-  config = json.loads(await getGithubFileContentAwait("demos/Servos/servos.json"))[target]
+  config = json.loads(await getGithubFileContentAwait("demos/assets/servos.json"))[target]
 
 # END BRY
 
@@ -473,6 +473,8 @@ async def getServosSetups(target, infos):
 
 async def createServoAwait(deviceId, device, infos, key):
   global servos
+
+  pca = None
 
   if key:
     key += '.'

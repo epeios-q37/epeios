@@ -21,7 +21,7 @@ async def atkSubmit(profile, dom):
     if profile.pseudo:
       await dom.begin("Output", f"<div class='me'>{input}</div>")
       message = input
-      atlastk.broadcastAction("Display", str(profile.pseudo))
+      atlastk.broadcastAction(atkDisplay, str(profile.pseudo))
     else:
       profile.pseudo = input
       await dom.begin("Output", f"<div>Hello, <i>{input}</i>!</div>")

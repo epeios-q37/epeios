@@ -96,4 +96,32 @@ python3 setup.py sdist bdist_wheel
 - lecture `esptool.py --chip esp32 --port /dev/ttyUSB0 read_flash 0x00000 0x400000 backup.bin`
 - écriture : `esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash 0x00000 backup.bin`
 
+## E-paper WeAct 2.13"
 
+Branchement de l'e-paper 2.13" de *WeAct* sur l'*ESP32-C3* mini de *TenStar* :
+
+| e-paper | ESP32-C3  | param.
+|---|---|---|
+| VCC                      | 3.3V                         |
+| GND                      | GND                          |
+| BUSY                     | GPIO 3                       | busy
+| RES (reset)              | GPIO 2                       | rst
+| D/C (data/command)       | GPIO 1                       | dc
+| CS (chip select)         | GPIO 7                       | cs
+| SCL (SPI clock)          | GPIO 4                       | sck
+| SDA (SPI data)           | GPIO 6                       | mosi
+
+### Brochage *ESP32-C3* de *TenStar*
+
+Vu de dessus, USB en-haut.
+
+| G | G | G | D | D | D
+|---|---|---|---|---|---
+| GPIO5 | A3 | D3 | | 5V
+| GPIO6 | SDA | D4 | | GND
+| GPIO7 | SCL | D5 | | 3V3
+| GPIO8 | SCK | D8 | GPIO4 | A2 | D2
+| GPIO9 | MISO | D9 | GPIO3 | A1 | D1
+| GPIO10 | MOSI | D10 | GPIO2 | A0 | D0
+| GPIO20 | RX | D7 | GPIO1 | ADC1-1
+| GPIO21 | TX | D6 | GPIO0 | ADC1-0

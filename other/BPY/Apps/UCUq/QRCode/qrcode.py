@@ -18,7 +18,7 @@ async def atkDisplay(dom, id):
 
 
 async def atkSubmit(dom):
-  await dom.executeVoid(f"generate('{await dom.getValue(W_TEXT)}')")
+  await dom.executeVoid(f"QRCodeLaunch('{await dom.getValue(W_TEXT)}')")
   await dom.focus(W_TEXT)
 
 

@@ -275,8 +275,8 @@ class Multi:
   def __init__(self, object):
     self.objects = [object]
 
-  def add(self, objet):
-    self.objects.append(objet)
+  def add(self, object):
+    self.objects.append(object)
 
   def __getattr__(self, methodName):
     def wrapper(*args, **kwargs):
@@ -482,13 +482,13 @@ async def getInfosAwait(device):
   return infos
 
 
-async def ATKConnectAwait(dom, body, *, device = None):
+async def ATKConnectAwait(dom, body, *, target = "", device = None):
   await getKitsAwait()
   
   if not KITS_:
     raise Exception("No kits defined!")
 
-  await dom.inner("", """
+  await dom.inner(target, """
   <style>
     .ucuq-connection {
       display: inline-block;
@@ -531,7 +531,7 @@ async def ATKConnectAwait(dom, body, *, device = None):
     device = getDemoDevice()
 
   if not device:
-    await dom.inner("", "<h3>ERROR: Please launch the 'Config' application!</h3>")
+    await dom.inner(target, "<h3>ERROR: Please launch the 'Config' application!</h3>")
     raise SystemExit("Unable to connect to a device!")
   
   setDevice(device = device)
@@ -544,13 +544,13 @@ async def ATKConnectAwait(dom, body, *, device = None):
 
   deviceId =  getDeviceId(infos)
 
-  await dom.inner("", ATK_BODY_.format(infos[IK_KIT_LABEL], deviceId))
+  await dom.inner(target, ATK_BODY_.format(infos[IK_KIT_LABEL], deviceId))
 
   await dom.inner("ucuq_body", body)
 
   await sleepAwait(1.5)
 
-  await dom.inner("", body)
+  await dom.inner(target, body)
 
   atlastk.setCallback(UCUQ_XDEVICE_ACTION_, handleXDeviceRetrieving_)
 
@@ -962,7 +962,7 @@ class HD44780_I2C(Core_):
     return self.addMethods(f"move_to({x},{y})")
 
   def putString(self, string):
-    return self.addMethods(f"putstr(\"{string}\")")
+    return self.addMethods(f"putstr(\"{string.replace('"','\\"')}\")")
 
   def clear(self):
     return self.addMethods("clear()")
@@ -1285,8 +1285,8 @@ class SSD1680_SPI(OLED_):
   def init(self, cs, dc, rst, busy, spi, landscape=False, extra=True):
     super().init("SSD1680-1", f"SSD1680({spi.getObject()},machine.Pin({cs}, machine.Pin.OUT),machine.Pin({dc}, machine.Pin.OUT),{rst},machine.Pin({busy}, machine.Pin.IN),{landscape})",spi.getDevice(), extra)
 
-  def hText(self, *args, **kargs):
-    return super().hText(*args, **kargs, trueWidth=250)
+  def hText(self, *args, trueWidth=None, **kargs):
+    return super().hText(*args, trueWidth=trueWidth or 250, **kargs)
 
 
 def pwmJumps(jumps, step = 100, delay = 0.05):

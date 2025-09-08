@@ -334,7 +334,7 @@ async def computerTurn(game, dom):
 
 
 def broadcast(token):
-  atlastk.broadcastAction("Display", token)
+  atlastk.broadcastAction(atkDisplay, token)
 
 
 async def atkRoll(user, dom):
