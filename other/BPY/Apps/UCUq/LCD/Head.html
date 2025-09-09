@@ -399,10 +399,10 @@
   }
 
   function displayLCD(escapedLines) {
-    console.log(escapedLines);
-    let lines = JSON.parse(escapedLines).split('\n').slice(0, nbRows);
+    console.log(escapedLines, escapedLines.length);
+    let lines = JSON.parse(escapedLines).split('\n');
     console.log(lines);
-    renderLCD(lines);
+    renderLCD(lines.slice(0, nbRows));
   }
 
   function init() {

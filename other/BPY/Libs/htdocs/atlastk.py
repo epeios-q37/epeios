@@ -572,7 +572,7 @@ def launch(callbacks=None, *, userCallback=None, globals=None, headContent=None)
   if headContent == None:
     headContent = ""
 
-  atlastkjs.launch(lambda : _callback(userCallback), headContent.replace("_BrythonWorkaroundForClosingScriptTag_","</script>"), LIB_VERSION)
+  atlastkjs.launch(lambda : _callback(userCallback), headContent.replace("_BrythonWorkaroundForClosingScriptTag_","</script>").replace("_BrythonWorkaroundForEOL_", "\\n"), LIB_VERSION)
 
   aio.run(handleCallbackBundles(callbacks, globals))
 

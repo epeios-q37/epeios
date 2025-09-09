@@ -1,5 +1,5 @@
 <?php
-$sourceCode = str_replace("</script>", "_BrythonWorkaroundForClosingScriptTag_", $_REQUEST['code']);
+$sourceCode = str_replace('\\n', "_BrythonWorkaroundForEOL_", str_replace("</script>", "_BrythonWorkaroundForClosingScriptTag_", $_REQUEST['code']));
 
 // Si modifié, adapter '/themes/hugo-book/layouts/_default/baseof.html' de atlastk.org et zelbinium.q37.info.
 const BRYTHON_VERSION = "3.13.1";

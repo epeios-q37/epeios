@@ -20,21 +20,6 @@ class TrueLCD():
     self.lcd.backlightOn()
 
 
-class SimulatedLCD():
-  def __init__(self, dom):
-    self.dom = dom
-
-    dom.executeVoid("init()")
-
-  def put(self, lines):
-    command = f"displayLCD(`{json.dumps(lines).replace('\\','\\\\').replace('`','\`')}`);"
-    print(command)
-    self.dom.executeVoid(command)
-
-  def backlightOn(self):
-    pass
-
-
 async def displayLCD(dom, lines):
   command = f"displayLCD(`{json.dumps(lines).replace('\\','\\\\').replace('`','\`')}`);"
   print(command)
@@ -53,8 +38,8 @@ async def atk(dom):
 
 
 async def atkSubmit(dom):
-  lines =  dom.getValue("lcdtext")
-  hw.put(await lines)
+  lines =  await dom.getValue("lcdtext")
+  hw.put(lines)
   hw.backlightOn()
 
   await displayLCD(dom, lines)

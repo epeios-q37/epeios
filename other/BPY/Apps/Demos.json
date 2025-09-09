@@ -24,6 +24,7 @@
     "Servos",
     "TFT",
     "QRCode",
+    "LCD",
     "Boilerplate"
   ]
 }
