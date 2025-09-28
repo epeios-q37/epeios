@@ -38,7 +38,19 @@
         }
       ]
     }
-  }, {
+  },
+  {
+    "_comment": "Bare RPi Pico 2 W",
+    "devices": [ "Bravo" ],
+    "brand": "q37.info",
+    "model": "Bare",
+    "variant": "RPiPico(2)W",
+    "hardware": {
+      "OnBoardLed": [ "LED", true ]
+    },
+    "features": { }
+  }, 
+  {
     "_comment": "2.8 LCD TFT ILI9431",
     "devices": [ "Kilo" ],
     "brand": "q37.info",
@@ -125,7 +137,7 @@
     }
   }, {
     "_comment": "ESP32-C3 with displays",
-    "devices": [ "Alpha", "Golf" ],
+    "devices": [ "Alpha" ],
     "brand": "q37.info",
     "model": "Displays",
     "variant": "SSD1306",
@@ -351,7 +363,7 @@
     }
   }, {
     "_comment": "Bare ESP32-C3",
-    "devices": [ "India" ],
+    "devices": [  ],
     "brand": "q37.info",
     "model": "Bare",
     "variant": "ESP32-C3°",
