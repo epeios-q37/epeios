@@ -1,4 +1,34 @@
 <script>
+  function getHexBitmap(canvas) {
+    let ctx = canvas.getContext("2d");
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+
+    const binaryPixels = [];
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+      binaryPixels.push(luminance < 128 ? 1 : 0);
+    }
+
+    if (canvas.width % 4 !== 0) {
+      throw new Error("QR code width is not a multiple of 4 pixels.");
+    }
+
+    let hexString = "";
+    for (let i = 0; i < binaryPixels.length; i += 4) {
+      let val = 0;
+      for (let j = 0; j < 4; j++) {
+        val |= (binaryPixels[i + j] << (3 - j));
+      }
+      hexString += val.toString(16);
+    }
+
+    return hexString;
+  }
+
   async function QRCodeGenerate(data) {
     const url = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(data)}`;
     const img = new Image();
@@ -17,41 +47,59 @@
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imageData.data;
-
-    const binaryPixels = [];
-    for (let i = 0; i < pixels.length; i += 4) {
-      const r = pixels[i];
-      const g = pixels[i + 1];
-      const b = pixels[i + 2];
-      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-      binaryPixels.push(luminance < 128 ? 1 : 0);
-    }
-
-    const width = canvas.width;
-    if (width % 4 !== 0) {
-      throw new Error("QR code width is not a multiple of 4 pixels.");
-    }
-
-    let hexString = "";
-    for (let i = 0; i < binaryPixels.length; i += 4) {
-      let val = 0;
-      for (let j = 0; j < 4; j++) {
-        val |= (binaryPixels[i + j] << (3 - j));
-      }
-      hexString += val.toString(16);
-    }
-
-    return { hexString, width };
+    return getHexBitmap(canvas);
   }
 
-  function QRCodeLAunch(text) {
+  function QRCodeLaunch(text) {
     QRCodeGenerate(text)
-      .then(({ hexString, width }) => {
-        launchEvent(`${hexString}|BUTTON|click||(Display)`);
+      .then(hexString => {
+        image = {
+          pattern: hexString,
+          width: 120,
+          offsetX: 60,
+          offsetY: 6,
+          mul: 1
+        };
+
+        launchEvent(`${JSON.stringify(image)}|BUTTON|click||(Display)`);
       })
       .catch(e => console.error(e));
+  }
+
+  function createTextCanvas(text, x, y, width, font, fontSize) {
+    /* const canvas = document.createElement('canvas');*/
+
+    const canvas = document.getElementById('TXTCanvas');
+
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    /* const fontSize = Math.floor(height * 0.6); */
+    ctx.font = `${fontSize}px ${font}`;
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    ctx.fillStyle = 'black';
+
+    ctx.fillText(text, x, y, width);
+
+    return canvas;
+  }
+
+  function displayText(text, x, y, width, font, fontSize, coeff) {
+    canvas = createTextCanvas(text, x, y, width, font, fontSize);
+    image = {
+      pattern: getHexBitmap(canvas),
+      width: canvas.width,
+      offsetX: 0,
+      offsetY: 0,
+      mul: 1
+    };
+
+    launchEvent(`${JSON.stringify(image)}|BUTTON|click||(Display)`);
   }
 
 </script>

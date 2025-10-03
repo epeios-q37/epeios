@@ -2,11 +2,69 @@
   <legend>E-paper</legend>
   <fieldset>
     <legend>QR code</legend>
-    <input id="Text" xdh:onevent="Submit" type="text" style="width: 100%" placeholder="Text to convert"
+    <input id="QRCText" xdh:onevent="QRCSubmit" type="text" style="width: 100%" placeholder="Text to convert"
       value="https://q37.info/ucuq/">
     <div style="display: flex; justify-content: space-around; padding-top: 10px;">
-      <button xdh:onevent="Submit">Submit</button>
-      <button xdh:onevent="Clear">Clear</button>
+      <button xdh:onevent="QRCSubmit">Submit</button>
+      <button xdh:onevent="QRCClear">Clear</button>
+    </div>
+  </fieldset>
+  <fieldset style="display: flex; flex-direction: column; row-gap: 5px; justify-content: space-around;">
+    <legend>Text</legend>
+    <input id="TXTText" xdh:onevents="(TXTSubmit)(input|TXTUpdate)" type="text" value="Hello World!">
+    <span style="display: flex; justify-content: space-around">
+      <span style="display: flex; flex-direction: column; row-gap: 5px;">
+        <label style="display: flex; justify-content: space-between; width: 100%;">
+          <span>X:&nbsp;</span>
+          <input id="TXTX" xdh:onevent="input|TXTUpdate" type="number" min="0" max="250" value="0">
+        </label>
+        <label style="display: flex; justify-content: space-between; width: 100%;">
+          <span>Font size:&nbsp;</span>
+          <input id="TXTFontSize" xdh:onevent="input|TXTUpdate" type="number" min="8" max="150" value="100">
+        </label>
+      </span>
+      <span style="display: flex; flex-direction: column; row-gap: 5px;">
+        <label style="display: flex; justify-content: space-between; width: 100%;">
+          <span>Y:&nbsp;</span>
+          <input id="TXTY" xdh:onevent="input|TXTUpdate" type="number" min="0" max="122" value="0">
+        </label>
+        <label style="display: flex; justify-content: space-between; width: 100%;">
+          <span>Width:&nbsp;</span>
+          <input id="TXTWidth" xdh:onevent="input|TXTUpdate" type="number" min="8" max="248" value="248">
+        </label>
+      </span>
+    </span>
+    <label>Fonts:
+      <select id="TXTFont" xdh:onevent="TXTUpdate">
+        <option value="Arial, Helvetica, sans-serif">Arial</option>
+        <option value="'Arial Black', Gadget, sans-serif">Arial Black</option>
+        <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans MS</option>
+        <option value="'Courier New', Courier, monospace">Courier New</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="Impact, Charcoal, sans-serif">Impact</option>
+        <option value="'Palatino Linotype', 'Book Antiqua', Palatino, serif">Palatino</option>
+        <option value="'Tahoma', Geneva, sans-serif">Tahoma</option>
+        <option value="'Times New Roman', Times, serif">Times New Roman</option>
+        <option value="'Trebuchet MS', Helvetica, sans-serif">Trebuchet MS</option>
+        <option value="Verdana, Geneva, sans-serif">Verdana</option>
+        <option disabled>---</option>
+  <option value="Arial" style="font-family: Arial, sans-serif;">Arial</option>
+  <option value="Helvetica" style="font-family: Helvetica, sans-serif;">Helvetica</option>
+  <option value="Times New Roman" style="font-family: 'Times New Roman', serif;">Times New Roman</option>
+  <option value="Courier New" style="font-family: 'Courier New', monospace;">Courier New</option>
+  <option value="Verdana" style="font-family: Verdana, Geneva, sans-serif;">Verdana</option>
+  <option value="Georgia" style="font-family: Georgia, serif;">Georgia</option>
+  <option value="Trebuchet MS" style="font-family: 'Trebuchet MS', sans-serif;">Trebuchet MS</option>
+  <option value="Palatino" style="font-family: Palatino, serif;">Palatino</option>
+  <option value="Calibri" style="font-family: Calibri, sans-serif;">Calibri</option>
+  <option value="Cambria" style="font-family: Cambria, serif;">Cambria</option>      </select>
+    </label>
+    <span style="display: flex; justify-content: center;">
+      <canvas id="TXTCanvas" width="248" height="122" style="border: 1px solid black;"></canvas>
+    </span>
+    <div style="display: flex; justify-content: space-around; padding-top: 5px;">
+      <button xdh:onevent="TXTSubmit">Submit</button>
+      <button xdh:onevent="TXTClear">Clear</button>
     </div>
   </fieldset>
   <span style="display: flex; width:100%; justify-content: space-around; padding-top: 10px;">
