@@ -1,0 +1,84 @@
+<fieldset>
+  <legend>E-paper</legend>
+  <fieldset>
+    <legend>QR code</legend>
+    <input id="QRCText" xdh:onevent="QRCSubmit" type="text" style="width: 100%" placeholder="Text to convert"
+      value="https://q37.info/ucuq/">
+    <div style="display: flex; justify-content: space-around; padding-top: 10px;">
+      <button xdh:onevent="QRCSubmit">Submit</button>
+      <button xdh:onevent="QRCClear">Clear</button>
+    </div>
+  </fieldset>
+  <fieldset style="display: flex; flex-direction: column; row-gap: 5px; justify-content: space-around;">
+    <legend>Text</legend>
+    <input id="TXTText" xdh:onevents="(TXTSubmit)(input|TXTUpdate)" type="text" value="Hello World!">
+    <span style="display: flex; justify-content: space-around">
+      <span style="display: flex; flex-direction: column; row-gap: 5px;">
+        <span style="display: flex; flex-direction: row; justify-content: space-between;">
+          <label style="display: flex;">
+            <span>↔: </span>
+            <input type="checkbox" id="TXTCenterX" xdh:onevent="TXTCenterX" checked>
+          </label>
+          <label style="display: flex; align-items: baseline;">
+            <span>↕: </span>
+            <input type="checkbox" id="TXTCenterY" xdh:onevent="TXTCenterY" checked>
+          </label>
+        </span>
+        <label style="display: flex; justify-content: space-between; width: 100%;">
+          <span>X:&nbsp;</span>
+          <input id="TXTX" xdh:onevent="input|TXTUpdate" type="number" min="0" max="250" value="0" disabled>
+        </label>
+      </span>
+      <span style="display: flex; flex-direction: column; row-gap: 5px;">
+        <label style="display: flex; justify-content: space-between; width: 100%;">
+          <span>Width:&nbsp;</span>
+          <input id="TXTWidth" xdh:onevent="input|TXTUpdate" type="number" min="8" max="248" value="248">
+        </label> <label style="display: flex; justify-content: space-between; width: 100%;">
+          <span>Y:&nbsp;</span>
+          <input id="TXTY" xdh:onevent="input|TXTUpdate" type="number" min="0" max="122" value="0" disabled>
+        </label>
+
+      </span>
+    </span>
+    <span>
+      <label>Font:
+        <select id="TXTFont" xdh:onevent="TXTUpdate">
+          <option value="Arial, sans-serif" style="font-family:Arial, sans-serif;">Arial</option>
+          <option value="Verdana, sans-serif" style="font-family:Verdana, sans-serif;">Verdana</option>
+          <option value="Tahoma, sans-serif" style="font-family:Tahoma, sans-serif;">Tahoma</option>
+          <option value="Trebuchet MS, sans-serif" style="font-family:'Trebuchet MS', sans-serif;">Trebuchet MS</option>
+          <option value="Times New Roman, serif" style="font-family:'Times New Roman', serif;">Times New Roman</option>
+          <option value="Georgia, serif" style="font-family:Georgia, serif;">Georgia</option>
+          <option value="Garamond, serif" style="font-family:Garamond, serif;">Garamond</option>
+          <option value="Courier New, monospace" style="font-family:'Courier New', monospace;">Courier New</option>
+          <option value="Lucida Console, monospace" style="font-family:'Lucida Console', monospace;">Lucida Console
+          </option>
+          <option value="Comic Sans MS, cursive, sans-serif" style="font-family:'Comic Sans MS', cursive, sans-serif;">
+            Comic Sans MS</option>
+          <option value="Impact, Charcoal, sans-serif" style="font-family:Impact, Charcoal, sans-serif;">Impact</option>
+          <option value="Palatino Linotype, Book Antiqua, Palatino, serif"
+            style="font-family:'Palatino Linotype', 'Book Antiqua', Palatino, serif;">Palatino Linotype</option>
+          <option value="Segoe UI, sans-serif" style="font-family:'Segoe UI', sans-serif;">Segoe UI</option>
+          <option value="Calibri, sans-serif" style="font-family:Calibri, sans-serif;">Calibri</option>
+          <option value="Cambria, serif" style="font-family:Cambria, serif;">Cambria</option>
+          <option value="Optima, sans-serif" style="font-family:Optima, sans-serif;">Optima</option>
+          <option value="serif" style="font-family:serif;">Serif (générique)</option>
+          <option value="monospace" style="font-family:monospace;">Monospace (générique)</option>
+          <option value="cursive" style="font-family:cursive;">Cursive (générique)</option>
+          <option value="fantasy" style="font-family:fantasy;">Fantasy (générique)</option>
+        </select>
+      </label>
+      <input id="TXTFontSize" xdh:onevent="input|TXTUpdate" type="number" min="8" max="150" value="100">
+    </span>
+    <span style="display: flex; justify-content: center;">
+      <canvas id="TXTCanvas" width="248" height="122" style="border: 1px solid black;"></canvas>
+    </span>
+    <div style="display: flex; justify-content: space-around; padding-top: 5px;">
+      <button xdh:onevent="TXTSubmit">Submit</button>
+      <button xdh:onevent="TXTClear">Clear</button>
+    </div>
+  </fieldset>
+  <span style="display: flex; width:100%; justify-content: space-around; padding-top: 10px;">
+    <button xdh:onevent="Reset">Reset</button>
+  </span>
+</fieldset>

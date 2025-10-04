@@ -66,10 +66,29 @@
       .catch(e => console.error(e));
   }
 
-  function createTextCanvas(text, x, y, width, font, fontSize) {
-    /* const canvas = document.createElement('canvas');*/
 
-    const canvas = document.getElementById('TXTCanvas');
+  function getCenteredTextCoordinates(ctx, text, canvasWidth, canvasHeight, maxWidth) {
+    const metrics = ctx.measureText(text);
+
+    const ascent = metrics.actualBoundingBoxAscent || 0;
+    const descent = metrics.actualBoundingBoxDescent || 0;
+    const fullWidth = metrics.width;
+    const textHeight = ascent + descent;
+    const textWidth = Math.min(fullWidth, maxWidth);
+
+    ctx.textAlign = 'start';
+
+    const x = Math.floor(Math.max((canvasWidth - textWidth) / 2, 0));
+
+    const y = Math.floor((canvasHeight / 2) + (ascent - textHeight / 2));
+
+    return { x, y };
+  }
+
+
+
+  function createTextCanvas(canvasId, text, x, y, width, font, fontSize, centerX, centerY) {
+    canvas = document.getElementById(canvasId);
 
     const ctx = canvas.getContext('2d');
 
@@ -80,17 +99,26 @@
     ctx.font = `${fontSize}px ${font}`;
 
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
+    ctx.textBaseline = 'bottom';
 
     ctx.fillStyle = 'black';
 
+    let centeredX = 0, centeredY = 0;
+
+    const centeredCoords = getCenteredTextCoordinates(ctx, text, canvas.width, canvas.height, width);
+
+    x = centerX ? centeredCoords['x'] : x;
+    y = centerY ? centeredCoords['y'] : y;
+
     ctx.fillText(text, x, y, width);
 
-    return canvas;
+    return { x, y };
   }
 
-  function displayText(text, x, y, width, font, fontSize, coeff) {
-    canvas = createTextCanvas(text, x, y, width, font, fontSize);
+
+  function displayText(canvasId, text, x, y, width, font, fontSize, coeff, centerX, centerY) {
+    canvas = document.getElementById(canvasId);
+
     image = {
       pattern: getHexBitmap(canvas),
       width: canvas.width,
