@@ -1,12 +1,22 @@
 # Notes à l'usage du développeur
 
+## Publication
+
+Est publié dans le dépôt *ucuq-python*. LE *README* n'est donc pas utilisé.
+
 ## *Micropython*
+
+### Installation
+
+Utiliser les scripts `UCQD_FlashErase` et `UCQD_FlashWrite <firmware>`.
+
+### Extension *CSCode*
 
 L'extension *VSCode* *MicroPython* permet de lancer l'exécution d'un fichier *Python* sur un *Raspberry Pico (W)*, mais fonctionne aussi avec quelques *ESP32* bien que cette extension est censé être dédiés au *Raspberry Pico (W)*
 
 ## Connection au WiFi
 
-Le code suivant peut être utilisé pour la fonction *init_* de quelques *ESP32*,, mais pas avec un *Raspberry Pi Pico W*, pour lequel `poller.poll()` rend la main de suite malgré le *timeout*. L'objet *socket* contient alors un membre *status* dont la valeur diffère selon que la connection a réussi ou non (à investiguer).
+Le code suivant peut être utilisé pour la fonction *init_* de quelques *ESP32*, mais pas avec un *Raspberry Pi Pico W*, pour lequel `poller.poll()` rend la main de suite malgré le *timeout*. L'objet *socket* contient alors un membre *status* dont la valeur diffère selon que la connection a réussi ou non (à investiguer).
 
 Code inspiré par <https://github.com/micropython/micropython/issues/8326#issuecomment-1629036122>.
 

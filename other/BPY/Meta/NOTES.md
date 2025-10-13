@@ -89,29 +89,15 @@ python3 setup.py sdist bdist_wheel
 
 `python3 -m twine upload dist/*` (le *token* se trouve dans le fichier *Comptes.md*).
 
-## 2.8 TFT ESP32 VROOM
+## *Firmware* d'origine
 
-### Firmware d'origine
+- lecture `esptool.py read_flash 0x00000 <size> <file>`
+- écriture : `esptool.py write_flash 0x00000 <file>`
 
-- lecture `esptool.py --chip esp32 --port /dev/ttyUSB0 read_flash 0x00000 0x400000 backup.bin`
-- écriture : `esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash 0x00000 backup.bin`
+*<size>* : taille de la flash en hexa (ex. : `0x400000` pour un 4MB, `0x800000` pour une 8 MB…) ;
+*<file>* : nom du fichier contenant le *firmware* (généralement avec l'extemsion `.bin`).
 
-## E-paper WeAct 2.13"
-
-Branchement de l'e-paper 2.13" de *WeAct* sur l'*ESP32-C3* mini de *TenStar* :
-
-| e-paper | ESP32-C3  | param.
-|---|---|---|
-| VCC                      | 3.3V                         |
-| GND                      | GND                          |
-| BUSY                     | GPIO 3                       | busy
-| RES (reset)              | GPIO 2                       | rst
-| D/C (data/command)       | GPIO 1                       | dc
-| CS (chip select)         | GPIO 7                       | cs
-| SCL (SPI clock)          | GPIO 4                       | sck
-| SDA (SPI data)           | GPIO 6                       | mosi
-
-### Brochage *ESP32-C3* de *TenStar*
+## Brochage *ESP32-C3* de *TenStar*
 
 Vu de dessus, USB en-haut.
 
@@ -125,3 +111,28 @@ Vu de dessus, USB en-haut.
 | GPIO10 | MOSI | D10 | GPIO2 | A0 | D0
 | GPIO20 | RX | D7 | GPIO1 | ADC1-1
 | GPIO21 | TX | D6 | GPIO0 | ADC1-0
+
+## *E-paper*
+
+Driver : <https://github.com/mcauser/micropython-waveshare-epaper>,
+
+### E-paper WeAct 2.13"
+
+Branchement de l'e-paper 2.13" de *WeAct* sur l'*ESP32-C3* mini de *TenStar* :
+
+| e-paper | ESP32-C3  | param.
+|---|---|---
+| VCC                      | 3.3V
+| GND                      | GND
+| BUSY                     | GPIO 3                       | busy
+| RES (reset)              | GPIO 2                       | rst
+| D/C (data/command)       | GPIO 1                       | dc
+| CS (chip select)         | GPIO 7                       | cs
+| SCL (SPI clock)          | GPIO 4                       | sck
+| SDA (SPI data)           | GPIO 6                       | mosi
+
+Driver alternatif : <https://github.com/peterhinch/micropython-nano-gui/blob/master/drivers/epaper/epd29_ssd1680.py>
+
+### CRow 2.19"
+
+Documentation : <https://www.elecrow.com/wiki/CrowPanel_ESP32_E-paper_2.9-inch_HMI_Display.html>
