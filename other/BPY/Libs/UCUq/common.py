@@ -7,8 +7,7 @@ K_DEVICE = "Device"
 K_DEVICE_TOKEN = "Token"
 K_DEVICE_ID = "Id"
 
-ONE_DEVICE_VTOKEN = "%ONE_DEVICE_VTOKEN%"
-ALL_DEVICES_VTOKEN = "%ALL_DEVICES_VTOKEN%"
+DEMO_VTOKEN = "%DEMO_VTOKEN%"
 
 FLASH_DELAY_ = 0
 
@@ -527,8 +526,6 @@ async def ATKConnectAwait(dom, body, *, target = "", device = None):
   
   if device or CONFIG_:
     device = getDevice(device)
-  elif useUCUqDemoDevices():
-    device = getDemoDevice()
 
   if not device:
     await dom.inner(target, "<h3>ERROR: Please launch the 'Config' application!</h3>")
@@ -567,11 +564,8 @@ def getDevice(device = None, *, id = None, token = None):
     if token or id:
       device_ = Device(id = id, token = token)
     elif device_ == None:
-      if useUCUqDemoDevices():
-        device_ = getDemoDevice()
-      else:
-        device_ = Device()
-        device_.connect()
+      device_ = Device()
+      device_.connect()
     return device_
   else:
     return device

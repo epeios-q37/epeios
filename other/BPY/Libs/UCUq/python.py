@@ -53,8 +53,6 @@ A_ERROR_ = 2
 A_PUZZLED_ = 3
 A_DISCONNECTED_ = 4
 
-useUCUqDemoDevices = lambda: False
-
 def recv_(socket, size):
   buffer = bytes()
   l = 0
@@ -253,7 +251,7 @@ class Device_:
     if not token:
       token = getConfigToken_()
 
-    self.token = token if token else ALL_DEVICES_VTOKEN
+    self.token = token if token else DEMO_VTOKEN
     self.id = id if id else ""
 
     self.proxy = Proxy(connect_(self.token, self.id, errorAsException = errorAsException))
@@ -299,9 +297,6 @@ class Device_:
       self.commands_ = []
 
     return result
-
-def getDemoDevice():
-  return None
 
 def getWebFileContent(url):
   parsedURL = urllib.parse.urlparse(url)

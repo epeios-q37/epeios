@@ -23,13 +23,6 @@ Modifier le script *B/Launch*.
 
 Pour cela, placer un `xdh:onevent="dblclick|UCUqXDevice"` sur l'élément qui va servir de déclencheur de l'affichage de l'interface permettant de saisir les paramètre du nouveau *device*, et créer la fonction `async def UCUqXDevice(dom, device):` afin de créer, à partir de `device`, les différents composants utilisés.
 
-## Paramètre `useUCUqDemoDevices`
-
-Le paramètre `useUCUqDemoDevices` de *Libs/htdocs/index.php* est passé à *Libs/htdocs/brython.php* lorsqu'il est présent.
-Lors du lancement d'une application *Brython* utilisant *UCUq*, lorsque le dispositif à utiliser n'est pas configuré, c'est le dispositif de démonstration qui est utilisé. Si *useUCUqDemoDevices* n'est pas présent, un message s'affiche demandant de lancer l'application *Config*.
-
-Utilisé dans les démos de la page consacré à *UCUq* pour le site *ng.q37.info* (voir *ucuq.js*). Permet de ne pas avoir à lancer l'application *Config*.
-
 ## Passage du code source en paramètre
 
 À l'instar du code XML pour *Blockly*, le code source passé à *Brython*, via le paramètre *code*, est compressé puis encodé en base 64 et en paramètre d'URL. La (dé)compression se fait à l'aide des scripts *Q_(un)packURI*.

@@ -9,8 +9,6 @@ LIB_VERSION = "0.0.1"
 
 CONFIG_ITEM_ = "ucuq-config"
 
-useUCUqDemoDevices = ucuqjs.useUCUqDemoDevices
-
 try:
   CONFIG_ = json.loads(storage[CONFIG_ITEM_])
 except:
@@ -89,7 +87,7 @@ class Device_:
     if not token:
       token = getConfigToken_()
 
-    self.device_ = ucuqjs.launch(token if token else ALL_DEVICES_VTOKEN, id if id else "", LIB_VERSION, callback if callback else lambda answer: answer.replace(ALL_DEVICES_VTOKEN, "<demo token>")) # 'None' is NOT converted in 'undefined' in JS.
+    self.device_ = ucuqjs.launch(token if token else DEMO_VTOKEN, id if id else "", LIB_VERSION, callback if callback else lambda answer: answer.replace(DEMO_VTOKEN, "<demo token>")) # 'None' is NOT converted in 'undefined' in JS.
 
 
   def upload_(self, modules):
@@ -154,27 +152,6 @@ def ignitionCallback(data, answer, errorMessage):
   data["lock"].release()
 
   return "" if success else errorMessage
-
-
-async def getDemoDeviceAwaitOld():
-  data = {
-    "lock": Lock_()
-  }
-
-  await data["lock"].acquireAwait()
-
-  device = Device(token = ONE_DEVICE_VTOKEN, callback = lambda answer: ignitionCallback(data, answer, "Please launch the 'Config' application!"))
-
-  await data["lock"].acquireAwait()
-
-  if data["success"]:
-    return device
-  else:
-    return None
-
-
-def getDemoDevice():
-  return Device(token = ONE_DEVICE_VTOKEN, callback = lambda answer: "Please launch the 'Config' application!" if len(answer) else "")
 
 
 async def getWebFileContentAwait(url):
