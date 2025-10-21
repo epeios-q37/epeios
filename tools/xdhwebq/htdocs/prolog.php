@@ -28,7 +28,8 @@ $out = str_replace(array("\r", "\n", "\t"), '',<<<MLS
       <meta name="viewport" content="width=device-width, initial-scale=1"/>
       <script src="xdhtml.js"></script>
       <script src="xdhwebq.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/eruda@3.4.1/eruda.min.js"></script>      
+      <script src="tools.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/eruda@3.4.1/eruda.min.js"></script>      
       <style id="XDHStyle">
         html, body {
           margin: 0;

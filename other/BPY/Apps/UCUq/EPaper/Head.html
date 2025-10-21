@@ -17,7 +17,7 @@
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
 
-    return getHexBitmap(canvas);
+    return UCQT_getHexBitmap(canvas);
   }
 
   function QRCodeLaunch(text) {
@@ -90,7 +90,7 @@
     canvas = document.getElementById(canvasId);
 
     image = {
-      pattern: getHexBitmap(canvas),
+      pattern: UCQT_getHexBitmap(canvas),
       width: canvas.width,
       offsetX: 0,
       offsetY: 0,

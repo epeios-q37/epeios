@@ -36,11 +36,8 @@ async def atk(dom):
 
   await ucuq.ATKConnectAwait(dom, BODY)
 
-  # epaper = ucuq.SSD1680_SPI(7, 1, 2, 3, ucuq.SPI(1, baudrate=2000000, polarity=0, phase=0, sck=4, mosi=6))
-  epaper = ucuq.SSD1680_SPI(
-    cs=45, dc=46, rst=47, busy=48,
-    spi=ucuq.SPI(1, baudrate=2000000, polarity=0, phase=0, sck=12, mosi=11)
-  )
+  epaper = ucuq.SSD1680_SPI(7, 1, 2, 3, ucuq.SPI(1, baudrate=2000000, polarity=0, phase=0, sck=4, mosi=6))
+  # epaper = ucuq.SSD1680_SPI( cs=45, dc=46, rst=47, busy=48, spi=ucuq.SPI(1, baudrate=2000000, polarity=0, phase=0, sck=12, mosi=11)  )
   epaper.fill(0).hText("E-paper ready !", 50).hText(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"), 75).show()
 
   await dom.focus(W_QRC_TEXT)
@@ -50,7 +47,7 @@ async def atk(dom):
 # Called from JS!
 async def atkDisplay(dom, data):
   image = json.loads(data)
-
+  
   epaper.fill(0).draw(image["pattern"], width = image['width'], ox = image['offsetX'], oy = image['offsetY'], mul = image['mul']).show()
 
 
@@ -96,8 +93,5 @@ async def atkTXTCenterY(dom, id):
 
 async def atkReset(dom, id):
   global epaper
-#  epaper = ucuq.SSD1680_SPI(7, 1, 2, 3, ucuq.SPI(1, baudrate=2000000, polarity=0, phase=0, sck=4, mosi=6)).fill(0).show()
-ucuq.SSD1680_SPI(
-    cs=45, dc=46, rst=47, busy=48,
-    spi=ucuq.SPI(1, baudrate=2000000, polarity=0, phase=0, sck=12, mosi=11)
-  ).fill(0).show()
+  epaper = ucuq.SSD1680_SPI(7, 1, 2, 3, ucuq.SPI(1, baudrate=2000000, polarity=0, phase=0, sck=4, mosi=6)).fill(0).show()
+#  ucuq.SSD1680_SPI(cs=45, dc=46, rst=47, busy=48,spi=ucuq.SPI(1,baudrate=2000000, polarity=0, phase=0, sck=12, mosi=11)).fill(0).show()
