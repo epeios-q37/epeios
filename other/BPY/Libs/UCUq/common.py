@@ -1278,6 +1278,7 @@ class SSD1680_SPI(OLED_):
 
   def init(self, cs, dc, rst, busy, spi, landscape=False, extra=True):
     super().init("SSD1680-1", f"SSD1680({spi.getObject()},machine.Pin({cs}, machine.Pin.OUT),machine.Pin({dc}, machine.Pin.OUT),{rst},machine.Pin({busy}, machine.Pin.IN),{landscape})",spi.getDevice(), extra)
+    self.addMethods("init()")
 
   def hText(self, *args, trueWidth=None, **kargs):
     return super().hText(*args, trueWidth=trueWidth or 250, **kargs)
