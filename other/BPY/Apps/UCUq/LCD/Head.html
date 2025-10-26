@@ -394,13 +394,13 @@
 
   function updateLCD() {
     let text = document.getElementById('lcdtext').value;
-    let lines = text.split('\n').slice(0, nbRows);
+    let lines = text.split('\\n').slice(0, nbRows);
     renderLCD(lines);
   }
 
   function displayLCD(escapedLines) {
     console.log(escapedLines, escapedLines.length);
-    let lines = JSON.parse(escapedLines).split('\n');
+    let lines = JSON.parse(escapedLines).split('\\n');
     console.log(lines);
     renderLCD(lines.slice(0, nbRows));
   }
