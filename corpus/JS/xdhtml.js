@@ -812,9 +812,13 @@ function handleEvent(event) {
 
 		if (key === 13) {
 			keys += "Enter"
-			event.preventDefault();	/* Without this, when a text box has an 'Enter' event handler, the 'Enter' will be also applied to a
-									   to a potential alert box reporting an error, preventing it to be displayed. This is only a workaround ;
-									   another solution should be found. */
+			event.preventDefault();
+			/*
+				Without this, when a text box has an 'Enter' event handler,
+				the 'Enter' will be also applied to a potential alert box
+				reporting an error, preventing it to be displayed.
+				This is only a workaround ; another solution should be found.
+			*/
 		} else if (key === 27)
 			keys += "Esc"
 		else if (key < 32)

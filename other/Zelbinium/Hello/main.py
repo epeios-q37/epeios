@@ -2,7 +2,7 @@ import atlastk
 
 HEAD = """
 <title>Hello, World! | Zelbinium</title>
-<link rel="icon" type="image/png" href="https://zelbinium.q37.info/Avatar.png" />
+<link rel="icon" type="image/png" href="https://zelbinium.org/Avatar.png" />
 """
 
 BODY = """
