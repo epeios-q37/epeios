@@ -17,11 +17,7 @@ Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with xdhwebq. If not, see <http://www.gnu.org/licenses/>.
 */ 
-
-// NOTA: '$_REQUEST["text"]' is already URL decoded…
-$html = base64_decode($_REQUEST["text"]);
-
-$out = <<<EOS
+?>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<script>
@@ -33,9 +29,6 @@ $out = <<<EOS
 	</script>
 </head>
 <body onload="adjust();">
-$html
+<!-- NOTA: '$_REQUEST["text"]' is already URL decoded… -->
+<?= base64_decode($_REQUEST["text"]) ?>
 </body>
-EOS;
-
-echo $out;
-?>

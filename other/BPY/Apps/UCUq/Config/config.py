@@ -61,7 +61,7 @@ def isDev():
   return atlastk.isDev()
 
 # BEGIN BRY
-from browser.session_storage import storage
+from browser.local_storage import storage
 
 CONFIG_ITEM = "ucuq-config"
 

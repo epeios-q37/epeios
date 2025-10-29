@@ -16,26 +16,29 @@ Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with xdhwebq. If not, see <http://www.gnu.org/licenses/>.
-*/ 
+*/
+?>
 
-$out='
 <head>
-	<meta charset="UTF-16"></meta>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js" integrity="sha512-L03kznCrNOfVxOUovR6ESfCz9Gfny7gihUX/huVbQB9zjODtYpxaVtIaAkpetoiyV2eqWbvxMH9fiSv5enX7bw==" crossorigin="anonymous"></script>
+	<meta charset="UTF-16">
+	</meta>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"
+		integrity="sha512-L03kznCrNOfVxOUovR6ESfCz9Gfny7gihUX/huVbQB9zjODtYpxaVtIaAkpetoiyV2eqWbvxMH9fiSv5enX7bw=="
+		crossorigin="anonymous"></script>
 	<script>
 		function markdownToHTML(text) {
 			converter = new showdown.Converter();
-			return converter.makeHtml(text).replace(/<a /g, "<a target=\'_blank\' ");
+			return converter.makeHtml(text).replace(/<a /g, "<a target='_blank' ");
 		}
 		function b64DecodeUnicode(str) {
-			return decodeURIComponent(atob(str).split("").map(function(c) {
+			return decodeURIComponent(atob(str).split("").map(function (c) {
 				return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
 			}).join(""));
 		}
 		function adjust() {
 			let iframe = window.parent.document.body.firstElementChild.firstElementChild;
 			iframe.height = "1px";
-			iframe.height = iframe.contentWindow.document.body.scrollHeight + \'px\';
+			iframe.height = iframe.contentWindow.document.body.scrollHeight + 'px';
 		}
 	</script>
 	<style>
@@ -44,7 +47,7 @@ $out='
 			width: 620px;
 		}
 
-		details > summary {
+		details>summary {
 			padding: 2px 6px;
 			width: 15em;
 			background-color: #ddd;
@@ -53,7 +56,7 @@ $out='
 			cursor: pointer;
 		}
 
-		details > div {
+		details>div {
 			border-radius: 0 0 10px 10px;
 			background-color: #ddd;
 			padding: 2px 6px;
@@ -77,15 +80,13 @@ $out='
 			animation-name: fadeIn;
 			animation-duration: 1s;
 		}
-	</style>	
+	</style>
 </head>
-<body onload="document.getElementById(\'desc\').innerHTML=markdownToHTML(b64DecodeUnicode(\'' . $_REQUEST["text"]. '\'));adjust();">
+
+<body
+	onload="document.getElementById('desc').innerHTML=markdownToHTML(b64DecodeUnicode('<?= $_REQUEST["text"] ?>'));adjust();">
 	<details ontoggle="adjust();" style="width: 100%;">
 		<summary>Description</summary>
-		<div id="desc"/>
+		<div id="desc"></div>
 	</details>
 </body>
-';
-
-echo $out;
-?>

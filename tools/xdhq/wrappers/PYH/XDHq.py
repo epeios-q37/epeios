@@ -54,7 +54,7 @@ def launch(callback, userCallback, callbacks, callingGlobals, headContent, l10n)
 	_l10n = l10n
 
 	return XDHqFaaS.launch(callback, userCallback, callbacks, callingGlobals, headContent)
- 
+
 def _split(keysAndValues):
 	keys = []
 	values = []

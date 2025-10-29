@@ -1,7 +1,7 @@
 import javascript, json, sys
 
 from browser import aio, ajax, alert, console
-from browser.session_storage import storage
+from browser.local_storage import storage
 
 javascript.import_js("ucuq.js", "ucuqjs")
 

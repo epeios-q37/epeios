@@ -22,10 +22,8 @@ const PATTERN = "_supplier=qrcode";
 
 $rawUrl = $_REQUEST['url'];
 $url = str_replace("&" . PATTERN, "", $rawUrl);
-$detailsOpenAttribute = strpos($rawUrl, PATTERN) ? 'open="open"' : "";
 $qrCodeId = "QRCode";
-
-echo <<<EOS
+?>
 <head>
   <script src="qrcode.min.js"></script>
   <script>
@@ -34,7 +32,7 @@ echo <<<EOS
       iframe.height = '50px';
       let body = document.body;
       iframe.height = body.scrollHeight + 'px';
-      document.getElementById("$qrCodeId").scrollIntoView({block: "end"});
+      document.getElementById("<?= $qrCodeId ?>").scrollIntoView({block: "end"});
     }
   </script>
   <style>
@@ -51,7 +49,7 @@ echo <<<EOS
   </style>
   <script>
   function toggle() {
-    var x = document.getElementById("$qrCodeId");
+    var x = document.getElementById("<?= $qrCodeId ?>");
     if (x.style.display === "none") {
       x.style.display = "flex";
     } else {
@@ -108,7 +106,7 @@ echo <<<EOS
   </style>
   <script>
   function prepare() {
-    new QRCode('$qrCodeId', {width:100, height:100, correctLevel: QRCode.CorrectLevel.L}).makeCode('$url');
+    new QRCode('<?= $qrCodeId ?>', {width:100, height:100, correctLevel: QRCode.CorrectLevel.L}).makeCode('<?= $url ?>');
     adjustHeight();
 
     let id = undefined;
@@ -124,7 +122,7 @@ echo <<<EOS
 
   function copy() {
     if ( window.isSecureContext ) {
-      navigator.clipboard.writeText("$url");
+      navigator.clipboard.writeText("<?= $url ?>");
       var popup = document.getElementById("copyReport");
       popup.classList.toggle("show");
       setTimeout(() => popup.classList.remove("show"), 2500);
@@ -135,7 +133,7 @@ echo <<<EOS
   function share() {
     if (navigator.share) { 
       navigator.share({
-        url: "$url"
+        url: "<?= $url ?>"
       })
     } else
         alert("Sharing not available in this context.\\nPlease right click/long press the QR code.");
@@ -163,10 +161,8 @@ echo <<<EOS
         <img title="Powered by the Atlas toolkit" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAbpJREFUSEul1E2IT2EUBvDfZHyUZkOJsNAsRo2ylA0LaWQjZGUslWZlLJCPko+wYkqUsvHRbIZhpWwsfGQ7FAmRj5W1hRWdeqdub/d/7/u/825u3fc9z3POc55zBpSfrVje8HwOv/P7gUL8cdxreTuDA10IIuuP+IXTNSRHsB9jeNaF4DzOYBteZgDr8QFP67KPt20SrUvZP8KhmuwfYhdG8a1OwjaCaezBRnzPAHYmSU7hcq/+NBGEa14hJDqXASzBWyzCJvztlyCI32AtRvAnA4isL2F30r+nwXpVEHrfTbrfz6JX4zMG8aJyN4ubJS6at+VPhEz/sqBVuINl6f92LMZZXCwhuJD8XmfLPP4KTuA6JktctAZfUtavKwFPcCMDuIajiO+x0ibn5Q9hC25hogJSBF4yaMdxFZuTLSOmVZZqNU1zEB7/hK/YkYL6Am+rYB9iFezF4zStJ5saWtLk6pvn2IDhZL++wZsqiOX1DtGDlegE3kRwGwfxAIf7laWtySvwA0vTMoshCp/nE91z/7QRxGSGW+IsCLxOonlrRnMXDF5HELs9mjuVdksnWdokCge976p53pj/x8VXGXemjWsAAAAASUVORK5CYII="/>
       </a>
     </div>
-    <a style="color: transparent;" target="_blank" href="$url">
-      <div title="$url" style="display: none; justify-content: space-around; padding: 5px 0px 10px" id="$qrCodeId"></div>
+    <a style="color: transparent;" target="_blank" href="<?= $url ?>">
+      <div title="<?= $url ?>" style="display: none; justify-content: space-around; padding: 5px 0px 10px" id="<?= $qrCodeId ?>"></div>
     </a>
   </div>
 </body>
-EOS;
-?>

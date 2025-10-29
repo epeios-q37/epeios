@@ -23,35 +23,36 @@ error_reporting(E_ALL);
 $host = "localhost";
 $service = 53710;
 
-function send($query) {
- /* creates a TCP/IP socket. */
- global $host, $service;
+function send($query)
+{
+  /* creates a TCP/IP socket. */
+  global $host, $service;
 
- $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+  $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 
- if ($socket === false) {
-  echo "socket_create() fails :  " . socket_strerror(socket_last_error()) . "\n";
-  return;
- }
+  if ($socket === false) {
+    echo "socket_create() fails :  " . socket_strerror(socket_last_error()) . "\n";
+    return;
+  }
 
- $result = socket_connect($socket, gethostbyname($host), $service);
+  $result = socket_connect($socket, gethostbyname($host), $service);
 
- if ($result === false) {
-  echo "Unable to connect to " . gethostbyname($host) . ":" . $service . "!\n";
-  return;
- }
+  if ($result === false) {
+    echo "Unable to connect to " . gethostbyname($host) . ":" . $service . "!\n";
+    return;
+  }
 
- socket_write($socket, $query, strlen($query));
+  socket_write($socket, $query, strlen($query));
 
- $answer = "";
+  $answer = "";
 
- while ($data = socket_read($socket, 2048)) {
-  $answer .= $data;
- }
+  while ($data = socket_read($socket, 2048)) {
+    $answer .= $data;
+  }
 
- socket_close($socket);
+  socket_close($socket);
 
- return $answer;
+  return $answer;
 }
 
 $token = $_REQUEST["_token"];
@@ -59,7 +60,7 @@ $qrcodeOnly = $_REQUEST["_supplier"] == "qrcode" ? "true" : "false";    // Used 
 $head = send("XDH web prolog\r\nToken: " . $token . "\r\n\r\n");
 
 if (empty($token))
-    $additional = ' style="display: none;"';
+  $additional = ' style="display: none;"';
 
 $id = $_REQUEST["_id"];
 $parameters = $_SERVER['QUERY_STRING'];
@@ -68,4 +69,3 @@ require 'prolog.php';
 
 echo $out;
 ?>
-
