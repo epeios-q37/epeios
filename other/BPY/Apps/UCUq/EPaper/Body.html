@@ -32,10 +32,10 @@
       <span style="display: flex; flex-direction: column; row-gap: 5px;">
         <label style="display: flex; justify-content: space-between; width: 100%;">
           <span>Width:&nbsp;</span>
-          <input id="TXTWidth" xdh:onevent="input|TXTUpdate" type="number" min="8" max="248" value="248">
+          <input id="TXTWidth" xdh:onevent="input|TXTUpdate" type="number" min="8" max="296" value="248">
         </label> <label style="display: flex; justify-content: space-between; width: 100%;">
           <span>Y:&nbsp;</span>
-          <input id="TXTY" xdh:onevent="input|TXTUpdate" type="number" min="0" max="122" value="0" disabled>
+          <input id="TXTY" xdh:onevent="input|TXTUpdate" type="number" min="0" max="128" value="0" disabled>
         </label>
 
       </span>
@@ -71,7 +71,7 @@
       <input id="TXTFontSize" xdh:onevent="input|TXTUpdate" type="number" min="8" max="150" value="100">
     </span>
     <span style="display: flex; justify-content: center;">
-      <canvas id="TXTCanvas" width="248" height="122" style="border: 1px solid black;"></canvas>
+      <canvas id="TXTCanvas" width="296" height="128" style="border: 1px solid black;"></canvas>
     </span>
     <div style="display: flex; justify-content: space-around; padding-top: 5px;">
       <button xdh:onevent="TXTSubmit">Submit</button>
