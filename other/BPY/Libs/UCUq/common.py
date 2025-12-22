@@ -1035,6 +1035,47 @@ class PWM(Core_):
 
   def deinit(self):
     return self.addMethods(f"deinit()")
+  
+BUZZER_COEFF_ = 2 ** (1/12)
+BASE_FREQ_ = 6.875
+  
+class Buzzer():
+  def __init__(self, pwm=None, *, u16=32000, device=None, extra=True):
+    self.on_ = False
+    self.init(pwm, u16=u16, device=device, extra=extra)
+
+  def init(self, pwm, *, u16=32000, device=None, extra=True):
+    self.u16_ = u16
+    self.pwm_ = pwm
+    
+    if pwm is not None:
+      self.pwm_.setU16(0)
+    
+    return self
+    
+  def off(self):
+    if self.on_:
+      self.on_ = False
+      self.pwm_.setU16(0)
+      
+    return self
+    
+  def on(self, freq):
+    if freq == 0:
+      self.off()
+    elif self.on_:
+        self.pwm_.setFreq(freq)
+    else:
+        self.pwm_.setFreq(freq).setU16(self.u16_)
+        self.on_ = True
+
+    return self
+        
+  def play(self, note):
+    if note == 0:
+      return self.off()
+    else:
+      return self.on(round(BASE_FREQ_ * BUZZER_COEFF_ ** ( note + 3 )))
 
 
 class PCA9685(Core_):
