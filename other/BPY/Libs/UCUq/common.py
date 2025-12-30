@@ -1,4 +1,4 @@
-import zlib, base64, time, atlastk, binascii
+import zlib, base64, time, atlastk, binascii, re
 
 ITEMS_ = "i_"
 
@@ -1719,3 +1719,100 @@ def setCommitBehavior(behavior):
   global defaultCommitBehavior_
 
   defaultCommitBehavior_ = behavior
+  
+  
+PP_NOTE_MAP_ = {
+  'C': -9, 'C#': -8, 'Db': -8, 'D': -7, 'D#': -6, 'Eb': -6,
+  'E': -5, 'F': -4, 'F#': -3, 'Gb': -3, 'G': -2, 'G#': -1, 'Ab': -1,
+  'A': 0, 'A#': 1, 'Bb': 1, 'B': 2
+}  
+  
+def ppNote2Midi_(noteStr, octave):
+  if noteStr == 'R':
+    return 0  # silence
+  elif noteStr == '-':
+    return -1
+  
+  if len(noteStr) == 2 and noteStr[1] in('b','#'):
+    noteKey = noteStr
+  else:
+    noteKey = noteStr[0]
+
+  if noteKey not in PP_NOTE_MAP_:
+    return 0
+  
+  return 12 * (int(octave) + 2) + PP_NOTE_MAP_[noteKey]
+
+
+def ppDuration2Seconds_(duration, base, dots=0):
+  value = 1 / (2 ** (4 - duration))
+
+  total = value
+  
+  if dots == -1:
+    total = total * 2  / 3
+  else:
+    for _ in range(dots):
+      value /= 2
+      total += value
+
+  return base * total
+
+
+def ppParseNoteString_(note_str, base):
+  match = re.match(r'([A-Z][b#]?)(\d)(\d)(\.*,?)', re.sub(r"\s+", "", note_str))
+
+  if not match:
+    match = re.match(r'([R\-])(\d)(\.*,?)', note_str)
+
+    if not match:
+      return None
+
+    octave = 0
+    note, duration, dots = match.groups()
+  else:
+    note, octave, duration, dots = match.groups()
+    
+  return ppNote2Midi_(note, int(octave)), ppDuration2Seconds_(int(duration), base, len(dots) if len(dots) == 0 or dots[0] != ',' else -1),
+
+
+def ppExtractNotes_(voice_str):
+  return re.findall(r'([A-Z\-][b#]?\d\d\.*,?|[R\-]\d\.*,?)', voice_str)
+
+
+def polyphonicPlay(voices, tempo, userObject, callback):
+  voiceNotes = [ppExtractNotes_(v) for v in voices]
+  
+  raws = []
+
+  for a in voiceNotes:
+    raw = []
+    for b in a:
+      raw.append(ppParseNoteString_(b, 60.0 / tempo))
+    raw.append((0, 0))
+    raws.append(raw)
+
+  indexes = [0 for _ in raws]
+  freqs = [0 for _ in raws]
+  delays = [0 for _ in raws]
+
+  while any(i != None for i in indexes):
+    events = []
+
+    delay = 100000
+
+    for i in range(len(indexes)):
+      if indexes[i] != None:
+        if delays[i] == 0:
+          freqs[i], delays[i] = raws[i][indexes[i]]
+          indexes[i] += 1
+          events.append((i, freqs[i]))
+        delay = min(delay, delays[i])
+
+    callback(userObject, events, delay)
+
+    for i in range(len(indexes)):
+      if indexes[i] != None and indexes[i] >= len(raws[i]):
+        indexes[i] = None
+      else:
+        delays[i] -= delay  
