@@ -56,14 +56,20 @@ def launch(callback, userCallback, callbacks, callingGlobals, headContent, l10n)
 	return XDHqFaaS.launch(callback, userCallback, callbacks, callingGlobals, headContent)
 
 def _split(keysAndValues):
-	keys = []
-	values = []
+  keys = []
+  values = []
 
-	for key in keysAndValues:
-		keys.append(str(key))
-		values.append(str(keysAndValues[key]))
+  for key in keysAndValues:
+    value = keysAndValues[key]
+    if isinstance(value, list):
+      for subValue in value:
+        keys.append(str(key))
+        values.append(str(subValue))
+    else:
+      keys.append(str(key))
+      values.append(str(value))
 
-	return [keys,values]
+  return [keys,values]
 
 def _unsplit(keys,values):
 	i = 0

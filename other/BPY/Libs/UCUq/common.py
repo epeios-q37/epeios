@@ -1360,6 +1360,15 @@ class OLED_(Core_):
   def rect(self, x, y, w, h, col, fill=True):
     return self.addMethods(f"rect({x},{y},{w},{h},{col},{fill})")
 
+  def hline(self, x, y, w, col):
+    return self.addMethods(f"hline({x},{y},{w},{col})")
+
+  def vline(self, x, y, h, col):
+    return self.addMethods(f"vline({x},{y},{h},{col})")
+
+  def line(self, x1, y1, x2, y2, col):
+    return self.addMethods(f"line({x1},{y1},{x2},{y2},{col})")
+
   def ellipse(self, x, y, rx, ry, col, fill=True):
     return self.addMethods(f"ellipse({x},{y},{rx},{ry},{col}, {fill})")
 
