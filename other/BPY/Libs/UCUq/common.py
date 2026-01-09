@@ -1357,7 +1357,7 @@ class OLED_(Core_):
       f"text('{string}',max(( {trueWidth} - len('{string}' ) * 8) // 2, 0), {y}, {col})"
     )
 
-  def rect(self, x, y, w, h, col, fill=True):
+  def rect(self, x, y, w, h, col, fill=False):
     return self.addMethods(f"rect({x},{y},{w},{h},{col},{fill})")
 
   def hline(self, x, y, w, col):
@@ -1369,8 +1369,8 @@ class OLED_(Core_):
   def line(self, x1, y1, x2, y2, col):
     return self.addMethods(f"line({x1},{y1},{x2},{y2},{col})")
 
-  def ellipse(self, x, y, rx, ry, col, fill=True):
-    return self.addMethods(f"ellipse({x},{y},{rx},{ry},{col}, {fill})")
+  def ellipse(self, x, y, rx, ry, col, fill=False, quad=15):
+    return self.addMethods(f"ellipse({x},{y},{rx},{ry},{col},{fill},{quad})")
 
   def draw(self, pattern, width, ox=0, oy=0, mul=1):
     if width % 4:
