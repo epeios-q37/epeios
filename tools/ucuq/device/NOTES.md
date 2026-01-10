@@ -1,5 +1,9 @@
 # Notes à l'usage du développeur
 
+## ATTENTION
+
+*Golf* (adresse MAC `dcb4d99a5118`) ne fonctionne qu'avec le kit alimenté par les 4 piles (rechargeables) de 1.5V (prototype). Semble nécessiter une platine d'alimentation spéciale (du type de celle du kit). Lorsque alimenté en direct par USB-C, erreur "Brownout detector was triggered" (apparemment problème d'alimentation pas assez puissante). NOTA : à l’occasion, tester en laissant le "WiFi power" à défaut.
+
 ## Publication
 
 Est publié dans le dépôt *ucuq-python*. LE *README* n'est donc pas utilisé.

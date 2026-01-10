@@ -137,7 +137,7 @@
     }
   }, {
     "_comment": "ESP32-C3 with displays",
-    "devices": [ "Alpha", "Golf" ],
+    "devices": [ "Alpha", "Golf", "India", "Lima" ],
     "brand": "q37.info",
     "model": "Displays",
     "variant": "SSD1306",
@@ -382,25 +382,6 @@
     "features":
     {
 
-    }
-  }, {
-    "_comment": "Freenove Dog (ESP32-WROVER)",
-    "devices": [ "India" ],
-    "brand": "Freenove",
-    "model": "Dog",
-    "variant": "ESP32",
-    "hardware": {
-      "OnBoardLed": [ 13, false ],
-      "RGB": [
-        {
-          "Pin": 0,
-          "Count": 4,
-          "Limiter": 30,
-          "Offset": 0
-        }
-      ]
-    },
-    "features": {
     }
   }
 ]
