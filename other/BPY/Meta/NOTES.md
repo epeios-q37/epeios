@@ -129,3 +129,9 @@ Driver alternatif : <https://github.com/peterhinch/micropython-nano-gui/blob/ma
 ### CRow 2.19"
 
 Documentation : <https://www.elecrow.com/wiki/CrowPanel_ESP32_E-paper_2.9-inch_HMI_Display.html>
+
+### Outils
+
+## Convertir une image en hexadécimale (pour OLED)
+
+`convert <source>> -monochrome -depth 1 gray:- | xxd -p -c 100000 | tr -d '\n' | xclip -selection clipboard`

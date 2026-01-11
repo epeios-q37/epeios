@@ -908,30 +908,35 @@ class SoftSPI(SPI):
 
 
 class WS2812(Core_):
-  def __init__(self, n=None, pin=None, device=None, extra=True):
+  def __init__(self, n=None, pin=None, offset=0, device=None, extra=True):
     super().__init__(device)
 
     if (pin == None) != (n == None):
       raise Exception("Both or none of 'pin'/'n' must be given")
 
     if pin != None:
-      self.init(n, pin, device=device, extra=extra)
+      self.init(n, pin, offset=offset, device=device, extra=extra)
 
-  def init(self, n, pin, device=None, extra=True):
+  def init(self, n, pin, offset=0, device=None, extra=True):
     super().init(
       "WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device, extra
     ).flash(extra)
+    self.n_ = n
+    self.offset_ = offset
 
   async def lenAwait(self):
     return int(await self.callMethodAwait("__len__()"))
+  
+  def convert(self, index):
+    return (index + self.offset_) % self.n_
 
   def setValue(self, index, val):
-    self.addMethods(f"__setitem__({index}, {json.dumps(val)})")
+    self.addMethods(f"__setitem__({self.convert(index)}, {json.dumps(val)})")
 
     return self
 
   async def getValueAwait(self, index):
-    return await self.callMethodAwait(f"__getitem__({index})")
+    return await self.callMethodAwait(f"__getitem__({self.convert(index)})")
 
   def fill(self, val):
     self.addMethods(f"fill({json.dumps(val)})")
