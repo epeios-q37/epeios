@@ -1,4 +1,5 @@
-import zlib, base64, time, atlastk, binascii, re
+import zlib, base64, atlastk, re, copy
+import time as time_
 
 ITEMS_ = "i_"
 
@@ -365,23 +366,29 @@ def getBits(infos, *bitLabels, device=None):
 
 
 class Multi:
-  def __init__(self, object):
-    self.objects = [object]
+  def __init__(self, object = None):
+    self.objects_ = []
+
+    if object is not None:
+      self.add(object)
 
   def add(self, object):
-    self.objects.append(object)
+    self.objects_.append(object)
 
   def __getattr__(self, methodName):
     def wrapper(*args, **kwargs):
-      for obj in self.objects:
-        getattr(obj, methodName)(*args, **kwargs)
+      for obj in self.objects_:
+        if hasattr(obj, "__getattr__"):
+          obj.__getattr__(methodName)(*args, **kwargs)
+        else:
+          getattr(obj, methodName)(*args, **kwargs)
       return self
 
     return wrapper
 
   def __getitem__(self, index):
-    if index < len(self.objects):
-      return self.objects[index]
+    if index < len(self.objects_):
+      return self.objects_[index]
     else:
       raise IndexError("Index out of range for Multi object.")
 
@@ -408,7 +415,10 @@ def sleepWait(start, us):
     super().__init__(id=id, token=token, callback=callback)
 
   def __del__(self):
-    self.commit()
+    try:
+      self.commit()
+    except:
+      pass
 
   def testCommit_(self, commit):
     return testCommit_(commit, self.commitBehavior)
@@ -449,6 +459,17 @@ def sleepWait(start, us):
 
   def sleep(self, secs):
     self.addCommand(f"time.sleep_us({int(secs * 1000000)})")
+    
+  def ntpSetTime(self):
+    self.addCommand(NTP_SCRIPT_)
+    
+  def sleepUntil(self, timestamp):
+    # self.addCommand(f"sleep_until_us({timestamp})")
+    self.addCommand(f"time.sleep_us({timestamp} - precise_time_us())")
+    
+  async def timeAwait(self):
+    return self.commitAwait("precise_time_us()")
+    
 
 
 async def getBaseInfosAwait_(device=None):
@@ -644,10 +665,10 @@ async def ATKConnectAwait(dom, body, *, target="", device=None):
 
   setDevice(device=device)
 
-  start = time.monotonic()
+  start = time_.monotonic()
   infos = await getInfosAwait(device)
 
-  if (elapsed := time.monotonic() - start) < 3:
+  if (elapsed := time_.monotonic() - start) < 3:
     await sleepAwait(3 - elapsed)
 
   deviceId = getDeviceId(infos)
@@ -773,6 +794,17 @@ class Core_:
   def sleep(self, secs):
     self.device_.sleep(secs)
     return self
+  
+  def ntpSetTime(self):
+    self.device_.ntpSetTime()
+    return self
+  
+  def sleepUntil(self, timestamp):
+    self.device_.sleepUntil(timestamp)
+    return self
+    
+  def time(self):
+    return self.device_.time()
 
 
 class GPIO(Core_):
@@ -918,33 +950,71 @@ class WS2812(Core_):
       self.init(n, pin, offset=offset, device=device, extra=extra)
 
   def init(self, n, pin, offset=0, device=None, extra=True):
+    self.n_ = n
+    self.offset_ = offset
+    self.current_ = [(0,0,0)] * n
+    self.new_ = [(0,0,0)] * n
     super().init(
       "WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device, extra
     ).flash(extra)
-    self.n_ = n
-    self.offset_ = offset
 
-  async def lenAwait(self):
+  def len(self):
+    return self.n_
+  
+  async def straightLenAwait(self):
     return int(await self.callMethodAwait("__len__()"))
   
   def convert(self, index):
     return (index + self.offset_) % self.n_
 
   def setValue(self, index, val):
-    self.addMethods(f"__setitem__({self.convert(index)}, {json.dumps(val)})")
-
+    self.new_[self.convert(index)] = tuple(val)
     return self
+  
+  def straightSetValue(self, index, val):
+    self.setValue(index, val)
+    return self.addMethods(f"__setitem__({self.convert(index)}, {json.dumps(val)})")
+  
+  def getValue(self, index):
+    return self.new_[self.convert(index)]
 
-  async def getValueAwait(self, index):
+  async def straightGetValueAwait(self, index):
     return await self.callMethodAwait(f"__getitem__({self.convert(index)})")
-
+  
   def fill(self, val):
-    self.addMethods(f"fill({json.dumps(val)})")
+    self.new_ = [tuple(val)] * self.n_
     return self
 
+  def straightFill(self, val):
+    self.fill(val)
+    return self.addMethods(f"fill({json.dumps(val)})")
+
+  def straightWrite(self):
+    self.current_ = copy.deepcopy(self.new_)
+    return self.addMethods("write()")
+  
   def write(self):
-    self.addMethods(f"write()")
-    return self
+    diffs = []
+    same = self.new_[0]
+    
+    for i in range(len(self.new_)):
+      if self.new_[i] != self.current_[i]:
+        diffs.append((i,self.new_[i]))
+        
+      if same is not None and same != self.new_[i]:
+        same = None
+      
+    if len(diffs):
+      if same is not None:
+        self.straightFill(same)
+      else:
+        command = ""
+        for diff in diffs:
+          command += f"{self.getObject()}.__setitem__({diff[0]},{json.dumps(diff[1])})\n"
+        self.addCommand(command)
+      return self.straightWrite()
+    else:
+      return self
 
   def flash(self, extra=True):
     self.fill((255, 255, 255)).write()
@@ -1045,11 +1115,11 @@ BUZZER_COEFF_ = 2 ** (1/12)
 BASE_FREQ_ = 6.875
   
 class Buzzer():
-  def __init__(self, pwm=None, *, u16=32000, device=None, extra=True):
+  def __init__(self, pwm=None, *, u16=32000, extra=True):
     self.on_ = False
-    self.init(pwm, u16=u16, device=device, extra=extra)
+    self.init(pwm, u16=u16, extra=extra)
 
-  def init(self, pwm, *, u16=32000, device=None, extra=True):
+  def init(self, pwm, *, u16=32000, extra=True):
     self.u16_ = u16
     self.pwm_ = pwm
     
@@ -1829,4 +1899,88 @@ def polyphonicPlay(voices, tempo, userObject, callback):
       if indexes[i] != None and indexes[i] >= len(raws[i]):
         indexes[i] = None
       else:
-        delays[i] -= delay  
+        delays[i] -= delay
+        
+        
+###### Begin of section high precision time handling based on NTP #####
+NTP_SCRIPT_ = """
+import socket
+import struct
+import time
+import machine
+
+NTP_DELTA = 2208988800  # Différence entre epoch NTP (1900) et Unix (1970)
+
+# --- Extraction correcte d'un timestamp NTP en microsecondes ---
+def unpack_ntp_timestamp_us(data, offset):
+    sec, frac = struct.unpack("!II", data[offset:offset+8])
+    unix_sec = sec - NTP_DELTA
+    # Conversion en microsecondes (sans float)
+    return unix_sec * 1_000_000 + (frac * 1_000_000) // 2**32
+
+
+# --- Requête NTP complète T1/T2/T3/T4 ---
+def ntp_time_t1_t4_us(host="fr.pool.ntp.org"):
+    addr = socket.getaddrinfo(host, 123)[0][-1]
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(2)
+
+    packet = b'\x1b' + 47 * b'\0'
+
+    # T1 : envoi (µs)
+    T1_us = time.ticks_us()
+    s.sendto(packet, addr)
+
+    # Réception
+    data = s.recv(48)
+    T4_us = time.ticks_us()  # µs
+    s.close()
+
+    # T2 et T3 : timestamps serveur (µs)
+    T2_us = unpack_ntp_timestamp_us(data, 32)
+    T3_us = unpack_ntp_timestamp_us(data, 40)
+
+    # Formule NTP officielle (RFC 5905), en microsecondes
+    offset_us = ((T2_us - T1_us) + (T3_us - T4_us)) // 2
+
+    # Temps Unix corrigé (µs)
+    return T4_us + offset_us
+
+
+# --- Ancrage monotone ---
+t_ntp_us = ntp_time_t1_t4_us()
+t0_ticks_us = time.ticks_us()
+TIME_ANCHOR_US = (t_ntp_us, t0_ticks_us)
+
+
+def precise_time_us():
+    t_ntp_us, t0_ticks_us = TIME_ANCHOR_US
+    elapsed_us = time.ticks_diff(time.ticks_us(), t0_ticks_us)
+    return t_ntp_us + elapsed_us
+
+
+# --- Mise à l'heure du RTC ---
+def set_rtc_from_us(timestamp_us):
+    ts = timestamp_us // 1_000_000
+    tm = time.localtime(ts)
+    us = timestamp_us % 1_000_000
+    rtc_tuple = (tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], us)
+    machine.RTC().datetime(rtc_tuple)
+
+set_rtc_from_us(precise_time_us())
+
+def sleep_until_us(target_time_us):
+    while precise_time_us() < target_time_us:
+        pass
+"""
+
+def ntpSetTime(device = None):
+  return getDevice(device).ntpSetTime()
+
+def sleepUntil(timestamp, device = None):
+  return getDevice(device).sleepUntil(timestamp)
+
+def time(device = None):
+  return getDevice(device).time()
+
+###### End of section high precision time handling based on NTP #####

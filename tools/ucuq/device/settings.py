@@ -16,11 +16,13 @@ _K_IDENTIFICATION = "Identification"
 _K_WLAN = "WLAN"
 _K_ONBOARD_LED = "OnBoardLed"
 _K_PROXY = "Proxy"
+_K_BLE = "BLE"
 _K_WIFI_POWER = "WifiPower"
 _K_KIT_LABEL = "KitLabel"
 
 _DEFAULT_ONBOARD_LED = (None, True)
 _DEFAULT_PROXY = ("ucuq.q37.info", 53800, False)
+_DEFAULT_BLE = (True,)
 _DEFAULT_WIFI_POWER = (8,)
 
 getSettings = lambda key: _SETTINGS[key] if key in _SETTINGS else None
@@ -30,6 +32,7 @@ if _settingsOK != False:
     _IDENTIFICATION = _SETTINGS[_K_IDENTIFICATION]
     _ONBOARD_LED = getSettings(_K_ONBOARD_LED)
     _PROXY = getSettings(_K_PROXY)
+    _BLE = getSettings(_K_BLE)
     _WIFI_POWER = getSettings(_K_WIFI_POWER)
     _settingsOK = True
   except:
@@ -123,3 +126,7 @@ def getProxy(deviceId):
 def getWifiPower(deviceId):
   return _getSettings(_WIFI_POWER, deviceId, _DEFAULT_WIFI_POWER)[0]
 
+
+def getBLE(deviceId):
+  return _getSettings(_BLE, deviceId, _DEFAULT_BLE)[0]
+  
