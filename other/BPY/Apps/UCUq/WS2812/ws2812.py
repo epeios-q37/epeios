@@ -32,11 +32,11 @@ class HW:
 
     self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"])
 
-  def sleepStart(self, chrono):
-    self.device.sleepStart(chrono)
+  def sleepStart(self):
+    self.device.sleepStart()
 
-  def sleepWait(self, chrono, delay):
-    self.device.sleepWait(chrono, delay)
+  def sleepWait(self, delay):
+    self.device.sleepWait(delay)
 
   def matrixDrawBar_(self, x, height):
     y = int(height)
@@ -64,11 +64,10 @@ class HW:
   def rainbow(self):
     v =  random.randint(0, 5)
     i = 0
-    chrono = ucuq.getObjectIndice()
     while i < 7 * 255:
-      self.sleepStart(chrono)
+      self.sleepStart()
       self.update(*ucuq.rbShadeFade(v, int(i), 255))
-      self.sleepWait(chrono, RB_DELAY)
+      self.sleepWait( RB_DELAY)
       i += 255 / 20
     self.update(0, 0, 0)
 

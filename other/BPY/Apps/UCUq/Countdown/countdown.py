@@ -262,11 +262,11 @@ class HW():
   def sleep(self, delay):
     self.device.sleep(delay)
 
-  def sleepStart(self, chrono):
-    self.device.sleepStart(chrono)
+  def sleepStart(self):
+    self.device.sleepStart()
 
-  def sleepWait(self, chrono, delay):
-    self.device.sleepWait(chrono, delay)
+  def sleepWait(self, delay):
+    self.device.sleepWait(delay)
 
   def addCommand(self, command):
     self.device.addCommand(command)
@@ -275,7 +275,7 @@ class HW():
 # 'ucuq.Multi' does not handle coroutines.
 class Multi(ucuq.Multi):
   async def counterAwait(self, winner):
-    for object in self.objects:
+    for object in self.getObjects():
       await object.counterAwait(winner)
 
 
@@ -530,13 +530,11 @@ async def atkNew(player, dom):
   if PROD:
     await ucuq.sleepAwait(8)
 
-  chrono = ucuq.getObjectIndice()
-
   for c in range( 40 if PROD else 0):
-    hw.sleepStart(chrono)
+    hw.sleepStart()
     hw.oledDisplayNumber(random.randint(101,999))
     hw.smartRGBFading(c, (1,0,1))
-    hw.sleepWait(chrono, 0.15)
+    hw.sleepWait(0.15)
 
   if PROD and not CHEAT:
     toFind = random.randint(101,999)

@@ -134,4 +134,4 @@ Documentation : <https://www.elecrow.com/wiki/CrowPanel_ESP32_E-paper_2.9-inch_
 
 ## Convertir une image en hexadécimale (pour OLED)
 
-`convert <source>> -monochrome -depth 1 gray:- | xxd -p -c 100000 | tr -d '\n' | xclip -selection clipboard`
+`convert <source> -monochrome -depth 1 gray:- | xxd -p -c 100000 | tr -d '\n' | xclip -selection clipboard`

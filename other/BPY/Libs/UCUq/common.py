@@ -1,5 +1,4 @@
-import zlib, base64, atlastk, re, copy
-import time as time_
+import zlib, base64, atlastk, re, copy, time
 
 ITEMS_ = "i_"
 
@@ -235,12 +234,12 @@ def testCommit_(commit, behavior=None):
     return commit
 
 
-def sleepStart(id=None):
-  return getDevice().sleepStart(id)
+def sleepStart():
+  return getDevice().sleepStart()
 
 
-def sleepWait(id, secs):
-  return getDevice().sleepWait(id, secs)
+def sleepWait(secs):
+  return getDevice().sleepWait(secs)
 
 
 def sleep(secs):
@@ -377,11 +376,11 @@ class Multi:
 
   def __getattr__(self, methodName):
     def wrapper(*args, **kwargs):
-      for obj in self.objects_:
-        if hasattr(obj, "__getattr__"):
-          obj.__getattr__(methodName)(*args, **kwargs)
+      for object in self.objects_:
+        if hasattr(object, "__getattr__"):
+          object.__getattr__(methodName)(*args, **kwargs)
         else:
-          getattr(obj, methodName)(*args, **kwargs)
+          getattr(object, methodName)(*args, **kwargs)
       return self
 
     return wrapper
@@ -391,6 +390,9 @@ class Multi:
       return self.objects_[index]
     else:
       raise IndexError("Index out of range for Multi object.")
+    
+  def getObjects(self):
+    return self.objects_
 
   # Workaround for Brython (https://github.com/brython-dev/brython/issues/2590)
   def __bool__(self):
@@ -398,7 +400,26 @@ class Multi:
 
 
 class Device(Device_):
-  def __init__(self, *, id=None, token=None, callback=None):
+  def __new__(cls, id=None, token=None, callback=None):
+    if type(id) in (list, tuple):
+      ids = id
+      
+      if type(token) not in (list, tuple):
+        tokens = (token,) * len(ids)
+        
+      if len(tokens) != len(ids):
+        raise Exception("'ids' and (tokens' must be of same amounr!)")
+      
+      multi = Multi()
+      
+      for i in range(len(ids)):
+        multi.add(Device(id=ids[i], token=tokens[i], callback=callback))
+        
+      return multi
+    else:
+      return super().__new__(Device)
+        
+  def __init__(self, *, id=None, token=None, callback=None):  # If id == "", using id and token from config.
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
     self.commands_ = [
@@ -410,9 +431,13 @@ def sleepWait(start, us):
     time.sleep_us(int(us - elapsed))
 """
     ]
-    self.commitBehavior = None
+    self.commitBehavior_ = None
+    self.timer_ = None
 
     super().__init__(id=id, token=token, callback=callback)
+    
+    if id == "":
+      self.connect(id=None, token=token)
 
   def __del__(self):
     try:
@@ -421,10 +446,10 @@ def sleepWait(start, us):
       pass
 
   def testCommit_(self, commit):
-    return testCommit_(commit, self.commitBehavior)
+    return testCommit_(commit, self.commitBehavior_)
 
   def addModule(self, module):
-    if not module in self.pendingModules_ and not module in self.handledModules_:
+    if module not in self.pendingModules_ and module not in self.handledModules_:
       self.pendingModules_.append(module)
 
     return self
@@ -446,16 +471,19 @@ def sleepWait(start, us):
 
     return self
 
-  def sleepStart(self, id=None):
-    if id == None:
-      id = getObjectIndice()
+  def sleepStart(self):
+    if self.timer_ is None:
+      self.timer_ = getObjectIndice()
 
-    self.addCommand(f"{getObject_(id)} = time.ticks_us()")
+    self.addCommand(f"{getObject_(self.timer_)} = time.ticks_us()")
 
     return id
 
-  def sleepWait(self, id, secs):
-    self.addCommand(f"sleepWait({getObject_(id)}, {secs * 1000000})")
+  def sleepWait(self, secs):
+    if self.timer_ is None:
+      raise Exception("'sleepWait' called before 'sleepStart'!")
+      
+    self.addCommand(f"sleepWait({getObject_(self.timer_)}, {secs * 1000000})")
 
   def sleep(self, secs):
     self.addCommand(f"time.sleep_us({int(secs * 1000000)})")
@@ -463,11 +491,14 @@ def sleepWait(start, us):
   def ntpSetTime(self):
     self.addCommand(NTP_SCRIPT_)
     
-  def sleepUntil(self, timestamp):
+  def ntpSleepUntil(self, timestamp):
     # self.addCommand(f"sleep_until_us({timestamp})")
     self.addCommand(f"time.sleep_us({timestamp} - precise_time_us())")
     
-  async def timeAwait(self):
+  def ntpSleep(self, delay):
+    self.addCommand(f"time.sleep_us({delay})")
+    
+  async def ntpTimeAwait(self):
     return self.commitAwait("precise_time_us()")
     
 
@@ -665,10 +696,10 @@ async def ATKConnectAwait(dom, body, *, target="", device=None):
 
   setDevice(device=device)
 
-  start = time_.monotonic()
+  start = time.monotonic()
   infos = await getInfosAwait(device)
 
-  if (elapsed := time_.monotonic() - start) < 3:
+  if (elapsed := time.monotonic() - start) < 3:
     await sleepAwait(3 - elapsed)
 
   deviceId = getDeviceId(infos)
@@ -690,12 +721,12 @@ def getDevice(device=None, *, id=None, token=None):
   if device and (token or id):
     displayExitMessage_("'device' can not be given together with 'token' or 'id'!")
 
-  if device == None:
+  if device is None:
     global device_
 
     if token or id:
       device_ = Device(id=id, token=token)
-    elif device_ == None:
+    elif device_ is None:
       device_ = Device()
       device_.connect()
     return device_
@@ -737,6 +768,22 @@ class Nothing_:
 
 
 class Core_:
+  def __new__(cls, *kargs, **kwargs):
+    if "device" in kwargs and type(devices := kwargs["device"]) is Multi:
+      kwargs.pop("device")
+      multi = Multi()
+      
+      for device in devices:
+        obj = object.__new__(cls)
+        cls.__init__(obj, *kargs, **kwargs, **{"device": device})
+        multi.add(obj)
+        
+      return multi
+    else:
+        obj = object.__new__(cls)
+        cls.__init__(obj, *kargs, **kwargs)
+        return obj
+  
   def __init__(self, device=None):
     self.id = None
     self.device_ = device
@@ -784,11 +831,11 @@ class Core_:
   def callMethodAwait(self, method):
     return self.device_.commitAwait(f"{self.getObject()}.{method}")
 
-  def sleepStart(self, id=None):
-    return self.device_.sleepStart(id)
+  def sleepStart(self):
+    return self.device_.sleepStart()
 
-  def sleepWait(self, id, secs):
-    self.device_.sleepWait(id, secs)
+  def sleepWait(self, secs):
+    self.device_.sleepWait(secs)
     return self
 
   def sleep(self, secs):
@@ -799,12 +846,16 @@ class Core_:
     self.device_.ntpSetTime()
     return self
   
-  def sleepUntil(self, timestamp):
-    self.device_.sleepUntil(timestamp)
+  def ntpSleepUntil(self, timestamp):
+    self.device_.ntpSleepUntil(timestamp)
     return self
     
-  def time(self):
-    return self.device_.time()
+  def ntpSleep(self, delay):
+    self.device_.ntpSleep(delay)
+    return self
+    
+  def ntpTime(self):
+    return self.device_.ntpTime()
 
 
 class GPIO(Core_):
@@ -1113,8 +1164,41 @@ class PWM(Core_):
   
 BUZZER_COEFF_ = 2 ** (1/12)
 BASE_FREQ_ = 6.875
-  
-class Buzzer():
+
+class Multi_:
+  def __new__(cls, *kargs, **kwargs):
+    position, name = cls.param_
+    
+    if name in kwargs:
+      ArgIsKW = True
+      values = kwargs[name]
+    elif len(kargs) >= position:
+      values = kargs[position]
+      ArgIsKW = False
+      kargs = list(kargs)
+    else:
+      values = None
+    
+    if type(values) is Multi:
+      multi = Multi()
+      
+      for value in values:
+        if ArgIsKW:
+          kwargs[name] = value
+        else:
+          kargs[position] = value
+
+        obj = object.__new__(cls)
+        cls.__init__(obj, *kargs, **kwargs)
+        multi.add(obj)
+      return multi
+    else:
+      obj = object.__new__(cls)
+      cls.__init__(obj, *kargs, **kwargs)
+      return obj
+
+class Buzzer(Multi_):
+  param_ = (0, "pwm")
   def __init__(self, pwm=None, *, u16=32000, extra=True):
     self.on_ = False
     self.init(pwm, u16=u16, extra=extra)
@@ -1246,7 +1330,8 @@ class PWM_PCA9685(Core_):
     self.pca.setPrescale(value)
 
 
-class HD44780_I2C(Core_):
+class HD44780_I2C(Multi_, Core_):
+  param_ = (2, "i2c")
   def __init__(self, num_columns, num_lines, /, i2c, addr=None, extra=True):
     super().__init__()
 
@@ -1463,7 +1548,8 @@ class SSD1306(OLED_):
     return self.addMethods(f"rotate({rotate})")
 
 
-class SSD1306_I2C(SSD1306):
+class SSD1306_I2C(Multi_, SSD1306):
+  param_ = (2, 'i2c')
   def __init__(
     self,
     width=None,
@@ -1880,13 +1966,13 @@ def polyphonicPlay(voices, tempo, userObject, callback):
   freqs = [0 for _ in raws]
   delays = [0 for _ in raws]
 
-  while any(i != None for i in indexes):
+  while any(i is not None for i in indexes):
     events = []
 
     delay = 100000
 
     for i in range(len(indexes)):
-      if indexes[i] != None:
+      if indexes[i] is not None:
         if delays[i] == 0:
           freqs[i], delays[i] = raws[i][indexes[i]]
           indexes[i] += 1
@@ -1896,7 +1982,7 @@ def polyphonicPlay(voices, tempo, userObject, callback):
     callback(userObject, events, delay)
 
     for i in range(len(indexes)):
-      if indexes[i] != None and indexes[i] >= len(raws[i]):
+      if indexes[i] is not None and indexes[i] >= len(raws[i]):
         indexes[i] = None
       else:
         delays[i] -= delay
@@ -1977,10 +2063,13 @@ def sleep_until_us(target_time_us):
 def ntpSetTime(device = None):
   return getDevice(device).ntpSetTime()
 
-def sleepUntil(timestamp, device = None):
-  return getDevice(device).sleepUntil(timestamp)
+def ntpSleepUntil(timestamp, device = None):
+  return getDevice(device).ntpSleepUntil(timestamp)
 
-def time(device = None):
-  return getDevice(device).time()
+def ntpSleep(delay, device = None):
+  return getDevice(device).ntpSleep(delay)
+
+def ntpTime(device = None):
+  return getDevice(device).ntpTime()
 
 ###### End of section high precision time handling based on NTP #####
