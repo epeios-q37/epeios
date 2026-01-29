@@ -373,6 +373,9 @@ class Multi:
 
   def add(self, object):
     self.objects_.append(object)
+    
+  def __len__(self):
+    return len(self.objects_)
 
   def __getattr__(self, methodName):
     def wrapper(*args, **kwargs):
@@ -769,8 +772,15 @@ class Nothing_:
 
 class Core_:
   def __new__(cls, *kargs, **kwargs):
-    if "device" in kwargs and type(devices := kwargs["device"]) is Multi:
-      kwargs.pop("device")
+    if "device" in kwargs:
+      devices = kwargs["device"]
+    else:
+      devices = getDevice()
+    
+    if type(devices) is Multi:
+      if "device" in kwargs:
+        kwargs.pop("device")
+        
       multi = Multi()
       
       for device in devices:
@@ -780,9 +790,9 @@ class Core_:
         
       return multi
     else:
-        obj = object.__new__(cls)
-        cls.__init__(obj, *kargs, **kwargs)
-        return obj
+      obj = object.__new__(cls)
+      cls.__init__(obj, *kargs, **kwargs)
+      return obj
   
   def __init__(self, device=None):
     self.id = None
