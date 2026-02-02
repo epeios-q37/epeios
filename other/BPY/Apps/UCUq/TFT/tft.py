@@ -10,6 +10,10 @@ class HW:
 
   def __getattr__(self, methodName):
     def wrapper(*args, **kwargs):
+      if methodName == "sleep":
+        return self.sleep(*args, **kwargs)
+      if methodName == "draw":
+        return self.draw(*args, **kwargs)
       getattr(self.tft, methodName)(*args, **kwargs)
       return self
     return wrapper

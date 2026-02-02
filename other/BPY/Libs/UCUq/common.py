@@ -432,7 +432,8 @@ def sleepWait(start, us):
             
   if elapsed < us:
     time.sleep_us(int(us - elapsed))
-"""
+""",
+      NTP_SCRIPT_
     ]
     self.commitBehavior_ = None
     self.timer_ = None
@@ -492,7 +493,7 @@ def sleepWait(start, us):
     self.addCommand(f"time.sleep_us({int(secs * 1000000)})")
     
   def ntpSetTime(self):
-    self.addCommand(NTP_SCRIPT_)
+    self.addCommand("ntp_set_time()")
     
   def ntpSleepUntil(self, timestamp):
     # self.addCommand(f"sleep_until_us({timestamp})")
@@ -1973,7 +1974,7 @@ def polyphonicPlay(voices, tempo, userObject, callback):
     raws.append(raw)
 
   indexes = [0 for _ in raws]
-  freqs = [0 for _ in raws]
+  notes = [0 for _ in raws]
   delays = [0 for _ in raws]
 
   while any(i is not None for i in indexes):
@@ -1984,9 +1985,9 @@ def polyphonicPlay(voices, tempo, userObject, callback):
     for i in range(len(indexes)):
       if indexes[i] is not None:
         if delays[i] == 0:
-          freqs[i], delays[i] = raws[i][indexes[i]]
+          notes[i], delays[i] = raws[i][indexes[i]]
           indexes[i] += 1
-          events.append((i, freqs[i]))
+          events.append((i, notes[i]))
         delay = min(delay, delays[i])
 
     callback(userObject, events, delay)
@@ -2007,67 +2008,60 @@ import machine
 
 NTP_DELTA = 2208988800  # Différence entre epoch NTP (1900) et Unix (1970)
 
-# --- Extraction correcte d'un timestamp NTP en microsecondes ---
 def unpack_ntp_timestamp_us(data, offset):
-    sec, frac = struct.unpack("!II", data[offset:offset+8])
-    unix_sec = sec - NTP_DELTA
-    # Conversion en microsecondes (sans float)
-    return unix_sec * 1_000_000 + (frac * 1_000_000) // 2**32
+  sec, frac = struct.unpack("!II", data[offset:offset+8])
+  unix_sec = sec - NTP_DELTA
+  return unix_sec * 1_000_000 + (frac * 1_000_000) // 2**32
 
 
-# --- Requête NTP complète T1/T2/T3/T4 ---
 def ntp_time_t1_t4_us(host="fr.pool.ntp.org"):
-    addr = socket.getaddrinfo(host, 123)[0][-1]
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(2)
+  addr = socket.getaddrinfo(host, 123)[0][-1]
+  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  s.settimeout(2)
 
-    packet = b'\x1b' + 47 * b'\0'
+  packet = b'\x1b' + 47 * b'\0'
 
-    # T1 : envoi (µs)
-    T1_us = time.ticks_us()
-    s.sendto(packet, addr)
+  T1_us = time.ticks_us()
+  s.sendto(packet, addr)
 
-    # Réception
-    data = s.recv(48)
-    T4_us = time.ticks_us()  # µs
-    s.close()
+  data = s.recv(48)
+  T4_us = time.ticks_us()  # µs
+  s.close()
 
-    # T2 et T3 : timestamps serveur (µs)
-    T2_us = unpack_ntp_timestamp_us(data, 32)
-    T3_us = unpack_ntp_timestamp_us(data, 40)
+  T2_us = unpack_ntp_timestamp_us(data, 32)
+  T3_us = unpack_ntp_timestamp_us(data, 40)
 
-    # Formule NTP officielle (RFC 5905), en microsecondes
-    offset_us = ((T2_us - T1_us) + (T3_us - T4_us)) // 2
+  offset_us = ((T2_us - T1_us) + (T3_us - T4_us)) // 2
 
-    # Temps Unix corrigé (µs)
-    return T4_us + offset_us
-
-
-# --- Ancrage monotone ---
-t_ntp_us = ntp_time_t1_t4_us()
-t0_ticks_us = time.ticks_us()
-TIME_ANCHOR_US = (t_ntp_us, t0_ticks_us)
+  return T4_us + offset_us
 
 
 def precise_time_us():
-    t_ntp_us, t0_ticks_us = TIME_ANCHOR_US
-    elapsed_us = time.ticks_diff(time.ticks_us(), t0_ticks_us)
-    return t_ntp_us + elapsed_us
+  t_ntp_us, t0_ticks_us = TIME_ANCHOR_US
+  elapsed_us = time.ticks_diff(time.ticks_us(), t0_ticks_us)
+  return t_ntp_us + elapsed_us
 
 
-# --- Mise à l'heure du RTC ---
 def set_rtc_from_us(timestamp_us):
-    ts = timestamp_us // 1_000_000
-    tm = time.localtime(ts)
-    us = timestamp_us % 1_000_000
-    rtc_tuple = (tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], us)
-    machine.RTC().datetime(rtc_tuple)
+  ts = timestamp_us // 1_000_000
+  tm = time.localtime(ts)
+  us = timestamp_us % 1_000_000
+  rtc_tuple = (tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], us)
+  machine.RTC().datetime(rtc_tuple)
 
-set_rtc_from_us(precise_time_us())
 
 def sleep_until_us(target_time_us):
-    while precise_time_us() < target_time_us:
-        pass
+  while precise_time_us() < target_time_us:
+    pass
+        
+        
+def ntp_set_time():
+  global TIME_ANCHOR_US
+  t_ntp_us = ntp_time_t1_t4_us()
+  t0_ticks_us = time.ticks_us()
+  TIME_ANCHOR_US = (t_ntp_us, t0_ticks_us)
+
+  set_rtc_from_us(precise_time_us())
 """
 
 def ntpSetTime(device = None):

@@ -1,0 +1,49 @@
+<fieldset>
+  <legend>Showrff</legend>
+  <fieldset style="display:flex; justify-content: space-around">
+    <legend>Hardware</legend>
+    <button xdh:onevent="Reconnect">Reconnect</button>
+    <button xdh:onevent="Sync">Sync</button>
+    <button xdh:onevent="Test">Test</button>
+  </fieldset>
+  <div style="display: flex; width: 100%;">
+  <fieldset style="display:flex; justify-content: space-around; width: 100%">
+    <legend>Music</legend>
+    <button xdh:onevent="Pink">Pink</button>
+    <button xdh:onevent="Fugue">Fugue</button>
+  </fieldset>
+  <fieldset>
+    <legend>Countdown</legend>
+    <label>
+      <span>Display: </span>
+      <input id="Countdown" style="vertical-align: bottom;" type="checkbox" checked/>
+    </label>
+  </fieldset>
+  </div>
+  <fieldset>
+    <legend>Colors</legend>
+    <div style="display:flex; justify-content: space-around">
+      <select id="ColorSchemes"></select>
+      <button xdh:onevent="ColorOnce">Once</button>
+      <button xdh:onevent="ColorRepeat">Repeat</button>
+    </div>
+      <br/>
+    <div style="display:flex; flex-direction: column;">
+      <div style="display: flex;">
+        <label style="display:flex; justify-content: space-between; width: 100%">
+          <span>Delay: </span>
+          <input id="ColorDelay" type="range" min=".01" max=".3" step=".01" value=".09" xdh:onevent="ColorUpdate">
+        </label>
+        <input id="ColorDelayDisplay" type="text" size="3" style="text-align: right;" disabled>
+      </div>
+      <div style="display: flex;">
+        <label style="display:flex; justify-content: space-between; width: 100%">
+          <span>Repeat: </span>
+          <input id="ColorRepeat" type="range" min="2" max="5" value="3" xdh:onevent="ColorUpdate">
+        </label>
+        <input id="ColorRepeatDisplay" type="text" size="3" style="text-align: right;" disabled>
+      </div>
+    </div>
+  </fieldset>
+</fieldset>
+</fieldset>
