@@ -810,8 +810,6 @@ class Core_:
     return self.id
 
   def init(self, modules, instanciation, device, extra, *, before=""):
-    self.id = getObjectIndice()
-
     if self.device_:
       if device and device != self.device_:
         raise Exception("'device' already given!")
@@ -825,6 +823,7 @@ class Core_:
       self.addCommand(before)
 
     if instanciation:
+      self.id = getObjectIndice()
       self.addCommand(f"{self.getObject()} = {instanciation}")
 
     return self if not isinstance(extra, bool) or extra else Nothing_(self)
@@ -2077,3 +2076,296 @@ def ntpTime(device = None):
   return getDevice(device).ntpTime()
 
 ###### End of section high precision time handling based on NTP #####
+
+
+##### Section dédicated to micro:bit #####
+
+MB_SCRIPT_ = """
+import time
+from machine import UART
+
+# --- UART + framing ---
+MB_START_ = 0x7E
+MB_END_   = 0x7F
+
+mbUART_ = UART(1, baudrate=115200, tx=21, rx=20)
+
+def mbChecksum_(data):
+    return sum(data) & 0xFF
+
+def mbSendFrame_(payload_str):
+    data = payload_str.encode()
+    frame = bytes([MB_START_, len(data)]) + data + bytes([mbChecksum_(data), MB_END_])
+    mbUART_.write(frame)
+
+# Buffer circulaire
+mbRXBuffer_ = bytearray()
+
+def mbFindByte_(buf, value, start=0):
+    for i in range(start, len(buf)):
+        if buf[i] == value:
+            return i
+    return -1
+
+def mbReadFrame_():
+    global mbRXBuffer_
+
+    if mbUART_.any():
+        mbRXBuffer_.extend(mbUART_.read())
+
+    s = mbFindByte_(mbRXBuffer_, MB_START_)
+    if s < 0:
+        if len(mbRXBuffer_) > 128:
+            mbRXBuffer_ = bytearray()
+        return None
+
+    e = mbFindByte_(mbRXBuffer_, MB_END_, s + 1)
+    if e < 0:
+        return None
+
+    frame = mbRXBuffer_[s:e+1]
+    mbRXBuffer_ = mbRXBuffer_[e+1:]
+
+    if len(frame) < 4:
+        return None
+
+    length = frame[1]
+    if len(frame) < 3 + length + 1:
+        return None
+
+    payload = frame[2:2+length]
+    cks = frame[2+length]
+
+    if mbChecksum_(payload) != cks:
+        return None
+
+    return ''.join(chr(b) for b in payload)
+
+mbSeq_ = 0
+
+def mbSendReliable_(content, retries=5, timeout_ms=600):
+    global mbSeq_
+
+    payload = "%d:%s" % (mbSeq_, content)
+
+    for attempt in range(retries):
+
+        # Purge du buffer avant envoi
+        global mbRXBuffer_
+        mbRXBuffer_ = bytearray()
+
+        mbSendFrame_(payload)
+        time.sleep_ms(20)
+
+        t0 = time.ticks_ms()
+
+        while time.ticks_diff(time.ticks_ms(), t0) < timeout_ms:
+            msg = mbReadFrame_()
+            if msg:
+
+                if msg.startswith("ACK:"):
+                    ack_seq = int(msg[4:])
+                    if ack_seq == mbSeq_:
+                        mbSeq_ ^= 1
+                        return True
+
+                if msg.startswith("NACK:"):
+                    nack_seq = int(msg[5:])
+                    if nack_seq == mbSeq_:
+                        break
+
+        # timeout → nouvelle tentative
+
+    return False
+
+# --- Envoi fiable AVEC valeur de retour (réponse + ACK) ---
+
+def mbRequestValue_(cmd, prefix):
+    global mbSeq_, mbRXBuffer_
+
+    payload = "%d:%s" % (mbSeq_, cmd)
+
+    for attempt in range(5):
+        mbRXBuffer_ = bytearray()
+        mbSendFrame_(payload)
+        time.sleep_ms(20)
+
+        t0 = time.ticks_ms()
+        value = None
+
+        while time.ticks_diff(time.ticks_ms(), t0) < 600:
+            msg = mbReadFrame_()
+            if not msg:
+                continue
+
+            # Réponse de la micro:bit
+            if msg.startswith(prefix):
+                try:
+                    value = int(msg[len(prefix):])
+                except:
+                    value = None
+                continue
+
+            # ACK
+            if msg.startswith("ACK:"):
+                ack_seq = int(msg[4:])
+                if ack_seq == mbSeq_:
+                    mbSeq_ ^= 1
+                    return value
+
+        # timeout → retry
+
+    return None
+
+
+# --- SYNC initial ---
+
+def mbSync():
+    global mbSeq_
+    mbSeq_ = 0
+    mbSendReliable_("SYNC")
+
+
+# --- Classe Image (style micro:bit) ---
+
+class Microbit:
+    class Image:
+        def __init__(self, data):
+            self.data = data
+
+        @staticmethod
+        def fromRows(rows):
+            return Microbit.Image("".join(rows))
+
+    class Display:
+        @staticmethod
+        def clear():
+            return mbSendReliable_("CLR")
+
+        @staticmethod
+        def setPixel(x, y, b):
+            return mbSendReliable_("PIX:%d,%d,%d" % (x, y, b))
+
+        @staticmethod
+        def getPixel(x, y):
+            return mbRequestValue_("GET:%d,%d" % (x, y), "VAL:")
+
+        @staticmethod
+        def showText(text, delay=150):
+            return mbSendReliable_("SCR:%d:%s" % (delay, text))
+
+        @staticmethod
+        def scroll(text, delay=150):
+            return Microbit.Display.showText(text, delay)
+
+        @staticmethod
+        def showImage(img):
+            return mbSendReliable_("IMG:" + img)
+
+        @staticmethod
+        def animate(images, delay=150, loop=False):
+            loop_flag = 1 if loop else 0
+            payload = "ANM:%d:%d:%s" % (delay, loop_flag, "|".join(images))
+            return mbSendReliable_(payload)
+
+        @staticmethod
+        def stopAnimation():
+            return mbSendReliable_("STOP")
+
+        @staticmethod
+        def on():
+            return mbSendReliable_("ON")
+
+        @staticmethod
+        def off():
+            return mbSendReliable_("OFF")
+
+        @staticmethod
+        def isOn():
+            val = mbRequestValue_("ISON", "ION:")
+            return bool(val) if val is not None else None
+
+        @staticmethod
+        def readLightLevel():
+            return mbRequestValue_("LUX", "LIG:")
+
+        @staticmethod
+        def show(obj, delay=400, loop=False, wait=True):
+            if isinstance(obj, str):
+                return Microbit.Display.scroll(obj, delay)
+
+            if isinstance(obj, Microbit.Image):
+                return Microbit.Display.showImage(obj.data)
+
+            if isinstance(obj, list):
+                frames = []
+                for img in obj:
+                    if isinstance(img, Microbit.Image):
+                        frames.append(img.data)
+                    else:
+                        raise TypeError("List must contain Image objects")
+                return Microbit.Display.animate(frames, delay=delay, loop=loop)
+
+            raise TypeError("Unsupported type for show()")
+
+
+# Quelques images pré-définies (optionnel)
+Microbit.Image.HEART = Microbit.Image.fromRows([
+    "09090",
+    "99999",
+    "99999",
+    "09990",
+    "00900",
+])
+
+Microbit.Image.HEART_SMALL = Microbit.Image.fromRows([
+    "00000",
+    "09090",
+    "09990",
+    "00900",
+    "00000",
+])
+
+Microbit.Image.HAPPY = Microbit.Image.fromRows([
+    "00000",
+    "09090",
+    "00000",
+    "90009",
+    "09990",
+])
+
+Microbit.Image.SAD = Microbit.Image.fromRows([
+    "00000",
+    "09090",
+    "00000",
+    "09990",
+    "90009",
+])
+
+
+mbSync()
+"""
+
+
+class Microbit():
+  def execute_(self, command):
+    self.device_.addCommand(f"Microbit.Display.{command}")
+    
+  def __init__(self, device=None, extra=True):
+    self.init(device=device, extra=extra)
+    
+  def init(self, device=None, extra=True):
+    self.device_ = getDevice(device)
+    self.device_.addCommand(MB_SCRIPT_)
+    self.flash()
+    
+  def clear(self):
+    self.execute_("clear()")
+    
+  def flash(self):
+    self.execute_("show(Microbit.Image.HEART)")
+    time.sleep(2)
+    self.clear()
+    
+  
+##### End of section dedicated to micro:bit #####
