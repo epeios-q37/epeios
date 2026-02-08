@@ -1,5 +1,7 @@
 import random
 import shared
+import ucuq
+import time
 
 from types import SimpleNamespace
 
@@ -31,6 +33,7 @@ def launch(timestamp):
   helper = SimpleNamespace(pantherPict = 0, led = random.randrange(len(RAINBOW)))
   
   helper.start = helper.timestamp = timestamp + 1
+  helper.gcTimestamp = None
   
   shared.polyphonicPlay(VOICES_, 120, helper, callback_)
 

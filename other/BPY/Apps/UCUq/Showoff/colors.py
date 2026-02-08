@@ -25,8 +25,41 @@ class Colors_:
 
     return self
   
+  
+SCHEMES_ = []  
 
-def scheme1(timestamp, delay):
+def _(timestamp, delay):
+  delay /= 1.5
+
+  for color in RAINBOW:
+    sleep(timestamp)
+    timestamp += delay
+    colors_.fill(color)
+    colors_.write()
+
+  colors_.fill((0,0,0))
+  return timestamp  
+
+SCHEMES_.append(_)
+
+def _(timestamp, delay):
+  delay /= 1.5
+  
+  rgbs = devices.rgbs
+  
+  for r in range(len(RAINBOW)):
+    sleep(timestamp)
+    timestamp += delay
+    for rgb in rgbs:
+      rgb.fill(RAINBOW[(r + rgbs.index(rgb) * len(RAINBOW) // len(rgbs)) % len(RAINBOW)])
+    colors_.write()
+
+  colors_.fill((0,0,0))
+  return timestamp  
+
+SCHEMES_.append(_)
+
+def _(timestamp, delay):
   for i in range(15):
     sleep(timestamp)
     timestamp += delay
@@ -47,7 +80,9 @@ def scheme1(timestamp, delay):
   return timestamp  
 
 
-def scheme2(timestamp, delay):
+SCHEMES_.append(_)
+
+def _(timestamp, delay):
   for i in range(15):
     sleep(timestamp)
     timestamp += delay
@@ -68,7 +103,9 @@ def scheme2(timestamp, delay):
   return timestamp  
 
   
-def scheme3(timestamp, delay):
+SCHEMES_.append(_)
+
+def _(timestamp, delay):
   for i in range(15):
     sleep(timestamp)
     timestamp += delay
@@ -89,7 +126,9 @@ def scheme3(timestamp, delay):
   return timestamp
 
   
-def scheme4(timestamp, delay): 
+SCHEMES_.append(_)
+
+def _(timestamp, delay):
   for _ in range(2):
     for i in range(15):
       sleep(timestamp)
@@ -103,7 +142,9 @@ def scheme4(timestamp, delay):
   colors_.fill((0,0,0))
   return timestamp  
 
-def scheme5(timestamp, delay): 
+SCHEMES_.append(_)
+
+def _(timestamp, delay):
   for _ in range(2):
     for i in range(15):
       sleep(timestamp)
@@ -120,7 +161,9 @@ def scheme5(timestamp, delay):
   return timestamp  
   
 
-def scheme6(timestamp, delay):
+SCHEMES_.append(_)
+
+def _(timestamp, delay):
   for i in range(8):
     sleep(timestamp)
     timestamp += delay
@@ -128,7 +171,7 @@ def scheme6(timestamp, delay):
     colors_.set(i, 0, col).set(14 - i, 0, col).set(i, 1, col).set(14 - i, 1, col)
     colors_.write()
     
-  for i in range(7, 0, -1):
+  for i in range(7, -1, -1):
     sleep(timestamp)
     timestamp += delay
     col = (0,0,0)
@@ -136,11 +179,10 @@ def scheme6(timestamp, delay):
     colors_.write()
     
   colors_.fill((0,0,0))
-  return timestamp  
-    
+  return timestamp
 
-SCHEMES_ = tuple((obj for nom, obj in globals().items() if nom.startswith("scheme")))
-  
+SCHEMES_.append(_)
+    
 
 def fill(dom):
   html = '\n<option value="0">All</option>'
@@ -157,6 +199,8 @@ def update(dom):
 
   
 def launch(scheme, timestamp, delay, repeat):
+  timestamp += 1 
+  
   if scheme == 0:
     for scheme in SCHEMES_:
       for _ in range(repeat):

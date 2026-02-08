@@ -163,7 +163,7 @@ Débrancher/rebrancher le *micro:bit* et relancer *Chrome*.
 
 ### Code facilitant le débogage
 
-Prmet d'afficher le résultat d'un *print* dans une console à l'aide de la commande ` :
+Permet d'afficher le résultat d'un *print* dans une console à l'aide de la commande `screen /dev/ttyACM<x> 115200` :
 
 ```python
 def p(*args, **kwargs):

@@ -394,6 +394,9 @@ class Multi:
     else:
       raise IndexError("Index out of range for Multi object.")
     
+  def index(self, object):
+    return self.objects_.index(object)
+    
   def getObjects(self):
     return self.objects_
 
@@ -2004,6 +2007,7 @@ import socket
 import struct
 import time
 import machine
+import gc
 
 NTP_DELTA = 2208988800  # Différence entre epoch NTP (1900) et Unix (1970)
 
@@ -2223,7 +2227,7 @@ def mbRequestValue_(cmd, prefix):
 def mbSync():
     global mbSeq_
     mbSeq_ = 0
-    mbSendReliable_("SYNC")
+    print(mbSendReliable_("SYNC"))
 
 
 # --- Classe Image (style micro:bit) ---
@@ -2318,6 +2322,14 @@ Microbit.Image.HEART = Microbit.Image.fromRows([
     "00900",
 ])
 
+Microbit.Image.HEART = Microbit.Image.fromRows([
+    "09090",
+    "99999",
+    "99999",
+    "09990",
+    "00900",
+])
+
 Microbit.Image.HEART_SMALL = Microbit.Image.fromRows([
     "00000",
     "09090",
@@ -2358,14 +2370,31 @@ class Microbit():
     self.device_ = getDevice(device)
     self.device_.addCommand(MB_SCRIPT_)
     self.flash()
+    self.matrix_ = [[0] * 5 for _ in range(5)]
     
   def clear(self):
     self.execute_("clear()")
     
-  def flash(self):
-    self.execute_("show(Microbit.Image.HEART)")
-    time.sleep(2)
-    self.clear()
+  def setPixel(self, x, y, level):
+    self.matrix_[x][y] = level
+    self.execute_(f'setPixel({x}, {y}, {level})')
     
+  def getPixel(self, x, y):
+    return self.matrix_[x][y]
   
+  def showText(self, text, delay=150):
+    self.execute_(f'showText("{text}", {delay})')
+    
+  def flash(self):
+    self.execute_("""show(Microbit.Image.fromRows([
+  "99999",
+  "99999",
+  "99999",
+  "99999",
+  "99999",
+]))
+""")
+    time.sleep(FLASH_DELAY_)
+    self.clear()
+
 ##### End of section dedicated to micro:bit #####
