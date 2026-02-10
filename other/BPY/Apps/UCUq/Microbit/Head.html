@@ -1,10 +1,17 @@
-<title>UCUq/ATK boilerplate</title>
+<title>Micro:bit</title>
 <style>
-.led {
-  cursor: pointer;
-}
-
-.led-off {
-  opacity: 0;
-}
+  .led {
+    cursor: pointer;
+    opacity: 0;
+  }
 </style>
+<script>
+  function getPosition(id) {
+    return [...document.getElementById("LEDsOn").children].indexOf(document.getElementById(id));
+  }
+
+  function clearMatrix() {
+    for (const child of document.getElementById("LEDsOn").children)
+      child.style.opacity = "0";
+  }
+</script>

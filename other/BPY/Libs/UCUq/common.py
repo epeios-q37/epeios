@@ -2369,10 +2369,13 @@ class Microbit():
   def init(self, device=None, extra=True):
     self.device_ = getDevice(device)
     self.device_.addCommand(MB_SCRIPT_)
-    self.flash()
     self.matrix_ = [[0] * 5 for _ in range(5)]
+    self.flash()
     
   def clear(self):
+    for x in range(5):
+      for y in range(5):
+        self.matrix_[x][y] = 0
     self.execute_("clear()")
     
   def setPixel(self, x, y, level):
