@@ -36,6 +36,9 @@ namespace ucucmn {
     c_Undefined
   };
 
+  typedef bch::qBUNCHdl(tol::sTimeStamp) dTimeStamps;
+  qW(TimeStamps);
+
   const char *GetLabel(eCaller Caller);
 
   eCaller GetCaller(const str::dString &Pattern);
@@ -73,6 +76,38 @@ namespace ucucmn {
     return csdcmn::Get(Flow, Strings);
   }
 
+  inline const dTimeStamps &Get_(
+    flw::rRFlow &Flow,
+    dTimeStamps &TimeStamps)
+  {
+    bso::sSize Size = 0;
+    tol::sTimeStamp TimeStamp = tol::UndefinedTimeStamp;
+
+    dtfptb::VGet( Flow, Size );
+
+    while ( Size > 0 ) {
+      dtfptb::VGet(Flow, TimeStamp);
+
+      TimeStamps.Append(TimeStamp);
+    }
+
+    return TimeStamps;
+  }
+
+  inline const dTimeStamps &Get(
+    flw::rRFlow &Flow,
+    dTimeStamps &TimeStamps)
+  {
+    return Get_(Flow, TimeStamps);
+  }
+
+  inline const dTimeStamps &Get(
+    flw::rRFlow &Flow,
+    wTimeStamps &TimeStamps)
+  {
+    return Get_(Flow, TimeStamps);
+  }
+
   inline void Put(
     const str::dString &String,
     flw::rWFlow &Flow)
@@ -101,7 +136,36 @@ namespace ucucmn {
     return csdcmn::Put(Integer, Flow);
   }
 
-  inline void Commit(flw::rWFlow &Flow)
+  inline void Put_(
+    const dTimeStamps &TimeStamps,
+    flw::rWFlow &Flow)
+  {
+    dtfptb::VPut(TimeStamps.Size(), Flow);
+
+    sdr::sRow Row = TimeStamps.First();
+
+    while ( Row != qNIL ) {
+      dtfptb::VPut(TimeStamps(Row), Flow);
+
+      Row = TimeStamps.Next(Row);
+    }
+  }
+
+  inline void Put(
+    const dTimeStamps &TimeStamps,
+    flw::rWFlow &Flow)
+  {
+    return Put_(TimeStamps, Flow);
+  }
+
+  inline void Put(
+    const wTimeStamps &TimeStamps,
+    flw::rWFlow &Flow)
+  {
+    return Put_(TimeStamps, Flow);
+  }
+
+inline void Commit(flw::rWFlow &Flow)
   {
     Flow.Commit();
   }

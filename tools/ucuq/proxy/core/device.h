@@ -82,23 +82,25 @@ namespace device {
   bso::sBool DeleteVToken(
     const str::dString &RToken,
     const str::dString &VToken);
-  void GetRTokenIds(
-    const str::dString &RToken,
-    str::dStrings & Ids,
+  void GetRTokenIds(const str::dString &RToken,
+    str::dStrings &Ids,
+    ucucmn::dTimeStamps &TimeStamps,
     bso::sBool Lock = true);
   void GetRTokenVTokens(
     const str::dString &RToken,
     str::dStrings &VTokens,
     bso::sBool Lock = true);
-  bso::sBool GetVTokenId(
-    const str::dString &RToken,
+  bso::sBool GetVTokenId(const str::dString &RToken,
     const str::dString &VToken,
     str::dString &Id,
+    tol::sTimeStamp &TimeStamps,
     bso::sBool Lock = true);
   void GetTokensFeatures(
     const str::dString &RToken,
     str::dStrings &Ids,
+    ucucmn::dTimeStamps &IdsTimeStamps,
     str::dStrings &VTokens,
+    ucucmn::dTimeStamps &VTokensTimeStamps,
     str::dStrings &VTokenIds);
 }
 

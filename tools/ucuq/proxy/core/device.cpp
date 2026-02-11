@@ -293,17 +293,17 @@ qRE;
   return Row != qNIL;
 }
 
-void device::GetRTokenIds(
-  const str::dString &RToken,
+void device::GetRTokenIds(const str::dString &RToken,
   str::dStrings &Ids,
+  ucucmn::dTimeStamps &TimeStamps,
   bso::sBool Lock)
 {
- qRH;
+  qRH;
   mtx::rHandle Locker;
   wSRows_ Rows;
   sdr::sRow Row = qNIL;
   seeker::wSet Set;
-qRB;
+  qRB;
   if ( Lock )
     Locker.InitAndLock(Mutex_);
 
@@ -318,13 +318,14 @@ qRB;
 
     seeker::Get(Rows(Row), Set);
 
-    if ( Set.ROrV != RToken )
+    if ( Set._ROrV != RToken )
       qRGnr();
 
     if ( Set.VOrR.Amount() )
       qRGnr();
 
     Ids.Append(Set.IdOrR);
+    TimeStamps.Append(Set.TimeStamp());
 
     Row = Rows.Next(Row);
   }
@@ -361,7 +362,7 @@ qRB;
     if ( Set.VOrR != RToken )
       qRGnr();
 
-    VTokens.Append(Set.ROrV);
+    VTokens.Append(Set._ROrV);
 
     Row = Rows.Next(Row);
   }
@@ -370,10 +371,10 @@ qRT;
 qRE;
 }
 
-bso::sBool device::GetVTokenId(
-  const str::dString &RToken,
+bso::sBool device::GetVTokenId(const str::dString &RToken,
   const str::dString &VToken,
   str::dString &Id,
+  tol::sTimeStamp &TimeStamp,
   bso::sBool Lock)
 {
   sSRow_ Row = qNIL;
@@ -391,7 +392,7 @@ qRB;
 
     seeker::Get(Row, Set);
 
-    if ( Set.ROrV != VToken )
+    if ( Set._ROrV != VToken )
       qRUnx();
 
     if ( Set.VOrR != RToken )
@@ -399,6 +400,11 @@ qRB;
 
     if ( Set.IdOrR.Amount() )
       Id = Set.IdOrR;
+
+    if ( Set.TimeStamp() == tol::UndefinedTimeStamp )
+      qRUnx();
+
+    TimeStamp = Set.TimeStamp();
   }
 qRR;
 qRT;
@@ -409,26 +415,29 @@ qRE;
 void device::GetTokensFeatures(
   const str::dString &RToken,
   str::dStrings &Ids,
+  ucucmn::dTimeStamps &IdsTimeStamps,
   str::dStrings &VTokens,
+  ucucmn::dTimeStamps &VTokensTimeStamps,
   str::dStrings &VTokenIds)
 {
 qRH;
   mtx::rHandle Locker;
   sdr::sRow Row = qNIL;
   str::wString Id;
+  tol::sTimeStamp TimeStamp = tol::UndefinedTimeStamp;
 qRB;
   Locker.InitAndLock(Mutex_);
 
   Row = VTokens.Last();
 
-  GetRTokenIds(RToken, Ids, false);
+  GetRTokenIds(RToken, Ids, IdsTimeStamps, false);
   GetRTokenVTokens(RToken, VTokens, false);
 
   Row = VTokens.Next(Row);
 
   while ( Row != qNIL ) {
     Id.Init();
-    GetVTokenId(RToken, VTokens(Row), Id, false);
+    GetVTokenId(RToken, VTokens(Row), Id, TimeStamp, false);
 
     VTokenIds.Append(Id);
 

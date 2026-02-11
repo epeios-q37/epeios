@@ -190,6 +190,7 @@ namespace {
   qRH;
     str::wString RToken;
     str::wStrings RTokenIds, VTokens, VTokenIds;
+    ucucmn::wTimeStamps IdsTimeStamps, VTokensTimeStamps;
   qRB;
     RToken.Init();  
 
@@ -197,13 +198,15 @@ namespace {
 
     ucucmn::Dismiss(Manager);
 
-    tol::Init(RTokenIds, VTokens, VTokenIds);
-    device::GetTokensFeatures(RToken, RTokenIds, VTokens, VTokenIds);
+    tol::Init(RTokenIds, IdsTimeStamps, VTokens, VTokensTimeStamps, VTokenIds);
+    device::GetTokensFeatures(RToken, RTokenIds, IdsTimeStamps, VTokens, VTokensTimeStamps, VTokenIds);
 
     ucucmn::Put(ucumng::aOK, Manager);
     ucucmn::Put(str::Empty, Manager);
     ucucmn::Put(RTokenIds, Manager);
+    ucucmn::Put(IdsTimeStamps, Manager);
     ucucmn::Put(VTokens, Manager);
+    ucucmn::Put(VTokensTimeStamps, Manager);
     ucucmn::Put(VTokenIds, Manager);
 
     ucucmn::Commit(Manager);

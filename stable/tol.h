@@ -2235,6 +2235,8 @@ namespace tol {
 	typedef tick__ sTick;
 	typedef time_t sTimeStamp;
 
+	qCDEF(sTimeStamp, UndefinedTimeStamp, -1);
+
 	void Crash( void );	// Crashes deliberately the program. For testing of daemons watchdog.
 
 

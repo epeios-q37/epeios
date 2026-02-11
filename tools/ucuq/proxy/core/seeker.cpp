@@ -45,24 +45,27 @@ namespace {
   {
   public:
     sSRow_
-      ROrV,
+      _ROrV,
       IdOrR,
       VOrR;
     sCRow_ Caller;
+    tol::sTimeStamp TimeStamp;
     void reset(bso::sBool = true)
     {
-      ROrV = IdOrR = VOrR = qNIL;
+      _ROrV = IdOrR = VOrR = qNIL;
       Caller = qNIL;
+      TimeStamp = tol::UndefinedTimeStamp;
     }
     qCTOR(sTie_);
     void Init(void)
     {
-      ROrV = IdOrR = VOrR = qNIL;
+      _ROrV = IdOrR = VOrR = qNIL;
       Caller = qNIL;
+      TimeStamp = tol::UndefinedTimeStamp;
     }
 #define T_(R) int(R != qNIL)
 #define F_(R,P) ( ( T_(R) & 1 ) << P)
-#define M_ (F_(ROrV,2) | F_(IdOrR, 1) | T_(VOrR))
+#define M_ (F_(_ROrV,2) | F_(IdOrR, 1) | T_(VOrR))
     bso::sBool IsRToV(void) const
     {
       return M_ == 3;
@@ -109,11 +112,11 @@ namespace {
       }
     }
   
-    const str::dString &GetROrV_(
+    const str::dString &_GetROrV_(
       sRow Row,
       gStrItm_ &Item)
     {
-      return Get_(Ties_(Row).ROrV, Item);
+      return Get_(Ties_(Row)._ROrV, Item);
     }
 
     const str::dString &GetIdOrR_(
@@ -142,7 +145,7 @@ namespace {
         sRow Row)
       {
         gStrItm_ Item;
-        bso::sSign Sign = str::Compare(ROrV, GetROrV_(Row, Item));
+        bso::sSign Sign = str::Compare(ROrV, _GetROrV_(Row, Item));
 
         if ( Sign == 0 )
           Sign = str::Compare(IdOrR, GetIdOrR_(Row, Item));
@@ -163,7 +166,7 @@ namespace {
         sRow Row)
       {
         gStrItm_ Item;
-        bso::sSign Sign = str::Compare(ROrV, GetROrV_(Row, Item));
+        bso::sSign Sign = str::Compare(ROrV, _GetROrV_(Row, Item));
 
         if ( ( Sign == 0 ) && IdOrR.Amount() )
           Sign = str::Compare(IdOrR, GetIdOrR_(Row, Item));
@@ -284,8 +287,8 @@ namespace {
   {
     cio::COut << "ROrV: ";
 
-    if ( Tie.ROrV != qNIL )
-      cio::COut << Strings_(Tie.ROrV);
+    if ( Tie._ROrV != qNIL )
+      cio::COut << Strings_(Tie._ROrV);
 
     cio::COut << "\tIdOrR: ";
 
@@ -301,6 +304,15 @@ namespace {
 
     if ( Tie.Caller != qNIL )
       cio::COut << *Tie.Caller;
+
+    if ( Tie.TimeStamp != tol::UndefinedTimeStamp ) {
+      struct tm *Local = localtime(&Tie.TimeStamp);
+
+      if ( Local == NULL )
+        qRGnr();
+
+      cio::COut << asctime(Local);
+    }
   }
 }
 
@@ -336,9 +348,10 @@ namespace {
     gStrItm_ Item;
     sTie_ Tie = Ties_(Row);
 
-    Set.ROrV = Get_(Tie.ROrV, Item);
+    Set._ROrV = Get_(Tie._ROrV, Item);
     Set.IdOrR = Get_(Tie.IdOrR, Item);
     Set.VOrR = Get_(Tie.VOrR, Item);
+    Set.S_.TimeStamp = Tie.TimeStamp;
 
     return Set;
   }
@@ -494,14 +507,14 @@ qRB;
 
   Row = index_::Search(RToken, str::Empty, str::Empty);
 
-  while ( ( Row != qNIL ) && ( GetROrV_(Row, Item) == RToken ) ) {
+  while ( ( Row != qNIL ) && ( _GetROrV_(Row, Item) == RToken ) ) {
     PrevRow = Row;
     Row = index_::GetLesser(Row);
   }
 
   Row = PrevRow;
 
-  while ( ( Row != qNIL ) && ( GetROrV_(Row, Item) == RToken ) ) {
+  while ( ( Row != qNIL ) && ( _GetROrV_(Row, Item) == RToken ) ) {
     if ( Ties_(Row).IsD() )
       Rows.Append(Row);
 
@@ -557,9 +570,10 @@ namespace {
 
     Tie.Init();
 
-    Tie.ROrV = Strings_.New(RToken);
+    Tie._ROrV = Strings_.New(RToken);
     Tie.IdOrR = Strings_.New(Id);
     Tie.Caller = Caller;
+    Tie.TimeStamp = tol::EpochTime(false);
 
     return Ties_.Add(Tie);
   }
@@ -616,8 +630,9 @@ qRB;
 
   Tie.Init();
 
-  Tie.ROrV = Add_(VToken);
+  Tie._ROrV = Add_(VToken);
   Tie.VOrR = Add_(RToken);
+  Tie.TimeStamp = tol::EpochTime(false);
 
   if ( Id.Amount() )
     Tie.IdOrR = Add_(Id);
@@ -630,6 +645,7 @@ qRB;
 
   Tie.IdOrR = Add_(RToken);
   Tie.VOrR = Add_(VToken);
+  Tie.TimeStamp = tol::EpochTime(false);
 
   index_::Update(str::Empty, RToken, VToken, Ties_.Add(Tie));
 qRR;
@@ -643,7 +659,7 @@ namespace {
   {
     sTie_ Tie = Ties_(Row);
 
-    Remove_(Tie.ROrV);
+    Remove_(Tie._ROrV);
     Remove_(Tie.IdOrR);
     Remove_(Tie.VOrR);
 
@@ -666,7 +682,7 @@ qRB;
 
     Get_(Row, Set);
 
-    Delete_(index_::Search(str::Empty, Set.VOrR, Set.ROrV));
+    Delete_(index_::Search(str::Empty, Set.VOrR, Set._ROrV));
   }
 
   Delete_(Row);

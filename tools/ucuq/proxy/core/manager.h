@@ -19,7 +19,7 @@
 
 
 #ifndef MANAGER_INC_
-# define MANAGERY_INC_
+# define MANAGER_INC_
 
 # include "fdr.h"
 

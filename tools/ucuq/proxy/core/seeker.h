@@ -43,26 +43,43 @@ namespace seeker {
         ROrV,
         IdOrR,
         VOrR;
-    };
+      tol::sTimeStamp TimeStamp;
+    } &S_;
     str::dString
-      ROrV,
+      _ROrV,
       IdOrR,
       VOrR;
     dSet(s &S):
-      ROrV(S.ROrV),
+      _ROrV(S.ROrV),
       IdOrR(S.IdOrR),
-      VOrR(S.VOrR)
+      VOrR(S.VOrR),
+      S_(S)
     {
       reset(false);
     }
     void reset(bso::sBool P = true)
     {
-      tol::reset(P, ROrV, IdOrR, VOrR);
+      tol::reset(P, _ROrV, IdOrR, VOrR);
+      S_.TimeStamp = tol::UndefinedTimeStamp;
     }
     qDTOR(dSet);
     void Init(void)
     {
-      tol::Init(ROrV, IdOrR, VOrR);
+      tol::Init(_ROrV, IdOrR, VOrR);
+      S_.TimeStamp = tol::UndefinedTimeStamp;
+    }
+    const dSet &operator =(const dSet &Set)
+    {
+      _ROrV = Set._ROrV;
+      IdOrR = Set.IdOrR;
+      VOrR = Set.VOrR;
+      S_.TimeStamp = Set.S_.TimeStamp;
+
+      return *this;
+    }
+    const tol::sTimeStamp TimeStamp(void)
+    {
+      return S_.TimeStamp;
     }
   };
 
