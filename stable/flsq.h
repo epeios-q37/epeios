@@ -270,7 +270,7 @@ namespace flsq {
 		// taille du fichier
 //		sdr::size__ TailleFichier_;	// 'sdr::size__' et non 'fil::size__', car considr comme un 'storage', et donc soumis  ses limites.
 		struct {
-			int
+			unsigned int
 				// signale si le Stream est ouvert ou non
 				Ouvert			:1,
 				// signale que la fermeture du fichier se fait manuellement

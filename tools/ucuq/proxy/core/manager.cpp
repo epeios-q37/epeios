@@ -32,7 +32,9 @@
 using namespace manager;
 
 namespace {
-  void Close_(flw::rRWFlow &Manager)
+  void Close_(
+    flw::rRWFlow &Manager,
+    csdcmn::sVersion)
   {
   qRH;
     str::string Token, Id;
@@ -51,7 +53,9 @@ namespace {
   qRE;
   }
 
-  void Execute_(flw::rRWFlow &Manager)
+  void Execute_(
+    flw::rRWFlow &Manager,
+    csdcmn::sVersion)
   {
   qRH;
     flw::rDressedRWFlow<> Device;
@@ -132,7 +136,9 @@ namespace {
   qRE;
   }
 
-  void Create_(flw::rRWFlow &Manager)
+  void Create_(
+    flw::rRWFlow &Manager,
+    csdcmn::sVersion )
   {
   qRH;
     str::wString
@@ -159,7 +165,9 @@ namespace {
   qRE;
   }
 
-  void Delete_(flw::rRWFlow &Manager)
+  void Delete_(
+    flw::rRWFlow &Manager,
+    csdcmn::sVersion)
   {
   qRH;
     str::wString RToken, VToken;
@@ -185,7 +193,9 @@ namespace {
   qRE;
   }
 
-  void Fetch_(flw::rRWFlow &Manager)
+  void Fetch_(
+    flw::rRWFlow &Manager,
+    csdcmn::sVersion ProtocolVersion)
   {
   qRH;
     str::wString RToken;
@@ -204,9 +214,11 @@ namespace {
     ucucmn::Put(ucumng::aOK, Manager);
     ucucmn::Put(str::Empty, Manager);
     ucucmn::Put(RTokenIds, Manager);
-    ucucmn::Put(IdsTimeStamps, Manager);
+    if ( ProtocolVersion >= 1 )
+      ucucmn::Put(IdsTimeStamps, Manager);
     ucucmn::Put(VTokens, Manager);
-    ucucmn::Put(VTokensTimeStamps, Manager);
+    if ( ProtocolVersion >= 1 )
+      ucucmn::Put(VTokensTimeStamps, Manager);
     ucucmn::Put(VTokenIds, Manager);
 
     ucucmn::Commit(Manager);
@@ -216,7 +228,9 @@ namespace {
   }
 }
 
-void manager::Process(fdr::rRWDriver &Driver)
+void manager::Process(
+  fdr::rRWDriver &Driver,
+  csdcmn::sVersion ProtocolVersion)
 {
 qRH;
   flw::rDressedRWFlow<> Flow;
@@ -229,19 +243,19 @@ qRB;
 
   switch ( ucumng::GetRequest(RawRequest) ) {
   case ucumng::rClose_1:
-    Close_(Flow);
+    Close_(Flow, ProtocolVersion);
     break;
   case ucumng::rExecute_1:
-    Execute_(Flow);
+    Execute_(Flow, ProtocolVersion);
     break;
   case ucumng::rCreate_1:
-    Create_(Flow);
+    Create_(Flow, ProtocolVersion);
     break;
   case ucumng::rDelete_1:
-    Delete_(Flow);
+    Delete_(Flow, ProtocolVersion);
     break;
   case ucumng::rFetch_1:
-    Fetch_(Flow);
+    Fetch_(Flow, ProtocolVersion);
     break;
   default:
     qRGnr();

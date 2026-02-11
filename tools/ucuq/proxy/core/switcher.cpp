@@ -182,7 +182,7 @@ namespace {
 			remote::Process(*Driver);
 			break;
 		case common::cManager:
-			manager::Process(*Driver);
+			manager::Process(*Driver, Features.ProtocolVersion);
 			break;
 		default:
 			qRUnx();

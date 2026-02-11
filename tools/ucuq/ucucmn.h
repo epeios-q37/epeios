@@ -45,7 +45,7 @@ namespace ucucmn {
 
   namespace protocol {
     extern const char *Id;
-    qCDEF(csdcmn::sVersion, LastVersion, 0);
+    qCDEF(csdcmn::sVersion, LastVersion, 1);
   }
 
   template <typename integer> integer Get(
@@ -85,7 +85,7 @@ namespace ucucmn {
 
     dtfptb::VGet( Flow, Size );
 
-    while ( Size > 0 ) {
+    while ( Size-- ) {
       dtfptb::VGet(Flow, TimeStamp);
 
       TimeStamps.Append(TimeStamp);
@@ -140,7 +140,7 @@ namespace ucucmn {
     const dTimeStamps &TimeStamps,
     flw::rWFlow &Flow)
   {
-    dtfptb::VPut(TimeStamps.Size(), Flow);
+    dtfptb::VPut(TimeStamps.Amount(), Flow);
 
     sdr::sRow Row = TimeStamps.First();
 

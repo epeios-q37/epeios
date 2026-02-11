@@ -22,9 +22,12 @@
 # define MANAGER_INC_
 
 # include "fdr.h"
+# include "csdcmn.h"
 
 namespace manager {
-  void Process(fdr::rRWDriver &);
+  void Process(
+    fdr::rRWDriver &Driver,
+    csdcmn::sVersion ProtocolVersion);
 }
 
 #endif

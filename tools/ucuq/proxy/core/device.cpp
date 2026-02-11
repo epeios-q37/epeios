@@ -318,7 +318,7 @@ void device::GetRTokenIds(const str::dString &RToken,
 
     seeker::Get(Rows(Row), Set);
 
-    if ( Set._ROrV != RToken )
+    if ( Set.ROrV != RToken )
       qRGnr();
 
     if ( Set.VOrR.Amount() )
@@ -362,7 +362,7 @@ qRB;
     if ( Set.VOrR != RToken )
       qRGnr();
 
-    VTokens.Append(Set._ROrV);
+    VTokens.Append(Set.ROrV);
 
     Row = Rows.Next(Row);
   }
@@ -392,7 +392,7 @@ qRB;
 
     seeker::Get(Row, Set);
 
-    if ( Set._ROrV != VToken )
+    if ( Set.ROrV != VToken )
       qRUnx();
 
     if ( Set.VOrR != RToken )
@@ -440,6 +440,7 @@ qRB;
     GetVTokenId(RToken, VTokens(Row), Id, TimeStamp, false);
 
     VTokenIds.Append(Id);
+    VTokensTimeStamps.Append(TimeStamp);
 
     Row = VTokens.Next(Row);
   }

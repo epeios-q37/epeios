@@ -348,7 +348,7 @@ namespace {
     gStrItm_ Item;
     sTie_ Tie = Ties_(Row);
 
-    Set._ROrV = Get_(Tie._ROrV, Item);
+    Set.ROrV = Get_(Tie._ROrV, Item);
     Set.IdOrR = Get_(Tie.IdOrR, Item);
     Set.VOrR = Get_(Tie.VOrR, Item);
     Set.S_.TimeStamp = Tie.TimeStamp;
@@ -682,7 +682,7 @@ qRB;
 
     Get_(Row, Set);
 
-    Delete_(index_::Search(str::Empty, Set.VOrR, Set._ROrV));
+    Delete_(index_::Search(str::Empty, Set.VOrR, Set.ROrV));
   }
 
   Delete_(Row);
