@@ -41,7 +41,7 @@ RAINBOW = rainbowGradient_(50, RGB_MAX_)
 indexes = [random.randrange(len(RAINBOW)) for i in range(3)]
 
 
-class RGB_(ucuq.WS2812):
+class RGB_(ucuq.Ravel.Ring):
   def setValue(self, index, color = None):
     if hasattr(self, "go") and not self.go:
       return self
@@ -55,10 +55,10 @@ def connect():
   
   ucuq.ntpSetTime()
   
-  devices.rgbs = RGB_(8, 20)
-  devices.buzzers = ucuq.Buzzer(ucuq.PWM(5))
-  devices.lcds = ucuq.HD44780_I2C(16, 2, ucuq.SoftI2C(6, 7))
-  devices.oleds = ucuq.SSD1306_I2C(128, 64, ucuq.I2C(8, 9))
+  devices.rgbs = RGB_()
+  devices.buzzers = ucuq.Ravel.Buzzer()
+  devices.lcds = ucuq.Ravel.LCD()
+  devices.oleds = ucuq.Ravel.OLED()
 
   
 def sleep(timestamp):

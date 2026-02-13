@@ -776,9 +776,7 @@ class Nothing_:
 
 class Core_:
   def __new__(cls, *kargs, **kwargs):
-    if "device" in kwargs:
-      devices = kwargs["device"]
-    else:
+    if "device" not in kwargs or (devices := kwargs["device"]) is None :
       devices = getDevice()
     
     if type(devices) is Multi:
@@ -1007,11 +1005,11 @@ class WS2812(Core_):
   def __init__(self, n=None, pin=None, offset=0, device=None, extra=True):
     super().__init__(device)
 
-    if (pin == None) != (n == None):
+    if (pin is None) != (n is None):
       raise Exception("Both or none of 'pin'/'n' must be given")
 
-    if pin != None:
-      self.init(n, pin, offset=offset, device=device, extra=extra)
+    if pin is not None:
+      WS2812.init(self, n, pin, offset=offset, device=device, extra=extra)
 
   def init(self, n, pin, offset=0, device=None, extra=True):
     self.n_ = n
@@ -1185,7 +1183,7 @@ class Multi_:
     if name in kwargs:
       ArgIsKW = True
       values = kwargs[name]
-    elif len(kargs) >= position:
+    elif len(kargs) > position:
       values = kargs[position]
       ArgIsKW = False
       kargs = list(kargs)
@@ -1214,7 +1212,7 @@ class Buzzer(Multi_):
   param_ = (0, "pwm")
   def __init__(self, pwm=None, *, u16=32000, extra=True):
     self.on_ = False
-    self.init(pwm, u16=u16, extra=extra)
+    Buzzer.init(self, pwm, u16=u16, extra=extra)
 
   def init(self, pwm, *, u16=32000, extra=True):
     self.u16_ = u16
@@ -1349,8 +1347,8 @@ class HD44780_I2C(Multi_, Core_):
     super().__init__()
 
     if i2c:
-      self.init(num_columns, num_lines, i2c, addr=addr, extra=extra)
-    elif addr != None:
+      HD44780_I2C.init(self, num_columns, num_lines, i2c, addr=addr, extra=extra)
+    elif addr is not None:
       raise Exception("addr can not be given without i2c!")
 
   def init(self, num_columns, num_lines, i2c, addr=None, extra=True):
@@ -2401,3 +2399,29 @@ class Microbit():
     self.clear()
 
 ##### End of section dedicated to micro:bit #####
+
+##### Begin of section dedicated to the Ravel kit #####
+
+def KitsClassPatch_(caller, owner):
+#  return caller if caller != owner else owner.__base__
+  return caller if caller != owner else owner.__bases__[0] # Workaround to Brython isseu 'https://github.com/brython-dev/brython/issues/2663'.
+
+class Ravel:
+  class Ring(WS2812):
+    def __new__(cls, offset=0, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
+      
+  # class Buzzer(Buzzer):
+  class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, Ravel.Buzzer), PWM(5, device=device), extra=extra)
+
+  class LCD(HD44780_I2C):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, Ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
+    
+  class OLED(SSD1306_I2C):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, Ravel.OLED), 128, 64, I2C(8, 9, device=device), extra=extra)
+
+##### End of section dedicated to the Ravel kit #####
