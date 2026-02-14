@@ -2404,7 +2404,7 @@ class Microbit():
 
 def KitsClassPatch_(caller, owner):
 #  return caller if caller != owner else owner.__base__
-  return caller if caller != owner else owner.__bases__[0] # Workaround to Brython isseu 'https://github.com/brython-dev/brython/issues/2663'.
+  return caller if caller != owner else owner.__bases__[0] # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2663'.
 
 class Ravel:
   class Ring(WS2812):
