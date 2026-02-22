@@ -1,11 +1,14 @@
 import random
-import shared
+import show
 import ucuq
 import time
 
 from types import SimpleNamespace
 
-from shared import devices, RAINBOW, sleep
+import shared
+
+from show import devices, sleep
+from shared import RAINBOW
 
 
 def callback_(helper, events, duration):

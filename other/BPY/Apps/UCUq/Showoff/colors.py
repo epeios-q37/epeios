@@ -1,4 +1,5 @@
-from shared import devices, sleep, RAINBOW
+from show import devices, sleep
+from shared import RAINBOW
 
 W_SCHEMES = "ColorSchemes"
 W_DELAY = "ColorDelay"

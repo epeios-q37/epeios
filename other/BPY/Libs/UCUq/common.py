@@ -1149,8 +1149,12 @@ class PWM(Core_):
       self.init(pin, freq=freq, u16=u16, ns=ns, device=device, extra=extra)
 
   def init(self, pin, *, freq=None, u16=None, ns=None, device=None, extra=True):
+    self.pin_ = pin
     command = f"machine.PWM(machine.Pin({pin}, machine.Pin.OUT){getParam('freq', freq)}{getParam('duty_u16', u16)}{getParam('duty_ns', ns)})"
     super().init("PWM-1", command, device, extra, before=f"{command}.deinit()")
+    
+  def GPIO(self):
+    return GPIO(self.pin_)
 
   async def getU16Await(self):
     return int(await self.callMethodAwait("duty_u16()"))
@@ -1173,9 +1177,6 @@ class PWM(Core_):
   def deinit(self):
     return self.addMethods(f"deinit()")
   
-BUZZER_COEFF_ = 2 ** (1/12)
-BASE_FREQ_ = 6.875
-
 class Multi_:
   def __new__(cls, *kargs, **kwargs):
     position, name = cls.param_
@@ -1210,6 +1211,9 @@ class Multi_:
 
 class Buzzer(Multi_):
   param_ = (0, "pwm")
+  BUZZER_MUL_ = 2 ** (1/12)
+  BASE_FREQ_ = 6.875
+
   def __init__(self, pwm=None, *, u16=32000, extra=True):
     self.on_ = False
     Buzzer.init(self, pwm, u16=u16, extra=extra)
@@ -1222,6 +1226,9 @@ class Buzzer(Multi_):
       self.pwm_.setU16(0)
     
     return self
+  
+  def PWM(self):
+    return self.pwm_
     
   def off(self):
     if self.on_:
@@ -1245,7 +1252,7 @@ class Buzzer(Multi_):
     if note == 0:
       return self.off()
     else:
-      return self.on(round(BASE_FREQ_ * BUZZER_COEFF_ ** ( note + 3 )))
+      return self.on(round(self.BASE_FREQ_ * self.BUZZER_MUL_ ** ( note + 3 )))
 
 
 class PCA9685(Core_):
@@ -2407,6 +2414,13 @@ def KitsClassPatch_(caller, owner):
   return caller if caller != owner else owner.__bases__[0] # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2663'.
 
 class Ravel:
+  @classmethod
+  def RAZ(cls):
+    cls.Ring()
+    cls.Buzzer()
+    cls.LCD()
+    cls.OLED()
+    
   class Ring(WS2812):
     def __new__(cls, offset=0, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)

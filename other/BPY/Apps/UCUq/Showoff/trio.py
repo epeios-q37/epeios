@@ -1,6 +1,6 @@
 import shared
 
-from shared import devices, indexes, sleep
+from show import devices, indexes, sleep
 
 from types import SimpleNamespace
 
