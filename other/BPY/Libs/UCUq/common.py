@@ -1511,6 +1511,9 @@ class OLED_(Core_):
   def powerOff(self):
     return self.addMethods("poweroff()")
 
+  def powerOn(self):
+    return self.addMethods("poweron()")
+
   def contrast(self, contrast):
     return self.addMethods(f"contrast({contrast})")
 
