@@ -2,6 +2,7 @@ import atlastk  # noqa: F401
 import ucuq # pyright: ignore[reportMissingImports]
 import time
 import pink
+import indy
 import trio
 import colors
 
@@ -26,7 +27,10 @@ def atkPartnerConnect(dom):
   
   
 def atkPartnerLaunch(dom):
-  partner.launch()
+  if not partner.isConnected():
+    partner.connect(dom.getValue("Device"))
+    
+  partner.launch(dom.getValue("PartnerSound") == "true")
   
   
 def atkShowConnect(dom):
@@ -49,6 +53,11 @@ def atkShowTest():
   show.devices.rgbs.flash()
   
   
+def atkShowIndy(dom):
+  timestamp = show.countdownIfSelected(dom, time.time() + 1)
+  indy.launch(timestamp)
+  
+
 def atkShowPink(dom):
   timestamp = show.countdownIfSelected(dom, time.time() + 1)
   pink.launch(timestamp)

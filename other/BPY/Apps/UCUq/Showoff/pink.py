@@ -20,8 +20,8 @@ def callback_(helper, events, duration):
     if event[1] !=-1:
       devices.buzzers.off()
       if event[1] != 0:
-        devices.buzzers.play(int(event[1]))
-        helper.led += 1
+        devices.buzzers.on(event[1])
+        helper.led += 1    
         
   devices.rgbs.setValue(helper.led, RAINBOW[helper.led % len(RAINBOW)]).write()
   devices.rgbs.setValue(helper.led + 1,(0,0,0)).write()

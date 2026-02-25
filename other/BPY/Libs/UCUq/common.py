@@ -1,4 +1,4 @@
-import zlib, base64, atlastk, re, copy, time
+import zlib, base64, atlastk, re, copy, time, json
 
 ITEMS_ = "i_"
 
@@ -30,19 +30,19 @@ def getObject_(id):
 
 
 def displayMissingConfigMessage_():
-  displayExitMessage_(
+  displayExitMessage_(  # noqa: F821
     "Please launch the 'Config' app first to set the device to use!"
   )
 
 
 def handlingConfig_(token, id):
-  if not CONFIG_:
+  if not CONFIG_:  # noqa: F821
     displayMissingConfigMessage_()
 
-  if K_DEVICE not in CONFIG_:
+  if K_DEVICE not in CONFIG_:  # noqa: F821
     displayMissingConfigMessage_()
 
-  device = CONFIG_[K_DEVICE]
+  device = CONFIG_[K_DEVICE]  # noqa: F821
 
   if not token:
     if K_DEVICE_TOKEN not in device:
@@ -61,7 +61,7 @@ def handlingConfig_(token, id):
 
 def getConfigToken_():
   try:
-    return CONFIG_[K_DEVICE][K_DEVICE_TOKEN]
+    return CONFIG_[K_DEVICE][K_DEVICE_TOKEN]  # noqa: F821
   except:
     return ""
 
@@ -405,7 +405,7 @@ class Multi:
     return True
 
 
-class Device(Device_):
+class Device(Device_):  # noqa: F821
   def __new__(cls, id=None, token=None, callback=None):
     if type(id) in (list, tuple):
       ids = id
@@ -430,6 +430,8 @@ class Device(Device_):
     self.handledModules_ = []
     self.commands_ = [
 """
+__import__("gc").collect()
+
 def sleepWait(start, us):
   elapsed = time.ticks_us() - start
             
@@ -519,7 +521,7 @@ async def getBaseInfosAwait_(device=None):
 
 
 def getKitFromDeviceId_(deviceId):
-  for kit in KITS_:
+  for kit in KITS_:  # noqa: F821
     if "devices" in kit and deviceId in kit["devices"]:
       return kit
   else:
@@ -541,7 +543,7 @@ def getKitLabelFromDeviceId_(deviceId):
 def getKitFromLabel_(label):
   brand, model, variant = label.split("/")
 
-  for kit in KITS_:
+  for kit in KITS_:  # noqa: F821
     if (
       kit["brand"] == brand
       and kit["model"] == model
@@ -647,9 +649,9 @@ async def getInfosAwait(device):
 
 
 async def ATKConnectAwait(dom, body, *, target="", device=None):
-  await getKitsAwait()
+  await getKitsAwait()  # noqa: F821
 
-  if not KITS_:
+  if not KITS_:  # noqa: F821
     raise Exception("No kits defined!")
 
   await dom.inner(
@@ -692,7 +694,7 @@ async def ATKConnectAwait(dom, body, *, target="", device=None):
   """,
   )
 
-  if device or CONFIG_:
+  if device or CONFIG_:  # noqa: F821
     device = getDevice(device)
 
   if not device:
@@ -707,7 +709,7 @@ async def ATKConnectAwait(dom, body, *, target="", device=None):
   infos = await getInfosAwait(device)
 
   if (elapsed := time.monotonic() - start) < 3:
-    await sleepAwait(3 - elapsed)
+    await sleepAwait(3 - elapsed)  # noqa: F821
 
   deviceId = getDeviceId(infos)
 
@@ -715,7 +717,7 @@ async def ATKConnectAwait(dom, body, *, target="", device=None):
 
   await dom.inner("ucuq_body", body)
 
-  await sleepAwait(1.5)
+  await sleepAwait(1.5)  # noqa: F821
 
   await dom.inner(target, body)
 
@@ -726,7 +728,7 @@ async def ATKConnectAwait(dom, body, *, target="", device=None):
 
 def getDevice(device=None, *, id=None, token=None):
   if device and (token or id):
-    displayExitMessage_("'device' can not be given together with 'token' or 'id'!")
+    displayExitMessage_("'device' can not be given together with 'token' or 'id'!")  # noqa: F821
 
   if device is None:
     global device_
@@ -898,7 +900,7 @@ class I2C_Core_(Core_):
       self.init(sda, scl, soft=soft, device=device)
 
   async def scanAwait(self):
-    return await commitAwait(f"{self.getObject()}.scan()")
+    return await commitAwait(f"{self.getObject()}.scan()")  # noqa: F821
 
 
 class I2C(I2C_Core_):
@@ -1209,10 +1211,14 @@ class Multi_:
       cls.__init__(obj, *kargs, **kwargs)
       return obj
 
+BUZZER_MUL_ = 2 ** (1/12)
+BUZZER_BASE_FREQ_ = 6.875
+
+def buzzerConvert_(note):
+  return note if note <= 0 else round(BUZZER_BASE_FREQ_ * BUZZER_MUL_ ** ( note + 3 ))
+
 class Buzzer(Multi_):
   param_ = (0, "pwm")
-  BUZZER_MUL_ = 2 ** (1/12)
-  BASE_FREQ_ = 6.875
 
   def __init__(self, pwm=None, *, u16=32000, extra=True):
     self.on_ = False
@@ -1252,7 +1258,7 @@ class Buzzer(Multi_):
     if note == 0:
       return self.off()
     else:
-      return self.on(round(self.BASE_FREQ_ * self.BUZZER_MUL_ ** ( note + 3 )))
+      return self.on(buzzerConvert_(note))
 
 
 class PCA9685(Core_):
@@ -1964,14 +1970,41 @@ def ppParseNoteString_(note_str, base):
   else:
     note, octave, duration, dots = match.groups()
     
-  return ppNote2Midi_(note, int(octave)), ppDuration2Seconds_(int(duration), base, len(dots) if len(dots) == 0 or dots[0] != ',' else -1),
+  return buzzerConvert_(ppNote2Midi_(note, int(octave))), ppDuration2Seconds_(int(duration), base, len(dots) if len(dots) == 0 or dots[0] != ',' else -1),
 
 
 def ppExtractNotes_(voice_str):
   return re.findall(r'([A-Z\-][b#]?\d\d\.*,?|[R\-]\d\.*,?)', voice_str)
 
 
-def polyphonicPlay(voices, tempo, userObject, callback):
+def polyeventPlay(polyEvents, callback, helper = None):
+  indexes = [0 for _ in polyEvents]
+  notes = [0 for _ in polyEvents]
+  delays = [0 for _ in polyEvents]
+
+  while any(i is not None for i in indexes):
+    events = []
+
+    delay = 100000
+
+    for i in range(len(indexes)):
+      if indexes[i] is not None:
+        if delays[i] == 0:
+          notes[i], delays[i] = polyEvents[i][indexes[i]]
+          indexes[i] += 1
+          events.append((i, notes[i]))
+        delay = min(delay, delays[i])
+
+    callback(helper, events, delay)
+
+    for i in range(len(indexes)):
+      if indexes[i] is not None and indexes[i] >= len(polyEvents[i]):
+        indexes[i] = None
+      else:
+        delays[i] -= delay
+        
+        
+def polyPhonicToEvents(voices, tempo):
   voiceNotes = [ppExtractNotes_(v) for v in voices]
   
   raws = []
@@ -1983,30 +2016,11 @@ def polyphonicPlay(voices, tempo, userObject, callback):
     raw.append((0, 0))
     raws.append(raw)
 
-  indexes = [0 for _ in raws]
-  notes = [0 for _ in raws]
-  delays = [0 for _ in raws]
+  return raws  
 
-  while any(i is not None for i in indexes):
-    events = []
 
-    delay = 100000
-
-    for i in range(len(indexes)):
-      if indexes[i] is not None:
-        if delays[i] == 0:
-          notes[i], delays[i] = raws[i][indexes[i]]
-          indexes[i] += 1
-          events.append((i, notes[i]))
-        delay = min(delay, delays[i])
-
-    callback(userObject, events, delay)
-
-    for i in range(len(indexes)):
-      if indexes[i] is not None and indexes[i] >= len(raws[i]):
-        indexes[i] = None
-      else:
-        delays[i] -= delay
+def polyphonicPlay(voices, tempo, userObject, callback):
+  polyeventPlay(polyPhonicToEvents(voices, tempo), callback, userObject)
         
         
 ###### Begin of section high precision time handling based on NTP #####

@@ -30,21 +30,21 @@ def callback_(helper, events, duration):
 
   for event in events:
     turn = event[0]
-    note = event[1]
+    freq = event[1]
     buzzer = devices.buzzers[turn]
     
-    if note != 0 and helper.prev[turn] == note:
+    if freq != 0 and helper.prev[turn] == freq:
       buzzer.off()
       devices.oleds[turn].contrast(0)
     else:
-      helper.prev[turn] = note
+      helper.prev[turn] = freq
   
-    if note != 0:
-      buzzer.play(int(note))
+    if freq > 0:
+      buzzer.on(int(freq))
       indexes[turn] += 1
       devices.rgbs[turn].go = True
       devices.oleds[turn].contrast(1)
-    else:
+    elif freq == 0:
       buzzer.off()
       devices.oleds[turn].contrast(0)
       
@@ -52,7 +52,7 @@ def callback_(helper, events, duration):
     
     for spot in spots:
       devices.rgbs.setValue(spot, (0,0,0))
-      if note != 0:
+      if freq != 0:
         devices.rgbs.setValue(spots[indexes[turn] % len(spots)], COLORS_[turn])
           
   devices.rgbs.setValue(6).setValue(2).write()

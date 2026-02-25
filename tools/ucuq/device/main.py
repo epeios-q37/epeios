@@ -14,6 +14,7 @@ except Exception as e:
 
 
 def callback(script, expression):
+  print(script)
   exec(script)
   if expression:
     return eval(expression)
