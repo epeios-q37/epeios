@@ -1509,6 +1509,29 @@ class Servo(Core_):
   def setAngle(self, angle):
     return self.pwm.setU16(self.angleToDuty(angle))
 
+def hexImageToBytearray_(hex_string, width=128, height=64):
+  bits = []
+  for c in hex_string:
+    nibble = int(c, 16)
+    bits.append((nibble >> 3) & 1)
+    bits.append((nibble >> 2) & 1)
+    bits.append((nibble >> 1) & 1)
+    bits.append(nibble & 1)
+
+  pages = height // 8
+  out = bytearray(width * pages)
+
+  for page in range(pages):
+    for x in range(width):
+      byte = 0
+      for bit in range(8):
+        y = page * 8 + bit
+        pixel = bits[y * width + x]
+        byte |= pixel << bit
+      out[page * width + x] = byte
+
+  return out
+
 
 class OLED_(Core_):
   def show(self):
@@ -1562,7 +1585,10 @@ class OLED_(Core_):
   def draw(self, pattern, width, ox=0, oy=0, mul=1):
     if width % 4:
       raise Exception("'width' must be a multiple of 4!")
-    return self.addMethods(f"draw('{pattern}',{width},{ox},{oy},{mul})")
+    if width == 128 and ox == 0 and oy == 0 and mul == 1 and len(pattern) >= 2048:
+      return self.addMethods(f'buffer[:] = ubinascii.a2b_base64("{base64.b64encode(hexImageToBytearray_(pattern)).decode("ascii")}")')
+    else:
+      return self.addMethods(f"draw('{pattern}',{width},{ox},{oy},{mul})")
 
   def flash(self, extra=True):
     self.fill(1).show()
@@ -2082,6 +2108,7 @@ def sleep_until_us(target_time_us):
         
 def ntp_set_time():
   global TIME_ANCHOR_US
+  gc.collect()
   t_ntp_us = ntp_time_t1_t4_us()
   t0_ticks_us = time.ticks_us()
   TIME_ANCHOR_US = (t_ntp_us, t0_ticks_us)

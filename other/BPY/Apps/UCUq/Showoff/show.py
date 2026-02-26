@@ -22,8 +22,8 @@ class RGB_(ucuq.Ravel.Ring):
     return super().setValue(index, color)
 
 
-def connect(list):
-  ucuq.setDevice(list)
+def connect(deviceList):
+  ucuq.setDevice(tuple(shared.handleDevices(device) for device in deviceList))
   
   ucuq.ntpSetTime()
   

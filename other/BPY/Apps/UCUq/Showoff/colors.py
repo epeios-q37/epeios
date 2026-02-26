@@ -26,8 +26,8 @@ class Colors_:
 
     return self
   
-  
 SCHEMES_ = []  
+
 
 def _(timestamp, delay):
   delay /= 1.5
@@ -42,6 +42,7 @@ def _(timestamp, delay):
   return timestamp  
 
 SCHEMES_.append(_)
+
 
 def _(timestamp, delay):
   delay /= 1.5
@@ -59,6 +60,7 @@ def _(timestamp, delay):
   return timestamp  
 
 SCHEMES_.append(_)
+
 
 def _(timestamp, delay):
   for i in range(15):
@@ -80,8 +82,8 @@ def _(timestamp, delay):
   colors_.fill((0,0,0))
   return timestamp  
 
-
 SCHEMES_.append(_)
+
 
 def _(timestamp, delay):
   for i in range(15):
@@ -102,9 +104,9 @@ def _(timestamp, delay):
 
   colors_.fill((0,0,0))
   return timestamp  
-
   
 SCHEMES_.append(_)
+
 
 def _(timestamp, delay):
   for i in range(15):
@@ -125,9 +127,9 @@ def _(timestamp, delay):
 
   colors_.fill((0,0,0))
   return timestamp
-
   
 SCHEMES_.append(_)
+
 
 def _(timestamp, delay):
   for _ in range(2):
@@ -144,6 +146,7 @@ def _(timestamp, delay):
   return timestamp  
 
 SCHEMES_.append(_)
+
 
 def _(timestamp, delay):
   for _ in range(2):
@@ -160,9 +163,9 @@ def _(timestamp, delay):
     
   colors_.fill((0,0,0))
   return timestamp  
-  
 
 SCHEMES_.append(_)
+
 
 def _(timestamp, delay):
   for i in range(8):

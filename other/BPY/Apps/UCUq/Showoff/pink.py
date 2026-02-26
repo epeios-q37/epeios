@@ -1,39 +1,36 @@
 import random
 import show
-import ucuq
-import time
+import shared
 
 from types import SimpleNamespace
 
-import shared
-
-from show import devices, sleep
-from shared import RAINBOW
-
+devices_ = show.devices
+sleep_ = show.sleep
+RAINBOW_ = shared.RAINBOW
 
 def callback_(helper, events, duration):
-  sleep(helper.timestamp)
+  sleep_(helper.timestamp)
 
   helper.timestamp += duration
   
   for event in events:
     if event[1] !=-1:
-      devices.buzzers.off()
+      devices_.buzzers.off()
       if event[1] != 0:
-        devices.buzzers.on(event[1])
+        devices_.buzzers.on(event[1])
         helper.led += 1    
         
-  devices.rgbs.setValue(helper.led, RAINBOW[helper.led % len(RAINBOW)]).write()
-  devices.rgbs.setValue(helper.led + 1,(0,0,0)).write()
+  devices_.rgbs.setValue(helper.led, RAINBOW_[helper.led % len(RAINBOW_)]).write()
+  devices_.rgbs.setValue(helper.led + 1,(0,0,0)).write()
   
-  if (helper.timestamp - helper.start) > PANTHER_DELAY_ * helper.pantherPict and duration >= .35:
-    devices.oleds.fill(0).show()
-    devices.oleds.draw(shared.unpack(PANTHER_[helper.pantherPict % len(PANTHER_)]), 128).show()
+  if (helper.timestamp - helper.start) > PANTHER_DELAY_ * helper.pantherPict:
+    devices_.oleds.fill(0).show()
+    devices_.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
     helper.pantherPict += 1
 
 
 def launch(timestamp):
-  helper = SimpleNamespace(pantherPict = 0, led = random.randrange(len(RAINBOW)))
+  helper = SimpleNamespace(pantherPict = 0, led = random.randrange(len(RAINBOW_)))
   
   helper.start = helper.timestamp = timestamp + 1
   helper.gcTimestamp = None
@@ -42,23 +39,23 @@ def launch(timestamp):
 
   TEXT = " " * 14 + "That's all folks!" + " " * 16
 
-  devices.lcds.backlightOn()
+  devices_.lcds.backlightOn()
 
   for i in range(64):
-    devices.rgbs.setValue(((helper.led + (i // 8)) % 8),(0,0,0)).write()
-    devices.oleds.scroll(0, 1).show()
-    devices.lcds.moveTo(0,0).putString(TEXT[i//2:i//2+16])
+    devices_.rgbs.setValue(((helper.led + (i // 8)) % 8),(0,0,0)).write()
+    devices_.oleds.scroll(0, 1).show()
+    devices_.lcds.moveTo(0,0).putString(TEXT[i//2:i//2+16])
     helper.timestamp += 0.07
-    sleep(helper.timestamp)
+    sleep_(helper.timestamp)
 
-  devices.oleds.fill(0).show()
-  devices.lcds.backlightOff()
-  devices.rgbs.fill((0, 0, 0)).write()
+  devices_.oleds.fill(0).show()
+  devices_.lcds.backlightOff()
+  devices_.rgbs.fill((0, 0, 0)).write()
   
   return helper.timestamp
 
 
-PANTHER_ = (
+PANTHERS_ = (
   'eJydlUtywzAIhq+ETMbAcSoM9z9CASddVMidqRZZ5BPi9YPdH489438eg/HI1ZWeuLjjE59/cGSa29DCkhB39gYQnLbcAcjPuNCxyoqDn2fLA7mmverKDShc+2A+Tmnqo55VNVKAE3l9XJwjN4sb8QMrx+CgN7CmP8iMBtfNm/bQ+SKj6/PYyvEgTx7d86b8JF/BpbKoO7/9a5QHqz6Z7JpfFOiKJEh6rjSJj7iGPTdwYgg33vN4eSb3HTeSd3k23BXlkfNP3Zr+uUXkmXv66ObHXjmuUqydr5Fuq37WyS80leFV+Toud9uSc9N/Q8jZyDudfMIxwAtLGtpxzgrE4/E0dNOPtRdSeq15+pWU/8Y8S5J74cpGdwfKxZRWfHEOStXL3HHEXJYxQ9TzKVoYNstvatgNncp9/DOryiMC5D7/3DnxOm7iq8Ewih613GBe2QSG0XK2mIzQBQ/oxGHIyNl/vvrux/4ou6GteobRvVSG+VgfqL6WfVRZVnnqR52WnJcOSxpflebhjMtnDdN5DqUSkzb7Tf3eeslukf524CWxDJ2a/VcLT+kj3YXXH1bagI6/oxjT7eze/+/5BlP18+4=',
   'eJy1VUuWxCAIvBIYjHgcP3j/I0xhZqUm781iXHT3sywoCqXH+I9F/AmbSPrCG4dPvAe5vnDN/ImXoK8Cyfm15RfYCJHLXd74zUvPV37HkUDtVb8RpVHiR/3AVfUNt6EJ9r37X5FB8il9849id+AQTviTU4kl0yn93DSlEkI85J/Ojep81YO9zfltEBUOmTZ2alQRo8NgkVA2caxsXTmZFGZZ+UaqXAdLrJkD+EsBLRDkReWAu5l3vmqhS0iDMHPA/VnwzEwXeovUUpRUVn4SMuBInSnu/pRcdPKDxKCZVn+cn27y1pGQlLU/JZtyIYQWGBxpxVWKeOcJ1XOgtXy8KMqk5N6qSNztR1fF04cM/qF9Bj5WUPD11P4GYUR9uH+bvEcB1l0aSlzde/iO1zEVHPCZHleg+deJ7+k5VnnBdfLHzHJ8He7+FfVRsS/DzaY40lv8YeblTf5mr8O9KwI/B+7DgYqh0+Mj4PD8zOroaRgznDoUgA4WVahLRicDjZMPpws3G1f02k7YxXdOxdB6vIK24fVONffU4U3LtONJ+33VXiHNgsiuAHMrjBtV+GPdHkD1Do273+69Rji9hPczsabuP9rOf2qwnia+8WdHrdZqc4jRPt/9BNLPITnCGr9PAVfqz76WVd9zqqenM5hTR31XS7/80xXD/m9j3/++/rp+AD9qybw=',
   'eJytlQGu5SAIRbeEUBWXUxH2v4RB22R+IvYnk7l5muYdUUFQs/8oeduRV2/5zME50zeXdJ4evLvnoBP3tRWOCzC5aePjAnCltxsxZ6lSkWIfkjXSKtZ8CxAsDnVUo+FBUpR9Aihubbdbm5Z745qM1BbvImnzQXE4J06iFXPbuBSiWycvoPneOSOKUktcAHLb1pc8EJTuJgUZS8QBKrUmmovw5p5cGdw/vExz73t8lFK5qwFWKSMH8YXRK2kC4p5HcISccwFG5pRt355HjsZQuAX7le99fyYjo4e9pCIpB5yLJQ8Nw7ghXTtv/aoMrpoxsk+FEZbm586RIcnEAsVPebfPV52cZiQi/6dTizcfGfA6Fp8VzAHXmVMCs9uzY2qip0Kj6b1mZtDn7cAprMCB9SksCarD3sKf3MMcYM9NmpWVjUcNNpg86fQJMFXt2+w9w8wuu4AkKO+u4n6VDpi9SqP9kaWB19xAeAeu/9BPqK2xm9aRegJBt+h+0dVf/Njveix8+bS59mOS3/hMz+P1+XD74vP8P7m33/gZL9uv98Xq6Wp+RW+cT+rrd1YLj+6vZD1xH7wGlf1DCufXben8eP2j/gCHVeey',
@@ -82,4 +79,4 @@ VOICES_ = ("""
   G42 Bb42 R3 Bb44 F#42 A42 R3 A44 G44
 """,)
 
-PANTHER_DELAY_ = 60 // len(PANTHER_)
+PANTHER_DELAY_ = 60 // len(PANTHERS_)

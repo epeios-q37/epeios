@@ -9,15 +9,14 @@ import colors
 import partner
 import show
 
+DEVICES_ = ("Alpha", "India", "Lima", "Golf")
 
-DEVICES = ("Alpha", "India", "Lima", "Golf")
-
-HTML_OPTION = "<option>{}</option>"
+HTML_OPTION_ = "<option>{}</option>"
 
 def atk(dom):
-  devices = "\n".join(HTML_OPTION.format(device) for device in DEVICES)
+  devices = "\n".join(HTML_OPTION_.format(device) for device in DEVICES_)
     
-  dom.inner("", BODY.format(devices, DEVICES[0], *DEVICES[:3]))  # type: ignore # noqa: F821
+  dom.inner("", BODY.format(devices, DEVICES_[0], *DEVICES_[:3]))  # type: ignore # noqa: F821
   colors.fill(dom)
   colors.update(dom)
   
