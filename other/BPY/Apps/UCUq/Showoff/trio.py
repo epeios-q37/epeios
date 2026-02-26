@@ -1,11 +1,9 @@
+import types
+
 import shared
-import show
 
-devices_ = show.devices
-indexes_ = show.indexes
-sleep_ = show.sleep
+from show import devices as devices_, indexes as indexes_, sleep as sleep_
 
-from types import SimpleNamespace
 
 def scroll_(text, start):
   width = len(devices_.lcds) * 16
@@ -77,7 +75,7 @@ def launch(timestamp):
   
   devices_.oleds.contrast(0).draw(PICTURE_, 64, 32).show()
   
-  helper = SimpleNamespace(timestamp = timestamp + 1, prev = [None] * len(devices_.buzzers))
+  helper = types.SimpleNamespace(timestamp = timestamp + 1, prev = [None] * len(devices_.buzzers))
 
   # shared.polyphonicPlay(JACQUES, 120, buzzers, callback)
 

@@ -1,12 +1,10 @@
 import random
-import show
+import types
+
 import shared
 
-from types import SimpleNamespace
-
-devices_ = show.devices
-sleep_ = show.sleep
-RAINBOW_ = shared.RAINBOW
+from shared import RAINBOW as RAINBOW_
+from show import devices as devices_, sleep as sleep_
 
 prev = 0
 
@@ -31,7 +29,7 @@ def callback_(helper, events, duration):
   
 def launch(timestamp):
   devices_.oleds.draw(INDY_, 128).show()
-  helper = SimpleNamespace(pantherPict = 0, led = random.randrange(len(RAINBOW_)))
+  helper = types.SimpleNamespace(pantherPict = 0, led = random.randrange(len(RAINBOW_)))
   
   helper.start = helper.timestamp = timestamp + 1
   helper.gcTimestamp = None

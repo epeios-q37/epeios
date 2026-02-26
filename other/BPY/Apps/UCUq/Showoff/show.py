@@ -1,15 +1,15 @@
 import base64
-import zlib
-import ucuq # type: ignore
 import random
+import types
+import zlib
 
-from types import SimpleNamespace
+import ucuq
 
 import shared
 
 W_COUNTDOWN_ = "Countdown"
 
-devices = SimpleNamespace()
+devices = types.SimpleNamespace()
 
 indexes = [random.randrange(len(shared.RAINBOW)) for i in range(3)]
 

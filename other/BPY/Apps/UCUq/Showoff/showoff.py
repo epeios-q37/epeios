@@ -1,13 +1,14 @@
-import atlastk  # noqa: F401
-import ucuq # pyright: ignore[reportMissingImports]
 import time
-import pink
-import indy
-import trio
-import colors
 
+import atlastk  # noqa: F401
+import ucuq
+
+import colors
+import indy
 import partner
+import pink
 import show
+import trio
 
 DEVICES_ = ("Alpha", "India", "Lima", "Golf")
 

@@ -1,6 +1,7 @@
 import base64
 import zlib
-import ucuq # type: ignore
+
+import ucuq
 
 RGB_MAX_ = 10
 

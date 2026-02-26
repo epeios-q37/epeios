@@ -1,11 +1,10 @@
-import ucuq
-import zlib
-import base64
 import time
+
+import ucuq
 
 import shared
 
-RAINBOW_ = shared.RAINBOW
+from shared import RAINBOW as RAINBOW_
 
 ring_ = None
 buzzer_ = None
@@ -124,17 +123,17 @@ def launch(withSound):
   
   lcdEvents = []
   
-  for l in range(64):
-    if l // 16 == 0:
-      event = ((0,0), line1[l % 16 :][:16])
-    elif l // 16 == 1:
-      event = ((0,1), line2[l % 16 :][:16])
-    elif withSound and l // 16 == 2:
-      event = ((l %16 ,0), "")
-    elif withSound and l // 16 == 3:
-      event = ((l % 16,1), "")
+  for i in range(64):
+    if i // 16 == 0:
+      event = ((0,0), line1[i % 16 :][:16])
+    elif i // 16 == 1:
+      event = ((0,1), line2[i % 16 :][:16])
+    elif withSound and i // 16 == 2:
+      event = ((i %16 ,0), "")
+    elif withSound and i // 16 == 3:
+      event = ((i % 16,1), "")
 
-    if withSound or l < 32:
+    if withSound or i < 32:
       lcdEvents.append((event, duration / ( 32 * ( 1 + withSound))))
       
   polyEvents.append(lcdEvents)
@@ -163,8 +162,8 @@ def launch(withSound):
   
   lcd_.hideCursor()
   
-  for l in range(8):
+  for i in range(8):
     ring_.setValue(
-      l, RAINBOW_[(ringOffset + l * (len(RAINBOW_) - 1) // 7) % len(RAINBOW_)]
+      i, RAINBOW_[(ringOffset + i * (len(RAINBOW_) - 1) // 7) % len(RAINBOW_)]
     ).write()
   
