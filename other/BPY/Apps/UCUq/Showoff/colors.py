@@ -1,4 +1,6 @@
-from shared import RAINBOW as RAINBOW_
+import ucuq
+
+from shared import RAINBOW as RAINBOW_, RGB_MAX as RGB_MAX_
 from show import devices as devices_, sleep as sleep_
 
 W_SCHEMES = "ColorSchemes"
@@ -23,22 +25,37 @@ class Colors_:
     
   def write(self):
     devices_.rgbs.write()
+    
+    for i in range(len(devices_.rgbs)):
+      devices_.lcds[i].moveTo(0,0).putString(devices_.rgbs[i].getJaugesString(RGB_MAX_))
 
     return self
   
-SCHEMES_ = []  
+SCHEMES_ = []
+
+
+def oledRGB(oled,color):
+  return oled.fill(0)\
+    .rect(0, 63 - color[0] * 63 // RGB_MAX_, 42, 64, 1, True)\
+    .rect(43, 63 - color[1] * 63 // RGB_MAX_, 42, 64, 1, True)\
+    .rect(86, 63 - color[2] * 63 // RGB_MAX_, 42, 64, 1, True)
 
 
 def _(timestamp, delay):
   delay /= 1.5
+  
+  # oleds = devices_.oleds  # Too slow, reintroduced when framebuffer implemented directly in ucuq.
+  oleds = ucuq.Nothing()
 
   for color in RAINBOW_:
     sleep_(timestamp)
     timestamp += delay
     colors_.fill(color)
     colors_.write()
+    oledRGB(oleds, color).show()
 
   colors_.fill((0,0,0))
+  oleds.fill(0).show()
   return timestamp  
 
 SCHEMES_.append(_)
@@ -48,15 +65,22 @@ def _(timestamp, delay):
   delay /= 1.5
   
   rgbs = devices_.rgbs
+  # oleds = devices_.oleds  # Too slow, reintroduced when framebuffer implemented directly in ucuq.
+  oleds = ucuq.Nothing()
   
   for r in range(len(RAINBOW_)):
     sleep_(timestamp)
     timestamp += delay
-    for rgb in rgbs:
-      rgb.fill(RAINBOW_[(r + rgbs.index(rgb) * len(RAINBOW_) // len(rgbs)) % len(RAINBOW_)])
+    for i in range(len(rgbs)):
+      color = RAINBOW_[(r + i * len(RAINBOW_) // len(rgbs)) % len(RAINBOW_)]
+      rgbs[i].fill(color)
+      oledRGB(oleds[i], color)
     colors_.write()
+    oleds.show()
 
   colors_.fill((0,0,0))
+  oleds.fill(0).show()
+  
   return timestamp  
 
 SCHEMES_.append(_)
@@ -201,9 +225,21 @@ def update(dom):
   delay, repeat = dom.getValues((W_DELAY, W_REPEAT)).values()
   dom.setValues({W_DELAY_DISPLAY: float(delay), W_REPEAT_DISPLAY: int(repeat)})
 
+
+def lcdSetJaugeChars_():
+  lcds = devices_.lcds
+  charmap = [0] * 8
+  
+  for i in range(8):
+    charmap[7-i] = 0b11111
+    lcds.createChar(i, charmap)
+    
+  lcds.backlightOn()
+
   
 def launch(scheme, timestamp, delay, repeat):
   timestamp += 1 
+  lcdSetJaugeChars_()
   
   if scheme == 0:
     for scheme in SCHEMES_:

@@ -33,7 +33,7 @@ def launch(timestamp):
   helper.start = helper.timestamp = timestamp + 1
   helper.gcTimestamp = None
   
-  shared.polyphonicPlay(VOICES_, 120, helper, callback_)
+  shared.playVoices(VOICES_, 120, helper, callback_)
 
   TEXT = " " * 14 + "That's all folks!" + " " * 16
 

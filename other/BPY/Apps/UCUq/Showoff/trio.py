@@ -77,9 +77,7 @@ def launch(timestamp):
   
   helper = types.SimpleNamespace(timestamp = timestamp + 1, prev = [None] * len(devices_.buzzers))
 
-  # shared.polyphonicPlay(JACQUES, 120, buzzers, callback)
-
-  shared.polyphonicPlay(FUGUE_, 160, helper, callback_)
+  shared.playVoices(FUGUE_, 160, helper, callback_)
   
   devices_.rgbs.fill((0,0,0)).write()
   
