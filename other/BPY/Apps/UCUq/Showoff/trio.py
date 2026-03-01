@@ -1,6 +1,7 @@
 import types
 
 import shared
+import show
 
 from show import devices as devices_, indexes as indexes_, sleep as sleep_
 
@@ -43,7 +44,7 @@ def callback_(helper, events, duration):
     if freq > 0:
       buzzer.on(int(freq))
       indexes_[turn] += 1
-      devices_.rgbs[turn].go = True
+      devices_.rings[turn].go = True
       devices_.oleds[turn].contrast(1)
     elif freq == 0:
       buzzer.off()
@@ -52,25 +53,29 @@ def callback_(helper, events, duration):
     spots = MAP_[turn]
     
     for spot in spots:
-      devices_.rgbs.setValue(spot, (0,0,0))
+      devices_.rings.setValue(spot, (0,0,0))
       if freq != 0:
-        devices_.rgbs.setValue(spots[indexes_[turn] % len(spots)], COLORS_[turn])
+        devices_.rings.setValue(spots[indexes_[turn] % len(spots)], COLORS_[turn])
           
-  devices_.rgbs.setValue(6).setValue(2).write()
+  devices_.rings.setValue(5).setValue(6).write()
+  
+  show.lcdDisplayRing()
     
   helper.timestamp += duration
       
 
 def init_():
-  for index, rgb in enumerate(devices_.rgbs):
+  for index, rgb in enumerate(devices_.rings):
     rgb.turn = index
     rgb.go = True
+    
+  shared.lcdSetJaugeChars(devices_.lcds)
     
 
 def launch(timestamp):
   init_()
   
-  for rgb in devices_.rgbs:
+  for rgb in devices_.rings:
     rgb.go = False
   
   devices_.oleds.contrast(0).draw(PICTURE_, 64, 32).show()
@@ -79,7 +84,7 @@ def launch(timestamp):
 
   shared.playVoices(FUGUE_, 160, helper, callback_)
   
-  devices_.rgbs.fill((0,0,0)).write()
+  devices_.rings.fill((0,0,0)).write()
   
   devices_.oleds.contrast(255)
   
@@ -106,7 +111,7 @@ COLORS_ = (
 )
 
 MAP_ = (
-  (7,3),
-  (0,4),
-  (1,5)
+  (0,7),
+  (1,2),
+  (3,4)
 )

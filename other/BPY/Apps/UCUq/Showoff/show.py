@@ -13,7 +13,7 @@ devices = types.SimpleNamespace()
 
 indexes = [random.randrange(len(shared.RAINBOW)) for i in range(3)]
 
-class RGB_(ucuq.Ravel.Ring):
+class Ring_(ucuq.Ravel.Ring):
   def setValue(self, index, color = None):
     if hasattr(self, "go") and not self.go:
       return self
@@ -27,7 +27,7 @@ def connect(deviceList):
   
   ucuq.ntpSetTime()
   
-  devices.rgbs = RGB_()
+  devices.rings = Ring_()
   devices.buzzers = ucuq.Ravel.Buzzer()
   devices.lcds = ucuq.Ravel.LCD()
   devices.oleds = ucuq.Ravel.OLED()
@@ -55,23 +55,29 @@ def countdownIfSelected(dom, timestamp):
     return timestamp
   
   sleep(timestamp)
-  devices.rgbs.flash()
+  devices.rings.flash()
   
   leds_ = [False] * 8
-  devices.rgbs.fill((1,1,1)).write()
+  devices.rings.fill((1,1,1)).write()
   for counter in range(5, 0, -1):
     devices.oleds.draw(DIGITS_[counter], 8, 48, 0, mul=9).show()
-    for c in range(3, 11):
+    for c in range(2, 10):
       timestamp += 1 / 8
       sleep(timestamp)
-      devices.rgbs.setValue(c, (1,1,1) if leds_[c % 8] else (0,0,0)).write()
+      devices.rings.setValue(c, (1,1,1) if leds_[c % 8] else (0,0,0)).write()
       leds_[c%8] = not leds_[c%8]
     
   devices.oleds.fill(0).show()
-  devices.rgbs.fill((0,0,0)).write()
+  devices.rings.fill((0,0,0)).write()
   
   return timestamp
 
 
 def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
+
+
+def lcdDisplayRing():
+  for i in range(len(devices.rings)):
+    devices.lcds[i].moveTo(0,0).putString(devices.rings[i].getJaugesString(shared.RGB_MAX))
+

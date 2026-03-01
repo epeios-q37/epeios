@@ -1093,19 +1093,6 @@ class WS2812(Core_):
     self.getDevice().sleep(FLASH_DELAY_ if isinstance(extra, bool) else extra)
     return self.fill((0, 0, 0)).write()
   
-  def getJaugesString(self, max):
-    result = ""
-    
-    for i in range(len(self.new_)):
-      sub = ""
-      j = i if i < 4 else 11 - i
-      for c in self.new_[j]:
-        jauge = 8 * c // max
-        sub += chr(32 if jauge == 0 else jauge - 1)
-      result += sub + ( ' ' if i in (3, 7) else ':') 
-    
-    return result
-
 
 class HT16K33(Core_):
   def __init__(self, i2c=None, addr=None, extra=True):
@@ -2493,10 +2480,39 @@ class Ravel:
     cls.LCD()
     cls.OLED()
     
-  class Ring(WS2812):
+  class WS2812_(WS2812):
+    def getJaugesString(self, max, placeholder="*"):
+      result = ""
+      
+      if len(placeholder) == 0:
+        placeholder = " "
+        
+      if len(placeholder) == 1:
+        placeholder = placeholder + " "
+        
+      if len(placeholder) == 2:
+        placeholder = placeholder.rjust(4, placeholder[0])
+        
+      if len(placeholder) == 3:
+        placeholder += " "
+        
+      amount = len(self.new_)
+        
+      for i in range(amount):
+        sub = ""
+        j = i if i < 4 else 11 - i
+        for k in range(len(self.new_[j])):
+          jauge = 8 * self.new_[j][k] // max
+          sub += placeholder[k] if jauge == 0 else chr(jauge - 1)
+        result += sub + ( ' ' if i in (3, 7) else placeholder[3]) 
+      
+      return result
+    
+    
+  class Ring(WS2812_):
     def __new__(cls, offset=0, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
-      
+
   # class Buzzer(Buzzer):
   class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     def __new__(cls, device=None, extra=True):

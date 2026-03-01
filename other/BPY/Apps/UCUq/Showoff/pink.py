@@ -2,6 +2,7 @@ import random
 import types
 
 import shared
+import show
 
 from shared import RAINBOW as RAINBOW_
 from show import devices as devices_, sleep as sleep_
@@ -18,20 +19,24 @@ def callback_(helper, events, duration):
         devices_.buzzers.on(event[1])
         helper.led += 1    
         
-  devices_.rgbs.setValue(helper.led, RAINBOW_[helper.led % len(RAINBOW_)]).write()
-  devices_.rgbs.setValue(helper.led + 1,(0,0,0)).write()
+  devices_.rings.setValue(helper.led, RAINBOW_[helper.led % len(RAINBOW_)]).write()
+  devices_.rings.setValue(helper.led + 1,(0,0,0)).write()
   
   if (helper.timestamp - helper.start) > PANTHER_DELAY_ * helper.pantherPict:
     devices_.oleds.fill(0).show()
     devices_.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
     helper.pantherPict += 1
+    
+  show.lcdDisplayRing()
 
 
 def launch(timestamp):
-  helper = types.SimpleNamespace(pantherPict = 0, led = random.randrange(len(RAINBOW_)))
+  helper = types.SimpleNamespace(pantherPict = 0, led = -1)
   
   helper.start = helper.timestamp = timestamp + 1
   helper.gcTimestamp = None
+  
+  shared.lcdSetJaugeChars(devices_.lcds)
   
   shared.playVoices(VOICES_, 120, helper, callback_)
 
@@ -40,7 +45,7 @@ def launch(timestamp):
   devices_.lcds.backlightOn()
 
   for i in range(64):
-    devices_.rgbs.setValue(((helper.led + (i // 8)) % 8),(0,0,0)).write()
+    devices_.rings.setValue(((helper.led + (i // 8)) % 8),(0,0,0)).write()
     devices_.oleds.scroll(0, 1).show()
     devices_.lcds.moveTo(0,0).putString(TEXT[i//2:i//2+16])
     helper.timestamp += 0.07
@@ -48,7 +53,7 @@ def launch(timestamp):
 
   devices_.oleds.fill(0).show()
   devices_.lcds.backlightOff()
-  devices_.rgbs.fill((0, 0, 0)).write()
+  devices_.rings.fill((0, 0, 0)).write()
   
   return helper.timestamp
 

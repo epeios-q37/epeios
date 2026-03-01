@@ -69,12 +69,14 @@ def callback_(_, events, duration):
         buzzer_.off()
       elif event[1] > 0:
         buzzer_.on(event[1])
-    elif event[0] == 1:
+    elif False and event[0] == 1:
       if event[1][1] == "":
         lcd_.showCursor()
       lcd_.moveTo(*event[1][0]).putString(event[1][1])
     elif event[0] == 2:
       ring_.setValue(event[1][0], event[1][2]).setValue(event[1][1], event[1][2]).write()
+      
+    lcd_.moveTo(0,0).putString(ring_.getJaugesString(shared.RGB_MAX, '*'))
       
   if duration > .05:
     ucuq.commit()
@@ -98,6 +100,8 @@ def launch(withSound):
   ring_.flash()
   lcd_.clear().backlightOff()
   oled_.powerOff()
+  
+  shared.lcdSetJaugeChars(lcd_)
 
   if withSound:
     polyEvents = ucuq.voicesToEvents(shared.INDY_VOICES, shared.INDY_TEMPO)
@@ -144,7 +148,7 @@ def launch(withSound):
 
   lcd_.backlightOn()
 
-  ucuq.polyeventPlay(polyEvents, callback_)
+  ucuq.playEvents(polyEvents, callback_)
   
   ucuq.setCommitBehavior(ucuq.CB_AUTO)
   
@@ -154,4 +158,6 @@ def launch(withSound):
     ring_.setValue(
       i, RAINBOW_[(ringOffset + i * (len(RAINBOW_) - 1) // 7) % len(RAINBOW_)]
     ).write()
+    
+  lcd_.moveTo(0,0).putString(ring_.getJaugesString(shared.RGB_MAX, '*'))
   

@@ -40,11 +40,22 @@ def playVoices(voices, tempo, userObject, callback):
   ucuq.playVoices(voices, tempo, userObject, callback)
 #  ucuq.addCommand("__import__('gc').enable()")
 
+
 def handleDevices(devices: str):
   parts = devices.split()
   if len(parts) == 1:
     return parts[0]
   return tuple(parts)
+
+
+def lcdSetJaugeChars(lcd):
+  charmap = [0b00000] * 8
+  
+  for i in range(8):
+    charmap[7-i] = 0b11111
+    lcd.createChar(i, charmap)
+    
+  lcd.backlightOn()
 
 
 INDY_VOICES = ("""

@@ -42,11 +42,11 @@ def syncTest():
   
   show.sleep(timestamp)
   
-  show.devices.rgbs.flash()
+  show.devices.rings.flash()
   
   show.sleep(timestamp + 1)
   
-  show.devices.rgbs.flash()
+  show.devices.rings.flash()
   
   
 def atkShowSync(dom):
