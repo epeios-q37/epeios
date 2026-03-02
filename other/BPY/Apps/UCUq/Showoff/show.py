@@ -1,5 +1,6 @@
 import base64
 import random
+import time
 import types
 import zlib
 
@@ -50,7 +51,7 @@ DIGITS_ = (
   "70888878088870",
 )  
   
-def countdownIfSelected(dom, timestamp):
+def countdownIfSelected_(dom, timestamp):
   if dom.getValue(W_COUNTDOWN_) != "true":
     return timestamp
   
@@ -73,11 +74,81 @@ def countdownIfSelected(dom, timestamp):
   return timestamp
 
 
+def countdownCallback_(helper, events, duration):
+  for event in events:
+    if event[0] == 2:
+      devices.oleds.draw(DIGITS_[event[1]], 8, 48, 0, mul=9).show()
+    elif event[0] == 0:
+      devices.rings.setValue(event[1][0], event[1][1]).write()
+    elif event[0] == 1:
+      devices.lcds.moveTo(0,0).putJauges(0, event[1])
+      
+  helper.timestamp += duration
+      
+  sleep(helper.timestamp)
+
+
+def countdownIfSelected(dom, timestamp):
+  ucuq.gcCollect()
+  if dom.getValue(W_COUNTDOWN_) != "true":
+    return timestamp
+  
+  leds = [False] * 8
+  helper = types.SimpleNamespace(timestamp = timestamp + .5)
+  
+  allEvents = []
+  
+  oledEvents = []
+  ringEvents = []
+  lcdEvents = []
+  
+  for i in range(5, 0, -1):
+    oledEvents.append((i, 1))
+    for c in range(2, 10):
+      ringEvents.append(((c,(1,1,1) if leds[c % 8] else (0,0,0) ), 1/8))
+      leds[c%8] = not leds[c%8]
+      
+
+  jauge = ()
+
+  for j in range(16):
+    jauge = ((j,) + jauge)[:16]
+    lcdEvents.append((jauge, 5/48))
+
+  for j in range(15, -1, -1):
+    jauge = ((j,) + jauge)[:16]
+    lcdEvents.append((jauge, 5/48))
+      
+  for j in range(16):
+    jauge = ((0,) + jauge)[:16]
+    lcdEvents.append((jauge, 5/48))
+
+
+  allEvents += (ringEvents,)
+  allEvents += (lcdEvents,)
+  allEvents += (oledEvents,)
+  
+  sleep(helper.timestamp)
+  devices.rings.flash()
+  devices.rings.fill((1,1,1)).write()
+  devices.lcds.backlightOn()
+  ucuq.playEvents(allEvents, countdownCallback_, helper)
+  devices.oleds.fill(0).show()
+  devices.rings.fill((0,0,0)).write()
+  devices.lcds.clear().backlightOff()
+  
+  ucuq.gcCollect()
+  
+  return helper.timestamp + 1
+
+
 def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
 def lcdDisplayRing():
   for i in range(len(devices.rings)):
-    devices.lcds[i].moveTo(0,0).putString(devices.rings[i].getJaugesString(shared.RGB_MAX))
+    ring = devices.rings[i]
+    if not hasattr(ring, "go") or ring.go:
+      devices.lcds[i].displayRing(ring, (shared.RGB_MAX))
 

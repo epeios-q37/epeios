@@ -54,8 +54,6 @@ def lcdSetJaugeChars(lcd):
   for i in range(8):
     charmap[7-i] = 0b11111
     lcd.createChar(i, charmap)
-    
-  lcd.backlightOn()
 
 
 INDY_VOICES = ("""

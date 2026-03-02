@@ -173,7 +173,7 @@ def _(timestamp, delay):
 
 SCHEMES_.append(_)
 
-# 7
+## 7
 def _(timestamp, delay):
   for _ in range(2):
     for i in range(12):
@@ -190,9 +190,9 @@ def _(timestamp, delay):
   colors_.fill((0,0,0))
   return timestamp  
 
-SCHEMES_.append(_)
+# SCHEMES_.append(_)
 
-# 8
+# 7
 def _(timestamp, delay):
   for i in range(6):
     sleep_(timestamp)
@@ -232,6 +232,9 @@ def launch(scheme, timestamp, delay, repeat):
   timestamp += 1 
   shared.lcdSetJaugeChars(devices_.lcds)
   
+  sleep_(timestamp)
+  devices_.lcds.backlightOn()
+  
   if scheme == 0:
     for scheme in SCHEMES_:
       for _ in range(repeat):
@@ -241,6 +244,7 @@ def launch(scheme, timestamp, delay, repeat):
       timestamp = SCHEMES_[scheme-1](timestamp, delay)
     
   colors_.fill((0,0,0)).write()
+  devices_.lcds.clear().backlightOff()
   
   return timestamp
 

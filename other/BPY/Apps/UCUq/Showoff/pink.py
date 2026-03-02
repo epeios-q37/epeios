@@ -38,11 +38,15 @@ def launch(timestamp):
   
   shared.lcdSetJaugeChars(devices_.lcds)
   
+  sleep_(helper.timestamp)
+  
+  devices_.lcds.backlightOn()
+
   shared.playVoices(VOICES_, 120, helper, callback_)
+  
+  devices_.lcds.clear()
 
   TEXT = " " * 14 + "That's all folks!" + " " * 16
-
-  devices_.lcds.backlightOn()
 
   for i in range(64):
     devices_.rings.setValue(((helper.led + (i // 8)) % 8),(0,0,0)).write()

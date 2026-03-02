@@ -1030,8 +1030,18 @@ class WS2812(Core_):
       "WS2812-1", f"neopixel.NeoPixel(machine.Pin({pin}), {n})", device, extra
     ).flash(extra)
 
-  def len(self):
+  def __len__(self):
     return self.n_
+  
+  def __getitem__(self, index):
+    return self.new_[self.convert(index)]
+  
+  def __setitem__(self, index, value):
+    self.new_[self.convert(index)] = value
+    return self
+  
+  def getAll(self):
+    return self.new_
   
   async def straightLenAwait(self):
     return int(await self.callMethodAwait("__len__()"))
@@ -1951,8 +1961,14 @@ def rbShadeFade(variant, i, max):
 
 def setCommitBehavior(behavior):
   global defaultCommitBehavior_
-
+  
+  oldCommeitBehavior = defaultCommitBehavior_
   defaultCommitBehavior_ = behavior
+  return oldCommeitBehavior
+  
+  
+def getCommitBehavior():
+  return defaultCommitBehavior_
   
   
 PP_NOTE_MAP_ = {
@@ -2130,6 +2146,8 @@ def ntp_set_time():
 
   set_rtc_from_us(precise_time_us())
 """
+def gcCollect():
+  addCommand("gc.collect()")
 
 def ntpSetTime(device = None):
   return getDevice(device).ntpSetTime()
@@ -2480,7 +2498,7 @@ class Ravel:
     cls.LCD()
     cls.OLED()
     
-  class WS2812_(WS2812):
+  class Ring_(WS2812):
     def getJaugesString(self, max, placeholder="*"):
       result = ""
       
@@ -2509,7 +2527,7 @@ class Ravel:
       return result
     
     
-  class Ring(WS2812_):
+  class Ring(Ring_):
     def __new__(cls, offset=0, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
 
@@ -2517,8 +2535,61 @@ class Ravel:
   class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.Buzzer), PWM(5, device=device), extra=extra)
+    
+    
+  class LCD_(HD44780_I2C):
+    def uploadJaugeChars(self):
+      charmap = [0b00000] * 8
+      
+      for i in range(8):
+        charmap[7-i] = 0b11111
+        self.createChar(i, charmap)
+        
+      return self
+        
+    def getJaugeChar_(self, jauge):
+      return chr(32 if jauge == 0 else (min(jauge, 7) - 1))
+        
+    def putJauges(self, position, jauges):
+      up = ""
+      down = ""
+      for jauge in jauges:
+        up += self.getJaugeChar_( 0 if jauge < 8 else jauge - 8)
+        down += self.getJaugeChar_(8 if jauge >= 8 else jauge)
+        
+      self.moveTo(position,0).putString(up)
+      self.moveTo(position,1).putString(down)
+      
+    def displayRing(self, ring, max, placeholder="*"):
+      result = ""
+      pixels = ring.getAll()
+      
+      if len(placeholder) == 0:
+        placeholder = " "
+        
+      if len(placeholder) == 1:
+        placeholder = placeholder + " "
+        
+      if len(placeholder) == 2:
+        placeholder = placeholder.rjust(4, placeholder[0])
+        
+      if len(placeholder) == 3:
+        placeholder += " "
+        
+      for i in range(len(pixels)):
+        sub = ""
+        j = i if i < 4 else 11 - i
+        for k in range(len(pixels[j])):
+          jauge = 8 * pixels[j][k] // max
+          sub += placeholder[k] if jauge == 0 else chr(jauge - 1)
+        result += sub + ( ' ' if i in (3, 7) else placeholder[3]) 
+      
+      self.moveTo(0,0).putString(result)
+      
+      return self
+      
 
-  class LCD(HD44780_I2C):
+  class LCD(LCD_):
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
     

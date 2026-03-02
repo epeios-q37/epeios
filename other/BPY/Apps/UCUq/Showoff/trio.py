@@ -2,6 +2,7 @@ import types
 
 import shared
 import show
+import ucuq
 
 from show import devices as devices_, indexes as indexes_, sleep as sleep_
 
@@ -10,26 +11,26 @@ def scroll_(text, start):
   width = len(devices_.lcds) * 16
   resizedText = " " * width + text + " " * width
   prevSubText = [None] *  len(devices_.lcds)
+  devices_.lcds.clear()
   
   for s in range(138):
     i = (len(resizedText) - width + 1) * s // 137
     sleep_(start)
-    for led in range(len(devices_.lcds)):
-      subText = resizedText[i + led * 16:i + (led + 1) * 16]
-      if prevSubText[led] != subText:
-        prevSubText[led] = subText
-        devices_.lcds[led].moveTo(0,0).putString(subText)
+    for lcd in range(len(devices_.lcds)):
+      subText = resizedText[i + lcd * 16:i + (lcd + 1) * 16]
+      if prevSubText[lcd] != subText:
+        prevSubText[lcd] = subText
+        devices_.lcds[lcd].moveTo(0,0).putString(subText)
       if not all(c == ' ' for c in subText):
-        devices_.lcds[led].backlightOn()
-        devices_.oleds[led].scroll(0, 1).hline(0,0,64, 0).show()
+        devices_.lcds[lcd].backlightOn()
+        devices_.oleds[lcd].scroll(0, 1).hline(0,0,64, 0).show()
       else:
-        devices_.lcds[led].backlightOff()
+        devices_.lcds[lcd].backlightOff()
     start += .07
-
 
 def callback_(helper, events, duration):
   sleep_(helper.timestamp)
-
+  
   for event in events:
     turn = event[0]
     freq = event[1]
@@ -40,16 +41,19 @@ def callback_(helper, events, duration):
       devices_.oleds[turn].contrast(0)
     else:
       helper.prev[turn] = freq
+
+    ucuq.getDevice()[turn].commit()
   
     if freq > 0:
       buzzer.on(int(freq))
-      indexes_[turn] += 1
       devices_.rings[turn].go = True
       devices_.oleds[turn].contrast(1)
+      devices_.lcds[turn].backlightOn()
+      indexes_[turn] += 1
     elif freq == 0:
       buzzer.off()
       devices_.oleds[turn].contrast(0)
-      
+
     spots = MAP_[turn]
     
     for spot in spots:
@@ -60,7 +64,7 @@ def callback_(helper, events, duration):
   devices_.rings.setValue(5).setValue(6).write()
   
   show.lcdDisplayRing()
-    
+  
   helper.timestamp += duration
       
 
@@ -81,9 +85,13 @@ def launch(timestamp):
   devices_.oleds.contrast(0).draw(PICTURE_, 64, 32).show()
   
   helper = types.SimpleNamespace(timestamp = timestamp + 1, prev = [None] * len(devices_.buzzers))
-
+  
+  ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  
   shared.playVoices(FUGUE_, 160, helper, callback_)
   
+  ucuq.setCommitBehavior(ucuq.CB_AUTO)
+
   devices_.rings.fill((0,0,0)).write()
   
   devices_.oleds.contrast(255)

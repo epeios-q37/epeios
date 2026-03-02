@@ -10,6 +10,8 @@ import pink
 import show
 import trio
 
+DELAY = 0.5
+
 DEVICES_ = ("Alpha", "India", "Lima", "Golf")
 
 HTML_OPTION_ = "<option>{}</option>"
@@ -57,17 +59,17 @@ def atkShowTest():
   syncTest()  
   
 def atkShowIndy(dom):
-  timestamp = show.countdownIfSelected(dom, time.time() + 1)
+  timestamp = show.countdownIfSelected(dom, time.time() + DELAY)
   indy.launch(timestamp)
   
 
 def atkShowPink(dom):
-  timestamp = show.countdownIfSelected(dom, time.time() + 1)
+  timestamp = show.countdownIfSelected(dom, time.time() + DELAY)
   pink.launch(timestamp)
   
   
 def atkShowFugue(dom):
-  timestamp = show.countdownIfSelected(dom, time.time() + 1)
+  timestamp = show.countdownIfSelected(dom, time.time() + DELAY)
   trio.launch(timestamp)
 
 
@@ -77,11 +79,11 @@ def atkShowColorUpdate(dom):
 
 def atkShowColorOnce(dom):
   scheme, delay = dom.getValues((colors.W_SCHEMES, colors.W_DELAY)).values()
-  timestamp = show.countdownIfSelected(dom, time.time() + 1)
+  timestamp = show.countdownIfSelected(dom, time.time() + DELAY)
   colors.launch(int(scheme), timestamp, float(delay), 1)
   
   
 def atkShowColorRepeat(dom):
   scheme, delay, repeat = dom.getValues((colors.W_SCHEMES, colors.W_DELAY, colors.W_REPEAT)).values()
-  timestamp = show.countdownIfSelected(dom, time.time() + 1)
+  timestamp = show.countdownIfSelected(dom, time.time() + DELAY)
   colors.launch(int(scheme), timestamp, float(delay), int(repeat))
