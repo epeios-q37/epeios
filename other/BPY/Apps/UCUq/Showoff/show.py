@@ -1,6 +1,5 @@
 import base64
 import random
-import time
 import types
 import zlib
 
@@ -32,10 +31,12 @@ def connect(deviceList):
   devices.buzzers = ucuq.Ravel.Buzzer()
   devices.lcds = ucuq.Ravel.LCD()
   devices.oleds = ucuq.Ravel.OLED()
+  
+  devices.lcds.uploadJaugeChars()
 
   
-def sleep(timestamp):
-  ucuq.ntpSleepUntil(int(timestamp * 1_000_000))
+def sleepUntil(timestamp):
+  ucuq.ntpSleepUntil(timestamp)
   
   
 DIGITS_ = (
@@ -55,7 +56,7 @@ def countdownIfSelected_(dom, timestamp):
   if dom.getValue(W_COUNTDOWN_) != "true":
     return timestamp
   
-  sleep(timestamp)
+  sleepUntil(timestamp)
   devices.rings.flash()
   
   leds_ = [False] * 8
@@ -64,7 +65,7 @@ def countdownIfSelected_(dom, timestamp):
     devices.oleds.draw(DIGITS_[counter], 8, 48, 0, mul=9).show()
     for c in range(2, 10):
       timestamp += 1 / 8
-      sleep(timestamp)
+      sleepUntil(timestamp)
       devices.rings.setValue(c, (1,1,1) if leds_[c % 8] else (0,0,0)).write()
       leds_[c%8] = not leds_[c%8]
     
@@ -85,11 +86,12 @@ def countdownCallback_(helper, events, duration):
       
   helper.timestamp += duration
       
-  sleep(helper.timestamp)
+  sleepUntil(helper.timestamp)
 
 
 def countdownIfSelected(dom, timestamp):
   ucuq.gcCollect()
+  
   if dom.getValue(W_COUNTDOWN_) != "true":
     return timestamp
   
@@ -128,7 +130,7 @@ def countdownIfSelected(dom, timestamp):
   allEvents += (lcdEvents,)
   allEvents += (oledEvents,)
   
-  sleep(helper.timestamp)
+  sleepUntil(helper.timestamp)
   devices.rings.flash()
   devices.rings.fill((1,1,1)).write()
   devices.lcds.backlightOn()

@@ -11,9 +11,17 @@ try:
 except Exception as e:
   # raise e
   _BLE = False
+  
+
+def show(script):
+  print("\n---------")
+  
+  for c in script:
+    print(c if c == '\n' or 32 <= ord(c) <= 126 else '?', end='')
 
 
 def callback(script, expression):
+#  show(script)
   exec(script)
   if expression:
     return eval(expression)

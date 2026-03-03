@@ -24,6 +24,8 @@ def connect(device):
   buzzer_ = ucuq.Ravel.Buzzer()
   oled_ = ucuq.Ravel.OLED()
   lcd_ = ucuq.Ravel.LCD()
+  
+  lcd_.uploadJaugeChars()
 
 
 LINE1_ = "Un smartphone"
@@ -76,7 +78,7 @@ def callback_(_, events, duration):
     elif event[0] == 2:
       ring_.setValue(event[1][0], event[1][2]).setValue(event[1][1], event[1][2]).write()
       
-    lcd_.moveTo(0,0).putString(ring_.getJaugesString(shared.RGB_MAX, '*'))
+    lcd_.displayRing(ring_, shared.RGB_MAX)
       
   if duration > .05:
     ucuq.commit()
@@ -101,8 +103,6 @@ def launch(withSound):
   lcd_.clear().backlightOff()
   oled_.powerOff()
   
-  shared.lcdSetJaugeChars(lcd_)
-
   if withSound:
     polyEvents = ucuq.voicesToEvents(shared.INDY_VOICES, shared.INDY_TEMPO)
     duration = getDuration_(polyEvents[0])
@@ -144,13 +144,13 @@ def launch(withSound):
       
   oledAnimation_()
   
-  ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  commitBehavior = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
   lcd_.backlightOn()
 
   ucuq.playEvents(polyEvents, callback_)
   
-  ucuq.setCommitBehavior(ucuq.CB_AUTO)
+  ucuq.setCommitBehavior(commitBehavior)
   
   lcd_.hideCursor()
   
@@ -159,5 +159,5 @@ def launch(withSound):
       i, RAINBOW_[(ringOffset + i * (len(RAINBOW_) - 1) // 7) % len(RAINBOW_)]
     ).write()
     
-  lcd_.moveTo(0,0).putString(ring_.getJaugesString(shared.RGB_MAX, '*'))
+  lcd_.displayRing(ring_, shared.RGB_MAX)
   

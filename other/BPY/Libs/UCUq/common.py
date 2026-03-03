@@ -430,8 +430,6 @@ class Device(Device_):  # noqa: F821
     self.handledModules_ = []
     self.commands_ = [
 """
-import gc # To deport to 'Modules.xml'
-
 gc.collect()
 
 def sleepWait(start, us):
@@ -497,20 +495,20 @@ def sleepWait(start, us):
     self.addCommand(f"sleepWait({getObject_(self.timer_)}, {secs * 1000000})")
 
   def sleep(self, secs):
-    self.addCommand(f"time.sleep_us({int(secs * 1000000)})")
+    self.addCommand(f"time.sleep_us({int(secs * 1_000_000)})")
     
   def ntpSetTime(self):
     self.addCommand("ntp_set_time()")
     
   def ntpSleepUntil(self, timestamp):
     # self.addCommand(f"sleep_until_us({timestamp})")
-    self.addCommand(f"time.sleep_us({timestamp} - precise_time_us())")
+    self.addCommand(f"time.sleep_us({int(timestamp * 1_000_000)} - precise_time_us())")
     
   def ntpSleep(self, delay):
-    self.addCommand(f"time.sleep_us({delay})")
+    self.addCommand(f"time.sleep_us({int(delay * 1_000_000)})")
     
   async def ntpTimeAwait(self):
-    return self.commitAwait("precise_time_us()")
+    return self.commitAwait("precise_time_us()") / 1_000_000
     
 
 
@@ -2082,7 +2080,7 @@ def playVoices(voices, tempo, userObject, callback):
         
 
 polyphonicPlay = playVoices #Deprecated
-   
+
 ###### Begin of section high precision time handling based on NTP #####
 NTP_SCRIPT_ = """
 import socket
@@ -2146,6 +2144,7 @@ def ntp_set_time():
 
   set_rtc_from_us(precise_time_us())
 """
+
 def gcCollect():
   addCommand("gc.collect()")
 
@@ -2499,43 +2498,19 @@ class Ravel:
     cls.OLED()
     
   class Ring_(WS2812):
-    def getJaugesString(self, max, placeholder="*"):
-      result = ""
-      
-      if len(placeholder) == 0:
-        placeholder = " "
-        
-      if len(placeholder) == 1:
-        placeholder = placeholder + " "
-        
-      if len(placeholder) == 2:
-        placeholder = placeholder.rjust(4, placeholder[0])
-        
-      if len(placeholder) == 3:
-        placeholder += " "
-        
-      amount = len(self.new_)
-        
-      for i in range(amount):
-        sub = ""
-        j = i if i < 4 else 11 - i
-        for k in range(len(self.new_[j])):
-          jauge = 8 * self.new_[j][k] // max
-          sub += placeholder[k] if jauge == 0 else chr(jauge - 1)
-        result += sub + ( ' ' if i in (3, 7) else placeholder[3]) 
-      
-      return result
-    
+    pass
     
   class Ring(Ring_):
     def __new__(cls, offset=0, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
 
-  # class Buzzer(Buzzer):
-  class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+  class Buzzer_(Buzzer):
+    pass
+  
+  class Buzzer(Buzzer_):
+  # class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.Buzzer), PWM(5, device=device), extra=extra)
-    
     
   class LCD_(HD44780_I2C):
     def uploadJaugeChars(self):
@@ -2557,10 +2532,13 @@ class Ravel:
         up += self.getJaugeChar_( 0 if jauge < 8 else jauge - 8)
         down += self.getJaugeChar_(8 if jauge >= 8 else jauge)
         
-      self.moveTo(position,0).putString(up)
-      self.moveTo(position,1).putString(down)
+      if position == 0 and len(jauges) == 16:
+        self.moveTo(0,0).putString(up + down)
+      else:
+        self.moveTo(position,0).putString(up)
+        self.moveTo(position,1).putString(down)
       
-    def displayRing(self, ring, max, placeholder="*"):
+    def displayRing(self, ring, max, placeholder="."):
       result = ""
       pixels = ring.getAll()
       
@@ -2588,12 +2566,14 @@ class Ravel:
       
       return self
       
-
   class LCD(LCD_):
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
     
-  class OLED(SSD1306_I2C):
+  class OLED_(SSD1306_I2C):
+    pass
+  
+  class OLED(OLED_):
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.OLED), 128, 64, I2C(8, 9, device=device), extra=extra)
 

@@ -5,13 +5,13 @@ import shared
 import show
 
 from shared import RAINBOW as RAINBOW_
-from show import devices as devices_, sleep as sleep_
+from show import devices as devices_, sleepUntil as sleepUntil_
 
 prev = 0
 
 def callback_(helper, events, duration):
   global prev
-  sleep_(helper.timestamp)
+  sleepUntil_(helper.timestamp)
 
   helper.timestamp += duration
   
@@ -32,9 +32,7 @@ def callback_(helper, events, duration):
 def launch(timestamp):
   helper = types.SimpleNamespace(pantherPict = 0, led = 0,timestamp = timestamp + 1)
   
-  shared.lcdSetJaugeChars(devices_.lcds)
-  
-  sleep_(helper.timestamp)
+  sleepUntil_(helper.timestamp)
   devices_.oleds.draw(INDY_, 128).show()
   devices_.lcds.backlightOn()
 
@@ -51,7 +49,7 @@ def launch(timestamp):
     devices_.oleds.scroll(0, 1).show()
     devices_.lcds.moveTo(0,0).putString(TEXT[i//2:i//2+16])
     helper.timestamp += 0.07
-    sleep_(helper.timestamp)
+    sleepUntil_(helper.timestamp)
 
   devices_.oleds.fill(0).show()
   devices_.lcds.backlightOff().clear()

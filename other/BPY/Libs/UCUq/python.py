@@ -207,13 +207,13 @@ def readingThread(proxy):
       raise Error("Sensor handling not yet implemented!")
     elif answer == A_ERROR_:
       result = readString_(proxy.socket)
-      print(f"\n>>>>>>>>>> ERROR FROM DEVICE BEGIN <<<<<<<<<<")
+      print(f"\n>>>>>>>>>> ERROR FROM DEVICE '{proxy.id}' BEGIN <<<<<<<<<<")
       print("Timestamp: ", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
       caller = getframeinfo(stack()[1][0])
       print(f"Caller: {caller.filename}:{caller.lineno}")
-      print(f">>>>>>>>>> ERROR FROM DEVICE CONTENT <<<<<<<<<<")
+      print(f">>>>>>>>>> ERROR FROM DEVICE '{proxy.id}' CONTENT <<<<<<<<<<")
       print(result)
-      print(f">>>>>>>>>> END ERROR FROM DEVICE END <<<<<<<<<<")
+      print(f">>>>>>>>>> END ERROR FROM DEVICE '{proxy.id}' END <<<<<<<<<<")
       proxy.exit = True
       proxy.resultBegin.set()
       exit_()
@@ -221,15 +221,16 @@ def readingThread(proxy):
       readString_(proxy.socket) # For future use
       raise Error("Puzzled!")
     elif answer == A_DISCONNECTED_:
-        raise Error("Disconnected from device!")
+        raise Error(f"Disconnected from device '{proxy.id}'!")
     else:
-      raise Error("Unknown answer from device!")
+      raise Error(f"Unknown answer from device '{proxy.id}'!")
 
 
 class Proxy:
-  def __init__(self, socket):
+  def __init__(self, socket, id):
     self.socket = socket
-    if socket != None:
+    self.id = id
+    if socket is not None:
       self.resultBegin = threading.Event()
       self.resultEnd = threading.Event()
       self.exit = False
@@ -254,7 +255,7 @@ class Device_:
     self.token = token if token else DEMO_VTOKEN
     self.id = id if id else ""
 
-    self.proxy = Proxy(connect_(self.token, self.id, errorAsException = errorAsException))
+    self.proxy = Proxy(connect_(self.token, self.id, errorAsException = errorAsException), self.id)
 
     return self.proxy.socket != None
   

@@ -40,13 +40,13 @@ def atkShowConnect(dom):
   
   
 def syncTest():
-  timestamp = time.time() + 1
+  timestamp = time.time() + 1.5
   
-  show.sleep(timestamp)
+  show.sleepUntil(timestamp)
   
   show.devices.rings.flash()
   
-  show.sleep(timestamp + 1)
+  show.sleepUntil(timestamp + 1)
   
   show.devices.rings.flash()
   
