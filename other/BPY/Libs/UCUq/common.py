@@ -1,4 +1,11 @@
-import zlib, base64, atlastk, re, copy, time, json
+import atlastk
+import base64
+import copy
+import inspect
+import json
+import re
+import time
+import zlib
 
 ITEMS_ = "i_"
 
@@ -14,7 +21,9 @@ FLASH_DELAY_ = 0
 objectCounter_ = 0
 device_ = None
 
-unpack_ = lambda data: zlib.decompress(base64.b64decode(data)).decode()
+
+def unpack_(data):
+  return zlib.decompress(base64.b64decode(data)).decode()
 
 
 def getObjectIndice():
@@ -88,6 +97,13 @@ IK_BRAND_ = "brand"
 IK_MODEL_ = "model"
 IK_VARIANT_ = "variant"
 
+SLEEP_WAIT_SCRIPT_ = """
+def sleepWait(start, us):
+  elapsed = time.ticks_us() - start
+            
+  if elapsed < us:
+    time.sleep_us(int(us - elapsed))
+"""
 
 INFO_SCRIPT_ = f"""
 def ucuqStructToDict(obj):
@@ -207,7 +223,7 @@ async def handleXDeviceRetrieving_(dom1, dom2):
   atlastk.setCallback("ucuq_xdevice_ok", handleXDeviceOK_)
   atlastk.setCallback("ucuq_xdevice_cancel", handleXDeviceCancel_)
 
-  await dom.executeVoid(f"document.getElementById('ucuq_xdevice').showModal();")
+  await dom.executeVoid("document.getElementById('ucuq_xdevice').showModal();")
 
 
 async def handleXDeviceOK_(dom1, dom2):
@@ -246,7 +262,8 @@ def sleep(secs):
   return getDevice().sleep(secs)
 
 
-patchKeys_ = lambda keys: keys if keys else []
+def patchKeys_(keys):
+  return keys if keys else []
 
 B_LCD = "LCD"
 B_OLED = "OLED"
@@ -394,6 +411,10 @@ class Multi:
     else:
       raise IndexError("Index out of range for Multi object.")
     
+  def __setitem__(self, index, value):
+    for object in self.objects_:
+      object.__setitem__(index, value)
+    
   def index(self, object):
     return self.objects_.index(object)
     
@@ -407,6 +428,15 @@ class Multi:
 
 class Device(Device_):  # noqa: F821
   def __new__(cls, id=None, token=None, callback=None):
+    if not token or not id:
+      token, id = handlingConfig_(token, id)
+
+    if not token:
+      token = getConfigToken_()
+
+    if isinstance(id, str):
+      id = "" if not id.strip() else (id[0] if len(id := id.split()) == 1 else tuple(id))
+
     if type(id) in (list, tuple):
       ids = id
       
@@ -414,7 +444,7 @@ class Device(Device_):  # noqa: F821
         tokens = (token,) * len(ids)
         
       if len(tokens) != len(ids):
-        raise Exception("'ids' and (tokens' must be of same amounr!)")
+        raise Exception("'ids' and 'tokens' must be of same amount!")
       
       multi = Multi()
       
@@ -423,21 +453,16 @@ class Device(Device_):  # noqa: F821
         
       return multi
     else:
-      return super().__new__(Device)
+      instance = object.__new__(Device)
+      instance.__init__(id = id, token = token, callback=callback)
+      return instance
         
   def __init__(self, *, id=None, token=None, callback=None):  # If id == "", using id and token from config.
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
     self.commands_ = [
-"""
-gc.collect()
-
-def sleepWait(start, us):
-  elapsed = time.ticks_us() - start
-            
-  if elapsed < us:
-    time.sleep_us(int(us - elapsed))
-""",
+      "gc.collect()",
+      SLEEP_WAIT_SCRIPT_,
       NTP_SCRIPT_
     ]
     self.commitBehavior_ = None
@@ -737,7 +762,6 @@ def getDevice(device=None, *, id=None, token=None):
       device_ = Device(id=id, token=token)
     elif device_ is None:
       device_ = Device()
-      device_.connect()
     return device_
   else:
     return device
@@ -1036,7 +1060,6 @@ class WS2812(Core_):
   
   def __setitem__(self, index, value):
     self.new_[self.convert(index)] = value
-    return self
   
   def getAll(self):
     return self.new_
@@ -1047,8 +1070,8 @@ class WS2812(Core_):
   def convert(self, index):
     return (index + self.offset_) % self.n_
 
-  def setValue(self, index, val):
-    self.new_[self.convert(index)] = tuple(val)
+  def setValue(self, index, value):
+    self.new_[self.convert(index)] = tuple(value)
     return self
   
   def straightSetValue(self, index, val):
@@ -2036,7 +2059,7 @@ def playEvents(polyEvents, callback, helper = None):
   while any(i is not None for i in indexes):
     events = []
 
-    delay = 100000
+    duration = 100000
 
     for i in range(len(indexes)):
       if indexes[i] is not None:
@@ -2044,15 +2067,20 @@ def playEvents(polyEvents, callback, helper = None):
           notes[i], delays[i] = polyEvents[i][indexes[i]]
           indexes[i] += 1
           events.append((i, notes[i]))
-        delay = min(delay, delays[i])
+        duration = min(duration, delays[i])
+        
+    params = [events, duration]
 
-    callback(helper, events, delay)
+    if len(inspect.signature(callback).parameters) > 2:
+      params.append(helper)
+
+    callback(*params)
 
     for i in range(len(indexes)):
       if indexes[i] is not None and indexes[i] >= len(polyEvents[i]):
         indexes[i] = None
       else:
-        delays[i] -= delay
+        delays[i] -= duration
         
         
 polyeventPlay = playEvents  # Deprecated        
@@ -2075,7 +2103,7 @@ def voicesToEvents(voices, tempo):
 polyPhonicToEvents = voicesToEvents  # Deprecated !
 
 
-def playVoices(voices, tempo, userObject, callback):
+def playVoices(voices, tempo, callback, userObject = None):
   playEvents(voicesToEvents(voices, tempo), callback, userObject)
         
 

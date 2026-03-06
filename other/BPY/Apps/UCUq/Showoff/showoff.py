@@ -22,21 +22,37 @@ def atk(dom):
   dom.inner("", BODY.format(devices, DEVICES_[0], *DEVICES_[:3]))  # type: ignore # noqa: F821
   colors.fill(dom)
   colors.update(dom)
+  dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);")
   
   
 def atkPartnerConnect(dom):
-  partner.connect(dom.getValue("Device"))
+  partner.connect(dom.getValue("PartnerDevice"))
+  dom.executeVoid("toggleFieldsetByLegend('Partner', true)")
   
   
-def atkPartnerLaunch(dom):
-  if not partner.isConnected():
-    partner.connect(dom.getValue("Device"))
-    
-  partner.launch(dom.getValue("PartnerSound") == "true")
+def atkPartnerBuzzer(dom):
+  partner.Buzzer()
+
+
+def atkPartnerOLED(dom):
+  partner.OLED()
+
   
+def atkPartnerRing(dom):
+  partner.Ring()
+
+  
+def atkPartnerLCD(dom):
+  partner.LCD()
+
+
+def atkPartnerIndy(dom):
+  partner.indy()
+
   
 def atkShowConnect(dom):
-  show.connect(tuple(dom.getValues(("Device1", "Device2", "Device3")).values()))
+  show.connect(tuple(dom.getValues(("ShowLeftDevice", "ShowMiddleDevice", "ShowRightDevice")).values()))
+  dom.executeVoid("toggleFieldsetByLegend('Show', true)")
   
   
 def syncTest():

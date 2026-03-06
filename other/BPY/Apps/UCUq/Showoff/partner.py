@@ -12,10 +12,6 @@ oled_ = None
 lcd_ = None
 
 
-def isConnected():
-  return ring_ is not None
-
-
 def connect(device):
   global ring_, buzzer_, oled_, lcd_
   ucuq.setDevice(shared.handleDevices(device))
@@ -61,7 +57,13 @@ def getDuration_(events):
   return duration
 
 
-def callback_(_, events, duration):
+def lcdsDisplayRings(lcdsAndRings):
+  for lcdAndRing in lcdsAndRings:
+    lcdAndRing[0].displayRing(lcdAndRing[1], shared.RGB_MAX)
+
+
+
+def callback_(events, duration, lcdsAndRings):
   ucuq.sleepStart()
   
   for event in events:
@@ -78,7 +80,7 @@ def callback_(_, events, duration):
     elif event[0] == 2:
       ring_.setValue(event[1][0], event[1][2]).setValue(event[1][1], event[1][2]).write()
       
-    lcd_.displayRing(ring_, shared.RGB_MAX)
+  lcdsDisplayRings(lcdsAndRings)
       
   if duration > .05:
     ucuq.commit()
@@ -97,7 +99,7 @@ def oledAnimation_():
     oled_.draw(toDraw, 128)
     oled_.show()
     
-def launch(withSound):
+def indy(withSound = True):
   ringOffset = int(time.time()) % len(RAINBOW_)
   ring_.flash()
   lcd_.clear().backlightOff()
@@ -147,8 +149,16 @@ def launch(withSound):
   commitBehavior = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
   lcd_.backlightOn()
+  
+  lcdsAndRings = []
+  
+  if isinstance(lcd_, ucuq.Multi ):
+    for lcd, ring in zip(lcd_, ring_):
+      lcdsAndRings.append((lcd, ring))  
+  else:
+    lcdsAndRings.append((lcd_, ring_))      
 
-  ucuq.playEvents(polyEvents, callback_)
+  ucuq.playEvents(polyEvents, callback_, lcdsAndRings)
   
   ucuq.setCommitBehavior(commitBehavior)
   
@@ -159,5 +169,125 @@ def launch(withSound):
       i, RAINBOW_[(ringOffset + i * (len(RAINBOW_) - 1) // 7) % len(RAINBOW_)]
     ).write()
     
-  lcd_.displayRing(ring_, shared.RGB_MAX)
+    
+  lcdsDisplayRings(lcdsAndRings)
   
+  return True
+  
+BUZZER_VOICE = "C44 D43 E43 F43 G43 A43 B43 C55"
+  
+def buzzerCallback_(events, duration, buzzer):
+  for event in events:
+    buzzer.on(event[1])
+    
+  ucuq.sleep(duration)
+  
+
+def Buzzer():
+  ucuq.playVoices((BUZZER_VOICE,), 170, buzzerCallback_, ucuq.Ravel.Buzzer())
+  
+EYES_ = "0" * 32 * 64 + shared.unpack("""eJztUkG2wyAIvBLGRPQ4UeH+R/hjrETbLrr8i8yrqTIIOKD64ME/hvzg4yt/uGWBqWpf7bywk1EYa2W1Sme5/TkVojiuvFDcjk/bcaULCx2bRbxchXSe5/Dd5K9T35Obao+zqWC3YZ3GJ9Szg+4hJYJ28U4gguNO5RXxLCDx2+7iCYZ6huHvkcJHZyJE8EcxSUtGjU5oKJDPI1JIdSSEetJ4ex5xoYPr8JcE3pd95As4kKZkBdfGi1i8gAqTbqY4dCaWOhQKHnxWb/XiJnG1FkdYSOUWvDDHqclILA6vMofsWnfDCNiE8C3KFECXIckt5zwQ19utQQL/+Xqrh5dRZtJpHsY+mGEdtm9YBz7nd57fDQ8efOIPyTYK6w==""")
+  
+  
+def OLED():
+  oled = ucuq.Ravel.OLED()
+  
+
+  for y in range(64):
+    oled.draw(EYES_[y * 32:][:2048], 128).show()
+  
+
+def Ring():
+  ring = ucuq.Ravel.Ring()
+  
+  count = len(RAINBOW_) // 8
+  
+  delay = 5 / (count * 8)
+
+  for i in range(count):
+    for led in range(8):
+      ring[led] = RAINBOW_[(i * 8 + led) % len(RAINBOW_)]
+      ring.write()
+      ucuq.sleep(delay)
+
+  for led in range(8):
+    ring[led] = RAINBOW_[led * len(RAINBOW_) // 8]
+    ring.write()
+    ucuq.sleep(delay)
+
+      
+  ucuq.sleep(1)
+
+  ring.fill((0, 0, 0)).write()  
+  
+LINE1_ = "Surfez vers".center(16)  
+#       "1234567890123456"
+LINE2_ = "le futur !".center(16)
+
+def print_(text, y, lcd):
+  lcd.moveTo(0,y).showCursor()
+
+  for i in range(16):
+    lcd.putString(text[i][:1])
+    if i == 15:
+      lcd.hideCursor()
+    ucuq.sleep(DELAY_TEXT_)
+    
+def fusion_espaces(s1: str, s2: str) -> str:
+    i = 0
+    while i < len(s2) and s2[i] == ' ':
+        i += 1
+
+    if i >= len(s1):
+      return s1 + s2[len(s1):]
+    else:
+      return s1 + s2.lstrip()
+    
+    
+DELAY_TEXT_ = 0.2
+DELAY_WAVE_ = 0.1
+    
+def LCD():
+  lcd = ucuq.Ravel.LCD().backlightOn()
+  
+  lcd.uploadJaugeChars()
+  
+  print_(LINE1_, 0, lcd)
+  print_(LINE2_, 1, lcd)
+  
+  ucuq.sleep(0.5)
+  
+  wave2 = ""
+  for i in range(8):
+    wave2 = chr(i) + wave2
+    lcd.moveTo(0,1).putString(fusion_espaces(wave2, LINE2_)[:16])
+    ucuq.sleep(DELAY_WAVE_)
+    
+  wave1 = ""
+    
+  for i in range(8):
+    wave1 = chr(i) + wave1
+    wave2 = chr(7) + wave2
+    lcd.putString(fusion_espaces(wave1, LINE1_)[:16] + fusion_espaces(wave2, LINE2_)[:16])
+    ucuq.sleep(DELAY_WAVE_)
+    
+  for i in range(7, -1, -1):
+    wave1 = chr(i) + wave1
+    wave2 = chr(7) + wave2
+    lcd.putString(fusion_espaces(wave1, LINE1_)[:16] + wave2[:16])
+    ucuq.sleep(DELAY_WAVE_)
+        
+  for i in range(7, -1, -1):
+    wave1 = " " + wave1
+    wave2 = chr(i) + wave2
+    lcd.putString(wave1[:16] + wave2[:16])
+    ucuq.sleep(DELAY_WAVE_)
+                
+  for i in range(16):
+    wave1 = " " + wave1
+    wave2 = " " + wave2
+    lcd.putString(wave1[:16] + wave2[:16])
+    ucuq.sleep(DELAY_WAVE_)
+    
+  lcd.backlightOff()
+                

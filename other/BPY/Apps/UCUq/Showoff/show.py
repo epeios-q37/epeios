@@ -75,7 +75,7 @@ def countdownIfSelected_(dom, timestamp):
   return timestamp
 
 
-def countdownCallback_(helper, events, duration):
+def countdownCallback_(events, duration, helper):
   for event in events:
     if event[0] == 2:
       devices.oleds.draw(DIGITS_[event[1]], 8, 48, 0, mul=9).show()

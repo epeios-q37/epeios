@@ -28,7 +28,7 @@ def scroll_(text, start):
         devices_.lcds[lcd].backlightOff()
     start += .07
 
-def callback_(helper, events, duration):
+def callback_(events, duration, helper):
   sleepUntil_(helper.timestamp)
   
   for event in events:
@@ -86,7 +86,7 @@ def launch(timestamp):
   
   ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
-  shared.playVoices(FUGUE_, 160, helper, callback_)
+  shared.playVoices(FUGUE_, 160, callback_, helper)
   
   ucuq.setCommitBehavior(ucuq.CB_AUTO)
 

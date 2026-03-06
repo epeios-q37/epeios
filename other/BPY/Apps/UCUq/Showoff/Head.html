@@ -1,0 +1,101 @@
+<style>
+  .clearable-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .clearable-wrapper input {
+    padding-right: 1rem;
+  }
+
+  .clearable-wrapper.empty input {
+    padding-right: 0;
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 0.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #888;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .clear-btn:hover {
+    color: #000;
+  }
+
+  .clearable-wrapper.empty .clear-btn {
+    display: none;
+  }
+</style>
+<script>
+  function handleClearable() {
+    document.querySelectorAll('input.clearable').forEach(input => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'clearable-wrapper empty';
+      input.parentNode.insertBefore(wrapper, input);
+      wrapper.appendChild(input);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'clear-btn';
+      btn.innerHTML = '&times;';
+      btn.setAttribute('aria-label', 'Effacer');
+      wrapper.appendChild(btn);
+
+      function update() {
+        wrapper.classList.toggle('empty', input.value === '');
+      }
+
+      btn.addEventListener('click', () => {
+        input.value = '';
+        input.focus();
+        update();
+      });
+
+      input.addEventListener('input', update);
+      update();
+    });
+  }
+</script>
+<script>
+  function toggleFieldsetByLegend(legendText, enable) {
+    const fieldsets = document.querySelectorAll('fieldset');
+
+    for (const fs of fieldsets) {
+      const legend = fs.querySelector('legend');
+      if (!legend) continue;
+
+      if (legend.textContent.trim() === legendText) {
+        const elements = fs.querySelectorAll('input, button, select, textarea');
+
+        elements.forEach(el => {
+          const isConnectButton =
+            el.tagName === 'BUTTON' &&
+            el.textContent.trim() === 'Connect';
+
+          const isDevicesInput =
+            el.tagName === 'INPUT' &&
+            el.getAttribute('list') === 'Devices';
+
+          const isClearButton =
+            el.tagName === 'BUTTON' &&
+            el.classList.contains('clear-btn');
+
+          if (enable) {
+            el.disabled = false;
+          } else {
+            el.disabled = !(isConnectButton || isDevicesInput || isClearButton);
+          }
+        });
+      }
+    }
+  }
+
+</script>

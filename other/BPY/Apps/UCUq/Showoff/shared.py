@@ -35,9 +35,9 @@ def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
-def playVoices(voices, tempo, userObject, callback):
+def playVoices(voices, tempo, callback, userObject = None):
 #  ucuq.addCommand("__import__('gc').disable()")
-  ucuq.playVoices(voices, tempo, userObject, callback)
+  ucuq.playVoices(voices, tempo, callback, userObject)
 #  ucuq.addCommand("__import__('gc').enable()")
 
 

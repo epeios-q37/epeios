@@ -7,7 +7,7 @@ import show
 from shared import RAINBOW as RAINBOW_
 from show import devices as devices_, sleepUntil as sleepUntil_
 
-def callback_(helper, events, duration):
+def callback_(events, duration, helper):
   sleepUntil_(helper.timestamp)
 
   helper.timestamp += duration
@@ -40,7 +40,7 @@ def launch(timestamp):
   
   devices_.lcds.backlightOn()
 
-  shared.playVoices(VOICES_, 120, helper, callback_)
+  shared.playVoices(VOICES_, 120, callback_, helper)
   
   devices_.lcds.clear()
 

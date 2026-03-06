@@ -3,28 +3,28 @@
 </datalist>
 <fieldset>
   <legend>Showoff</legend>
-  <fieldset style="display: flex; flex-direction: column; gap: 5px;">
+  <fieldset style="display: flex; flex-direction: column; row-gap: 15px;">
     <legend>Partner</legend>
-    <div style="display: flex; justify-content: center;">
-      <input id="Device" list="Devices" value="{}">
+    <div style="display: flex; justify-content: space-between;">
+      <input id="PartnerDevice" list="Devices" value="{}" class="clearable" placeholder="Device">
+      <button xdh:onevent="PartnerConnect">Connect</button>
     </div>
     <div style="display: flex; justify-content: space-evenly;">
-      <label>
-        <span>With sound:</span>
-        <input checked style="vertical-align: middle;" type="checkbox" id="PartnerSound" />
-      </label>
-      <button xdh:onevent="PartnerConnect">Connect</button>
-      <button xdh:onevent="PartnerLaunch">Launch</button>
+      <button xdh:onevent="PartnerBuzzer">Buzzer</button>
+      <button xdh:onevent="PartnerOLED">OLED</button>
+      <button xdh:onevent="PartnerRing">Ring</button>
+      <button xdh:onevent="PartnerLCD">LCD</button>
+      <button xdh:onevent="PartnerIndy">Indy</button>
     </div>
   </fieldset>
   <fieldset>
     <legend>Show</legend>
-    <fieldset style="display: flex; justify-content: space-around">
+    <fieldset style="display: flex; justify-content: space-around; gap: 5px;">
       <legend>Devices</legend>
       <div style="display: flex; flex-direction: column; gap: 5px;">
-        <input id="Device1" list="Devices" value="{}">
-        <input id="Device2" list="Devices" value="{}">
-        <input id="Device3" list="Devices" value="{}">
+        <input id="ShowLeftDevice" list="Devices" value="{}" class="clearable" placeholder="Left device">
+        <input id="ShowMiddleDevice" list="Devices" value="{}" class="clearable" placeholder="Middle device">
+        <input id="ShowRightDevice" list="Devices" value="{}" class="clearable" placeholder="Right device">
       </div>
       <div style="display: flex; flex-direction: column; gap: 5px;">
         <button xdh:onevent="ShowConnect">Connect</button>

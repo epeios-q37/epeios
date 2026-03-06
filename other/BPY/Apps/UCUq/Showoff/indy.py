@@ -9,7 +9,7 @@ from show import devices as devices_, sleepUntil as sleepUntil_
 
 prev = 0
 
-def callback_(helper, events, duration):
+def callback_(events, duration, helper):
   global prev
   sleepUntil_(helper.timestamp)
 
@@ -36,7 +36,7 @@ def launch(timestamp):
   devices_.oleds.draw(INDY_, 128).show()
   devices_.lcds.backlightOn()
 
-  shared.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, helper, callback_)
+  shared.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, callback_, helper)
   
   devices_.lcds.clear()
 
