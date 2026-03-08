@@ -30,6 +30,12 @@ def rainbowGradient_(n, max):
 
 RAINBOW = rainbowGradient_(50, RGB_MAX)
 
+def getRainbowColor(index, max = None):
+  if max is not None:
+    index = (index % (max + 1 )) * (len(RAINBOW)  - 1 ) // max
+    
+  return RAINBOW[index % len(RAINBOW)]
+
 
 def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
@@ -41,7 +47,7 @@ def playVoices(voices, tempo, callback, userObject = None):
 #  ucuq.addCommand("__import__('gc').enable()")
 
 
-def handleDevices(devices: str):
+def handleDeviceInput(devices: str):
   parts = devices.split()
   if len(parts) == 1:
     return parts[0]

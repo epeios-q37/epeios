@@ -1,10 +1,9 @@
-import random
 import types
 
 import shared
 import show
 
-from shared import RAINBOW as RAINBOW_
+from shared import getRainbowColor as getRainbowColor_
 from show import devices as devices_, sleepUntil as sleepUntil_
 
 prev = 0
@@ -23,14 +22,14 @@ def callback_(events, duration, helper):
       devices_.buzzers.on(event[1])
       if prev != event[1]:
         prev = event[1]
-        devices_.rings.setValue(helper.led, RAINBOW_[helper.led % len(RAINBOW_)]).write()
+        devices_.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
         devices_.rings.setValue(helper.led + 1,(0,0,0)).write()
         helper.led += 1    
         
     show.lcdDisplayRing()
     
 def launch(timestamp):
-  helper = types.SimpleNamespace(pantherPict = 0, led = 0,timestamp = timestamp + 1)
+  helper = types.SimpleNamespace(led = 0,timestamp = timestamp + 1)
   
   sleepUntil_(helper.timestamp)
   devices_.oleds.draw(INDY_, 128).show()
@@ -38,22 +37,15 @@ def launch(timestamp):
 
   shared.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, callback_, helper)
   
-  devices_.lcds.clear()
-
-  TEXT = " " * 14 + "That's all folks!" + " " * 16
-
   devices_.oleds.hline(0, 0, 128, 0)
-
-  for i in range(64):
-    devices_.rings.setValue(((helper.led + (i // 8)) % 8),(0,0,0)).write()
-    devices_.oleds.scroll(0, 1).show()
-    devices_.lcds.moveTo(0,0).putString(TEXT[i//2:i//2+16])
-    helper.timestamp += 0.07
-    sleepUntil_(helper.timestamp)
-
+  
+  helper.timestamp = show.turnOffAndScrollDown(helper.timestamp + .5)
+  
   devices_.oleds.fill(0).show()
+
+  # helper.timestamp = show.flood(helper.timestamp + .5)
+
   devices_.lcds.backlightOff().clear()
-  devices_.rings.fill((0, 0, 0)).write()
   
   return helper.timestamp
 

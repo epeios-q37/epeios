@@ -4,7 +4,7 @@ import ucuq
 
 import shared
 
-from shared import RAINBOW as RAINBOW_
+from shared import RAINBOW as RAINBOW_, getRainbowColor as getRainbowColor_
 
 ring_ = None
 buzzer_ = None
@@ -14,7 +14,7 @@ lcd_ = None
 
 def connect(device):
   global ring_, buzzer_, oled_, lcd_
-  ucuq.setDevice(shared.handleDevices(device))
+  ucuq.setDevice(shared.handleDeviceInput(device))
 
   ring_ = ucuq.Ravel.Ring()
   buzzer_ = ucuq.Ravel.Buzzer()
@@ -100,7 +100,7 @@ def oledAnimation_():
     oled_.show()
     
 def indy(withSound = True):
-  ringOffset = int(time.time()) % len(RAINBOW_)
+  ringOffset = int(time.time())
   ring_.flash()
   lcd_.clear().backlightOff()
   oled_.powerOff()
@@ -137,12 +137,12 @@ def indy(withSound = True):
   ringCount = 200 if withSound else 50
 
   for c in range(ringCount):
-    ringEvent = (c, ringCount - c, RAINBOW_[(c + ringOffset) % len(RAINBOW_)])
+    ringEvent = (c, ringCount - c, getRainbowColor_(c + ringOffset))
     ringEvents.append((ringEvent, duration / ringCount))
   
   polyEvents.append(ringEvents)
 
-  ringOffset = int(time.time()) % len(RAINBOW_)
+  ringOffset = int(time.time())
       
   oledAnimation_()
   
@@ -165,9 +165,7 @@ def indy(withSound = True):
   lcd_.hideCursor()
   
   for i in range(8):
-    ring_.setValue(
-      i, RAINBOW_[(ringOffset + i * (len(RAINBOW_) - 1) // 7) % len(RAINBOW_)]
-    ).write()
+    ring_.setValue(i, getRainbowColor_(ringOffset + i, 7)).write()
     
     
   lcdsDisplayRings(lcdsAndRings)
@@ -206,12 +204,12 @@ def Ring():
 
   for i in range(count):
     for led in range(8):
-      ring[led] = RAINBOW_[(i * 8 + led) % len(RAINBOW_)]
+      ring[led] = getRainbowColor_(i * 8 + led)
       ring.write()
       ucuq.sleep(delay)
 
   for led in range(8):
-    ring[led] = RAINBOW_[led * len(RAINBOW_) // 8]
+    ring[led] = getRainbowColor_(led, 7)
     ring.write()
     ucuq.sleep(delay)
 
@@ -224,15 +222,7 @@ LINE1_ = "Surfez vers".center(16)
 #       "1234567890123456"
 LINE2_ = "le futur !".center(16)
 
-def print_(text, y, lcd):
-  lcd.moveTo(0,y).showCursor()
-
-  for i in range(16):
-    lcd.putString(text[i][:1])
-    if i == 15:
-      lcd.hideCursor()
-    ucuq.sleep(DELAY_TEXT_)
-    
+  
 def fusion_espaces(s1: str, s2: str) -> str:
     i = 0
     while i < len(s2) and s2[i] == ' ':
@@ -252,8 +242,7 @@ def LCD():
   
   lcd.uploadJaugeChars()
   
-  print_(LINE1_, 0, lcd)
-  print_(LINE2_, 1, lcd)
+  lcd.showCursor().ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
   
   ucuq.sleep(0.5)
   

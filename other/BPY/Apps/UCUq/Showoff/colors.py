@@ -1,9 +1,8 @@
 import ucuq
 
-import shared
 import show
 
-from shared import RAINBOW as RAINBOW_, RGB_MAX as RGB_MAX_
+from shared import RAINBOW as RAINBOW_, RGB_MAX as RGB_MAX_, getRainbowColor as getRainbowColor_
 from show import devices as devices_, sleepUntil as sleepUntil_
 
 W_SCHEMES = "ColorSchemes"
@@ -93,7 +92,7 @@ def _(timestamp, delay):
     sleepUntil_(timestamp)
     timestamp += delay
     colors_.fill((0,0,0))
-    col = RAINBOW_[len(RAINBOW_) * x // 12]
+    col = getRainbowColor_(x, 11)
     colors_.set(x, (x // 4) % 2, col)
     colors_.write()
     
@@ -101,7 +100,7 @@ def _(timestamp, delay):
     sleepUntil_(timestamp)
     timestamp += delay
     colors_.fill((0,0,0))
-    col = RAINBOW_[len(RAINBOW_) * x // 12]
+    col = getRainbowColor_(x, 11)
     colors_.set(x, (x // 4 + 1) % 2, col)
     colors_.write()
 
@@ -139,7 +138,7 @@ def _(timestamp, delay):
     sleepUntil_(timestamp)
     timestamp += delay
     colors_.fill((0,0,0))
-    col = RAINBOW_[len(RAINBOW_) * i // 12]
+    col = getRainbowColor_(i, 11)
     colors_.set(i, 0, col).set(i, 1, col)
     colors_.write()
 
@@ -147,7 +146,7 @@ def _(timestamp, delay):
     sleepUntil_(timestamp)
     timestamp += delay
     colors_.fill((0,0,0))
-    col = RAINBOW_[len(RAINBOW_) * i // 12]
+    col = getRainbowColor_(i, 10)
     colors_.set(i, 0, col).set(i, 1, col)
     colors_.write()
 
@@ -163,7 +162,7 @@ def _(timestamp, delay):
       sleepUntil_(timestamp)
       timestamp += delay
       colors_.fill((0,0,0))
-      col = RAINBOW_[len(RAINBOW_) * i // 12]
+      col = getRainbowColor_(i, 11)
       colors_.set(i, 0, col).set(i, 1, col)
       colors_.set(11 - i, 0, col).set(11 - i, 1, col)
       colors_.write()
@@ -180,7 +179,7 @@ def _(timestamp, delay):
       sleepUntil_(timestamp)
       timestamp += delay
       colors_.fill((0,0,0))
-      col = RAINBOW_[len(RAINBOW_) * i // 12]
+      col = getRainbowColor_(i, 11)
       colors_.set(i, 0, col).set(i, 1, col)
       colors_.set(6 - i, 0, col).set(6 - i, 1, col)
       colors_.set(6 + i, 0, col).set(6 + i, 1, col)
@@ -197,7 +196,7 @@ def _(timestamp, delay):
   for i in range(6):
     sleepUntil_(timestamp)
     timestamp += delay
-    col = RAINBOW_[len(RAINBOW_) * (5 - i) // 6]
+    col = getRainbowColor_(5 - i, 5)
     colors_.set(i, 0, col).set(11 - i, 0, col).set(i, 1, col).set(11 - i, 1, col)
     colors_.write()
     

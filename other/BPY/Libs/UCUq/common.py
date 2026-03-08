@@ -1062,7 +1062,7 @@ class WS2812(Core_):
     self.new_[self.convert(index)] = value
   
   def getAll(self):
-    return self.new_
+    return tuple(self.new_)
   
   async def straightLenAwait(self):
     return int(await self.callMethodAwait("__len__()"))
@@ -2511,36 +2511,16 @@ class Microbit():
 
 ##### End of section dedicated to micro:bit #####
 
-##### Begin of section dedicated to the Ravel kit #####
+##### Begin of generic section for kits #####
 
-def KitsClassPatch_(caller, owner):
-#  return caller if caller != owner else owner.__base__
-  return caller if caller != owner else owner.__bases__[0] # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2663'.
+class Kit:
+  class WS2812(globals()["WS2812"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+    pass    
+    
+  class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+    pass    
 
-class Ravel:
-  @classmethod
-  def RAZ(cls):
-    cls.Ring()
-    cls.Buzzer()
-    cls.LCD()
-    cls.OLED()
-    
-  class Ring_(WS2812):
-    pass
-    
-  class Ring(Ring_):
-    def __new__(cls, offset=0, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
-
-  class Buzzer_(Buzzer):
-    pass
-  
-  class Buzzer(Buzzer_):
-  # class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
-    def __new__(cls, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, Ravel.Buzzer), PWM(5, device=device), extra=extra)
-    
-  class LCD_(HD44780_I2C):
+  class HD44780_I2C(globals()["HD44780_I2C"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     def uploadJaugeChars(self):
       charmap = [0b00000] * 8
       
@@ -2553,20 +2533,20 @@ class Ravel:
     def getJaugeChar_(self, jauge):
       return chr(32 if jauge == 0 else (min(jauge, 7) - 1))
         
-    def putJauges(self, position, jauges):
+    def putJauges(self, position, jauges, strip = False):
       up = ""
       down = ""
       for jauge in jauges:
         up += self.getJaugeChar_( 0 if jauge < 8 else jauge - 8)
         down += self.getJaugeChar_(8 if jauge >= 8 else jauge)
         
-      if position == 0 and len(jauges) == 16:
+      if not strip and position == 0 and len(jauges) == 16:
         self.moveTo(0,0).putString(up + down)
       else:
-        self.moveTo(position,0).putString(up)
-        self.moveTo(position,1).putString(down)
+        self.moveTo(position,0).putString(up.rstrip() if len(up.rstrip()) != 0 else " " * 16)
+        self.moveTo(position,1).putString(down.rstrip() if len(down.rstrip()) != 0 else " " * 16)
       
-    def displayRing(self, ring, max, placeholder="."):
+    def displayRing(self, ring, max, x, y, size, placeholder="."):
       result = ""
       pixels = ring.getAll()
       
@@ -2590,15 +2570,68 @@ class Ravel:
           sub += placeholder[k] if jauge == 0 else chr(jauge - 1)
         result += sub + ( ' ' if i in (3, 7) else placeholder[3]) 
       
-      self.moveTo(0,0).putString(result)
+      if x != 0 or y != 0 or len(result) % size:
+        for l in len(result) // size:
+          self.moveTo(x, y + l).putString(result[l * size][:size])
+      else:
+        self.moveTo(0,0).putString(result)
       
       return self
+    
+    def ttyWrite(self, text, delay, hideCursorOnEnd = True):
+      limit = len(text) - 1 if hideCursorOnEnd else -1 
       
+      for i in range(len(text)):
+        self.putString(text[i][:1])
+        if i >= limit:
+          self.hideCursor()
+        self.getDevice().sleep(delay)
+        
+      return self
+      
+  class SSD1306_I2C(globals()["SSD1306_I2C"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+    pass    
+
+
+def KitsClassPatch_(caller, owner):
+#  return caller if caller != owner else owner.__base__
+  return caller if caller != owner else owner.__bases__[0] # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2663'.
+
+##### End of generic section for kits #####
+
+##### Begin of section dedicated to the Ravel kit #####
+
+class Ravel:
+  @classmethod
+  def RAZ(cls):
+    cls.Ring()
+    cls.Buzzer()
+    cls.LCD()
+    cls.OLED()
+    
+  class Ring_(Kit.WS2812):
+    pass
+    
+  class Ring(Ring_):
+    def __new__(cls, offset=0, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
+
+  class Buzzer_(Kit.Buzzer):
+    pass
+  
+  class Buzzer(Buzzer_):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, Ravel.Buzzer), PWM(5, device=device), extra=extra)
+    
+  class LCD_(Kit.HD44780_I2C):
+    def displayRing(self, ring, max, placeholder="."):
+      return super().displayRing(ring, max, 0, 0, 16, placeholder)
+    
   class LCD(LCD_):
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
     
-  class OLED_(SSD1306_I2C):
+  class OLED_(Kit.SSD1306_I2C):
     pass
   
   class OLED(OLED_):
