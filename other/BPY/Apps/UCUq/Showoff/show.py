@@ -98,7 +98,7 @@ def countdownIfSelected(dom, timestamp):
     return timestamp
   
   leds = [False] * 8
-  helper = types.SimpleNamespace(timestamp = timestamp + .5)
+  timestamp += .5
   
   allEvents = []
   
@@ -107,9 +107,16 @@ def countdownIfSelected(dom, timestamp):
   lcdEvents = []
   
   for i in range(5, 0, -1):
-    oledEvents.append((i, 1))
+    oledEvents.append((
+      lambda digit=i:
+        devices.oleds.draw(DIGITS_[digit], 8, 48, 0, mul=9).show(),
+      1))
     for c in range(2, 10):
-      ringEvents.append(((c,(1,1,1) if leds[c % 8] else (0,0,0) ), 1/8))
+      ringEvents.append((
+        lambda
+          led=c,
+          color=(1,1,1) if leds[c % 8] else (0,0,0):
+            devices.rings.setValue(led, color).write(), 1/8))
       leds[c%8] = not leds[c%8]
       
 
@@ -117,33 +124,42 @@ def countdownIfSelected(dom, timestamp):
 
   for j in range(16):
     jauge = ((j,) + jauge)[:16]
-    lcdEvents.append((jauge, 5/48))
+    lcdEvents.append((
+      lambda jauge = jauge:
+        devices.lcds.moveTo(0,0).putJauges(0, jauge),
+      5/48))
 
   for j in range(15, -1, -1):
     jauge = ((j,) + jauge)[:16]
-    lcdEvents.append((jauge, 5/48))
+    lcdEvents.append((
+      lambda jauge = jauge:
+        devices.lcds.moveTo(0,0).putJauges(0, jauge),
+      5/48))
       
   for j in range(16):
     jauge = ((0,) + jauge)[:16]
-    lcdEvents.append((jauge, 5/48))
+    lcdEvents.append((
+      lambda jauge = jauge:
+        devices.lcds.moveTo(0,0).putJauges(0, jauge),
+      5/48))
 
 
   allEvents += (ringEvents,)
   allEvents += (lcdEvents,)
   allEvents += (oledEvents,)
   
-  sleepUntil(helper.timestamp)
+  sleepUntil(timestamp)
   devices.rings.flash()
   devices.rings.fill((1,1,1)).write()
   devices.lcds.backlightOn()
-  ucuq.playEvents(allEvents, countdownCallback_, helper)
+  timestamp += ucuq.playEventsNG(allEvents, lambda _, cumul: sleepUntil(timestamp + cumul))
   devices.oleds.fill(0).show()
   devices.rings.fill((0,0,0)).write()
   devices.lcds.clear().backlightOff()
   
   ucuq.gcCollect()
   
-  return helper.timestamp + 1
+  return timestamp + 1
 
 
 def unpack(data):

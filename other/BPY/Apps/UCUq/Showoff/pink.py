@@ -1,55 +1,55 @@
 import types
 
+import ucuq
+
 import shared
 import show
 
 from shared import getRainbowColor as getRainbowColor_
 from show import devices as devices_, sleepUntil as sleepUntil_
 
-def callback_(events, duration, helper):
-  sleepUntil_(helper.timestamp)
-
-  helper.timestamp += duration
-  
-  for event in events:
-    if event[1] !=-1:
+def eventCallback_(freq, helper):
+    if freq !=-1:
       devices_.buzzers.off()
-      if event[1] != 0:
-        devices_.buzzers.on(event[1])
+      if freq != 0:
+        devices_.buzzers.on(freq)
         helper.led += 1    
         
+
+def durationCallback_(timestamp, helper):
   devices_.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
   devices_.rings.setValue(helper.led + 1,(0,0,0)).write()
   
-  if (helper.timestamp - helper.start) > PANTHER_DELAY_ * helper.pantherPict:
+  if (timestamp - helper.start) > PANTHER_DELAY_ * helper.pantherPict:
     devices_.oleds.fill(0).show()
     devices_.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
     helper.pantherPict += 1
     
   show.lcdDisplayRing()
+  
+  sleepUntil_(timestamp)
 
 
 def launch(timestamp):
   helper = types.SimpleNamespace(pantherPict = 0, led = -1)
   
-  helper.start = helper.timestamp = timestamp + 1
-  helper.gcTimestamp = None
-  
-  sleepUntil_(helper.timestamp)
+  helper.start = timestamp = timestamp + 1
   
   devices_.lcds.backlightOn()
 
-  shared.playVoices(VOICES_, 120, callback_, helper)
+  sleepUntil_(timestamp)
+
+  timestamp += ucuq.playVoicesNG(VOICES_, 120, lambda freq: eventCallback_(freq, helper), lambda _, cumul: durationCallback_(timestamp + cumul, helper))
   
-  helper.timestamp = show.turnOffAndScrollDown(helper.timestamp + .5)
+  timestamp = show.turnOffAndScrollDown(timestamp + .5)
   
   devices_.oleds.fill(0).show()
 
   # helper.timestamp = show.flood(helper.timestamp + .5)
   
-  devices_.lcds.backlightOff()
+  devices_.lcds.clear().backlightOff()
   
-  return helper.timestamp
+  return timestamp
 
 
 PANTHERS_ = (

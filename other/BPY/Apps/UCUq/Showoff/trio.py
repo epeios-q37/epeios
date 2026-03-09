@@ -1,5 +1,3 @@
-import types
-
 import shared
 import show
 import ucuq
@@ -28,45 +26,39 @@ def scroll_(text, start):
         devices_.lcds[lcd].backlightOff()
     start += .07
 
-def callback_(events, duration, helper):
-  sleepUntil_(helper.timestamp)
-  
-  for event in events:
-    turn = event[0]
-    freq = event[1]
-    buzzer = devices_.buzzers[turn]
-    
-    if freq != 0 and helper.prev[turn] == freq:
-      buzzer.off()
-      devices_.oleds[turn].contrast(0)
-    else:
-      helper.prev[turn] = freq
 
-    ucuq.getDevice()[turn].commit()
+def callback_(freq, turn, prev):
+  buzzer = devices_.buzzers[turn]
   
-    if freq > 0:
-      buzzer.on(int(freq))
-      devices_.rings[turn].go = True
-      devices_.oleds[turn].contrast(1)
-      devices_.lcds[turn].backlightOn()
-      indexes_[turn] += 1
-    elif freq == 0:
-      buzzer.off()
-      devices_.oleds[turn].contrast(0)
+  if freq != 0 and prev[turn] == freq:
+    buzzer.off()
+    devices_.oleds[turn].contrast(0)
+  else:
+    prev[turn] = freq
 
-    spots = MAP_[turn]
-    
-    for spot in spots:
-      devices_.rings.setValue(spot, (0,0,0))
-      if freq != 0:
-        devices_.rings.setValue(spots[indexes_[turn] % len(spots)], COLORS_[turn])
+  ucuq.getDevice()[turn].commit()
+
+  if freq > 0:
+    buzzer.on(int(freq))
+    devices_.rings[turn].go = True
+    devices_.oleds[turn].contrast(1)
+    devices_.lcds[turn].backlightOn()
+    indexes_[turn] += 1
+  elif freq == 0:
+    buzzer.off()
+    devices_.oleds[turn].contrast(0)
+
+  spots = MAP_[turn]
+  
+  for spot in spots:
+    devices_.rings.setValue(spot, (0,0,0))
+    if freq != 0:
+      devices_.rings.setValue(spots[indexes_[turn] % len(spots)], COLORS_[turn])
           
   devices_.rings.setValue(5).setValue(6).write()
   
   show.lcdDisplayRing()
-  
-  helper.timestamp += duration
-      
+
 
 def init_():
   for index, rgb in enumerate(devices_.rings):
@@ -81,12 +73,23 @@ def launch(timestamp):
     rgb.go = False
   
   devices_.oleds.contrast(0).draw(PICTURE_, 64, 32).show()
-  
-  helper = types.SimpleNamespace(timestamp = timestamp + 1, prev = [None] * len(devices_.buzzers))
+    
+  timestamp = timestamp + 1
+  prev = [None] * len(devices_.buzzers)
   
   ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
-  shared.playVoices(FUGUE_, 160, callback_, helper)
+  timestamp += ucuq.playVoicesNG(
+    FUGUE_,
+    160,
+    lambda
+      freq,
+      turn:
+        callback_(freq, turn, prev),
+    lambda
+      _,
+      cumul:
+        sleepUntil_(timestamp + cumul))
   
   ucuq.setCommitBehavior(ucuq.CB_AUTO)
 
@@ -94,7 +97,7 @@ def launch(timestamp):
   
   devices_.oleds.contrast(255)
   
-  return scroll_("That's all Folks!", helper.timestamp)
+  return scroll_("That's all Folks!", timestamp)
   
 JACQUES_ = (
   "C44D44E44C44C44D44E44C44E44F44G45E44F44G45G43.A42G43F43E44C44G43.A42G43F43E44C44C44G34C45C44G34C45C44D44E44C44C44D44E44C44E44F44G45E44F44G45G43.A42G43F43E44C44G43.A42G43F43E44C44C44G34C45C44G34C45",

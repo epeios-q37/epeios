@@ -41,12 +41,6 @@ def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
-def playVoices(voices, tempo, callback, userObject = None):
-#  ucuq.addCommand("__import__('gc').disable()")
-  ucuq.playVoices(voices, tempo, callback, userObject)
-#  ucuq.addCommand("__import__('gc').enable()")
-
-
 def handleDeviceInput(devices: str):
   parts = devices.split()
   if len(parts) == 1:
