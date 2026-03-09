@@ -81,7 +81,7 @@ def indy(withSound = True):
   oled_.powerOff()
   
   if withSound:
-    polyEvents = ucuq.voicesToEventsNG(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: buzzer_.off() if freq == 0 else buzzer_.on(freq) if freq > 0 else None)
+    polyEvents = ucuq.voicesToEvents(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: buzzer_.off() if freq == 0 else buzzer_.on(freq) if freq > 0 else None)
     duration = getDuration_(polyEvents[0])
   else:
     polyEvents = [[(lambda: buzzer_.off(),0)]]
@@ -117,7 +117,7 @@ def indy(withSound = True):
   
   ucuq.sleepStart()  
 
-  ucuq.playEventsNG(polyEvents, lambda duration: (ucuq.sleepWait(duration), ucuq.sleepStart(),  ucuq.commit() if duration > .05 else None))
+  ucuq.playEvents(polyEvents, lambda duration: (ucuq.sleepWait(duration), ucuq.sleepStart(),  ucuq.commit() if duration > .05 else None))
   
   ucuq.setCommitBehavior(commitBehavior)
   
@@ -136,7 +136,7 @@ BUZZER_VOICE = "C44 D43 E43 F43 G43 A43 B43 C55"
 
 def Buzzer():
   buzzer = ucuq.Ravel.Buzzer()
-  ucuq.playVoicesNG((BUZZER_VOICE,), 170, lambda freq: buzzer.on(freq), lambda duration: ucuq.sleep(duration))
+  ucuq.playVoices((BUZZER_VOICE,), 170, lambda freq: buzzer.on(freq), lambda duration: ucuq.sleep(duration))
   
   
 EYES_ = "0" * 32 * 64 + shared.unpack("""eJztUkG2wyAIvBLGRPQ4UeH+R/hjrETbLrr8i8yrqTIIOKD64ME/hvzg4yt/uGWBqWpf7bywk1EYa2W1Sme5/TkVojiuvFDcjk/bcaULCx2bRbxchXSe5/Dd5K9T35Obao+zqWC3YZ3GJ9Szg+4hJYJ28U4gguNO5RXxLCDx2+7iCYZ6huHvkcJHZyJE8EcxSUtGjU5oKJDPI1JIdSSEetJ4ex5xoYPr8JcE3pd95As4kKZkBdfGi1i8gAqTbqY4dCaWOhQKHnxWb/XiJnG1FkdYSOUWvDDHqclILA6vMofsWnfDCNiE8C3KFECXIckt5zwQ19utQQL/+Xqrh5dRZtJpHsY+mGEdtm9YBz7nd57fDQ8efOIPyTYK6w==""")

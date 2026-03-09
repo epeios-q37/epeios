@@ -35,11 +35,11 @@ def launch(timestamp):
   
   helper.start = timestamp = timestamp + 1
   
+  sleepUntil_(timestamp)
+  
   devices_.lcds.backlightOn()
 
-  sleepUntil_(timestamp)
-
-  timestamp += ucuq.playVoicesNG(VOICES_, 120, lambda freq: eventCallback_(freq, helper), lambda _, cumul: durationCallback_(timestamp + cumul, helper))
+  timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper), lambda _, cumul: durationCallback_(timestamp + cumul, helper))
   
   timestamp = show.turnOffAndScrollDown(timestamp + .5)
   

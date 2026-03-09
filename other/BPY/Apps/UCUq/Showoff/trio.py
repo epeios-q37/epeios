@@ -33,10 +33,10 @@ def callback_(freq, turn, prev):
   if freq != 0 and prev[turn] == freq:
     buzzer.off()
     devices_.oleds[turn].contrast(0)
+    ucuq.getDevice()[turn].sleep(0.015)
   else:
     prev[turn] = freq
-
-  ucuq.getDevice()[turn].commit()
+    ucuq.getDevice()[turn].commit()
 
   if freq > 0:
     buzzer.on(int(freq))
@@ -55,22 +55,20 @@ def callback_(freq, turn, prev):
     if freq != 0:
       devices_.rings.setValue(spots[indexes_[turn] % len(spots)], COLORS_[turn])
           
+
+def updateRings():
   devices_.rings.setValue(5).setValue(6).write()
   
   show.lcdDisplayRing()
 
-
 def init_():
-  for index, rgb in enumerate(devices_.rings):
-    rgb.turn = index
-    rgb.go = True
+  for index, ring in enumerate(devices_.rings):
+    ring.turn = index
+    ring.go = False
     
 
 def launch(timestamp):
   init_()
-  
-  for rgb in devices_.rings:
-    rgb.go = False
   
   devices_.oleds.contrast(0).draw(PICTURE_, 64, 32).show()
     
@@ -79,7 +77,7 @@ def launch(timestamp):
   
   ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
-  timestamp += ucuq.playVoicesNG(
+  timestamp += ucuq.playVoices(
     FUGUE_,
     160,
     lambda
@@ -89,7 +87,11 @@ def launch(timestamp):
     lambda
       _,
       cumul:
-        sleepUntil_(timestamp + cumul))
+        (
+          updateRings(),
+          sleepUntil_(timestamp + cumul),
+        )
+  )
   
   ucuq.setCommitBehavior(ucuq.CB_AUTO)
 

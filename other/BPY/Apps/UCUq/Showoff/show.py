@@ -152,7 +152,7 @@ def countdownIfSelected(dom, timestamp):
   devices.rings.flash()
   devices.rings.fill((1,1,1)).write()
   devices.lcds.backlightOn()
-  timestamp += ucuq.playEventsNG(allEvents, lambda _, cumul: sleepUntil(timestamp + cumul))
+  timestamp += ucuq.playEvents(allEvents, lambda _, cumul: sleepUntil(timestamp + cumul))
   devices.oleds.fill(0).show()
   devices.rings.fill((0,0,0)).write()
   devices.lcds.clear().backlightOff()

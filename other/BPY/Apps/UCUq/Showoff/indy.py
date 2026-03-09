@@ -28,12 +28,12 @@ def launch(timestamp):
   
   helper = types.SimpleNamespace(prev = 0, led = 0)
   
+  sleepUntil_(timestamp)
+  
   devices_.oleds.draw(INDY_, 128).show()
   devices_.lcds.backlightOn()
-  
-  sleepUntil_(timestamp)
 
-  timestamp += ucuq.playVoicesNG(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper), lambda _, cumul: sleepUntil_(timestamp + cumul))
+  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper), lambda _, cumul: sleepUntil_(timestamp + cumul))
   
   devices_.oleds.hline(0, 0, 128, 0)
   

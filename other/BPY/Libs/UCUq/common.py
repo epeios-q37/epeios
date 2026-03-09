@@ -2051,42 +2051,7 @@ def voicesExtractNotes_(voice_str):
   return re.findall(r'([A-Z\-][b#]?\d\d\.*,?|[R\-]\d\.*,?)', voice_str)
 
 
-def playEvents(polyEvents, callback, helper = None):
-  indexes = [0 for _ in polyEvents]
-  notes = [0 for _ in polyEvents]
-  delays = [0 for _ in polyEvents]
-
-  while any(i is not None for i in indexes):
-    events = []
-
-    duration = 100000
-
-    for i in range(len(indexes)):
-      if indexes[i] is not None:
-        if delays[i] == 0:
-          notes[i], delays[i] = polyEvents[i][indexes[i]]
-          indexes[i] += 1
-          events.append((i, notes[i]))
-        duration = min(duration, delays[i])
-        
-    params = [events, duration]
-
-    if len(inspect.signature(callback).parameters) > 2:
-      params.append(helper)
-
-    callback(*params)
-
-    for i in range(len(indexes)):
-      if indexes[i] is not None and indexes[i] >= len(polyEvents[i]):
-        indexes[i] = None
-      else:
-        delays[i] -= duration
-        
-        
-polyeventPlay = playEvents  # Deprecated        
-
-
-def playEventsNG(polyEvents, durationCallback):
+def playEvents(polyEvents, durationCallback):
   cumul = 0
 
   indexes = [0 for _ in polyEvents]
@@ -2121,24 +2086,7 @@ def playEventsNG(polyEvents, durationCallback):
   return cumul
         
 
-def voicesToEvents(voices, tempo):
-  voiceNotes = [voicesExtractNotes_(v) for v in voices]
-  
-  raws = []
-
-  for a in voiceNotes:
-    raw = []
-    for b in a:
-      raw.append(voicesParseNoteString_(b, 60.0 / tempo))
-    raw.append((0, 0))
-    raws.append(raw)
-
-  return raws
-
-polyPhonicToEvents = voicesToEvents  # Deprecated !
-
-
-def voicesToEventsNG(voices, tempo, callback):
+def voicesToEvents(voices, tempo, callback):
   voiceNotes = [voicesExtractNotes_(v) for v in voices]
   
   raws = []
@@ -2165,14 +2113,8 @@ def voicesToEventsNG(voices, tempo, callback):
   return raws
 
 
-def playVoices(voices, tempo, callback, userObject = None):
-  playEvents(voicesToEvents(voices, tempo), callback, userObject)
-        
-
-polyphonicPlay = playVoices #Deprecated
-
-def playVoicesNG(voices, tempo, voiceCallback, durationCallback):
-  return playEventsNG(voicesToEventsNG(voices, tempo, voiceCallback), durationCallback)
+def playVoices(voices, tempo, voiceCallback, durationCallback):
+  return playEvents(voicesToEvents(voices, tempo, voiceCallback), durationCallback)
 
 
 ###### Begin of section high precision time handling based on NTP #####
