@@ -2103,10 +2103,8 @@ def voicesToEvents(voices, tempo, callback):
             callback(freq, turn) if len(inspect.signature(callback).parameters) > 1 else callback(freq),
         duration))
     raw.append((
-      lambda
-        freq=0,
-        turn=i:
-          callback(freq, turn) if len(inspect.signature(callback).parameters) > 1 else callback(freq), 
+      lambda turn=i:
+        callback(0, turn) if len(inspect.signature(callback).parameters) > 1 else callback(0), 
       0))
     raws.append(raw)
 
