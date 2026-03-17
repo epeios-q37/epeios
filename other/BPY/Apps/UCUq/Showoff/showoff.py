@@ -5,6 +5,7 @@ import ucuq
 
 import colors
 import indy
+import os
 import partner
 import pink
 import show
@@ -103,3 +104,6 @@ def atkShowColorRepeat(dom):
   scheme, delay, repeat = dom.getValues((colors.W_SCHEMES, colors.W_DELAY, colors.W_REPEAT)).values()
   timestamp = show.countdownIfSelected(dom, time.time() + DELAY)
   colors.launch(int(scheme), timestamp, float(delay), int(repeat))
+  
+if os.environ.get("PREFIX", "").startswith("/data/data/com.termux"):
+  atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"'))  

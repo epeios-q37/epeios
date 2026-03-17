@@ -437,11 +437,16 @@ class Device(Device_):  # noqa: F821
     if isinstance(id, str):
       id = "" if not id.strip() else (id[0] if len(id := id.split()) == 1 else tuple(id))
 
+    if isinstance(token, str):
+      token = "" if not token.strip() else (token[0] if len(token := token.split()) == 1 else tuple(token))
+
     if type(id) in (list, tuple):
       ids = id
       
       if type(token) not in (list, tuple):
         tokens = (token,) * len(ids)
+      else:
+        tokens = token
         
       if len(tokens) != len(ids):
         raise Exception("'ids' and 'tokens' must be of same amount!")
@@ -1286,9 +1291,9 @@ class Buzzer(Multi_):
     if freq == 0:
       self.off()
     elif self.on_:
-        self.pwm_.setFreq(freq)
+        self.pwm_.setFreq(int(freq))
     else:
-        self.pwm_.setFreq(freq).setU16(self.u16_)
+        self.pwm_.setFreq(int(freq)).setU16(self.u16_)
         self.on_ = True
 
     return self
@@ -1298,6 +1303,9 @@ class Buzzer(Multi_):
       return self.off()
     else:
       return self.on(buzzerConvert_(note))
+    
+  def getDevice(self):
+    return self.pwm_.getDevice()
 
 
 class PCA9685(Core_):

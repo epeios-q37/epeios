@@ -199,7 +199,7 @@ def LCD():
   
   lcd.showCursor().ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
   
-  ucuq.sleep(0.5)
+  # ucuq.sleep(0.5)
   
   wave2 = ""
   for i in range(8):
