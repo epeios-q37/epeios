@@ -193,13 +193,11 @@ DELAY_TEXT_ = 0.2
 DELAY_WAVE_ = 0.1
     
 def LCD():
-  lcd = ucuq.Ravel.LCD().backlightOn()
+  lcd = ucuq.Ravel.LCD().backlightOn().showCursor().moveTo(0,0)
   
   lcd.uploadJaugeChars()
   
-  lcd.showCursor().ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
-  
-  # ucuq.sleep(0.5)
+  lcd.ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
   
   wave2 = ""
   for i in range(8):
