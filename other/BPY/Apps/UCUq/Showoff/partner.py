@@ -200,6 +200,7 @@ def LCD():
   lcd.ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
   
   wave2 = ""
+  
   for i in range(8):
     wave2 = chr(i) + wave2
     lcd.moveTo(0,1).putString(fusion_espaces(wave2, LINE2_)[:16])

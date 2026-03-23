@@ -2592,7 +2592,7 @@ class Kit:
       
       return self
     
-    def ttyWrite(self, text, delay, hideCursorOnEnd = True):
+    def ttyWrite(self, text, delay = .2, hideCursorOnEnd = True):
       limit = len(text) - 1 if hideCursorOnEnd else -1 
       
       for i in range(len(text)):
