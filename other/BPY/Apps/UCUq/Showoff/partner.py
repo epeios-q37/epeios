@@ -173,9 +173,9 @@ def Ring():
 
   ring.fill((0, 0, 0)).write()  
   
-LINE1_ = "Surfez vers".center(16)  
+LINE1_ = "En route".center(16)  
 #       "1234567890123456"
-LINE2_ = "le futur !".center(16)
+LINE2_ = "vers le futur !".center(16)
 
   
 def fusion_espaces(s1: str, s2: str) -> str:
@@ -198,6 +198,8 @@ def LCD():
   lcd.uploadJaugeChars()
   
   lcd.ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
+  
+  ucuq.sleep(0.5)
   
   wave2 = ""
   
