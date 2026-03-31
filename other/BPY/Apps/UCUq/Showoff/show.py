@@ -33,14 +33,23 @@ def connect(deviceList):
   devices.buzzers = ucuq.Ravel.Buzzer()
   devices.lcds = ucuq.Ravel.LCD()
   devices.oleds = ucuq.Ravel.OLED()
+  devices.ravel = ucuq.Ravel(ring=devices.rings, buzzer=devices.buzzers, oled = devices.oleds, lcd=devices.lcds)
   
-  devices.lcds.uploadJaugeChars()
+  devices.lcds.uploadGaugeChars()
 
+prevLocalTimeStamp_ = 0
+  
   
 def sleepUntil(timestamp):
+  global prevLocalTimeStamp_
+  
+  if timestamp - prevLocalTimeStamp_ > 0.66:
+    prevLocalTimeStamp_ = timestamp
+    ucuq.commit()
+
   ucuq.ntpSleepUntil(timestamp)
-  
-  
+
+
 DIGITS_ = (
   "708898A8C88870",
   "20602020202070",
@@ -77,20 +86,6 @@ def countdownIfSelected_(dom, timestamp):
   return timestamp
 
 
-def countdownCallback_(events, duration, helper):
-  for event in events:
-    if event[0] == 2:
-      devices.oleds.draw(DIGITS_[event[1]], 8, 48, 0, mul=9).show()
-    elif event[0] == 0:
-      devices.rings.setValue(event[1][0], event[1][1]).write()
-    elif event[0] == 1:
-      devices.lcds.moveTo(0,0).putJauges(0, event[1])
-      
-  helper.timestamp += duration
-      
-  sleepUntil(helper.timestamp)
-
-
 def countdownIfSelected(dom, timestamp):
   ucuq.gcCollect()
   
@@ -120,33 +115,35 @@ def countdownIfSelected(dom, timestamp):
       leds[c%8] = not leds[c%8]
       
 
-  jauge = ()
+  gauge = ()
 
   for j in range(16):
-    jauge = ((j,) + jauge)[:16]
+    gauge = ((j,) + gauge)[:16]
     lcdEvents.append((
-      lambda jauge = jauge:
-        devices.lcds.moveTo(0,0).putJauges(0, jauge),
+      lambda gauge = gauge:
+        devices.lcds.moveTo(0,0).putGauges(0, gauge),
       5/48))
 
   for j in range(15, -1, -1):
-    jauge = ((j,) + jauge)[:16]
+    gauge = ((j,) + gauge)[:16]
     lcdEvents.append((
-      lambda jauge = jauge:
-        devices.lcds.moveTo(0,0).putJauges(0, jauge),
+      lambda gauge = gauge:
+        devices.lcds.moveTo(0,0).putGauges(0, gauge),
       5/48))
       
   for j in range(16):
-    jauge = ((0,) + jauge)[:16]
+    gauge = ((0,) + gauge)[:16]
     lcdEvents.append((
-      lambda jauge = jauge:
-        devices.lcds.moveTo(0,0).putJauges(0, jauge),
+      lambda gauge = gauge:
+        devices.lcds.moveTo(0,0).putGauges(0, gauge),
       5/48))
 
 
   allEvents += (ringEvents,)
   allEvents += (lcdEvents,)
   allEvents += (oledEvents,)
+  
+  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
   sleepUntil(timestamp)
   devices.rings.flash()
@@ -157,6 +154,8 @@ def countdownIfSelected(dom, timestamp):
   devices.rings.fill((0,0,0)).write()
   devices.lcds.clear().backlightOff()
   
+  ucuq.setCommitBehavior(cb)
+  
   ucuq.gcCollect()
   
   return timestamp + 1
@@ -166,12 +165,8 @@ def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
-def lcdDisplayRing():
-  for i in range(len(devices.rings)):
-    ring = devices.rings[i]
-    if not hasattr(ring, "go") or ring.go:
-      devices.lcds[i].displayRing(ring, (RGB_MAX_))
-  
+def displayRingGauges():
+  devices.ravel.displayRingGauges(RGB_MAX_)  
 
 def turnOffAndScrollDown(timestamp):
   offset = random.randrange(len(RAINBOW_))
@@ -184,19 +179,19 @@ def turnOffAndScrollDown(timestamp):
   for i in range(64):
     devices.rings.setValue(i // 8 + offset, (0,0,0)).write()
     devices.oleds.scroll(0, 1).show()
-    devices.lcds.displayRing(devices.rings[0], RGB_MAX_)
-    timestamp += 0.07
+    devices.ravel.displayRingGauges(RGB_MAX_)
+    timestamp += 0.09
     sleepUntil(timestamp) 
     
   return timestamp
     
   
 def flood(timestamp):
-  jauges = (0,) * 16 + tuple(15 - abs(i) for i in range(-15, 16))
+  gauges = (0,) * 16 + tuple(15 - abs(i) for i in range(-15, 16))
     
-  for i in range(len(jauges)):
+  for i in range(len(gauges)):
     sleepUntil(timestamp)
-    devices.lcds.putJauges(0, jauges[len(jauges) - i - 1:][:16], True)
+    devices.lcds.putGauges(0, gauges[len(gauges) - i - 1:][:16], True)
     timestamp += 0.1
     
   return timestamp

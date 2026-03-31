@@ -10,10 +10,11 @@ ring_ = None
 buzzer_ = None
 oled_ = None
 lcd_ = None
+ravel_ = None
 
 
 def connect(device):
-  global ring_, buzzer_, oled_, lcd_
+  global ring_, buzzer_, oled_, lcd_, ravel_
   ucuq.setDevice(shared.handleDeviceInput(device))
 
   ring_ = ucuq.Ravel.Ring()
@@ -21,12 +22,14 @@ def connect(device):
   oled_ = ucuq.Ravel.OLED()
   lcd_ = ucuq.Ravel.LCD()
   
-  lcd_.uploadJaugeChars()
+  ravel_ = ucuq.Ravel(ring=ring_, buzzer=buzzer_, oled = oled_, lcd=lcd_)
+  
+  lcd_.uploadGaugeChars()
 
 
-LINE1_ = "Un smartphone"
-#        "1234567890123456"
-LINE2_ = "et c'est parti !"
+LINE1_ = "En route vers".center(16)  
+#       "1234567890123456"
+LINE2_ = "le futur !".center(16)
 
 GIRL_ = """000000000000018000000000000003e000000000000007f0000000000001e7e0000000000007fef000000000001ffc7800000000001ffe7800000000003fff3c00000000007fffbc0000000000fffff80000000001fffff80000000001fffff80000000000bffff80000000000bff7f800000000001ff7f800000000001ff7f800000000000ffe7800000000000fff7800000000000fff3c000000000007ff9c000000000003ffce000000000001dfce0000000000000fcf00000000000007ff0000000000000fff0000000000001fff0000000000003fff0000000000007fff0000000000007fff0000000000007fff000000000000dfff000000000000bfff000000000000bfff0000000400007fff0000001f0000ffff000000078000ffff00000001e0019fff00000001f801dfff00000000fe01ffff0000003cffc1ffff0000007ffdc1dfff0000007ffe40dfff000000ffff02dfff0000007fffc3dffd0000007ffffbdfff0000003ffffffdfe0000003fffffcffb0000001fffdfcffb0000000fffefcffd00000007fff3cefe00000003fffbfffd00000001fffdfffb00000000fffefff3000000007fff7ff1000000003fff7ff9000000003bff7ff1000000007dfffff00000001ffeffffe00000003fff7fffe00000007fffbfffc00000007fffdfffc00000003fff8fff800000000fff03ff00000000000000c000"""
 
@@ -57,9 +60,8 @@ def getDuration_(events):
   return duration
 
 
-def lcdsDisplayRings(lcdsAndRings):
-  for lcdAndRing in lcdsAndRings:
-    lcdAndRing[0].displayRing(lcdAndRing[1], shared.RGB_MAX)
+def lcdsDisplayRingGauges():
+  ravel_.displayRingGauges(shared.RGB_MAX)
 
 
 def oledAnimation_():
@@ -91,18 +93,10 @@ def indy(withSound = True):
   
   ringCount = 200 if withSound else 50
 
-  lcdsAndRings = []
-  
-  if isinstance(lcd_, ucuq.Multi ):
-    for lcd, ring in zip(lcd_, ring_):
-      lcdsAndRings.append((lcd, ring))  
-  else:
-    lcdsAndRings.append((lcd_, ring_))    
-
   for c in range(ringCount):
     ringEvents.append((
       lambda c=c, color=getRainbowColor_(c + ringOffset), ringCount=ringCount:
-        (ring_.setValue(c, color).setValue(ringCount - c, color).write(), lcdsDisplayRings(lcdsAndRings)),
+        (ring_.setValue(c, color).setValue(ringCount - c, color).write(), lcdsDisplayRingGauges()),
       duration / ringCount))
   
   polyEvents.append(ringEvents)
@@ -111,7 +105,7 @@ def indy(withSound = True):
       
   oledAnimation_()
   
-  commitBehavior = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
   lcd_.backlightOn()
   
@@ -119,14 +113,14 @@ def indy(withSound = True):
 
   ucuq.playEvents(polyEvents, lambda duration: (ucuq.sleepWait(duration), ucuq.sleepStart(),  ucuq.commit() if duration > .05 else None))
   
-  ucuq.setCommitBehavior(commitBehavior)
+  ucuq.setCommitBehavior(cb)
   
   lcd_.hideCursor()
   
   for i in range(8):
     ring_.setValue(i, getRainbowColor_(ringOffset + i, 7)).write()
     
-  lcdsDisplayRings(lcdsAndRings)
+  lcdsDisplayRingGauges()
   
   return True
 
@@ -173,10 +167,6 @@ def Ring():
 
   ring.fill((0, 0, 0)).write()  
   
-LINE1_ = "En route".center(16)  
-#       "1234567890123456"
-LINE2_ = "vers le futur !".center(16)
-
   
 def fusion_espaces(s1: str, s2: str) -> str:
     i = 0
@@ -195,11 +185,11 @@ DELAY_WAVE_ = 0.1
 def LCD():
   lcd = ucuq.Ravel.LCD().backlightOn().showCursor().moveTo(0,0)
   
-  lcd.uploadJaugeChars()
+  lcd.uploadGaugeChars()
   
   lcd.ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
   
-  ucuq.sleep(0.5)
+  ucuq.sleep(0)
   
   wave2 = ""
   

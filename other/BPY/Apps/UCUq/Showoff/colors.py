@@ -27,19 +27,19 @@ class Colors_:
     
   def write(self):
     devices_.rings.write()
-    show.lcdDisplayRing()
+    show.displayRingGauges()
     
     return self
   
 
-SCHEMES_ = []
-
-
-def oledRGB(oled,color):
+def oledRGB_(oled,color):
   return oled.fill(0)\
     .rect(0, 63 - color[0] * 63 // RGB_MAX_, 42, 64, 1, True)\
     .rect(43, 63 - color[1] * 63 // RGB_MAX_, 42, 64, 1, True)\
     .rect(86, 63 - color[2] * 63 // RGB_MAX_, 42, 64, 1, True)
+
+
+SCHEMES_ = []
 
 # 1
 def _(timestamp, delay):
@@ -53,7 +53,7 @@ def _(timestamp, delay):
     timestamp += delay
     colors_.fill(color)
     colors_.write()
-    oledRGB(oleds, color).show()
+    oledRGB_(oleds, color).show()
 
   colors_.fill((0,0,0))
   oleds.fill(0).show()
@@ -75,7 +75,7 @@ def _(timestamp, delay):
     for i in range(len(rings)):
       color = RAINBOW_[(r + i * len(RAINBOW_) // len(rings)) % len(RAINBOW_)]
       rings[i].fill(color)
-      oledRGB(oleds[i], color)
+      oledRGB_(oleds[i], color)
     colors_.write()
     oleds.show()
 
@@ -228,10 +228,12 @@ def update(dom):
 
 
 def launch(scheme, timestamp, delay, repeat):
-  timestamp += 1 
+  timestamp += 1
   
   sleepUntil_(timestamp)
   devices_.lcds.backlightOn()
+
+  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
   if scheme == 0:
     for scheme in SCHEMES_:
@@ -240,6 +242,8 @@ def launch(scheme, timestamp, delay, repeat):
   else:
     for _ in range(repeat):
       timestamp = SCHEMES_[scheme-1](timestamp, delay)
+      
+  ucuq.setCommitBehavior(cb)
     
   colors_.fill((0,0,0)).write()
   devices_.lcds.clear().backlightOff()

@@ -36,7 +36,6 @@ def callback_(freq, turn, prev):
     ucuq.getDevice()[turn].sleep(0.015)
   else:
     prev[turn] = freq
-    ucuq.getDevice()[turn].commit()
 
   if freq > 0:
     buzzer.on(int(freq))
@@ -59,7 +58,7 @@ def callback_(freq, turn, prev):
 def updateRings():
   devices_.rings.setValue(5).setValue(6).write()
   
-  show.lcdDisplayRing()
+  show.displayRingGauges()
 
 def init_():
   for index, ring in enumerate(devices_.rings):

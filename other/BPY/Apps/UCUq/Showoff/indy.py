@@ -19,7 +19,7 @@ def callback_(freq, helper):
       helper.prev = freq
       devices_.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
       devices_.rings.setValue(helper.led + 1,(0,0,0)).write()
-      show.lcdDisplayRing()
+      show.displayRingGauges()
       helper.led += 1    
   
       
@@ -37,11 +37,9 @@ def launch(timestamp):
   
   devices_.oleds.hline(0, 0, 128, 0)
   
-  timestamp = show.turnOffAndScrollDown(timestamp + .5)
+  timestamp = show.turnOffAndScrollDown(timestamp)
   
   devices_.oleds.fill(0).show()
-
-  # helper.timestamp = show.flood(helper.timestamp + .5)
 
   devices_.lcds.backlightOff().clear()
   

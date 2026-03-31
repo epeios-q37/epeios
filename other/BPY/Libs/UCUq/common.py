@@ -241,8 +241,8 @@ defaultCommitBehavior_ = CB_AUTO
 
 
 def testCommit_(commit, behavior=None):
-  if commit == None:
-    if behavior == None:
+  if commit is None:
+    if behavior is None:
       behavior = defaultCommitBehavior_
 
     return behavior == CB_AUTO
@@ -1005,7 +1005,7 @@ class SPI(Core_):
   ):
     super().init(
       None,
-      f"machine.{'Soft' if not id else ''}SPI({str(id) + ', ' if id else ''}sck=machine.Pin({sck}){getParam('mosi', mosi, 'machine.Pin({})')}{getParam('miso', miso, 'machine.Pin({})')}{getParam('baudrate', baudrate)}{getParam('polarity', polarity)}{getParam('phase', phase)}{getParam('bits', bits)})",
+      f"machine.{'Soft' if not id else ''}SPI({str(id) + ', ' if id else ''}sck=machine.Pin({sck}){getParam_('mosi', mosi, 'machine.Pin({})')}{getParam_('miso', miso, 'machine.Pin({})')}{getParam_('baudrate', baudrate)}{getParam_('polarity', polarity)}{getParam_('phase', phase)}{getParam_('bits', bits)})",
       device=device,
       extra=extra,
     )
@@ -1065,6 +1065,9 @@ class WS2812(Core_):
   
   def __setitem__(self, index, value):
     self.new_[self.convert(index)] = value
+    
+  def getOffset(self):
+    return self.offset_
   
   def getAll(self):
     return tuple(self.new_)
@@ -1175,10 +1178,10 @@ class HT16K33(Core_):
     return self.addMethods(f"rect({x0}, {y0}, {x1}, {y1}, ink={1 if ink else 0})")
 
   def show(self):
-    return self.addMethods(f"render()")
+    return self.addMethods("render()")
 
 
-def getParam(label, value, expr=None):
+def getParam_(label, value, expr=None):
   if value:
     return f", {label} = {value if expr is None else expr.format(value)}"
   else:
@@ -1191,12 +1194,12 @@ class PWM(Core_):
   ):
     super().__init__(device)
 
-    if pin != None:
+    if pin is not None:
       self.init(pin, freq=freq, u16=u16, ns=ns, device=device, extra=extra)
 
   def init(self, pin, *, freq=None, u16=None, ns=None, device=None, extra=True):
     self.pin_ = pin
-    command = f"machine.PWM(machine.Pin({pin}, machine.Pin.OUT){getParam('freq', freq)}{getParam('duty_u16', u16)}{getParam('duty_ns', ns)})"
+    command = f"machine.PWM(machine.Pin({pin}, machine.Pin.OUT){getParam_('freq', freq)}{getParam_('duty_u16', u16)}{getParam_('duty_ns', ns)})"
     super().init("PWM-1", command, device, extra, before=f"{command}.deinit()")
     
   def GPIO(self):
@@ -1306,6 +1309,9 @@ class Buzzer(Multi_):
     
   def getDevice(self):
     return self.pwm_.getDevice()
+  
+  def flash(self):
+    self.pwm_.setU16(0)
 
 
 class PCA9685(Core_):
@@ -1991,9 +1997,9 @@ def rbShadeFade(variant, i, max):
 def setCommitBehavior(behavior):
   global defaultCommitBehavior_
   
-  oldCommeitBehavior = defaultCommitBehavior_
+  oldCommitBehavior = defaultCommitBehavior_
   defaultCommitBehavior_ = behavior
-  return oldCommeitBehavior
+  return oldCommitBehavior
   
   
 def getCommitBehavior():
@@ -2527,7 +2533,11 @@ class Microbit():
 
 ##### Begin of generic section for kits #####
 
-class Kit:
+class Kit_:
+  @staticmethod
+  def ensureSequence_(component):
+    return component if isinstance(component, Multi) else (component, )
+    
   class WS2812(globals()["WS2812"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     pass    
     
@@ -2535,7 +2545,7 @@ class Kit:
     pass    
 
   class HD44780_I2C(globals()["HD44780_I2C"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
-    def uploadJaugeChars(self):
+    def uploadGaugeChars(self):
       charmap = [0b00000] * 8
       
       for i in range(8):
@@ -2544,23 +2554,23 @@ class Kit:
         
       return self
         
-    def getJaugeChar_(self, jauge):
-      return chr(32 if jauge == 0 else (min(jauge, 7) - 1))
+    def getGaugeChar_(self, gauge):
+      return chr(32 if gauge == 0 else (min(gauge, 7) - 1))
         
-    def putJauges(self, position, jauges, strip = False):
+    def putGauges(self, position, gauges, strip = False):
       up = ""
       down = ""
-      for jauge in jauges:
-        up += self.getJaugeChar_( 0 if jauge < 8 else jauge - 8)
-        down += self.getJaugeChar_(8 if jauge >= 8 else jauge)
+      for gauge in gauges:
+        up += self.getGaugeChar_( 0 if gauge < 8 else gauge - 8)
+        down += self.getGaugeChar_(8 if gauge >= 8 else gauge)
         
-      if not strip and position == 0 and len(jauges) == 16:
+      if not strip and position == 0 and len(gauges) == 16:
         self.moveTo(0,0).putString(up + down)
       else:
         self.moveTo(position,0).putString(up.rstrip() if len(up.rstrip()) != 0 else " " * 16)
         self.moveTo(position,1).putString(down.rstrip() if len(down.rstrip()) != 0 else " " * 16)
       
-    def displayRing(self, ring, max, x, y, size, placeholder="."):
+    def displayRingGauges(self, ring, max, x, y, size, placeholder="."):
       result = ""
       pixels = ring.getAll()
       
@@ -2580,8 +2590,8 @@ class Kit:
         sub = ""
         j = i if i < 4 else 11 - i
         for k in range(len(pixels[j])):
-          jauge = 8 * pixels[j][k] // max
-          sub += placeholder[k] if jauge == 0 else chr(jauge - 1)
+          gauge = 8 * pixels[j][k] // max
+          sub += placeholder[k] if gauge == 0 else chr(gauge - 1)
         result += sub + ( ' ' if i in (3, 7) else placeholder[3]) 
       
       if x != 0 or y != 0 or len(result) % size:
@@ -2615,41 +2625,57 @@ def KitsClassPatch_(caller, owner):
 
 ##### Begin of section dedicated to the Ravel kit #####
 
-class Ravel:
-  @classmethod
-  def RAZ(cls):
-    cls.Ring()
-    cls.Buzzer()
-    cls.LCD()
-    cls.OLED()
-    
-  class Ring_(Kit.WS2812):
-    pass
-    
-  class Ring(Ring_):
-    def __new__(cls, offset=0, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
+def ravelDisplayRingGauges_(rings, lcds, max, placeholder):
+  for ring in rings:
+    lcds[rings.index(ring)].displayRingGauges(ring, max, 0, 0, 16, placeholder)
 
-  class Buzzer_(Kit.Buzzer):
-    pass
-  
-  class Buzzer(Buzzer_):
+class Ravel:
+  class Buzzer(Kit_.Buzzer):
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.Buzzer), PWM(5, device=device), extra=extra)
-    
-  class LCD_(Kit.HD44780_I2C):
-    def displayRing(self, ring, max, placeholder="."):
-      return super().displayRing(ring, max, 0, 0, 16, placeholder)
-    
-  class LCD(LCD_):
-    def __new__(cls, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, Ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
-    
-  class OLED_(Kit.SSD1306_I2C):
-    pass
-  
-  class OLED(OLED_):
+      
+  class Ring(Kit_.WS2812):
+    def __new__(cls, offset=0, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
+      
+  class OLED(Kit_.SSD1306_I2C):
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.OLED), 128, 64, I2C(8, 9, device=device), extra=extra)
+      
+  class LCD(Kit_.HD44780_I2C):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, Ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
+  
+  @staticmethod
+  def init_(object, instanciation):
+    return object if object is not None else instanciation()
+    
+  def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None):
+    cls = self.__class__
+    self.buzzer_ = cls.init_(buzzer, lambda : cls.Buzzer(device, extra))
+    self.ring_ = cls.init_(ring, lambda : cls.Ring(ringOffset, device, extra))
+    self.oled_ = cls.init_(oled, lambda : cls.OLED(device, extra))
+    self.lcd_ = cls.init_(lcd, lambda : cls.LCD(device, extra))
+    
+  def raz(self=None): # 'self=None' to dectect if called as static method.
+    if self is None:
+      Ravel()
+    else:
+      self.__init__(self.ring_.getOffset())
+    
+  def buzzer(self):
+    return self.buzzer_
+  
+  def ring(self):
+    return self.ring_
+  
+  def oled(self):
+    return self.oled_
+  
+  def lcd(self):
+    return self.lcd_
+  
+  def displayRingGauges(self, max, placeholder="."):
+    ravelDisplayRingGauges_(Kit_.ensureSequence_(self.ring_), Kit_.ensureSequence_(self.lcd_), max, placeholder)
 
 ##### End of section dedicated to the Ravel kit #####

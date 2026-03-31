@@ -95,8 +95,9 @@ HTML_CALCULATION = """
 </tr>
 """
 
-JAUGE_SCRIPT = """
-def jauge(v):
+GAUGE_SCRIPT = """
+
+def gauge(v):
   oled = {oled}
   l = int(126*v)
   oled.rect(0, 50, 127, 13, 0, True)
@@ -112,7 +113,7 @@ async def counter_():
   start = time.ticks_ms()
 
   while not stop and ( elapsed := time.ticks_diff(time.ticks_ms(), start) ) < {delay}:
-    jauge(1- (elapsed / {delay}))
+    gauge(1- (elapsed / {delay}))
 
     if {lcdAvailable}:
       {lcd}.move_to(13,1)
@@ -166,7 +167,7 @@ class HW():
 
     self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"]) if self.smartRGB else (10,0,0)
 
-    self.device.addCommand(JAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled.getObject(),lcdAvailable="True" if self.lcd else "False",lcd=self.lcd.getObject() if self.lcd else "None"))
+    self.device.addCommand(GAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled.getObject(),lcdAvailable="True" if self.lcd else "False",lcd=self.lcd.getObject() if self.lcd else "None"))
 
     self.reset()
 
@@ -204,7 +205,7 @@ class HW():
 
     self.smartRGB.write()
 
-  def oledJauge(self, v): # v: 0 <= v <= 1
+  def oledGauge(self, v): # v: 0 <= v <= 1
     l = int(126*v)
     self.oled.rect(0,50,127,13,0).rect(0, 50, l, 13, 1).rect(l, 50, 127-l, 13, 1, False).show()
 
@@ -219,7 +220,7 @@ class HW():
     if winner():
       hw.addCommand("stop = True")
 
-    hw.addCommand("jauge(0)")
+    hw.addCommand("gauge(0)")
 
     if not winner():
       self.smartRGBDisplayCounter(1)

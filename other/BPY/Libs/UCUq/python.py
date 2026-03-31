@@ -53,6 +53,10 @@ A_ERROR_ = 2
 A_PUZZLED_ = 3
 A_DISCONNECTED_ = 4
 
+def exit():
+  __import__("os")._exit(0)
+
+
 def recv_(socket, size):
   buffer = bytes()
   l = 0
