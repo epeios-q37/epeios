@@ -2570,7 +2570,7 @@ class Kit_:
         self.moveTo(position,0).putString(up.rstrip() if len(up.rstrip()) != 0 else " " * 16)
         self.moveTo(position,1).putString(down.rstrip() if len(down.rstrip()) != 0 else " " * 16)
       
-    def displayRingGauges(self, ring, max, x, y, size, placeholder="."):
+    def displayRingGauges(self, ring, max, x, y, size, placeholder=".", addendum="  "):
       result = ""
       pixels = ring.getAll()
       
@@ -2592,7 +2592,7 @@ class Kit_:
         for k in range(len(pixels[j])):
           gauge = 8 * pixels[j][k] // max
           sub += placeholder[k] if gauge == 0 else chr(gauge - 1)
-        result += sub + ( ' ' if i in (3, 7) else placeholder[3]) 
+        result += sub + ( addendum[0] if i == 3 else addendum[1] if i == 7 else placeholder[3]) 
       
       if x != 0 or y != 0 or len(result) % size:
         for l in len(result) // size:
@@ -2625,9 +2625,9 @@ def KitsClassPatch_(caller, owner):
 
 ##### Begin of section dedicated to the Ravel kit #####
 
-def ravelDisplayRingGauges_(rings, lcds, max, placeholder):
+def ravelDisplayRingGauges_(rings, lcds, max, placeholder, addendum):
   for ring in rings:
-    lcds[rings.index(ring)].displayRingGauges(ring, max, 0, 0, 16, placeholder)
+    lcds[rings.index(ring)].displayRingGauges(ring, max, 0, 0, 16, placeholder, addendum)
 
 class Ravel:
   class Buzzer(Kit_.Buzzer):
@@ -2675,7 +2675,7 @@ class Ravel:
   def lcd(self):
     return self.lcd_
   
-  def displayRingGauges(self, max, placeholder="."):
-    ravelDisplayRingGauges_(Kit_.ensureSequence_(self.ring_), Kit_.ensureSequence_(self.lcd_), max, placeholder)
+  def displayRingGauges(self, max, placeholder=".", addendum="  "):
+    ravelDisplayRingGauges_(Kit_.ensureSequence_(self.ring_), Kit_.ensureSequence_(self.lcd_), max, placeholder, addendum)
 
 ##### End of section dedicated to the Ravel kit #####

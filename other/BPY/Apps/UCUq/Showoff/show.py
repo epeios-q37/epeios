@@ -165,8 +165,8 @@ def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
-def displayRingGauges():
-  devices.ravel.displayRingGauges(RGB_MAX_)  
+def displayRingGauges(addendum = "  "):
+  devices.ravel.displayRingGauges(RGB_MAX_, addendum=addendum)  
 
 def turnOffAndScrollDown(timestamp):
   offset = random.randrange(len(RAINBOW_))

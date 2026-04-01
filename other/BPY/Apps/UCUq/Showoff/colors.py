@@ -27,7 +27,7 @@ class Colors_:
     
   def write(self):
     devices_.rings.write()
-    show.displayRingGauges()
+    show.displayRingGauges("AB")
     
     return self
   
@@ -45,7 +45,7 @@ SCHEMES_ = []
 def _(timestamp, delay):
   delay /= 1.5
   
-  # oleds = devices_.oleds  # Too slow, reintroduced when framebuffer implemented directly in ucuq.
+  # oleds = devices_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
   oleds = ucuq.Nothing()
 
   for color in RAINBOW_:
@@ -66,7 +66,7 @@ def _(timestamp, delay):
   delay /= 1.5
   
   rings = devices_.rings
-  # oleds = devices_.oleds  # Too slow, reintroduced when framebuffer implemented directly in ucuq.
+  # oleds = devices_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
   oleds = ucuq.Nothing()
   
   for r in range(len(RAINBOW_)):
