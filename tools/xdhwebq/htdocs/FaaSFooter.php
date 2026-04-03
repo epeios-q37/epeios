@@ -163,9 +163,9 @@ $qrCodeId = "QRCode";
         <img onclick="toggle();" style="cursor: pointer" title="Displays the QR code to access the application"
           src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAQ9JREFUSEu1lLENAjEQBOdFA1AIJFQABRBRBogKSKACRBuQUABUQEQhUAKyZKT1iUNnrP/o9V7/2Ht719Hz0/X8fxQwAbbA0EBfwA54AOu8dgQi+gJwAubA3QCmwBVYAre8NgMi+gKgm5Wh3713T+8CVsAAOJhTewBP7wI2+UgWoDVQmKevtsi1QhYKqzVFZyAV71eR1YqIvrjBOMd0ZFL0BPY5pmpFRF8Aeuk5tUivn4q5EOIFSM1lNUmSvmvxVVPcQK/vAby0eIlqsijSdNWzKNKArkWR2WJt/FYD1TQ1Wih1miL11LPCFt+DfFL31yzS+P4NiMycaosis0WtizRm0yyKNGZTo1VbFNpQK3oD3s5tGW4LqcAAAAAASUVORK5CYII=" />
         <span id="Copy" class="popup hidden" onclick="copy()">
-          <img title="Copies the link of the application to the clipboard"
+          <img title="Copies the link of the application to the clipboard."
             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAONJREFUSEvt1cFJQ0EQxvFfSrCDkAZysAFz85CruYghaAsWYAHpIenAS+6xBG1A7MBbiOBBBjYQw9u3L+E9BMnAXJbh+883LDM9HUevY31/DnjCGJ8VTqO5DSbY5iZRchCAl5T7Glf4wCVmuMlBcoA5hhjgoQKwDw4Ht8nJ16GTHGCNEXIODt8Dco37NgH9NKbQXGKRmvrFONVBiEfu4hXPbQKqPs1urK04OAOUvul5RP9oRFPc1RylC0S+4w2Px+6i0sGLtR0Zy68y6nbRd0k9db86BdBAu1lJ6aI1U6mp6hzwA2dATRlJV2KvAAAAAElFTkSuQmCC" />
-          <span class="popuptext" style="width: max-content;" id="copyReport">Link to application copied</span>
+          <span class="popuptext" style="width: max-content;" id="copyReport">Link to application copied !!!</span>
         </span>
         <span id="Share" style="cursor: pointer;" class="hidden" onclick="share()">
           <img title="Shares the link of the application"

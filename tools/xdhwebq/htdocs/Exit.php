@@ -16,19 +16,21 @@ Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with xdhwebq. If not, see <http://www.gnu.org/licenses/>.
-*/ 
+*/
 ?>
+
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<script>
 		function adjust() {
 			let iframe = window.parent.document.body.firstElementChild.firstElementChild;
-//			iframe.height = "10px"
+			//			iframe.height = "10px"
 			iframe.height = iframe.contentWindow.document.body.scrollHeight + 'px';
 		}
 	</script>
 </head>
+
 <body onload="adjust();">
-<!-- NOTA: '$_REQUEST["text"]' is already URL decoded… -->
-<?= base64_decode($_REQUEST["text"]) ?>
+	<!-- NOTA: '$_REQUEST["text"]' is already URL decoded… -->
+	<?= base64_decode($_REQUEST["text"]) ?>
 </body>
