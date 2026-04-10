@@ -27,7 +27,7 @@ class Colors_:
     
   def write(self):
     devices_.rings.write()
-    show.displayRingGauges("AB")
+    show.displayRingGauges()
     
     return self
   

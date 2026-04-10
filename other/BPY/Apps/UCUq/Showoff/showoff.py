@@ -13,7 +13,7 @@ import trio
 
 DELAY = 0.5
 
-DEVICES_ = ("Alpha", "India", "Lima", "Golf")
+DEVICES_ = ("Alfa", "India", "Lima", "Golf")
 
 HTML_OPTION_ = "<option>{}</option>"
 

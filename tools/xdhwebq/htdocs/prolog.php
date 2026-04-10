@@ -98,6 +98,7 @@ along with xdhwebq. If not, see <http://www.gnu.org/licenses/>.
     <iframe id="monIframe" frameborder="0" width="100%"></iframe>
   </span>
   <!-- There must be one and only one element here, even an empty one, for the 'More' section to be handled correctly. -->
+  <!-- NOTA : deprecated ? -->
   <!--iframe style="border: none; width: 100%; height: 0px;" src="sponsors.php?<?= $parameters ?>"></iframe-->
   <span></span>
 </body>

@@ -137,7 +137,7 @@
     }
   }, {
     "_comment": "ESP32-C3 with displays",
-    "devices": [ "Alpha", "Golf", "India", "Lima" ],
+    "devices": [ "Alfa", "Golf", "India", "Lima" ],
     "brand": "q37.info",
     "model": "Displays",
     "variant": "SSD1306",
