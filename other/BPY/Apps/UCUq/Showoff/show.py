@@ -166,7 +166,7 @@ def unpack(data):
 
 
 def displayRingGauges(addendum = "  "):
-  devices.ravel.displayRingGauges(RGB_MAX_, addendum=addendum)  
+  devices.ravel.displayRingGauges(addendum=addendum)  
 
 def turnOffAndScrollDown(timestamp):
   offset = random.randrange(len(RAINBOW_))
@@ -179,7 +179,7 @@ def turnOffAndScrollDown(timestamp):
   for i in range(64):
     devices.rings.setValue(i // 8 + offset, (0,0,0)).write()
     devices.oleds.scroll(0, 1).show()
-    devices.ravel.displayRingGauges(RGB_MAX_)
+    devices.ravel.displayRingGauges()
     timestamp += 0.09
     sleepUntil(timestamp) 
     

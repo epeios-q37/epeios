@@ -2569,11 +2569,17 @@ class Kit_:
       else:
         self.moveTo(position,0).putString(up.rstrip() if len(up.rstrip()) != 0 else " " * 16)
         self.moveTo(position,1).putString(down.rstrip() if len(down.rstrip()) != 0 else " " * 16)
-      
-    def displayRingGauges(self, ring, max, x, y, size, placeholder=".", addendum="  "):
+        
+    @staticmethod
+    def deepMax_(x):
+      return x if not isinstance(x,(list,tuple,set)) else max((Kit_.HD44780_I2C.deepMax_(i) for i in x), default=None)
+
+    def displayRingGauges(self, ring, x, y, size, globalMax = False, placeholder=".", addendum="  "):
       result = ""
       pixels = ring.getAll()
       
+      maxValue = self.deepMax_(pixels)
+        
       if len(placeholder) == 0:
         placeholder = " "
         
@@ -2589,8 +2595,12 @@ class Kit_:
       for i in range(len(pixels)):
         sub = ""
         j = i if i < 4 else 11 - i
+        if not globalMax:
+          maxValue = max(pixels[j])
+        if maxValue == 0:
+          maxValue = 1
         for k in range(len(pixels[j])):
-          gauge = 8 * pixels[j][k] // max
+          gauge = 8 * pixels[j][k] // maxValue
           sub += placeholder[k] if gauge == 0 else chr(gauge - 1)
         result += sub + ( addendum[0] if i == 3 else addendum[1] if i == 7 else placeholder[3]) 
       
@@ -2625,9 +2635,9 @@ def KitsClassPatch_(caller, owner):
 
 ##### Begin of section dedicated to the Ravel kit #####
 
-def ravelDisplayRingGauges_(rings, lcds, max, placeholder, addendum):
+def ravelDisplayRingGauges_(rings, lcds, globalMax, placeholder, addendum):
   for ring in rings:
-    lcds[rings.index(ring)].displayRingGauges(ring, max, 0, 0, 16, placeholder, addendum)
+    lcds[rings.index(ring)].displayRingGauges(ring, 0, 0, 16, globalMax, placeholder, addendum)
 
 class Ravel:
   class Buzzer(Kit_.Buzzer):
@@ -2675,7 +2685,7 @@ class Ravel:
   def lcd(self):
     return self.lcd_
   
-  def displayRingGauges(self, max, placeholder=".", addendum="  "):
-    ravelDisplayRingGauges_(Kit_.ensureSequence_(self.ring_), Kit_.ensureSequence_(self.lcd_), max, placeholder, addendum)
+  def displayRingGauges(self, globalMax = False, placeholder=".", addendum="  "):
+    ravelDisplayRingGauges_(Kit_.ensureSequence_(self.ring_), Kit_.ensureSequence_(self.lcd_), globalMax, placeholder, addendum)
 
 ##### End of section dedicated to the Ravel kit #####

@@ -61,7 +61,7 @@ def getDuration_(events):
 
 
 def lcdsDisplayRingGauges():
-  ravel_.displayRingGauges(shared.RGB_MAX)
+  ravel_.displayRingGauges()
 
 
 def oledAnimation_():
