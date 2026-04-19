@@ -1,10 +1,14 @@
+import json
 import time
 
 import ucuq
 
 import shared
 
-from shared import RAINBOW as RAINBOW_, getRainbowColor as getRainbowColor_
+from shared import\
+  RAINBOW as RAINBOW_,\
+  RGB_MAX as RGB_MAX_,\
+  getRainbowColor as getRainbowColor_
 
 ring_ = None
 buzzer_ = None
@@ -29,7 +33,7 @@ def connect(device):
 
 LINE1_ = "En route vers".center(16)  
 #       "1234567890123456"
-LINE2_ = "le futur !".center(16)
+LINE2_ = "l'aventure !".center(16)
 
 GIRL_ = """000000000000018000000000000003e000000000000007f0000000000001e7e0000000000007fef000000000001ffc7800000000001ffe7800000000003fff3c00000000007fffbc0000000000fffff80000000001fffff80000000001fffff80000000000bffff80000000000bff7f800000000001ff7f800000000001ff7f800000000000ffe7800000000000fff7800000000000fff3c000000000007ff9c000000000003ffce000000000001dfce0000000000000fcf00000000000007ff0000000000000fff0000000000001fff0000000000003fff0000000000007fff0000000000007fff0000000000007fff000000000000dfff000000000000bfff000000000000bfff0000000400007fff0000001f0000ffff000000078000ffff00000001e0019fff00000001f801dfff00000000fe01ffff0000003cffc1ffff0000007ffdc1dfff0000007ffe40dfff000000ffff02dfff0000007fffc3dffd0000007ffffbdfff0000003ffffffdfe0000003fffffcffb0000001fffdfcffb0000000fffefcffd00000007fff3cefe00000003fffbfffd00000001fffdfffb00000000fffefff3000000007fff7ff1000000003fff7ff9000000003bff7ff1000000007dfffff00000001ffeffffe00000003fff7fffe00000007fffbfffc00000007fffdfffc00000003fff8fff800000000fff03ff00000000000000c000"""
 
@@ -138,7 +142,6 @@ EYES_ = "0" * 32 * 64 + shared.unpack("""eJztUkG2wyAIvBLGRPQ4UeH+R/hjrETbLrr8i8y
   
 def OLED():
   oled = ucuq.Ravel.OLED()
-  
 
   for y in range(64):
     oled.draw(EYES_[y * 32:][:2048], 128).show()
@@ -165,9 +168,51 @@ def Ring():
       
   ucuq.sleep(1)
 
-  ring.fill((0, 0, 0)).write()  
+  ring.fill((0, 0, 0)).write()
+
+
+
+SPOKEN_COLORS_ =  {
+  "rouge": [255, 0, 0],
+  "vert": [0, 255, 0],
+  "verre": [0, 255, 0],
+  "verte": [0, 255, 0],
+  "bleu": [0, 0, 255],
+  "jaune": [255, 255, 0],
+  "cyan": [0, 255, 255],
+  "magenta": [255, 0, 255],
+  "orange": [255, 127, 0],
+  "violet": [127, 0, 255],
+  "rose": [255, 127, 127],
+  "gris": [127, 127, 127],
+  "noir": [0, 0, 0],
+  "blanc": [255, 255, 255],
+  "marron": [127, 59, 0],
+  "turquoise": [0, 127, 127],
+  "beige": [255, 212, 170]
+}
   
   
+def DisplaySpokenColor(dom):
+  colors = json.loads(dom.getValue("PartnerColors"))
+
+  for color in colors:
+    color = color.lower()
+    if color in SPOKEN_COLORS_:
+      r, g, b = map(lambda c: RGB_MAX_ * int(c) // 255, [c for c in SPOKEN_COLORS_[color]])
+      ring_.fill((r, g, b)).write()
+      lcd_.moveTo(0,0)\
+        .putString("RGB: {} {} {}".format(*map(lambda c: str(c).rjust(3), [r, g, b])))\
+        .moveTo(0,1)\
+        .putString(color.center(16))\
+        .backlightOn()
+      break
+  
+  
+def Listen(dom):
+  dom.executeVoid("partnerListen()")
+  
+
 def fusion_espaces(s1: str, s2: str) -> str:
     i = 0
     while i < len(s2) and s2[i] == ' ':

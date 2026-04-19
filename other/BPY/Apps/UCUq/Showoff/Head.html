@@ -97,5 +97,49 @@
       }
     }
   }
+</script>
+<script>
+  var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+  var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent;
 
+  var recognition = new SpeechRecognition();
+
+  recognition.continuous = false;
+  recognition.lang = 'fr-FR';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 5;
+
+  function partnerListen() {
+    recognition.start();
+    console.log('Ready to receive a color command.');
+  };
+
+  recognition.onresult = function (event) {
+    var color = event.results[0][0].transcript;
+    console.log('Confidence: ' + event.results[0][0].confidence);
+    results = event.results[0];
+    array = [];
+    for (const cle in results) {
+      if (results.hasOwnProperty(cle)) {
+        console.log(`${cle}: ${results[cle].transcript}`);
+        array.push(results[cle].transcript);
+      }
+      console.log(array)
+    }
+    console.log(color);
+    document.getElementById("PartnerColors").value = JSON.stringify(array);
+    launchEvent("test|BUTTON|click||(PartnerDisplaySpokenColor)");
+  };
+
+  recognition.onspeechend = function () {
+    recognition.start();
+  };
+
+  recognition.onnomatch = function (event) {
+    console.warn("I didn't recognize that color.");
+  };
+
+  recognition.onerror = function (event) {
+    console.err('Error occurred in recognition: ' + event.error);
+  };
 </script>

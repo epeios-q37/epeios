@@ -47,6 +47,15 @@ def atkPartnerLCD(dom):
   partner.LCD()
 
 
+def atkPartnerListen(dom):
+  partner.Listen(dom)
+  
+
+# Called by JS 'partnerListen' script (itself launched by above 'atkPartnerListen' callback)
+def atkPartnerDisplaySpokenColor(dom):
+  partner.DisplaySpokenColor(dom)
+
+
 def atkPartnerIndy(dom):
   partner.indy()
 
