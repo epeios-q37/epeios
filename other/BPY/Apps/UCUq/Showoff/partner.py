@@ -16,23 +16,27 @@ oled_ = None
 lcd_ = None
 ravel_ = None
 
+spokenColorLed_ = 0
 
 def connect(device):
-  global ring_, buzzer_, oled_, lcd_, ravel_
+  global ring_, buzzer_, oled_, lcd_, ravel_, spokenColorLed_
+  
+  spokenColorLed_ = 0
+  
   ucuq.setDevice(shared.handleDeviceInput(device))
 
-  ring_ = ucuq.Ravel.Ring()
-  buzzer_ = ucuq.Ravel.Buzzer()
-  oled_ = ucuq.Ravel.OLED()
-  lcd_ = ucuq.Ravel.LCD()
-  
-  ravel_ = ucuq.Ravel(ring=ring_, buzzer=buzzer_, oled = oled_, lcd=lcd_)
+  ravel_ = ucuq.Ravel()
+
+  ring_ = ravel_.ring()
+  buzzer_ = ravel_.buzzer()
+  oled_ = ravel_.oled()
+  lcd_ = ravel_.lcd()
   
   lcd_.uploadGaugeChars()
 
 
 LINE1_ = "En route vers".center(16)  
-#       "1234567890123456"
+#        "1234567890123456"
 LINE2_ = "l'aventure !".center(16)
 
 GIRL_ = """000000000000018000000000000003e000000000000007f0000000000001e7e0000000000007fef000000000001ffc7800000000001ffe7800000000003fff3c00000000007fffbc0000000000fffff80000000001fffff80000000001fffff80000000000bffff80000000000bff7f800000000001ff7f800000000001ff7f800000000000ffe7800000000000fff7800000000000fff3c000000000007ff9c000000000003ffce000000000001dfce0000000000000fcf00000000000007ff0000000000000fff0000000000001fff0000000000003fff0000000000007fff0000000000007fff0000000000007fff000000000000dfff000000000000bfff000000000000bfff0000000400007fff0000001f0000ffff000000078000ffff00000001e0019fff00000001f801dfff00000000fe01ffff0000003cffc1ffff0000007ffdc1dfff0000007ffe40dfff000000ffff02dfff0000007fffc3dffd0000007ffffbdfff0000003ffffffdfe0000003fffffcffb0000001fffdfcffb0000000fffefcffd00000007fff3cefe00000003fffbfffd00000001fffdfffb00000000fffefff3000000007fff7ff1000000003fff7ff9000000003bff7ff1000000007dfffff00000001ffeffffe00000003fff7fffe00000007fffbfffc00000007fffdfffc00000003fff8fff800000000fff03ff00000000000000c000"""
@@ -192,24 +196,34 @@ SPOKEN_COLORS_ =  {
   "beige": [255, 212, 170]
 }
   
-  
 def DisplaySpokenColor(dom):
+  global spokenColorLed_
+  
   colors = json.loads(dom.getValue("PartnerColors"))
 
   for color in colors:
     color = color.lower()
     if color in SPOKEN_COLORS_:
+      ucuq.sleepStart()
+      ring_.setValue(spokenColorLed_, ((255, 255, 255))).write()
       r, g, b = map(lambda c: RGB_MAX_ * int(c) // 255, [c for c in SPOKEN_COLORS_[color]])
-      ring_.fill((r, g, b)).write()
-      lcd_.moveTo(0,0)\
-        .putString("RGB: {} {} {}".format(*map(lambda c: str(c).rjust(3), [r, g, b])))\
-        .moveTo(0,1)\
-        .putString(color.center(16))\
-        .backlightOn()
+      ucuq.sleepWait(0.05)
+      ring_.setValue(spokenColorLed_, (r,g,b)).write()
+      ravel_.displayRingGauges()
+      y = spokenColorLed_ % 8 * 8
+      oled_.rect(0, y, 128, 8, 0, True).rect(0, 0, 8, 64, 0, True).text(color, 64 - 8 * len(color) // 2, y)
+      if spokenColorLed_ >= 8:
+        oled_.text(">", 0, y).show()
+      oled_.show()
+      spokenColorLed_ += 1
       break
   
   
 def Listen(dom):
+  if spokenColorLed_ == 0:
+    lcd_.backlightOn()
+    ring_.fill((0,0,0)).write()
+    oled_.fill(0).show()
   dom.executeVoid("partnerListen()")
   
 

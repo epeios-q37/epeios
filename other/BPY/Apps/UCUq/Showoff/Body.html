@@ -9,7 +9,7 @@
       <input id="PartnerDevice" list="Devices" value="{}" class="clearable" placeholder="Device">
       <button xdh:onevent="PartnerConnect">Connect</button>
     </div>
-    <div style="display: flex; justify-content: space-evenly;">
+    <div style="display: grid; grid-template-columns: auto auto auto; justify-content: space-around; grid-row-gap: 8px;">
       <button xdh:onevent="PartnerBuzzer">Buzzer</button>
       <button xdh:onevent="PartnerOLED">OLED</button>
       <button xdh:onevent="PartnerRing">Ring</button>
