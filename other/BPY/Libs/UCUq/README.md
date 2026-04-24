@@ -52,11 +52,11 @@ You can put more then one entry under the `WLAN` entry; the microcontroller will
 As an example, try following code which blinks an LED connected to your microcontroller:
 
 ```python
-import ucuq, time
+import ucuq
 
 for i in range(20):
   ucuq.GPIO(<led_pin>).high(i & 1)
-  time.sleep(0.5)
+  ucuq.sleep(0.5)
 ```
 
 Replace *<led_pin>* with the number corresponding of the onboard led pin number or string (or of whichever LED connected to your microcontroller). Launch this program with *python3*.

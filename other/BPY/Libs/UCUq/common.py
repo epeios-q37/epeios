@@ -2601,6 +2601,8 @@ class Kit_:
           maxValue = 1
         for k in range(len(pixels[j])):
           gauge = 8 * pixels[j][k] // maxValue
+          if gauge == 0 and pixels[j][k] != 0:
+            gauge = 1
           sub += placeholder[k] if gauge == 0 else chr(gauge - 1)
         result += sub + ( addendum[0] if i == 3 else addendum[1] if i == 7 else placeholder[3]) 
       

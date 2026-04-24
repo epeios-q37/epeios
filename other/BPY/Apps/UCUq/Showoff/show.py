@@ -1,5 +1,9 @@
 import base64
+import datetime
 import random
+import socket
+import struct
+import time
 import types
 import zlib
 
@@ -24,7 +28,37 @@ class Ring_(ucuq.Ravel.Ring):
     return super().setValue(index, color)
 
 
+def getNTPTime_(host="pool.ntp.org"):
+  port = 123
+  buf = 1024
+  address = (host, port)
+  msg = b'\x1b' + 47 * b'\0'
+
+  NTP_DELTA = 2208988800
+
+  try:
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client.settimeout(2)
+    client.sendto(msg, address)
+    data, _ = client.recvfrom(buf)
+  except Exception as e:
+    raise RuntimeError("Erreur NTP : " + str(e))
+
+  t = struct.unpack("!12I", data)[10]
+  ntp_time = t - NTP_DELTA
+
+  return ntp_time
+
+
+ntpOffset_ = 0
+  
 def connect(deviceList):
+  global ntpOffset_
+  
+  ntpOffset_ = time.time() - getNTPTime_()
+  
+  print(f"Décalage horaire : {ntpOffset_} s.")
+  
   ucuq.setDevice(tuple(shared.handleDeviceInput(device) for device in deviceList))
   
   ucuq.ntpSetTime()
@@ -36,6 +70,8 @@ def connect(deviceList):
   devices.ravel = ucuq.Ravel(ring=devices.rings, buzzer=devices.buzzers, oled = devices.oleds, lcd=devices.lcds)
   
   devices.lcds.uploadGaugeChars()
+  
+  return ntpOffset_
 
 prevLocalTimeStamp_ = 0
   
@@ -47,7 +83,7 @@ def sleepUntil(timestamp):
     prevLocalTimeStamp_ = timestamp
     ucuq.commit()
 
-  ucuq.ntpSleepUntil(timestamp)
+  ucuq.ntpSleepUntil(timestamp - ntpOffset_)
 
 
 DIGITS_ = (
@@ -167,6 +203,7 @@ def unpack(data):
 
 def displayRingGauges(addendum = "  "):
   devices.ravel.displayRingGauges(addendum=addendum)  
+
 
 def turnOffAndScrollDown(timestamp):
   offset = random.randrange(len(RAINBOW_))

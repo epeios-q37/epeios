@@ -157,14 +157,21 @@ SCHEMES_.append(_)
 
 # 6
 def _(timestamp, delay):
-  for _ in range(2):
+  for c in range(2):
     for i in range(12):
       sleepUntil_(timestamp)
       timestamp += delay
       colors_.fill((0,0,0))
-      col = getRainbowColor_(i, 11)
-      colors_.set(i, 0, col).set(i, 1, col)
-      colors_.set(11 - i, 0, col).set(11 - i, 1, col)
+      colA = getRainbowColor_(i, 11)
+      colB = getRainbowColor_(i + 6, 11)
+      if c:
+        col1 = colA
+        col2 = colB
+      else:
+        col1 = colB
+        col2 = colA
+      colors_.set(i, 0, col1).set(i, 1, col1)
+      colors_.set(11 - i, 0, col2).set(11 - i, 1, col2)
       colors_.write()
     
   colors_.fill((0,0,0))

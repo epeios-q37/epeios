@@ -48,6 +48,27 @@ INDY_ = """000000000004001100000000000c00820000000000034008000000000001808200000
 FATHER_ = """01d5b7e0107ff22f057d5ec07ffffd6e0bd5bd01ffffc6dc055afa003f3bebf901eb380005d7f7f90dfef400023ff7ff0aa94000001ffbff017f4800007ff9ff005b0000008fffff000f800411aafbf80005e8061cffffff0000f80feafeffff0000dd1a36ffffff000036c0abfdffff000035f01effffff000274a0bf7fffff00045f55fdfdffff000439a2ff7ffffc00062eeabffdffff00883afc5ffdffff00411ebff1f7ffff0004756d0ffddfff00011dbaffeb67ff00047eafffd5ffff00093d53ffb6bfff0010bea9ffebdfff00027fe8fdd6dfff0000bff47f753fff4044bb823fdadfff20107e012ef57fff1840081297feffff000a0075cfdeffff0008006bebf77fff0006007fe2ffffff000a006dfbb7ffff000302336affffff00050032157fffff0003800001ffffff00054001017fffff0002001f807fffff00408090007fffff010003817e3ffffb0000001fff9fffff012000bf4adffff7080003800defffff812000002ffeffef000000005fffffbf024a000abfffff7f080100217ffffd7f00098047ffffe17f20828803ffff807f04009e2ffffe007f00209fb7ffff00ff11041faffffe00ff40011feffff801ff00405fffffe801ff12092ff7fff003ff40000fffff8003ff008257fff7c007ff040007ffbf000fff5124abfff0002fff0000017bc0004fe7254a4aad40001c000000002000003800"""
 
 
+cumulativeSleepDelay_ = 0
+relativeSleepDelay_ = 0
+
+def sleepStart_():
+  global cumulativeSleepDelay_, relativeSleepDelay_
+
+  ucuq.sleepStart()
+  cumulativeSleepDelay_ = relativeSleepDelay_ = 0  
+
+def sleepWait_(delay):
+  global cumulativeSleepDelay_, relativeSleepDelay_
+  
+  relativeSleepDelay_ += delay
+  
+  if relativeSleepDelay_ >= 0.3:
+    ucuq.commit()
+    
+  cumulativeSleepDelay_ += delay
+  ucuq.sleepWait(cumulativeSleepDelay_)
+
+
 def concatHEXImages_(img1: str, img2: str) -> str:
   result_lines = []
 
@@ -68,12 +89,13 @@ def getDuration_(events):
   return duration
 
 
-def lcdsDisplayRingGauges():
-  ravel_.displayRingGauges()
-
-
 def oledAnimation_():
   oled_.powerOn()
+  
+  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  
+  sleepStart_()
+  
   for c in range(64):
     toDraw = concatHEXImages_(
       ("0" * 16 * (63 - c) + INDY_)[:1024],
@@ -82,6 +104,9 @@ def oledAnimation_():
     
     oled_.draw(toDraw, 128)
     oled_.show()
+    sleepWait_(.05)
+    
+  ucuq.setCommitBehavior(cb)
     
 
 def indy(withSound = True):
@@ -104,7 +129,7 @@ def indy(withSound = True):
   for c in range(ringCount):
     ringEvents.append((
       lambda c=c, color=getRainbowColor_(c + ringOffset), ringCount=ringCount:
-        (ring_.setValue(c, color).setValue(ringCount - c, color).write(), lcdsDisplayRingGauges()),
+        (ring_.setValue(c, color).setValue(ringCount - c, color).write(), ravel_.displayRingGauges()),
       duration / ringCount))
   
   polyEvents.append(ringEvents)
@@ -119,7 +144,7 @@ def indy(withSound = True):
   
   ucuq.sleepStart()  
 
-  ucuq.playEvents(polyEvents, lambda duration: (ucuq.sleepWait(duration), ucuq.sleepStart(),  ucuq.commit() if duration > .05 else None))
+  ucuq.playEvents(polyEvents, lambda duration: (ucuq.sleepWait(duration), ucuq.sleepStart(), ucuq.commit() if duration > .05 else None))
   
   ucuq.setCommitBehavior(cb)
   
@@ -128,7 +153,7 @@ def indy(withSound = True):
   for i in range(8):
     ring_.setValue(i, getRainbowColor_(ringOffset + i, 7)).write()
     
-  lcdsDisplayRingGauges()
+  ravel_.displayRingGauges(globalMax = True)
   
   return True
 
@@ -142,13 +167,20 @@ def Buzzer():
   
   
 EYES_ = "0" * 32 * 64 + shared.unpack("""eJztUkG2wyAIvBLGRPQ4UeH+R/hjrETbLrr8i8yrqTIIOKD64ME/hvzg4yt/uGWBqWpf7bywk1EYa2W1Sme5/TkVojiuvFDcjk/bcaULCx2bRbxchXSe5/Dd5K9T35Obao+zqWC3YZ3GJ9Szg+4hJYJ28U4gguNO5RXxLCDx2+7iCYZ6huHvkcJHZyJE8EcxSUtGjU5oKJDPI1JIdSSEetJ4ex5xoYPr8JcE3pd95As4kKZkBdfGi1i8gAqTbqY4dCaWOhQKHnxWb/XiJnG1FkdYSOUWvDDHqclILA6vMofsWnfDCNiE8C3KFECXIckt5zwQ19utQQL/+Xqrh5dRZtJpHsY+mGEdtm9YBz7nd57fDQ8efOIPyTYK6w==""")
-  
-  
+
+
 def OLED():
   oled = ucuq.Ravel.OLED()
+  
+  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  
+  sleepStart_()
 
   for y in range(64):
+    sleepWait_(.05)
     oled.draw(EYES_[y * 32:][:2048], 128).show()
+    
+  ucuq.setCommitBehavior(cb)
   
 
 def Ring():
@@ -168,7 +200,6 @@ def Ring():
     ring[led] = getRainbowColor_(led, 7)
     ring.write()
     ucuq.sleep(delay)
-
       
   ucuq.sleep(1)
 
