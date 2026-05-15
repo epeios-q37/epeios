@@ -67,9 +67,14 @@ def atkPartnerListen(dom):
   partner.Listen(dom)
 
 
-# Called by JS 'partnerListen' script (itself launched by above 'atkPartnerListen' callback)
+# Called by JS script
 def atkPartnerDisplaySpokenColor(dom):
   partner.DisplaySpokenColor(dom)
+  
+  
+# Called by JS script
+def atkPartnerDisplayOrientation(dom, id):
+  partner.DisplayOrientation(id)
 
 
 def atkPartnerIndy(dom):

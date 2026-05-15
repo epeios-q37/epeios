@@ -128,7 +128,7 @@
     }
     console.log(color);
     document.getElementById("PartnerColors").value = JSON.stringify(array);
-    launchEvent("test|BUTTON|click||(PartnerDisplaySpokenColor)");
+    launchEvent("PartnerDisplaySpokenColor|BUTTON|click||(PartnerDisplaySpokenColor)");
   };
 
   recognition.onspeechend = function () {
@@ -142,4 +142,39 @@
   recognition.onerror = function (event) {
     console.err('Error occurred in recognition: ' + event.error);
   };
+</script>
+<script>
+  async function getOrientation() {
+    if (!window.DeviceOrientationEvent || !window.DeviceOrientationEvent.requestPermission) {
+      return alert("Your current device does not have access to the DeviceOrientation event");
+    }
+
+    let permission = await window.DeviceOrientationEvent.requestPermission();
+    if (permission !== "granted") {
+      return alert("You must grant access to the device's sensor for this demo");
+    }
+  }
+
+  var previousTime = 0;
+
+  window.addEventListener("deviceorientation", function (e) {
+    let requestBtn = document.querySelector("#get-orientation");
+    if (requestBtn) { requestBtn.remove(); }
+
+    let x = Math.round(e.alpha);
+    let y = Math.round(e.beta);
+    let z = Math.round(e.gamma);
+
+    document.getElementById('PartnerOrientationX').innerHTML = `${x}°`;
+    document.getElementById('PartnerOrientationY').innerHTML = `${y}°`;
+    document.getElementById('PartnerOrientationZ').innerHTML = `${z}°`;
+
+    if ((performance.now() - previousTime) < 333)
+      return;
+
+    previousTime = performance.now();
+
+    if (document.getElementById("PartnerOrientation").checked)
+      launchEvent(`${x},${y},${z}|BUTTON|click||(PartnerDisplayOrientation)`);
+  });
 </script>

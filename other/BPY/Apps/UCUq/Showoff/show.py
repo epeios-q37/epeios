@@ -1,5 +1,4 @@
 import base64
-import datetime
 import random
 import socket
 import struct
@@ -11,7 +10,10 @@ import ucuq
 
 import shared
 
-from shared import RGB_MAX as RGB_MAX_, RAINBOW as RAINBOW_, getRainbowColor as getRainbowColor_
+from shared import (
+  RAINBOW as RAINBOW_,
+  getRainbowColor as getRainbowColor_
+)
 
 W_COUNTDOWN_ = "Countdown"
 
