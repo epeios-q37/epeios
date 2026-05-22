@@ -3,6 +3,7 @@ import base64
 import copy
 import inspect
 import json
+import math
 import re
 import time
 import zlib
@@ -120,6 +121,20 @@ def ucuqGetInfos():
 
   return infos
 """
+
+KIT_WOKWI_WS2812_PATCH_SCRIPT_ = f"""
+from machine import UART
+
+try:
+  UART(0)  # Sur Wokwi, UART0 existe toujours
+  CONV_ = {tuple((int(255 * math.log(1+i) / math.log(32)) for i in range(32)))}
+  def c_(color):
+    return (CONV_[min(color[0],31)], CONV_[min(color[1],31)], CONV_[min(color[2],31)])
+except:
+  def c_(color):
+    return color
+"""
+
 
 ATK_BODY_ = (
   """
@@ -468,7 +483,8 @@ class Device(Device_):  # noqa: F821
     self.commands_ = [
       "gc.collect()",
       SLEEP_WAIT_SCRIPT_,
-      NTP_SCRIPT_
+      NTP_SCRIPT_,
+      KIT_WOKWI_WS2812_PATCH_SCRIPT_
     ]
     self.commitBehavior_ = None
     self.timer_ = None
@@ -1096,15 +1112,15 @@ class WS2812(Core_):
     self.new_ = [tuple(val)] * self.n_
     return self
 
-  def straightFill(self, val):
-    self.fill(val)
-    return self.addMethods(f"fill({json.dumps(val)})")
+  def straightFill(self, color, conv = lambda color : json.dumps(color)):
+    self.fill(color)
+    return self.addMethods(f"fill({conv(color)})")
 
   def straightWrite(self):
     self.current_ = copy.deepcopy(self.new_)
     return self.addMethods("write()")
   
-  def write(self):
+  def write(self, conv = lambda color : json.dumps(color)):
     diffs = []
     same = self.new_[0]
     
@@ -1117,11 +1133,11 @@ class WS2812(Core_):
       
     if len(diffs):
       if same is not None:
-        self.straightFill(same)
+        self.straightFill(same, conv)
       else:
         command = ""
         for diff in diffs:
-          command += f"{self.getObject()}.__setitem__({diff[0]},{json.dumps(diff[1])})\n"
+          command += f"{self.getObject()}.__setitem__({diff[0]},{conv(diff[1])})\n"
         self.addCommand(command)
       return self.straightWrite()
     else:
@@ -2538,8 +2554,10 @@ class Kit_:
   def ensureSequence_(component):
     return component if isinstance(component, Multi) else (component, )
     
-  class WS2812(globals()["WS2812"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
-    pass    
+  class WS2812(globals()["WS2812"]):  # Workaround to Brython issue     
+    def write(self):
+      super().write(lambda color: f"(c_({color}))")
+      return self
     
   class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     pass    
@@ -2649,7 +2667,7 @@ class Ravel:
   class Ring(Kit_.WS2812):
     def __new__(cls, offset=0, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
-      
+    
   class OLED(Kit_.SSD1306_I2C):
     def __new__(cls, device=None, extra=True):
       return super().__new__(KitsClassPatch_(cls, Ravel.OLED), 128, 64, I2C(8, 9, device=device), extra=extra)
