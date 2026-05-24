@@ -139,4 +139,4 @@ def atkShowColorRepeat(dom):
   colors.launch(int(scheme), timestamp, float(delay), int(repeat))
 
 if os.environ.get("PREFIX", "").startswith("/data/data/com.termux"):
-  atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"'))  
+  atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"')) 
