@@ -179,7 +179,7 @@ def indy(withSound=True):
   for i in range(8):
     ring_.setValue(i, getRainbowColor_(ringOffset + i, 7)).write()
 
-  ravel_.displayRingGauges(globalMax=True)
+  ravel_.displayRingGauges()
 
   return True
 

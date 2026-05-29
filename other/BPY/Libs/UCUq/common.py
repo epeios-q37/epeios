@@ -123,14 +123,15 @@ def ucuqGetInfos():
 """
 
 KIT_WOKWI_WS2812_PATCH_SCRIPT_ = f"""
-from machine import UART
-
 try:
-  UART(0)  # Sur Wokwi, UART0 existe toujours
+  with open("diagram.json") as f:
+    content = f.read()
+  assert '"editor"' in content
+  assert '"editor": "wokwi"' in content
   CONV_ = {tuple((int(255 * math.log(1+i) / math.log(32)) for i in range(32)))}
   def c_(color):
     return (CONV_[min(color[0],31)], CONV_[min(color[1],31)], CONV_[min(color[2],31)])
-except:
+except (OSError, AssertionError):
   def c_(color):
     return color
 """
@@ -2549,7 +2550,7 @@ class Microbit():
 
 ##### Begin of generic section for kits #####
 
-class Kit_:
+class kit_: # Act as namespace.
   @staticmethod
   def ensureSequence_(component):
     return component if isinstance(component, Multi) else (component, )
@@ -2590,13 +2591,16 @@ class Kit_:
         
     @staticmethod
     def deepMax_(x):
-      return x if not isinstance(x,(list,tuple,set)) else max((Kit_.HD44780_I2C.deepMax_(i) for i in x), default=None)
+      return x if not isinstance(x,(list,tuple,set)) else max((kit_.HD44780_I2C.deepMax_(i) for i in x), default=None)
 
+    # - globalMax == -1: same max for all gauges.
+    # - globalMax == 0: each gauge has its own max. 
     def displayRingGauges(self, ring, x, y, size, globalMax = False, placeholder=".", addendum="  "):
       result = ""
       pixels = ring.getAll()
       
-      maxValue = self.deepMax_(pixels)
+      if globalMax == -1:
+        maxValue = self.deepMax_(pixels)
         
       if len(placeholder) == 0:
         placeholder = " "
@@ -2612,11 +2616,17 @@ class Kit_:
         
       for i in range(len(pixels)):
         sub = ""
+        
         j = i if i < 4 else 11 - i
-        if not globalMax:
+        
+        if globalMax == 0:
           maxValue = max(pixels[j])
+        elif globalMax !=-1:
+          maxValue = globalMax
+          
         if maxValue == 0:
           maxValue = 1
+          
         for k in range(len(pixels[j])):
           gauge = 8 * pixels[j][k] // maxValue
           if gauge == 0 and pixels[j][k] != 0:
@@ -2660,38 +2670,19 @@ def ravelDisplayRingGauges_(rings, lcds, globalMax, placeholder, addendum):
     lcds[rings.index(ring)].displayRingGauges(ring, 0, 0, 16, globalMax, placeholder, addendum)
 
 class Ravel:
-  class Buzzer(Kit_.Buzzer):
-    def __new__(cls, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, Ravel.Buzzer), PWM(5, device=device), extra=extra)
-      
-  class Ring(Kit_.WS2812):
-    def __new__(cls, offset=0, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, Ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
-    
-  class OLED(Kit_.SSD1306_I2C):
-    def __new__(cls, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, Ravel.OLED), 128, 64, I2C(8, 9, device=device), extra=extra)
-      
-  class LCD(Kit_.HD44780_I2C):
-    def __new__(cls, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, Ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
-  
   @staticmethod
   def init_(object, instanciation):
     return object if object is not None else instanciation()
     
   def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None):
     cls = self.__class__
-    self.buzzer_ = cls.init_(buzzer, lambda : cls.Buzzer(device, extra))
-    self.ring_ = cls.init_(ring, lambda : cls.Ring(ringOffset, device, extra))
-    self.oled_ = cls.init_(oled, lambda : cls.OLED(device, extra))
-    self.lcd_ = cls.init_(lcd, lambda : cls.LCD(device, extra))
+    self.buzzer_ = cls.init_(buzzer, lambda : ravel.Buzzer(device, extra))
+    self.ring_ = cls.init_(ring, lambda : ravel.Ring(ringOffset, device, extra))
+    self.oled_ = cls.init_(oled, lambda : ravel.OLED(device, extra))
+    self.lcd_ = cls.init_(lcd, lambda : ravel.LCD(device, extra))
     
-  def raz(self=None): # 'self=None' to dectect if called as static method.
-    if self is None:
-      Ravel()
-    else:
-      self.__init__(self.ring_.getOffset())
+  def raz(self):
+    self.__init__(self.ring_.getOffset())
     
   def buzzer(self):
     return self.buzzer_
@@ -2705,7 +2696,28 @@ class Ravel:
   def lcd(self):
     return self.lcd_
   
-  def displayRingGauges(self, globalMax = False, placeholder=".", addendum="  "):
-    ravelDisplayRingGauges_(Kit_.ensureSequence_(self.ring_), Kit_.ensureSequence_(self.lcd_), globalMax, placeholder, addendum)
+  def displayRingGauges(self, globalMax = 0, placeholder=".", addendum="  "):
+    ravelDisplayRingGauges_(kit_.ensureSequence_(self.ring_), kit_.ensureSequence_(self.lcd_), globalMax, placeholder, addendum)
+
+
+class ravel:  # act as namespace
+  class Buzzer(kit_.Buzzer):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, ravel.Buzzer), PWM(5, device=device), extra=extra)
+      
+  class Ring(kit_.WS2812):
+    def __new__(cls, offset=0, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
+    
+  class OLED(kit_.SSD1306_I2C):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, ravel.OLED), 128, 64, I2C(8, 9, device=device), extra=extra)
+      
+  class LCD(kit_.HD44780_I2C):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(KitsClassPatch_(cls, ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
+  
+  def raz():
+    Ravel()
 
 ##### End of section dedicated to the Ravel kit #####
