@@ -1,6 +1,7 @@
 import atlastk
 import base64
 import copy
+import gzip
 import inspect
 import json
 import math
@@ -482,6 +483,7 @@ class Device(Device_):  # noqa: F821
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
     self.commands_ = [
+      "import deflate, io",
       "gc.collect()",
       SLEEP_WAIT_SCRIPT_,
       NTP_SCRIPT_,
@@ -1297,6 +1299,13 @@ class Buzzer(Multi_):
     
     return self
   
+  def ratio(self, ratio):
+    prevRatio = self.u16_ / 65535
+    self.u16_ = int(65535 * ratio)
+    self.on_ = False
+    
+    return prevRatio
+    
   def PWM(self):
     return self.pwm_
     
@@ -1654,12 +1663,15 @@ class OLED_(Core_):
 
   def ellipse(self, x, y, rx, ry, col, fill=False, quad=15):
     return self.addMethods(f"ellipse({x},{y},{rx},{ry},{col},{fill},{quad})")
-
-  def draw(self, pattern, width, ox=0, oy=0, mul=1):
+  
+  def draw(self, pattern, width, ox=0, oy=0, mul=1, compress=True):
     if width % 4:
       raise Exception("'width' must be a multiple of 4!")
     if width == 128 and ox == 0 and oy == 0 and mul == 1 and len(pattern) >= 2048:
-      return self.addMethods(f'buffer[:] = ubinascii.a2b_base64("{base64.b64encode(hexImageToBytearray_(pattern)).decode("ascii")}")')
+      if compress:
+        return self.addMethods(f'buffer[:] = deflate.DeflateIO(io.BytesIO(ubinascii.a2b_base64("{base64.b64encode(gzip.compress(hexImageToBytearray_(pattern), compresslevel = 9)).decode("ascii")}")), deflate.AUTO, 10).read()')
+      else:
+        return self.addMethods(f'buffer[:] = ubinascii.a2b_base64("{base64.b64encode(hexImageToBytearray_(pattern)).decode("ascii")}")')
     else:
       return self.addMethods(f"draw('{pattern}',{width},{ox},{oy},{mul})")
 
@@ -2561,7 +2573,8 @@ class kit_: # Act as namespace.
       return self
     
   class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
-    pass    
+    pass
+      
 
   class HD44780_I2C(globals()["HD44780_I2C"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     def uploadGaugeChars(self):
@@ -2573,15 +2586,16 @@ class kit_: # Act as namespace.
         
       return self
         
-    def getGaugeChar_(self, gauge):
-      return chr(32 if gauge == 0 else (min(gauge, 7) - 1))
+    @staticmethod
+    def getGaugeChar_(gauge):
+      return " " if gauge == 0 else chr(min(gauge, 8) - 1)
         
     def putGauges(self, position, gauges, strip = False):
       up = ""
       down = ""
       for gauge in gauges:
-        up += self.getGaugeChar_( 0 if gauge < 8 else gauge - 8)
-        down += self.getGaugeChar_(8 if gauge >= 8 else gauge)
+        up += self.getGaugeChar_(max(gauge - 8, 0))
+        down += self.getGaugeChar_(min(gauge, 8))
         
       if not strip and position == 0 and len(gauges) == 16:
         self.moveTo(0,0).putString(up + down)

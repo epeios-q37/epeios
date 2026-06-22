@@ -21,7 +21,7 @@ devices = types.SimpleNamespace()
 
 indexes = [random.randrange(len(RAINBOW_)) for i in range(3)]
 
-class Ring_(ucuq.Ravel.Ring):
+class Ring_(ucuq.ravel.Ring):
   def setValue(self, index, color = None):
     if hasattr(self, "go") and not self.go:
       return self
@@ -66,9 +66,9 @@ def connect(deviceList):
   ucuq.ntpSetTime()
   
   devices.rings = Ring_()
-  devices.buzzers = ucuq.Ravel.Buzzer()
-  devices.lcds = ucuq.Ravel.LCD()
-  devices.oleds = ucuq.Ravel.OLED()
+  devices.buzzers = ucuq.ravel.Buzzer()
+  devices.lcds = ucuq.ravel.LCD()
+  devices.oleds = ucuq.ravel.OLED()
   devices.ravel = ucuq.Ravel(ring=devices.rings, buzzer=devices.buzzers, oled = devices.oleds, lcd=devices.lcds)
   
   devices.lcds.uploadGaugeChars()

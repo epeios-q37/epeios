@@ -49,10 +49,32 @@ def atkPartnerConnect(dom):
 
 def atkPartnerBuzzer(dom):
   partner.Buzzer()
+  
+  
+def getPartnerOLEDAnimationsId():
+  return tuple(f"PartnerOLED{7-i}" for i in range(8))
 
 
 def atkPartnerOLED(dom):
-  partner.OLED()
+  field = 0
+  
+  for value in dom.getValues(getPartnerOLEDAnimationsId()).values():
+    field = field * 2
+    
+    if value == "true":
+      field += 1
+      
+  partner.OLED(field)
+  
+  
+def atkPartnerOLEDSelect(dom, id):
+  value = dom.getValue(id)
+  values= {}
+  
+  for id in getPartnerOLEDAnimationsId():
+    values[id] = value
+    
+  dom.setValues(values)
 
 
 def atkPartnerRing(dom):
@@ -79,6 +101,10 @@ def atkPartnerDisplayOrientation(dom, id):
 
 def atkPartnerIndy(dom):
   partner.indy()
+
+
+def atkPartnerMatrix(dom):
+  partner.matrixSimulation()
 
 
 def atkShowConnect(dom):

@@ -15,10 +15,61 @@
       <button xdh:onevent="PartnerBuzzer">Buzzer</button>
       <button xdh:onevent="PartnerRing">Ring</button>
       <button xdh:onevent="PartnerLCD">LCD</button>
-      <button xdh:onevent="PartnerOLED">OLED</button>
       <button xdh:onevent="PartnerIndy">Indy</button>
+      <button xdh:onevent="PartnerMatrix">Matrix</button>
       <button xdh:onevent="PartnerListen">Listen</button>
       <input id="PartnerColors" type="hidden">
+    </fieldset>
+    <fieldset style="display: flex; justify-content: space-around;">
+      <legend>OLED Animations</legend>
+      <span style="width: 100%; display: flex;">
+        <span style="display: flex; width: 100%; justify-content: space-around; padding-right: 5px;">
+          <span style="display: flex; flex-direction: column;">
+            <label style="display: flex; justify-content: space-between; border: solid 1px; padding: 0px 5px">
+              <span>1:</span>
+              <input id="PartnerOLED0" type="checkbox" style="vertical-align:middle;" checked>
+            </label>
+            <label style="display: flex; justify-content: space-between; border: solid 1px; padding: 0px 5px">
+              <span>2:</span>
+              <input id="PartnerOLED1" type="checkbox" style="vertical-align:middle;" checked>
+            </label>
+          </span>
+          <span style="display: flex; flex-direction: column;">
+            <label style="display: flex; justify-content: space-between; border: solid 1px; padding: 0px 5px">
+              <span>3:</span>
+              <input id="PartnerOLED2" type="checkbox" style="vertical-align:middle;" checked>
+            </label>
+            <label style="display: flex; justify-content: space-between; border: solid 1px; padding: 0px 5px">
+              <span>🐕:</span>
+              <input id="PartnerOLED3" type="checkbox" style="vertical-align:middle;" checked>
+            </label>
+          </span>
+          <span style="display: flex; flex-direction: column;">
+            <label style="display: flex; justify-content: space-between; border: solid 1px; padding: 0px 5px">
+              <span>🐱:</span>
+              <input id="PartnerOLED4" type="checkbox" style="vertical-align:middle;" checked>
+            </label>
+            <label style="display: flex; justify-content: space-between; border: solid 1px; padding: 0px 5px">
+              <span>4:</span>
+              <input id="PartnerOLED5" type="checkbox" style="vertical-align:middle;" checked>
+            </label>
+          </span>
+          <span style="display: flex; flex-direction: column;">
+            <label style="display: flex; justify-content: space-between; border: solid 1px; padding: 0px 5px">
+              <span>🐦:</span>
+              <input id="PartnerOLED6" type="checkbox" style="vertical-align:middle;" checked>
+            </label>
+            <label style="display: flex; justify-content: space-between; border: solid 1px; padding: 0px 5px">
+              <span>🐎:</span>
+              <input id="PartnerOLED7" type="checkbox" style="vertical-align:middle;" checked>
+            </label>
+          </span>
+        </span>
+        <span style="display: flex; vertical-align: middle; flex-direction: column; justify-content: space-between;">
+          <button xdh:onevent="PartnerOLED">Display</button>
+          <input xdh:onevent="PartnerOLEDSelect" type="checkbox" checked>
+        </span>
+      </span>
     </fieldset>
     <fieldset style="display: flex; justify-content: space-around;">
       <legend>Orientation</legend>
