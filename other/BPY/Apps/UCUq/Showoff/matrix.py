@@ -33,15 +33,9 @@ ANIMATION_ = (
 
 animation_ = tuple(zlib.decompress(base64.b64decode(picture)).decode() for picture in ANIMATION_)
 
-def modem_tone():
-    bandes = [(300, 600), (800, 1200), (1500, 2200)]
-    freq = random.randint(*random.choice(bandes))
-    delai_ms = random.randint(150, 300)
-    return freq, delai_ms
-  
 DURATION_ = 20
 
-def buildBuzzer(buzzer):
+def getBuzzerEvents_(buzzer):
   coeff = 2 ** (1/12)
   delay = 1/4
   previousFreq = None
@@ -61,7 +55,7 @@ def buildBuzzer(buzzer):
   return events
 
 
-def buildOLED(oled):
+def getOLEDEvents_(oled):
   elapsed = 0
   events = []
   counter = 0
@@ -75,7 +69,7 @@ def buildOLED(oled):
   return events
 
 
-def buildRing(ring):
+def getRingEvents_(ring):
   elapsed = 0
   delay = 1/5
   step = 1
@@ -100,11 +94,7 @@ def buildRing(ring):
   return events
 
 
-def getGaugeChar(gauge):
-  return chr(32 if gauge == 0 else (min(gauge, 7) - 1))
-
-
-def buildLCD(lcd):
+def getLCDEvents_(lcd):
   delay = 1 / 7
   ups = [random.randrange(2, 16)] * 16
   downs = [random.randrange(1, limit) for limit in ups]
@@ -130,7 +120,7 @@ def buildLCD(lcd):
   return events
 
 
-def buildCommit():
+def getCommitEvents_():
   elapsed = 0
   events = []
   delay = .35
@@ -146,16 +136,18 @@ def launch(oled, buzzer, ring, lcd):
   lcd.backlightOn()
   
   allEvents = [
-    buildBuzzer(buzzer),
-    buildOLED(oled),
-    buildRing(ring),
-    buildLCD(lcd),
-    buildCommit()
+    getBuzzerEvents_(buzzer),
+    getOLEDEvents_(oled),
+    getRingEvents_(ring),
+    getLCDEvents_(lcd),
+    getCommitEvents_()
   ]
   
   ratioBackup = buzzer.ratio(.992)
   
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  
+  ucuq.commit()
   
   ucuq.sleepStart()
   

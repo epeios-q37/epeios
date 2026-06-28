@@ -378,7 +378,7 @@ def launch(oled, field):
   
   for animation in animations_:
     if field & 1 << animations_.index(animation):
-      for _ in range(90 * 2 // len(animation)):
+      for _ in range(60 * 2 // len(animation)):
         for picture in animation:
           oled.draw(picture, 128).show()
           

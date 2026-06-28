@@ -2097,9 +2097,9 @@ def voicesExtractNotes_(voice_str):
 def playEvents(polyEvents, durationCallback):
   cumul = 0
 
-  indexes = [0 for _ in polyEvents]
-  events = [0 for _ in polyEvents]
-  delays = [0 for _ in polyEvents]
+  indexes = [0] * len(polyEvents)
+  events = indexes.copy()
+  delays = indexes.copy()
 
   while any(i is not None for i in indexes):
     duration = 100000
