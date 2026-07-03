@@ -19,12 +19,14 @@ buzzer_ = None
 oled_ = None
 lcd_ = None
 ravel_ = None
+upper_ = None
+lower_ = None
 
 spokenColorLed_ = 0
 
 
 def connect(device):
-  global ring_, buzzer_, oled_, lcd_, ravel_, spokenColorLed_
+  global ravel_, ring_, buzzer_, oled_, lcd_, upper_, lower_, spokenColorLed_
 
   spokenColorLed_ = 0
 
@@ -36,6 +38,8 @@ def connect(device):
   buzzer_ = ravel_.buzzer()
   oled_ = ravel_.oled()
   lcd_ = ravel_.lcd()
+  upper_ = ravel_.upper()
+  lower_ = ravel_.lower()
 
   lcd_.uploadGaugeChars()
 
@@ -204,7 +208,7 @@ def OLED(field):
   
   
 def matrixSimulation():
-  matrix.launch(oled_, buzzer_, ring_, lcd_)
+  matrix.launch(oled_, buzzer_, ring_, lcd_, upper_, lower_)
 
 
 def Ring():
@@ -226,6 +230,26 @@ def Ring():
   ucuq.sleep(1)
 
   ring_.fill((0, 0, 0)).write()
+  
+  
+def Servos():
+  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  for angle in range(-90, 90):
+    upper_.setAngle(-angle)
+    lower_.setAngle(angle)
+    ucuq.sleep(.01)
+    if not angle % 10:
+      ucuq.commit()
+
+  for angle in range(-90, 90):
+    upper_.setAngle(angle)
+    lower_.setAngle(-angle)
+    ucuq.sleep(.01)
+    if not angle % 10:
+      ucuq.commit()
+      
+  ucuq.commit()
+  ucuq.setCommitBehavior(cb)
 
 
 SPOKEN_COLORS_ = {

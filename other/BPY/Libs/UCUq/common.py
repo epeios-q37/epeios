@@ -123,18 +123,34 @@ def ucuqGetInfos():
   return infos
 """
 
-KIT_WOKWI_WS2812_PATCH_SCRIPT_ = f"""
+WOKWI_KIT_PATCH_SCRIPT_ = f"""
 try:
   with open("diagram.json") as f:
     content = f.read()
   assert '"editor"' in content
   assert '"editor": "wokwi"' in content
   CONV_ = {tuple((int(255 * math.log(1+i) / math.log(32)) for i in range(32)))}
-  def c_(color):
+  def wc_(color):
     return (CONV_[min(color[0],31)], CONV_[min(color[1],31)], CONV_[min(color[2],31)])
+  def sp_(pin):
+    if pin == 0:
+      return 2
+    if pin == 1:
+      return 3
+    return pin
+  def su_(u16):
+    return 9830 - u16 # Wokks only with PWM freq of 50 Hz !
+  def sn_(ns):
+    return 3 - ns # Wokks only with PWM freq of 50 Hz !
 except (OSError, AssertionError):
-  def c_(color):
+  def wc_(color):
     return color
+  def sp_(pin):
+    return pin
+  def su_(u16):
+    return u16
+  def sn_(ns):
+    return ns
 """
 
 
@@ -487,7 +503,7 @@ class Device(Device_):  # noqa: F821
       "gc.collect()",
       SLEEP_WAIT_SCRIPT_,
       NTP_SCRIPT_,
-      KIT_WOKWI_WS2812_PATCH_SCRIPT_
+      WOKWI_KIT_PATCH_SCRIPT_
     ]
     self.commitBehavior_ = None
     self.timer_ = None
@@ -1209,17 +1225,18 @@ def getParam_(label, value, expr=None):
 
 class PWM(Core_):
   def __init__(
-    self, pin=None, *, freq=None, ns=None, u16=None, device=None, extra=True
-  ):
+    self, pin=None, *, freq=None, ns=None, u16=None, device=None, extra=True, convPin = lambda pin: pin, convU16 = lambda u16: u16, convNS = lambda ns : ns):
     super().__init__(device)
 
     if pin is not None:
-      self.init(pin, freq=freq, u16=u16, ns=ns, device=device, extra=extra)
+      self.init(pin, freq=freq, u16=u16, ns=ns, device=device, extra=extra, convPin = convPin, convU16 = convU16, convNS = convNS)
 
-  def init(self, pin, *, freq=None, u16=None, ns=None, device=None, extra=True):
+  def init(self, pin, *, freq=None, u16=None, ns=None, device=None, extra=True, convPin = lambda pin: pin, convU16 = lambda u16: u16, convNS = lambda ns : ns):
     self.pin_ = pin
-    command = f"machine.PWM(machine.Pin({pin}, machine.Pin.OUT){getParam_('freq', freq)}{getParam_('duty_u16', u16)}{getParam_('duty_ns', ns)})"
+    command = f"machine.PWM(machine.Pin({convPin(pin)}, machine.Pin.OUT){getParam_('freq', freq)}{getParam_('duty_u16', u16)}{getParam_('duty_ns', ns)})"
     super().init("PWM-1", command, device, extra, before=f"{command}.deinit()")
+    self.convU16_ = convU16
+    self.convNS_ = convNS
     
   def GPIO(self):
     return GPIO(self.pin_)
@@ -1228,13 +1245,13 @@ class PWM(Core_):
     return int(await self.callMethodAwait("duty_u16()"))
 
   def setU16(self, u16):
-    return self.addMethods(f"duty_u16({u16})")
+    return self.addMethods(f"duty_u16({self.convU16_(u16)})")
 
   async def getNSAwait(self):
     return int(await self.callMethodAwait("duty_ns()"))
 
   def setNS(self, ns):
-    return self.addMethods(f"duty_ns({ns})")
+    return self.addMethods(f"duty_ns({self.ConvNS_(ns)})")
 
   async def getFreqAwait(self):
     return int(await self.callMethodAwait("freq()"))
@@ -1498,6 +1515,7 @@ class HD44780_I2C(Multi_, Core_):
 
 
 class Servo(Core_):
+  param_ = (1, 'pwm')
   class Specs:
     def __init__(self, u16_min, u16_max, range):
       self.min = u16_min
@@ -1528,6 +1546,9 @@ class Servo(Core_):
     super().__init__()
 
     self.test_(specs, tweak, domain)
+    
+    self.pwm_ = None
+    self.u16_ = None
 
     if pwm:
       self.init(pwm, specs, tweak=tweak, domain=domain)
@@ -1543,53 +1564,88 @@ class Servo(Core_):
     if not domain:
       domain = self.Domain(specs.min, specs.max)
 
-    self.specs = specs
-    self.tweak = tweak
-    self.domain = domain
+    self.specs_ = specs
+    self.tweak_ = tweak
+    self.domain_ = domain
 
-    self.pwm = pwm
+    self.pwm_ = pwm
+    self.u16_ = 0
 
     self.reset()
 
-  def angleToDuty(self, angle):
-    if self.tweak.invert:
+  def angleToDuty_(self, angle):
+    if self.tweak_.invert:
       angle = -angle
 
     u16 = (
-      self.specs.min
-      + (angle + self.tweak.angle)
-      * (self.specs.max - self.specs.min)
-      / self.specs.range
-      + self.tweak.offset
+      self.specs_.min
+      + (angle + self.tweak_.angle)
+      * (self.specs_.max - self.specs_.min)
+      / self.specs_.range
+      + self.tweak_.offset
     )
 
-    if u16 > self.domain.max:
-      u16 = self.domain.max
-    elif u16 < self.domain.min:
-      u16 = self.domain.min
-
+    if u16 > self.domain_.max:
+      u16 = self.domain_.max
+    elif u16 < self.domain_.min:
+      u16 = self.domain_.min
+      
     return int(u16)
 
-  def dutyToAngle(self, duty):
+  def dutyToAngle_(self, duty):
     angle = (
-      self.specs.range
-      * (duty - self.tweak.offset - self.specs.min)
-      / (self.specs.mas - self.specs.min)
+      self.specs_.range
+      * (duty - self.tweak_.offset - self.specs_.min)
+      / (self.specs_.mas - self.specs_.min)
     )
 
-    if self.tweak.invert:
+    if self.tweak_.invert:
       angle = -angle
 
-    return angle - self.tweak.angle
+    return angle - self.tweak_.angle
 
   def reset(self):
-    self.setAngle(0)
+    self.setAngleRough(0)
 
   async def getAngleAwait(self):
-    return self.dutyToAngle(await self.pwm.getU16Await())
-
+    return self.dutyToAngle_(await self.pwm_.getU16Await())
+  
+  def setU16Straight_(self, u16):
+    return self.pwm_.setU16(u16)
+    
+  def setU16Rough(self, u16):
+    self.u16_ = min(max(u16, self.specs_.min), self.specs_.max)
+    return self.setU16Straight_(u16)
+  
+  def getU16(self):
+    return self.u16_
+  
+  def setU16(self, u16):
+    step = 40
+    
+    while self.u16_ < u16:
+      self.setU16Rough(min(self.u16_ + step, u16))
+      
+    while self.u16_ > u16:
+      self.setU16Rough(max(self.u16_ - step, u16))
+      
+    return self
+  
+  def setAngleRough(self, angle):
+    return self.setU16Rough(self.angleToDuty_(angle))
+  
   def setAngle(self, angle):
-    return self.pwm.setU16(self.angleToDuty(angle))
+    return self.setU16(self.angleToDuty_(angle))
+  
+  def setRough(self, value):
+    return self.setU16(value + self.specs_.min)
+  
+  def set(self, value):
+    return self.setU16(value + self.specs_.min)
+
+  def get(self):
+    return self.u16_ - self.specs_.min
+  
 
 def hexImageToBytearray_(hex_string, width=128, height=64):
   bits = []
@@ -2569,13 +2625,12 @@ class kit_: # Act as namespace.
     
   class WS2812(globals()["WS2812"]):  # Workaround to Brython issue     
     def write(self):
-      super().write(lambda color: f"(c_({color}))")
+      super().write(lambda color: f"(wc_({color}))")
       return self
     
   class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     pass
       
-
   class HD44780_I2C(globals()["HD44780_I2C"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     def uploadGaugeChars(self):
       charmap = [0b00000] * 8
@@ -2602,6 +2657,7 @@ class kit_: # Act as namespace.
       else:
         self.moveTo(position,0).putString(up.rstrip() if len(up.rstrip()) != 0 else " " * 16)
         self.moveTo(position,1).putString(down.rstrip() if len(down.rstrip()) != 0 else " " * 16)
+        
         
     @staticmethod
     def deepMax_(x):
@@ -2668,10 +2724,15 @@ class kit_: # Act as namespace.
       return self
       
   class SSD1306_I2C(globals()["SSD1306_I2C"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
-    pass    
+    pass
+  
+  class Servo180(globals()["Servo"]):  # Workaround to Brython issue 
+    def __init__(self, pin, rest, device = None, extra = True):
+      super().__init__(pwm := PWM(pin, freq=50, device=device, extra=extra, convPin = lambda pin : f"(sp_({pin}))", convU16 = lambda u16: f"(su_({u16}))", convNS = lambda ns: f"(sn_({ns}))"), Servo.Specs(1638, 8192, 180))
+      pwm.setU16(rest)
 
 
-def KitsClassPatch_(caller, owner):
+def BaseClassPatch_(caller, owner):
 #  return caller if caller != owner else owner.__base__
   return caller if caller != owner else owner.__bases__[0] # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2663'.
 
@@ -2688,12 +2749,14 @@ class Ravel:
   def init_(object, instanciation):
     return object if object is not None else instanciation()
     
-  def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None):
+  def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None, upper=None, lower=None):
     cls = self.__class__
     self.buzzer_ = cls.init_(buzzer, lambda : ravel.Buzzer(device, extra))
     self.ring_ = cls.init_(ring, lambda : ravel.Ring(ringOffset, device, extra))
     self.oled_ = cls.init_(oled, lambda : ravel.OLED(device, extra))
     self.lcd_ = cls.init_(lcd, lambda : ravel.LCD(device, extra))
+    self.upper_ =  cls.init_(upper, lambda : ravel.Upper(device, extra))
+    self.lower_ =  cls.init_(lower, lambda : ravel.Lower(device, extra))
     
   def raz(self):
     self.__init__(self.ring_.getOffset())
@@ -2709,29 +2772,62 @@ class Ravel:
   
   def lcd(self):
     return self.lcd_
+
+  def upper(self):
+    return self.upper_
   
+  def lower(self):
+    return self.lower_
+
   def displayRingGauges(self, globalMax = 0, placeholder=".", addendum="  "):
     ravelDisplayRingGauges_(kit_.ensureSequence_(self.ring_), kit_.ensureSequence_(self.lcd_), globalMax, placeholder, addendum)
+    
+    
+class ravel_:  # act as namespace
+  class Upper(kit_.Servo180):
+    def __init__(self, device=None, extra=True):
+      return super().__init__(0, 8192, device, extra)
+    
+    def park(self):
+      self.set(ravel.SERVO_MAX)
+  
+  class Lower(kit_.Servo180):
+    def __init__(self, device=None, extra=True):
+      return super().__init__(1, 1638, device, extra)
+    
+    def park(self):
+      self.set(0)
 
 
 class ravel:  # act as namespace
   class Buzzer(kit_.Buzzer):
     def __new__(cls, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, ravel.Buzzer), PWM(5, device=device), extra=extra)
+      return super().__new__(BaseClassPatch_(cls, ravel.Buzzer), PWM(5, device=device), extra=extra)
       
   class Ring(kit_.WS2812):
     def __new__(cls, offset=0, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
+      return super().__new__(BaseClassPatch_(cls, ravel.Ring), 8, 20, offset=offset, device=device, extra=extra)
     
   class OLED(kit_.SSD1306_I2C):
     def __new__(cls, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, ravel.OLED), 128, 64, I2C(8, 9, device=device), extra=extra)
+      return super().__new__(BaseClassPatch_(cls, ravel.OLED), 128, 64, I2C(10, 9, device=device), extra=extra)
       
   class LCD(kit_.HD44780_I2C):
     def __new__(cls, device=None, extra=True):
-      return super().__new__(KitsClassPatch_(cls, ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
-  
+      return super().__new__(BaseClassPatch_(cls, ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
+    
+  class Upper(ravel_.Upper):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(BaseClassPatch_(cls, ravel.Upper), device=device, extra=extra)
+    
+  class Lower(ravel_.Lower):
+    def __new__(cls, device=None, extra=True):
+      return super().__new__(BaseClassPatch_(cls, ravel.Lower), device=device, extra=extra)
+    
+
   def raz():
     Ravel()
+    
+  SERVO_MAX = 6554
 
 ##### End of section dedicated to the Ravel kit #####

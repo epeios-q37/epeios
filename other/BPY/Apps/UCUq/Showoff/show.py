@@ -235,3 +235,18 @@ def flood(timestamp):
     
   return timestamp
 
+def syncTest():
+  for i in range(3):  
+    devices.oleds[i].draw(DIGITS_[i+1], 8, 48, 0, mul=9).show(),
+  
+  timestamp = time.time() + 1.5
+  
+  sleepUntil(timestamp)
+  
+  devices.rings.flash()
+  
+  sleepUntil(timestamp + 1)
+  
+  devices.rings.flash()
+
+  devices.oleds.fill(0).show(),

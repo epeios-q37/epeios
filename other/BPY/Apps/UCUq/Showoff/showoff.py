@@ -14,6 +14,7 @@ import trio
 DELAY = 0.5
 
 DEVICES_ = ("Alfa", "India", "Lima", "Golf")
+SHOW_DEVICES_ = (DEVICES_[0], DEVICES_[2], DEVICES_[1])
 
 HTML_OPTION_ = "<option>{}</option>"
 
@@ -36,7 +37,7 @@ def combinaisons_(A):
 def atk(dom):
   devices = "\n".join(HTML_OPTION_.format(device) for device in combinaisons_(DEVICES_))
   
-  dom.inner("", BODY.format(devices, DEVICES_[0], *DEVICES_[:3]))  # type: ignore # noqa: F821
+  dom.inner("", BODY.format(devices, DEVICES_[0], *SHOW_DEVICES_))  # type: ignore # noqa: F821
   colors.fill(dom)
   colors.update(dom)
   dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);")
@@ -52,7 +53,7 @@ def atkPartnerBuzzer(dom):
   
   
 def getPartnerOLEDAnimationsId():
-  return tuple(f"PartnerOLED{7-i}" for i in range(8))
+  return tuple(f"PartnerOLED{8-i}" for i in range(9))
 
 
 def atkPartnerOLED(dom):
@@ -85,6 +86,10 @@ def atkPartnerLCD(dom):
   partner.LCD()
 
 
+def atkPartnerServos(dom):
+  partner.Servos()
+
+
 def atkPartnerListen(dom):
   partner.Listen(dom)
 
@@ -115,24 +120,13 @@ def atkShowConnect(dom):
     dom.alert(f"Décalage horaire : {offset} s !")
 
 
-def syncTest():
-  timestamp = time.time() + 1.5
-  
-  show.sleepUntil(timestamp)
-  
-  show.devices.rings.flash()
-  
-  show.sleepUntil(timestamp + 1)
-  
-  show.devices.rings.flash()
-
-
 def atkShowSync(dom):
   ucuq.ntpSetTime()
-  syncTest()
+  show.syncTest()
+
 
 def atkShowTest():
-  syncTest()  
+  show.syncTest()  
 
 def atkShowIndy(dom):
   timestamp = show.countdownIfSelected(dom, time.time() + DELAY)
