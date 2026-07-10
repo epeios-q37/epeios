@@ -26,11 +26,11 @@ SPOKEN_COLORS =  {
 
 class HW:
   def __init__(self, infos, device=None):
-    self.device, self.smartRGB, self.lcd, self.matrix = ucuq.getBits(infos, ucuq.B_SMART_RGB, ucuq.B_LCD, ucuq.B_MATRIX, device=device)
+    self.device, self.ring, self.lcd, self.matrix = ucuq.getBits(infos, ucuq.B_SMART_RGB, ucuq.B_LCD, ucuq.B_MATRIX, device=device)
 
     self.lcd.backlightOn()
 
-    self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"])
+    self.ringCount, self.ringOffset, self.ringLimiter = ucuq.getFeatures(infos, "Ring", ["Count", "Offset", "Limiter"])
 
   def sleepStart(self):
     self.device.sleepStart()
@@ -46,9 +46,9 @@ class HW:
 
   def update(self, r, g, b, limit = None, *, color=""):
     if limit is None:
-      limit = self.smartRGBLimiter
+      limit = self.ringLimiter
 
-    self.smartRGB.fill(list(map(lambda c: limit * int(c) // 255, [r, g, b]))).write()
+    self.ring.fill(list(map(lambda c: limit * int(c) // 255, [r, g, b]))).write()
 
     self.matrix.clear()
     self.matrixDrawBar_(0, 8 * int(r) // 255)

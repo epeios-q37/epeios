@@ -143,14 +143,14 @@
     "variant": "SSD1306",
     "hardware": {
       "OnBoardLed": [ 8, false ],
-      "SmartRGB": [ {
+      "Ring": [ {
           "Pin": 20
         }
       ],
       "OLED": [
         {
           "Soft": false,
-          "SDA": 8,
+          "SDA": 10,
           "SCL": 9
         }
       ],
@@ -182,7 +182,7 @@
           "Height": 2
         }
       ],
-      "SmartRGB": [
+      "Ring": [
         {
           "Count": 8,
           "Offset": 2,
@@ -226,7 +226,7 @@
     "variant": "RPiPico(2)W",
     "hardware": {
       "OnBoardLed": [ "LED", true ],
-      "SmartRGB": [
+      "Ring": [
         {
           "Pin": 16,
           "Count": 4,
@@ -273,7 +273,7 @@
       ]
     },
     "features": {
-      "SmartRGB": [
+      "Ring": [
         {
           "Count": 4,
           "Limiter": 30,
@@ -307,7 +307,7 @@
     "variant": "Displays",
     "hardware": {
       "OnBoardLed": [ 2, true ],
-      "SmartRGB": [
+      "Ring": [
         {
           "Pin": 20
         }
@@ -353,7 +353,7 @@
           "Height": 2
         }
       ],
-      "SmartRGB": [
+      "Ring": [
         {
           "Count": 8,
           "Offset": 0,

@@ -160,12 +160,12 @@ winner = 0 # if != 0, the role of the player which wins.
 
 class HW():
   def __init__(self, infos, device=None):
-    self.device, self.lcd, self.oled, self.buzzer, self.smartRGB = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "SmartRGB", device=device)
+    self.device, self.lcd, self.oled, self.buzzer, self.ring = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "Ring", device=device)
     
     self.lcd.backlightOn()
     self.buzzer.setNS(0)
 
-    self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"]) if self.smartRGB else (10,0,0)
+    self.ringCount, self.ringOffset, self.ringLimiter = ucuq.getFeatures(infos, "Ring", ["Count", "Offset", "Limiter"]) if self.ring else (10,0,0)
 
     self.device.addCommand(GAUGE_SCRIPT.format(aw="aw" + "ait", delay=DELAY * 1000,oled=self.oled.getObject(),lcdAvailable="True" if self.lcd else "False",lcd=self.lcd.getObject() if self.lcd else "None"))
 
@@ -173,7 +173,7 @@ class HW():
 
   def reset(self):
     self.oled.fill(0).show()
-    self.smartRGB.fill((0,0,0)).write()
+    self.ring.fill((0,0,0)).write()
     self.lcd.clear()
     
   def oledDisplayDigit_(self, n, offset):
@@ -192,18 +192,18 @@ class HW():
 
     self.oled.show()
 
-  def smartRGBDisplayCounter(self, v):
+  def ringDisplayCounter(self, v):
     if v < 1:
-      limit = round(0.5 + self.smartRGBCount * v)
+      limit = round(0.5 + self.ringCount * v)
 
-      for l in range(self.smartRGBCount):
-        colorCore = int(self.smartRGBLimiter * (l / self.smartRGBCount))
-        color = (colorCore, 0, self.smartRGBLimiter - colorCore)
-        self.smartRGB.setValue((l + self.smartRGBOffset) % self.smartRGBCount, color if l < limit else (0,0,0))
+      for l in range(self.ringCount):
+        colorCore = int(self.ringLimiter * (l / self.ringCount))
+        color = (colorCore, 0, self.ringLimiter - colorCore)
+        self.ring.setValue((l + self.ringOffset) % self.ringCount, color if l < limit else (0,0,0))
     else:
-      self.smartRGB.fill((self.smartRGBLimiter, 0, 0))
+      self.ring.fill((self.ringLimiter, 0, 0))
 
-    self.smartRGB.write()
+    self.ring.write()
 
   def oledGauge(self, v): # v: 0 <= v <= 1
     l = int(126*v)
@@ -214,7 +214,7 @@ class HW():
     elapsed = 0
 
     while not winner() and elapsed <= DELAY:
-      self.smartRGBDisplayCounter(elapsed / DELAY)
+      self.ringDisplayCounter(elapsed / DELAY)
       elapsed = await self.device.commitAwait("elapsed") / 1000
 
     if winner():
@@ -223,10 +223,10 @@ class HW():
     hw.addCommand("gauge(0)")
 
     if not winner():
-      self.smartRGBDisplayCounter(1)
+      self.ringDisplayCounter(1)
       atlastk.broadcastAction(atkBElapsed)
     else:
-      self.smartRGB.fill([0,0,self.smartRGBLimiter]).write()
+      self.ring.fill([0,0,self.ringLimiter]).write()
 
   def lcdDisplayCards(self, cards, center = True):
     text = ""
@@ -249,16 +249,16 @@ class HW():
   def lcdPutString(self, x, y, text):
     self.lcd.moveTo(x,y).putString(text).backlightOn()
 
-  def smartRGBSet(self, index, colors):
-    self.smartRGB.setValue((index + self.smartRGBOffset) % self.smartRGBCount, tuple(int(color * self.smartRGBLimiter) for color in colors))
+  def ringSet(self, index, colors):
+    self.ring.setValue((index + self.ringOffset) % self.ringCount, tuple(int(color * self.ringLimiter) for color in colors))
 
-  def smartRGBWrite(self):
-    self.smartRGB.write()
+  def ringWrite(self):
+    self.ring.write()
 
-  def smartRGBFading(self, index, colors):
-    for l in range(self.smartRGBCount):
-      self.smartRGBSet(l + index, tuple(color * l / ( self.smartRGBCount -1 ) for color in colors))
-    self.smartRGBWrite()
+  def ringFading(self, index, colors):
+    for l in range(self.ringCount):
+      self.ringSet(l + index, tuple(color * l / ( self.ringCount -1 ) for color in colors))
+    self.ringWrite()
 
   def sleep(self, delay):
     self.device.sleep(delay)
@@ -534,7 +534,7 @@ async def atkNew(player, dom):
   for c in range( 40 if PROD else 0):
     hw.sleepStart()
     hw.oledDisplayNumber(random.randint(101,999))
-    hw.smartRGBFading(c, (1,0,1))
+    hw.ringFading(c, (1,0,1))
     hw.sleepWait(0.15)
 
   if PROD and not CHEAT:

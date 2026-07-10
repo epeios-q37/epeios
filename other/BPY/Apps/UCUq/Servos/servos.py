@@ -110,6 +110,8 @@ async def atk(dom):
   kitLabel =  ucuq.getKitLabel(infos)
 
   await updateFileList(dom, next((key for key, val in SOLOS.items() if val == kitLabel), None))
+  
+  reset_()
 
 
 async def atkTest():

@@ -41,7 +41,7 @@ def connect(device):
   upper_ = ravel_.upper()
   lower_ = ravel_.lower()
 
-  lcd_.uploadGaugeChars()
+  lcd_.uploadUpwardGaugeChars()
 
 
 LINE1_ = "En route vers".center(16)
@@ -334,7 +334,7 @@ DELAY_WAVE_ = 0.1
 
 
 def LCD():
-  lcd_.uploadGaugeChars().backlightOn().showCursor().moveTo(0, 0)
+  lcd_.uploadUpwardGaugeChars().backlightOn().showCursor().moveTo(0, 0)
 
   lcd_.ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
 

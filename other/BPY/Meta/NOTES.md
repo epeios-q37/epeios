@@ -88,7 +88,7 @@ python3 setup.py sdist bdist_wheel
 - écriture : `esptool.py write_flash 0x00000 <file>`
 
 *<size>* : taille de la flash en hexa (ex. : `0x400000` pour un 4MB, `0x800000` pour une 8 MB…) ;
-*<file>* : nom du fichier contenant le *firmware* (généralement avec l'extemsion `.bin`).
+*<file>* : nom du fichier contenant le *firmware* (généralement avec l'extension `.bin`).
 
 ## Brochage *ESP32-C3* de *TenStar*
 

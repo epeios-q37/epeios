@@ -112,7 +112,7 @@ def getLCDEvents_(lcd):
   events = []
   
   while elapsed <= DURATION_:
-    events.append((lambda levels = levels.copy(): lcd.putGauges(0, levels), delay))
+    events.append((lambda levels = levels.copy(): lcd.putUpwardGauges(0, levels), delay))
     
     for i in range(len(levels)):
       levels[i] += coeffs[i]
@@ -189,7 +189,7 @@ def launch(oled, buzzer, ring, lcd, upper, lower):
     getCommitEvents_()
   ]
   
-  ratioBackup = buzzer.ratio(.992)
+  ratioBackup = buzzer.off().ratio(.992)
   
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   

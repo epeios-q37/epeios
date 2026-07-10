@@ -71,7 +71,7 @@ def connect(deviceList):
   devices.oleds = ucuq.ravel.OLED()
   devices.ravel = ucuq.Ravel(ring=devices.rings, buzzer=devices.buzzers, oled = devices.oleds, lcd=devices.lcds)
   
-  devices.lcds.uploadGaugeChars()
+  devices.lcds.uploadUpwardGaugeChars()
   
   return ntpOffset_
 
@@ -159,21 +159,21 @@ def countdownIfSelected(dom, timestamp):
     gauge = ((j,) + gauge)[:16]
     lcdEvents.append((
       lambda gauge = gauge:
-        devices.lcds.moveTo(0,0).putGauges(0, gauge),
+        devices.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
 
   for j in range(15, -1, -1):
     gauge = ((j,) + gauge)[:16]
     lcdEvents.append((
       lambda gauge = gauge:
-        devices.lcds.moveTo(0,0).putGauges(0, gauge),
+        devices.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
       
   for j in range(16):
     gauge = ((0,) + gauge)[:16]
     lcdEvents.append((
       lambda gauge = gauge:
-        devices.lcds.moveTo(0,0).putGauges(0, gauge),
+        devices.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
 
 
@@ -230,7 +230,7 @@ def flood(timestamp):
     
   for i in range(len(gauges)):
     sleepUntil(timestamp)
-    devices.lcds.putGauges(0, gauges[len(gauges) - i - 1:][:16], True)
+    devices.lcds.putUpwardGauges(0, gauges[len(gauges) - i - 1:][:16], True)
     timestamp += 0.1
     
   return timestamp

@@ -66,14 +66,14 @@ userSeq = ""
 
 class HW:
   def __init__(self, infos, device=None):
-    self.device, self.lcd, self.oled, self.buzzer, self.smartRGB = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "SmartRGB", device=device)
+    self.device, self.lcd, self.oled, self.buzzer, self.ring = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "Ring", device=device)
 
     self.buzzer.setNS(0)
     self.lcd.backlightOn()
 
     self.trueBuzzer = self.buzzer
 
-    self.smartRGBCount, self.smartRGBOffset, self.smartRGBLimiter = ucuq.getFeatures(infos, "SmartRGB", ["Count", "Offset", "Limiter"]) if self.smartRGB else (1,0,0)
+    self.ringCount, self.ringOffset, self.ringLimiter = ucuq.getFeatures(infos, "Ring", ["Count", "Offset", "Limiter"]) if self.ring else (1,0,0)
 
     self.commit()
 
@@ -84,12 +84,12 @@ class HW:
     if sleep:
       self.device.sleep(sleep)
 
-  def smartRGBFlash_(self, button):
-    self.smartRGB.fill([0,0,0])
+  def ringFlash_(self, button):
+    self.ring.fill([0,0,0])
     if button in BUTTONS:
-      for i in range(1 + self.smartRGBCount // 4):
-        self.smartRGB.setValue((list(BUTTONS.keys()).index(button) * self.smartRGBCount // 4 + i + self.smartRGBOffset) % self.smartRGBCount,[self.smartRGBLimiter * item // 255 for item in BUTTONS[button][0]])
-    self.smartRGB.write()
+      for i in range(self.ringCount // 4):
+        self.ring.setValue((list(BUTTONS.keys()).index(button) * self.ringCount // 4 + i + self.ringOffset) % self.ringCount,[self.ringLimiter * item // 255 for item in BUTTONS[button][0]])
+    self.ring.write()
 
   def oledDigit_(self, n, offset):
     self.oled.draw(DIGITS[n], 8, offset, mul=8)
@@ -104,9 +104,9 @@ class HW:
         if ( button != prevButton ) and ( button != prevPrevButton ):
           break
       prevPrevButton = prevButton
-      self.smartRGBFlash_(prevButton := button)
+      self.ringFlash_(prevButton := button)
       self.buzzerBeep_(n, 0.15, 0)
-    self.smartRGBFlash_("")
+    self.ringFlash_("")
 
   def oledNumber(self, n):
     try:
@@ -189,15 +189,15 @@ class HW:
       self.buzzer = ucuq.Nothing()  
 
   def displayButton(self, button):
-    self.smartRGB.fill([0,0,0])
+    self.ring.fill([0,0,0])
     if button in BUTTONS:
-      for i in range(1 + self.smartRGBCount // 4):
-        self.smartRGB.setValue((list(BUTTONS.keys()).index(button) * self.smartRGBCount // 4 + i + self.smartRGBOffset) % self.smartRGBCount,[self.smartRGBLimiter * item // 255 for item in BUTTONS[button][0]])
-    self.smartRGB.write()
+      for i in range(self.ringCount // 4):
+        self.ring.setValue((list(BUTTONS.keys()).index(button) * self.ringCount // 4 + i + self.ringOffset) % self.ringCount,[self.ringLimiter * item // 255 for item in BUTTONS[button][0]])
+    self.ring.write()
     self.buzzer.setFreq(pitches[BUTTONS[button][2]]).setU16(30000)
     self.device.sleep(0.29)
     self.buzzer.setU16(0)
-    self.smartRGB.fill([0,0,0]).write()
+    self.ring.fill([0,0,0]).write()
     self.device.sleep(0.01)
 
   def play(self, sequence):
