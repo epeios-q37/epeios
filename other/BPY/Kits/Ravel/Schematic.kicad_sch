@@ -1453,7 +1453,7 @@
 		)
 		(uuid "3329cc16-723c-47d7-b295-e7203a291476")
 	)
-	(text "SH1106"
+	(text "SSD1306"
 		(exclude_from_sim no)
 		(at 169.926 88.138 0)
 		(effects
