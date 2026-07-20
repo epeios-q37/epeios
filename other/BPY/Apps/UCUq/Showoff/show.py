@@ -17,7 +17,22 @@ from shared import (
 
 W_COUNTDOWN_ = "Countdown"
 
-devices = types.SimpleNamespace()
+devices_ = None
+
+def setDevices_():
+  devices = types.SimpleNamespace()
+
+  devices.rings = Ring_()
+  devices.ravel = ucuq.Ravel(ring=devices.rings, create = True)
+
+  devices.buzzers, devices.lcds, devices.oleds = devices.ravel.get("BLO")
+
+  return devices
+
+
+def getDevices():
+  return devices_
+
 
 indexes = [random.randrange(len(RAINBOW_)) for i in range(3)]
 
@@ -55,23 +70,17 @@ def getNTPTime_(host="pool.ntp.org"):
 ntpOffset_ = 0
   
 def connect(deviceList):
-  global ntpOffset_
+  global ntpOffset_, devices_
   
   ntpOffset_ = time.time() - getNTPTime_()
   
   print(f"Décalage horaire : {ntpOffset_} s.")
   
   ucuq.setDevice(tuple(shared.handleDeviceInput(device) for device in deviceList))
-  
+
+  devices_ = setDevices_()
+
   ucuq.ntpSetTime()
-  
-  devices.rings = Ring_()
-  devices.buzzers = ucuq.ravel.Buzzer()
-  devices.lcds = ucuq.ravel.LCD()
-  devices.oleds = ucuq.ravel.OLED()
-  devices.ravel = ucuq.Ravel(ring=devices.rings, buzzer=devices.buzzers, oled = devices.oleds, lcd=devices.lcds)
-  
-  devices.lcds.uploadUpwardGaugeChars()
   
   return ntpOffset_
 
@@ -100,31 +109,8 @@ DIGITS_ = (
   "70888870888870",
   "70888878088870",
 )  
-  
-def countdownIfSelected_(dom, timestamp):
-  if dom.getValue(W_COUNTDOWN_) != "true":
-    return timestamp
-  
-  sleepUntil(timestamp)
-  devices.rings.flash()
-  
-  leds_ = [False] * 8
-  devices.rings.fill((1,1,1)).write()
-  for counter in range(5, 0, -1):
-    devices.oleds.draw(DIGITS_[counter], 8, 48, 0, mul=9).show()
-    for c in range(2, 10):
-      timestamp += 1 / 8
-      sleepUntil(timestamp)
-      devices.rings.setValue(c, (1,1,1) if leds_[c % 8] else (0,0,0)).write()
-      leds_[c%8] = not leds_[c%8]
-    
-  devices.oleds.fill(0).show()
-  devices.rings.fill((0,0,0)).write()
-  
-  return timestamp
 
-
-def countdownIfSelected(dom, timestamp):
+def countdownIfSelected(dom, timestamp, devices):
   ucuq.gcCollect()
   
   if dom.getValue(W_COUNTDOWN_) != "true":
@@ -138,6 +124,8 @@ def countdownIfSelected(dom, timestamp):
   oledEvents = []
   ringEvents = []
   lcdEvents = []
+
+  devices.lcds.uploadUpwardGaugeChars().backlightOn()
   
   for i in range(5, 0, -1):
     oledEvents.append((
@@ -196,18 +184,18 @@ def countdownIfSelected(dom, timestamp):
   
   ucuq.gcCollect()
   
-  return timestamp + 1
+  return timestamp + 1.5
 
 
 def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
-def displayRingGauges(addendum = "  "):
+def displayRingGauges(devices, addendum = "  "):
   devices.ravel.displayRingGauges(addendum=addendum)  
 
 
-def turnOffAndScrollDown(timestamp):
+def turnOffAndScrollDown(timestamp, devices):
   offset = random.randrange(len(RAINBOW_))
   
   for i in range(offset, 8 + offset):
@@ -224,18 +212,9 @@ def turnOffAndScrollDown(timestamp):
     
   return timestamp
     
-  
-def flood(timestamp):
-  gauges = (0,) * 16 + tuple(15 - abs(i) for i in range(-15, 16))
-    
-  for i in range(len(gauges)):
-    sleepUntil(timestamp)
-    devices.lcds.putUpwardGauges(0, gauges[len(gauges) - i - 1:][:16], True)
-    timestamp += 0.1
-    
-  return timestamp
-
 def syncTest():
+  devices = getDevices()
+
   for i in range(3):  
     devices.oleds[i].draw(DIGITS_[i+1], 8, 48, 0, mul=9).show(),
   

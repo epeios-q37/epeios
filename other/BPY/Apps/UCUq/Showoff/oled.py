@@ -1,6 +1,8 @@
 import zlib
 import base64
 
+import ucuq
+
 ANIMATIONS_ = (
   (
     "eJztkkGOQyEMQ69E8C8JyzaK73+kZg5g9lPxJFYPHCtijMvlZ3jOOvZRb1qtFdK/QfAwnLks/aMCXhZkutKGDk8UUlxoZSyU0DsWmJR+TJaF08QS4F2/+5UoGJnOXV5TxI9+3AdqvO8EgynyEdEFkyEX1I+hddMNTdVrnme53M7fgNHhpy80MQ/TL5f/xhet5IY2",
@@ -363,7 +365,12 @@ animations_ = tuple(
   for animation in ANIMATIONS_
 )
 
-def launch(oled, field):
+def launch(field):
+  oled = ucuq.ravel.OLED()
+
+  oled.addMethods("write_cmd(0xD5)")
+  oled.addMethods("write_cmd(0xF0)")
+
   oled.invert(True)
   
   for animation in animations_:

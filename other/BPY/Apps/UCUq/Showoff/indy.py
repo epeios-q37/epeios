@@ -6,42 +6,42 @@ import shared
 import show
 
 from shared import getRainbowColor as getRainbowColor_
-from show import devices as devices_, sleepUntil as sleepUntil_
+from show import sleepUntil as sleepUntil_
 
 
-def callback_(freq, helper):
+def callback_(freq, helper, devices):
   if freq == 0:
-    devices_.buzzers.off()
+    devices.buzzers.off()
     helper.prev = 0
   elif freq > 0:
-    devices_.buzzers.on(freq)
+    devices.buzzers.on(freq)
     if helper.prev != freq:
       helper.prev = freq
-      devices_.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
-      devices_.rings.setValue(helper.led + 1,(0,0,0)).write()
-      show.displayRingGauges()
+      devices.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
+      devices.rings.setValue(helper.led + 1,(0,0,0)).write()
+      show.displayRingGauges(devices, )
       helper.led += 1    
   
       
-def launch(timestamp):
+def launch(timestamp, devices):
   timestamp += 1
   
   helper = types.SimpleNamespace(prev = 0, led = 0)
   
   sleepUntil_(timestamp)
   
-  devices_.oleds.draw(INDY_, 128).show()
-  devices_.lcds.backlightOn()
+  devices.oleds.draw(INDY_, 128).show()
+  devices.lcds.uploadUpwardGaugeChars().backlightOn()
 
-  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper), lambda _, cumul: sleepUntil_(timestamp + cumul))
+  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, devices), lambda _, cumul: sleepUntil_(timestamp + cumul))
   
-  devices_.oleds.hline(0, 0, 128, 0)
+  devices.oleds.hline(0, 0, 128, 0)
   
-  timestamp = show.turnOffAndScrollDown(timestamp)
+  timestamp = show.turnOffAndScrollDown(timestamp, devices)
   
-  devices_.oleds.fill(0).show()
+  devices.oleds.fill(0).show()
 
-  devices_.lcds.backlightOff().clear()
+  devices.lcds.backlightOff().clear()
   
   return timestamp
 

@@ -109,6 +109,9 @@ class DOM:
 	def __init__(self,instance):
 		self._dom = XDHqFaaS.DOM_FaaS(instance)
 
+	def getCounter(self):
+		return self._dom.getCounter()
+
 	def getL10n(self, *args, **kwargs):
 		if not _l10n:
 			return ""

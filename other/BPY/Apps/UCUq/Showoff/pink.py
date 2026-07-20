@@ -6,46 +6,46 @@ import shared
 import show
 
 from shared import getRainbowColor as getRainbowColor_
-from show import devices as devices_, sleepUntil as sleepUntil_
+from show import sleepUntil as sleepUntil_
 
-def eventCallback_(freq, helper):
+def eventCallback_(freq, helper, devices):
     if freq !=-1:
-      devices_.buzzers.off()
+      devices.buzzers.off()
       if freq != 0:
-        devices_.buzzers.on(freq)
+        devices.buzzers.on(freq)
         helper.led += 1    
         
 
-def durationCallback_(timestamp, helper):
-  devices_.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
-  devices_.rings.setValue(helper.led + 1,(0,0,0)).write()
+def durationCallback_(timestamp, helper, devices):
+  devices.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
+  devices.rings.setValue(helper.led + 1,(0,0,0)).write()
   
   if (timestamp - helper.start) > PANTHER_DELAY_ * helper.pantherPict:
-    devices_.oleds.fill(0).show()
-    devices_.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
+    devices.oleds.fill(0).show()
+    devices.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
     helper.pantherPict += 1
     
-  show.displayRingGauges()
+  show.displayRingGauges(devices, )
   
   sleepUntil_(timestamp)
 
 
-def launch(timestamp):
+def launch(timestamp, devices):
   helper = types.SimpleNamespace(pantherPict = 0, led = -1)
   
   helper.start = timestamp = timestamp + 1
   
   sleepUntil_(timestamp)
   
-  devices_.lcds.backlightOn()
+  devices.lcds.uploadUpwardGaugeChars().backlightOn()
 
-  timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper), lambda _, cumul: durationCallback_(timestamp + cumul, helper))
+  timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper, devices), lambda _, cumul: durationCallback_(timestamp + cumul, helper, devices))
   
-  timestamp = show.turnOffAndScrollDown(timestamp)
+  timestamp = show.turnOffAndScrollDown(timestamp, devices)
   
-  devices_.oleds.fill(0).show()
+  devices.oleds.fill(0).show()
 
-  devices_.lcds.clear().backlightOff()
+  devices.lcds.clear().backlightOff()
   
   return timestamp
 

@@ -2,77 +2,74 @@ import shared
 import show
 import ucuq
 
-from show import devices as devices_, indexes as indexes_, sleepUntil as sleepUntil_
+from show import indexes as indexes_, sleepUntil as sleepUntil_
 
 
-def scroll_(text, start):
-  width = len(devices_.lcds) * 16
+def scroll_(text, start, devices):
+  width = len(devices.lcds) * 16
   resizedText = " " * width + text + " " * width
-  prevSubText = [None] *  len(devices_.lcds)
-  devices_.lcds.clear()
+  prevSubText = [None] *  len(devices.lcds)
+  devices.lcds.clear()
   
   for s in range(138):
     i = (len(resizedText) - width + 1) * s // 137
     sleepUntil_(start)
-    for lcd in range(len(devices_.lcds)):
+    for lcd in range(len(devices.lcds)):
       subText = resizedText[i + lcd * 16:i + (lcd + 1) * 16]
       if prevSubText[lcd] != subText:
         prevSubText[lcd] = subText
-        devices_.lcds[lcd].moveTo(0,0).putString(subText)
+        devices.lcds[lcd].moveTo(0,0).putString(subText)
       if not all(c == ' ' for c in subText):
-        devices_.lcds[lcd].backlightOn()
-        devices_.oleds[lcd].scroll(0, 1).hline(0,0,64, 0).show()
+        devices.lcds[lcd].backlightOn()
+        devices.oleds[lcd].scroll(0, 1).hline(0,0,64, 0).show()
       else:
-        devices_.lcds[lcd].backlightOff()
+        devices.lcds[lcd].backlightOff()
     start += .07
 
 
-def callback_(freq, turn, prev):
-  buzzer = devices_.buzzers[turn]
+def callback_(freq, turn, prev, devices):
+  buzzer = devices.buzzers[turn]
   
   if freq != 0 and prev[turn] == freq:
     buzzer.off()
-    devices_.oleds[turn].contrast(0)
+    devices.oleds[turn].contrast(0)
     ucuq.getDevice()[turn].sleep(0.015)
   else:
     prev[turn] = freq
 
   if freq > 0:
     buzzer.on(int(freq))
-    devices_.rings[turn].go = True
-    devices_.oleds[turn].contrast(1)
-    devices_.lcds[turn].backlightOn()
+    devices.rings[turn].go = True
+    devices.oleds[turn].contrast(1)
+    devices.lcds[turn].backlightOn()
     indexes_[turn] += 1
   elif freq == 0:
     buzzer.off()
-    devices_.oleds[turn].contrast(0)
+    devices.oleds[turn].contrast(0)
 
   spots = MAP_[turn]
   
   for spot in spots:
-    devices_.rings.setValue(spot, (0,0,0))
+    devices.rings.setValue(spot, (0,0,0))
     if freq != 0:
-      devices_.rings.setValue(spots[indexes_[turn] % len(spots)], COLORS_[turn])
+      devices.rings.setValue(spots[indexes_[turn] % len(spots)], COLORS_[turn])
           
 
-def updateRings():
-  devices_.rings.setValue(5).setValue(6).write()
+def updateRings(devices):
+  devices.rings.setValue(5).setValue(6).write()
   
-  show.displayRingGauges()
+  show.displayRingGauges(devices)
 
-def init_():
-  for index, ring in enumerate(devices_.rings):
+def launch(timestamp, devices):
+  devices.lcds.uploadUpwardGaugeChars()   
+  devices.oleds.contrast(0).draw(PICTURE_, 64, 32).show()
+    
+  for index, ring in enumerate(devices.rings):
     ring.turn = index
-    ring.go = False
-    
+    ring.go = False 
 
-def launch(timestamp):
-  init_()
-  
-  devices_.oleds.contrast(0).draw(PICTURE_, 64, 32).show()
-    
   timestamp = timestamp + 1
-  prev = [None] * len(devices_.buzzers)
+  prev = [None] * len(devices.buzzers)
   
   ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
@@ -82,23 +79,23 @@ def launch(timestamp):
     lambda
       freq,
       turn:
-        callback_(freq, turn, prev),
+        callback_(freq, turn, prev, devices),
     lambda
       _,
       cumul:
         (
-          updateRings(),
+          updateRings(devices),
           sleepUntil_(timestamp + cumul),
         )
   )
   
   ucuq.setCommitBehavior(ucuq.CB_AUTO)
 
-  devices_.rings.fill((0,0,0)).write()
+  devices.rings.fill((0,0,0)).write()
   
-  devices_.oleds.contrast(255)
+  devices.oleds.contrast(255)
   
-  return scroll_("That's all Folks!", timestamp)
+  return scroll_("That's all Folks!", timestamp, devices)
   
 JACQUES_ = (
   "C44D44E44C44C44D44E44C44E44F44G45E44F44G45G43.A42G43F43E44C44G43.A42G43F43E44C44C44G34C45C44G34C45C44D44E44C44C44D44E44C44E44F44G45E44F44G45G43.A42G43F43E44C44G43.A42G43F43E44C44C44G34C45C44G34C45",

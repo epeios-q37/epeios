@@ -130,14 +130,14 @@ def getLCDEvents_(lcd):
   return events
 
 LIMIT_ = ucuq.ravel.SERVO_MAX
-DELTA_ = LIMIT_ // 3
+DELTA_ = LIMIT_ // 2
 
 def getServosEvents_(upper, lower):
-  delay = 1 / 6
+  delay = 1 / 10
   ups = [LIMIT_// 2, random.randrange(1, DELTA_)]
   downs = [random.randrange(LIMIT_-DELTA_, LIMIT_), LIMIT_ // 2]
-  levels = [LIMIT_ // 2, LIMIT_ // 2]
-  coeffs = [-40,40]
+  levels = [upper.get(), lower.get()]
+  coeffs = [-100,100]
   elapsed = 0
   events = []
   
@@ -155,10 +155,10 @@ def getServosEvents_(upper, lower):
       
     elapsed += delay
     
-  while False and levels != [LIMIT_,0]:
-    levels[0] = min(levels[0] + 300, LIMIT_)
-    levels[1] = max(levels[1] - 300, 0)
-    events.append((lambda levels = levels.copy(): (upper.set(levels[0]), lower.set(levels[1])), 1/15))
+  while levels != [LIMIT_,0]:
+    levels[0] = min(levels[0] + 100, LIMIT_)
+    levels[1] = max(levels[1] - 100, 0)
+    events.append((lambda levels = levels.copy(): (upper.set(levels[0]), lower.set(levels[1])), 1/30))
     
   return events
 
@@ -174,11 +174,13 @@ def getCommitEvents_():
   
   return events  
 
-def launch(oled, buzzer, ring, lcd, upper, lower):
-  upper.set(ucuq.ravel.SERVO_MAX // 2)
-  lower.set(ucuq.ravel.SERVO_MAX // 2)
+def launch():
+  oled, buzzer, ring, lcd, upper, lower = ucuq.ravel.get("OBRLS")
+  
+#  upper.setSmooth(ucuq.ravel.SERVO_MAX // 2)
+#  lower.setSmooth(ucuq.ravel.SERVO_MAX // 2)
   oled.invert(True)
-  lcd.backlightOn()
+  lcd.uploadUpwardGaugeChars().backlightOn()
   
   allEvents = [
     getBuzzerEvents_(buzzer),

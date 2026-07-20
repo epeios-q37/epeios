@@ -3,7 +3,7 @@ import ucuq
 import show
 
 from shared import RAINBOW as RAINBOW_, RGB_MAX as RGB_MAX_, getRainbowColor as getRainbowColor_
-from show import devices as devices_, sleepUntil as sleepUntil_
+from show import sleepUntil as sleepUntil_
 
 W_SCHEMES = "ColorSchemes"
 W_DELAY = "ColorDelay"
@@ -12,22 +12,25 @@ W_REPEAT = "ColorRepeat"
 W_REPEAT_DISPLAY = "ColorRepeatDisplay"
 
 class Colors_:
+  def __init__(self, devices):
+    self.devices_ = devices
+
   def set(self, x, y, col):
     x = x % 12
     index = x // 4
     x = x % 4
-    devices_.rings[index].setValue(x if y == 0 else -x - 1, col)
+    self.devices_.rings[index].setValue(x if y == 0 else -x - 1, col)
     
     return self
     
   def fill(self, col):
-    devices_.rings.fill(col)
+    self.devices_.rings.fill(col)
 
     return self
     
   def write(self):
-    devices_.rings.write()
-    show.displayRingGauges()
+    self.devices_.rings.write()
+    show.displayRingGauges(self.devices_)
     
     return self
   
@@ -42,7 +45,7 @@ def oledRGB_(oled,color):
 SCHEMES_ = []
 
 # 1
-def _(timestamp, delay):
+def _(timestamp, delay, _):
   delay /= 1.5
   
   # oleds = devices_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
@@ -62,10 +65,10 @@ def _(timestamp, delay):
 SCHEMES_.append(_)
 
 # 2
-def _(timestamp, delay):
+def _(timestamp, delay, devices):
   delay /= 1.5
   
-  rings = devices_.rings
+  rings = devices.rings
   # oleds = devices_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
   oleds = ucuq.Nothing()
   
@@ -87,7 +90,7 @@ def _(timestamp, delay):
 SCHEMES_.append(_)
 
 # 3
-def _(timestamp, delay):
+def _(timestamp, delay, _):
   for x in range(12):
     sleepUntil_(timestamp)
     timestamp += delay
@@ -110,7 +113,7 @@ def _(timestamp, delay):
 SCHEMES_.append(_)
 
 # 4
-def _(timestamp, delay):
+def _(timestamp, delay, _):
   for i in range(12):
     sleepUntil_(timestamp)
     timestamp += delay
@@ -133,7 +136,7 @@ def _(timestamp, delay):
 SCHEMES_.append(_)
 
 # 5
-def _(timestamp, delay):
+def _(timestamp, delay, _):
   for i in range(12):
     sleepUntil_(timestamp)
     timestamp += delay
@@ -156,7 +159,7 @@ def _(timestamp, delay):
 SCHEMES_.append(_)
 
 # 6
-def _(timestamp, delay):
+def _(timestamp, delay, _):
   for c in range(2):
     for i in range(12):
       sleepUntil_(timestamp)
@@ -180,7 +183,7 @@ def _(timestamp, delay):
 SCHEMES_.append(_)
 
 ## 7
-def _(timestamp, delay):
+def _(timestamp, delay, _):
   for _ in range(2):
     for i in range(12):
       sleepUntil_(timestamp)
@@ -199,7 +202,7 @@ def _(timestamp, delay):
 # SCHEMES_.append(_)
 
 # 7
-def _(timestamp, delay):
+def _(timestamp, delay, _):
   for i in range(6):
     sleepUntil_(timestamp)
     timestamp += delay
@@ -234,27 +237,31 @@ def update(dom):
   dom.setValues({W_DELAY_DISPLAY: float(delay), W_REPEAT_DISPLAY: int(repeat)})
 
 
-def launch(scheme, timestamp, delay, repeat):
+def launch(scheme, timestamp, delay, repeat, devices):
+  global colors_
+
+  colors_ = Colors_(devices)
+
   timestamp += 1
   
   sleepUntil_(timestamp)
-  devices_.lcds.backlightOn()
+  devices.lcds.uploadUpwardGaugeChars().backlightOn()
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
   if scheme == 0:
     for scheme in SCHEMES_:
       for _ in range(repeat):
-        timestamp = scheme(timestamp, delay)
+        timestamp = scheme(timestamp, delay, devices)
   else:
     for _ in range(repeat):
-      timestamp = SCHEMES_[scheme-1](timestamp, delay)
+      timestamp = SCHEMES_[scheme-1](timestamp, delay, devices)
       
   ucuq.setCommitBehavior(cb)
     
   colors_.fill((0,0,0)).write()
-  devices_.lcds.clear().backlightOff()
+  devices.lcds.clear().backlightOff()
   
   return timestamp
 
-colors_ = Colors_()
+

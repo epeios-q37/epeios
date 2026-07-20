@@ -1,11 +1,13 @@
 import json
 import time
+import types
 
 import ucuq
 
 import cube
 import matrix
 import oled
+import servos
 import shared
 
 from shared import (
@@ -14,37 +16,13 @@ from shared import (
   getRainbowColor as getRainbowColor_,
 )
 
-ring_ = None
-buzzer_ = None
-oled_ = None
-lcd_ = None
-ravel_ = None
-upper_ = None
-lower_ = None
-
-spokenColorLed_ = 0
-
-
 def connect(device):
-  global ravel_, ring_, buzzer_, oled_, lcd_, upper_, lower_, spokenColorLed_
-
-  spokenColorLed_ = 0
-
   ucuq.setDevice(shared.handleDeviceInput(device))
 
-  ravel_ = ucuq.Ravel()
-
-  ring_ = ravel_.ring()
-  buzzer_ = ravel_.buzzer()
-  oled_ = ravel_.oled()
-  lcd_ = ravel_.lcd()
-  upper_ = ravel_.upper()
-  lower_ = ravel_.lower()
-
-  lcd_.uploadUpwardGaugeChars()
+  ucuq.ravel.raz()
 
 
-LINE1_ = "En route vers".center(16)
+LINE1_ = "En route pour".center(16)
 #        "1234567890123456"
 LINE2_ = "l'aventure !".center(16)
 
@@ -97,7 +75,9 @@ def getDuration_(events):
 
 
 def oledAnimation_():
-  oled_.powerOn()
+  oled = ucuq.ravel.OLED()
+
+  oled.powerOn()
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
@@ -109,30 +89,42 @@ def oledAnimation_():
       (SENIOR_[16 * (63 - c) :] + "0" * 1024)[:1024],
     )
 
-    oled_.draw(toDraw, 128)
-    oled_.show()
+    oled.draw(toDraw, 128)
+    oled.show()
     sleepWait_(0.05)
 
   ucuq.setCommitBehavior(cb)
 
 
+def set(dom):
+  dom.partner = types.SimpleNamespace()
+  dom.partner.colors = types.SimpleNamespace()
+  dom.partner.colors.counter = 0
+  dom.partner.colors.led = 0
+  dom.partner.orientation = types.SimpleNamespace()
+  dom.partner.orientation.counter = 0
+
+
 def indy(withSound=True):
+  buzzer, ring, oled, lcd = ucuq.ravel.get("BROL")
+  ravel = ucuq.Ravel(buzzer = buzzer, ring = ring, oled = oled, lcd = lcd)
+
   ringOffset = int(time.time())
-  ring_.flash()
-  lcd_.clear().backlightOff()
-  oled_.powerOff()
+  ring.flash()
+  lcd.uploadUpwardGaugeChars().clear().backlightOff()
+  oled.powerOff()
 
   if withSound:
     polyEvents = ucuq.voicesToEvents(
       shared.INDY_VOICES,
       shared.INDY_TEMPO,
       lambda freq: (
-        buzzer_.off() if freq == 0 else buzzer_.on(freq) if freq > 0 else None
+        buzzer.off() if freq == 0 else buzzer.on(freq) if freq > 0 else None
       ),
     )
     duration = getDuration_(polyEvents[0])
   else:
-    polyEvents = [[(lambda: buzzer_.off(), 0)]]
+    polyEvents = [[(lambda: buzzer.off(), 0)]]
     duration = 5
 
   ringEvents = []
@@ -145,8 +137,8 @@ def indy(withSound=True):
         lambda c=c, color=getRainbowColor_(
           c + ringOffset
         ), ringCount=ringCount: (
-          ring_.setValue(c, color).setValue(ringCount - c, color).write(),
-          ravel_.displayRingGauges(),
+          ring.setValue(c, color).setValue(ringCount - c, color).write(),
+          ravel.displayRingGauges(),
         ),
         duration / ringCount,
       )
@@ -160,7 +152,7 @@ def indy(withSound=True):
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
-  lcd_.backlightOn()
+  lcd.backlightOn()
 
   ucuq.sleepStart()
 
@@ -175,23 +167,25 @@ def indy(withSound=True):
 
   ucuq.setCommitBehavior(cb)
 
-  lcd_.hideCursor()
+  lcd.hideCursor()
 
   for i in range(8):
-    ring_.setValue(i, getRainbowColor_(ringOffset + i, 7)).write()
+    ring.setValue(i, getRainbowColor_(ringOffset + i, 7)).write()
 
-  ravel_.displayRingGauges()
+  ravel.displayRingGauges()
 
   return True
 
 
 def Buzzer():
+  buzzer = ucuq.ravel.Buzzer()
+
   coeff = 2 ** (1 / 12)
 
   freq = 220
   
   for n in range(-12, 13):
-    buzzer_.on(int(freq))
+    buzzer.on(int(freq))
     
     if n < 0:
       freq *= coeff
@@ -200,56 +194,42 @@ def Buzzer():
       
     ucuq.sleep(0.1)
     
-  buzzer_.off()
+  buzzer.off()
 
 
 def OLED(field):
-  oled.launch(oled_, field)
+  oled.launch(field)
   
   
 def matrixSimulation():
-  matrix.launch(oled_, buzzer_, ring_, lcd_, upper_, lower_)
+  matrix.launch()
 
 
 def Ring():
+  ring = ucuq.ravel.Ring()
+
   count = len(RAINBOW_) // 8
 
   delay = 5 / (count * 8)
 
   for i in range(count):
     for led in range(8):
-      ring_[led] = getRainbowColor_(i * 8 + led)
-      ring_.write()
+      ring[led] = getRainbowColor_(i * 8 + led)
+      ring.write()
       ucuq.sleep(delay)
 
   for led in range(8):
-    ring_[led] = getRainbowColor_(led, 7)
-    ring_.write()
+    ring[led] = getRainbowColor_(led, 7)
+    ring.write()
     ucuq.sleep(delay)
 
   ucuq.sleep(1)
 
-  ring_.fill((0, 0, 0)).write()
+  ring.fill((0, 0, 0)).write()
   
   
 def Servos():
-  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
-  for angle in range(-90, 90):
-    upper_.setAngle(-angle)
-    lower_.setAngle(angle)
-    ucuq.sleep(.01)
-    if not angle % 10:
-      ucuq.commit()
-
-  for angle in range(-90, 90):
-    upper_.setAngle(angle)
-    lower_.setAngle(-angle)
-    ucuq.sleep(.01)
-    if not angle % 10:
-      ucuq.commit()
-      
-  ucuq.commit()
-  ucuq.setCommitBehavior(cb)
+  servos.launch()
 
 
 SPOKEN_COLORS_ = {
@@ -274,7 +254,12 @@ SPOKEN_COLORS_ = {
 
 
 def DisplaySpokenColor(dom):
-  global spokenColorLed_
+  dom.partner.colors.counter = dom.getCounter()
+
+  ravel = dom.partner.colors.ravel
+
+  ring = ravel.ring()
+  oled = ravel.oled()
 
   colors = json.loads(dom.getValue("PartnerColors"))
 
@@ -282,43 +267,61 @@ def DisplaySpokenColor(dom):
     color = color.lower()
     if color in SPOKEN_COLORS_:
       ucuq.sleepStart()
-      ring_.setValue(spokenColorLed_, ((255, 255, 255))).write()
+      ring.setValue(dom.partner.colors.led, ((255, 255, 255))).write()
       r, g, b = map(
         lambda c: RGB_MAX_ * int(c) // 255, [c for c in SPOKEN_COLORS_[color]]
       )
       ucuq.sleepWait(0.05)
-      ring_.setValue(spokenColorLed_, (r, g, b)).write()
-      ravel_.displayRingGauges()
-      y = spokenColorLed_ % 8 * 8
-      oled_.rect(0, y, 128, 8, 0, True).rect(0, 0, 8, 64, 0, True).text(
+      ring.setValue(dom.partner.colors.led, (r, g, b)).write()
+      ravel.displayRingGauges()
+      y = dom.partner.colors.led % 8 * 8
+      oled.rect(0, y, 128, 8, 0, True).rect(0, 0, 8, 64, 0, True).text(
         color, 64 - 8 * len(color) // 2, y
       )
-      if spokenColorLed_ >= 8:
-        oled_.text(">", 0, y).show()
-      oled_.show()
-      spokenColorLed_ += 1
+      if dom.partner.colors.led >= 8:
+        oled.text(">", 0, y).show()
+      oled.show()
+      dom.partner.colors.led += 1
       break
 
 
-def DisplayOrientation(values):
+def DisplayOrientation(dom, values):
+  counter = dom.getCounter()
+
+  if dom.partner.orientation.counter != counter - 1:
+    ring, lcd, oled = ucuq.ravel.get("RLO")
+    dom.partner.orientation.ravel = ucuq.Ravel(ring = ring, oled = oled, lcd = lcd)
+
+  dom.partner.orientation.counter = counter
+
+  ring, lcd, oled = dom.partner.orientation.ravel.get("RLO")
+
   x, y, z = (float(value) for value in values.split(","))
   
-  ring_.fill((0,0,0)).write()
+  ring.fill((0,0,0)).write()
 
-  lcd_.backlightOn().moveTo(0, 0).putString(f"{f"{int(z):+3d} {int(x):4d} {int(y):+4d}".center(16)}".ljust(32))
+  lcd.backlightOn().moveTo(0, 0).putString(f"{f"{int(z):+3d} {int(x):4d} {int(y):+4d}".center(16)}".ljust(32))
 
-  oled_.draw(cube.draw3DCube(x, y, z), 128).show()
+  oled.draw(cube.draw3DCube(x, y, z), 128).show()
 
 
 def Listen(dom):
-  if spokenColorLed_ == 0:
-    lcd_.backlightOn()
-    ring_.fill((0, 0, 0)).write()
-    oled_.fill(0).show()
+  counter = dom.getCounter()
+
+  if dom.partner.colors.counter != counter - 1:
+    ring, oled, lcd = ucuq.ravel.get("ROL")
+    lcd.uploadUpwardGaugeChars().backlightOn()
+    ring.fill((0, 0, 0)).write()
+    oled.fill(0).show()
+    dom.partner.colors.led = 0
+    dom.partner.colors.ravel = ucuq.Ravel(ring = ring, oled = oled, lcd = lcd)
+
+  dom.partner.colors.counter = counter
+
   dom.executeVoid("partnerListen()")
 
 
-def fusion_espaces(s1: str, s2: str) -> str:
+def spacesMerging_(s1: str, s2: str) -> str:
   i = 0
   while i < len(s2) and s2[i] == " ":
     i += 1
@@ -334,15 +337,17 @@ DELAY_WAVE_ = 0.1
 
 
 def LCD():
-  lcd_.uploadUpwardGaugeChars().backlightOn().showCursor().moveTo(0, 0)
+  lcd = ucuq.ravel.LCD()
 
-  lcd_.ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
+  lcd.uploadUpwardGaugeChars().backlightOn().showCursor().moveTo(0, 0)
+
+  lcd.ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
 
   wave2 = ""
 
   for i in range(8):
     wave2 = chr(i) + wave2
-    lcd_.moveTo(0, 1).putString(fusion_espaces(wave2, LINE2_)[:16])
+    lcd.moveTo(0, 1).putString(spacesMerging_(wave2, LINE2_)[:16])
     ucuq.sleep(DELAY_WAVE_)
 
   wave1 = ""
@@ -350,27 +355,27 @@ def LCD():
   for i in range(8):
     wave1 = chr(i) + wave1
     wave2 = chr(7) + wave2
-    lcd_.putString(
-      fusion_espaces(wave1, LINE1_)[:16] + fusion_espaces(wave2, LINE2_)[:16]
+    lcd.putString(
+      spacesMerging_(wave1, LINE1_)[:16] + spacesMerging_(wave2, LINE2_)[:16]
     )
     ucuq.sleep(DELAY_WAVE_)
 
   for i in range(7, -1, -1):
     wave1 = chr(i) + wave1
     wave2 = chr(7) + wave2
-    lcd_.putString(fusion_espaces(wave1, LINE1_)[:16] + wave2[:16])
+    lcd.putString(spacesMerging_(wave1, LINE1_)[:16] + wave2[:16])
     ucuq.sleep(DELAY_WAVE_)
 
   for i in range(7, -1, -1):
     wave1 = " " + wave1
     wave2 = chr(i) + wave2
-    lcd_.putString(wave1[:16] + wave2[:16])
+    lcd.putString(wave1[:16] + wave2[:16])
     ucuq.sleep(DELAY_WAVE_)
 
   for i in range(16):
     wave1 = " " + wave1
     wave2 = " " + wave2
-    lcd_.putString(wave1[:16] + wave2[:16])
+    lcd.putString(wave1[:16] + wave2[:16])
     ucuq.sleep(DELAY_WAVE_)
 
-  lcd_.backlightOff()
+  lcd.backlightOff()

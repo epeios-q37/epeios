@@ -115,6 +115,8 @@ def _call(func, userObject, dom, id, action):
 	if userObject and ( amount >= 1 ):
 		args.insert(0, userObject)
 
+	dom._dom.instance.counter_ += 1
+
 	return func(*args)
 
 def _is_jupyter():

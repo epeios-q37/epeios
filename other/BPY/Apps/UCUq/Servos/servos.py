@@ -177,7 +177,7 @@ def getMacro(token):
     if char:
       raise Exception(f"Unexpected character after macro call ({token[1]})!")
 
-  if not name in macros:
+  if name not in macros:
     raise Exception(f"Unknown macro ({token[1]})!")
 
   return {"name": name, "amount" :amount}
@@ -215,7 +215,7 @@ def getMoves(token):
         if device != "":
           servo = device + '.' + servo
 
-      if not servo in servos:
+      if servo not in servos:
         raise Exception(f"No servo of id '{servo}' ({token[1]})")
         
       angle = 0
@@ -296,7 +296,7 @@ async def execute(dom, string, speed = DEFAULT_SPEED):
       match item[0]:
         case "action":
           tempSpeed = item[1]["speed"]
-          ucuq.servoMoves(item[1]["moves"], int(STEP * ( speed if tempSpeed == None else ( int(tempSpeed) if tempSpeed != "" else DEFAULT_SPEED))))
+          ucuq.servoMoves(item[1]["moves"], int(STEP * ( speed if tempSpeed is None else ( int(tempSpeed) if tempSpeed != "" else DEFAULT_SPEED))))
         case "macro":
           for _ in range(item[1]["amount"]):
             await execute(dom, macros[item[1]["name"]]["Content"], speed)

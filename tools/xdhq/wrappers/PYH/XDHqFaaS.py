@@ -111,8 +111,11 @@ class _Instance:
 		self.id = id
 		self.thread = thread_retriever(self)
 		self.language = None
+		self.counter_ = 0
 	def getId(self):
 		return self.id
+	def getCounter(self):
+		return self.counter_
 	def waitForData(self):
 		self._readLock.acquire()
 		if self.quit:
@@ -358,6 +361,9 @@ class DOM_FaaS:
 
 	def __init__(self, instance):
 		self.instance = instance
+
+	def getCounter(self):
+		return self.instance.getCounter()
 
 	def _waitForData(self):
 		self.instance.waitForData()

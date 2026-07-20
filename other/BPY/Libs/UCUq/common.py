@@ -1458,7 +1458,7 @@ class HD44780_I2C(Multi_, Core_):
   VERTICAL_GAUGES_TABLE_ = tuple((' ',) + tuple(chr(c) for c in (range(8))))
   HORIZONTAL_GAUGES_TABLE_ = ('',) + tuple(chr(c) for c in range(5)) + (chr(4),)
   VERTICAL_PEAKS_TABLE_ = tuple(chr(c) for c in (32, 0, 95, 1, 2, 45, 3, 4, 5, 32))
-  HORIZONTAL_PEAKS_TABLE_ = tuple(chr(c) for c in range(5))
+  HORIZONTAL_PEAKS_TABLE_ = tuple(chr(c) for c in range(6))
   MULTI_PARAMS_ = (2, "i2c")
 
   def __init__(self, numColumns, numLines, /, i2c, addr=None, extra=True):
@@ -1643,17 +1643,19 @@ class HD44780_I2C(Multi_, Core_):
     return self.putUpwardPeaks(position, tuple(15 - peak for peak in peaks), strip)
 
   def uploadHPeakChars(self):
-    for c in range(5):
-      self.createChar(c, (0b10000 >> c,) * 8)
+    self.createChar(0, (0b11111,) + (0,) * 6 + (0b11111,))
+
+    for c in range(1, 6):
+      self.createChar(c, (0b11111,) + (0b10000 >> (c - 1),) * 6 + (0b11111,))
         
     return self
     
-  def getForwardPeak(self, gauge):
+  def getForwardPeak(self, peak, max):
     table = self.HORIZONTAL_PEAKS_TABLE_
-    return ' ' * (gauge // 5) + table[gauge % 5]
+    return table[0] * (peak // 5) +  table[peak % 5 + 1] + table[0] * ((max - peak - 1) // 5)
 
-  def getBackwardPeak(self, gauge, max):
-    return self.getForwardPeak(max - gauge)
+  def getBackwardPeak(self, peak, max):
+    return self.getForwardPeak(max - peak, max)
 
 
 class Servo(Multi_):
@@ -1684,7 +1686,7 @@ class Servo(Multi_):
       if not specs:
         raise Exception("'domain' can not be given without 'specs'!")
 
-  def __init__(self, pwm=None, specs=None, /, *, tweak=None, domain=None):
+  def __init__(self, pwm=None, specs=None, /, *, tweak=None, domain=None, smooth = False):
     super().__init__()
 
     self.test_(specs, tweak, domain)
@@ -1693,9 +1695,9 @@ class Servo(Multi_):
     self.u16_ = None
 
     if pwm:
-      self.init(pwm, specs, tweak=tweak, domain=domain)
+      self.init(pwm, specs, smooth = smooth, tweak=tweak, domain=domain)
 
-  def init(self, pwm, specs, tweak=None, domain=None, extra=True):
+  def init(self, pwm, specs, *, tweak=None, domain=None, smooth = False, extra=True):
     self.test_(specs, tweak, domain)
 
     if not tweak:
@@ -1709,6 +1711,8 @@ class Servo(Multi_):
     self.domain_ = domain
 
     self.pwm_ = pwm
+
+    self.set = self.setSmooth if smooth else self.setRough
     
   def getDevice(self):
     return self.pwm_.getDevice()
@@ -1757,7 +1761,7 @@ class Servo(Multi_):
   def getU16(self):
     return self.u16_
   
-  def setU16(self, u16):
+  def setU16Smooth(self, u16):
     step = 40
     
     if self.u16_ is None:
@@ -1774,15 +1778,15 @@ class Servo(Multi_):
   def setAngleRough(self, angle):
     return self.setU16Rough(self.angleToDuty_(angle))
   
-  def setAngle(self, angle):
-    return self.setU16(self.angleToDuty_(angle))
+  def setAngleSmooth(self, angle):
+    return self.setU16Smooth(self.angleToDuty_(angle))
   
   def setRough(self, value):
-    return self.setU16(value + self.specs_.min)
+    return self.setU16Rough(value + self.specs_.min)
   
-  def set(self, value):
-    return self.setU16(value + self.specs_.min)
-
+  def setSmooth(self, value):
+    return self.setU16Smooth(value + self.specs_.min)
+  
   def get(self):
     return self.u16_ - self.specs_.min
   
@@ -2161,7 +2165,7 @@ def servoMoves(moves, step=100, delay=0.05):
     servo = move[0]
     key = id(servo.getDevice())
 
-    if not key in devices:
+    if key not in devices:
       devices[key] = servo.getDevice()
       jumps[key] = []
       commands[key] = []
@@ -2842,9 +2846,13 @@ class kit_: # Act as namespace.
   
   class Servo180(Servo):
     def __init__(self, pin, rest, device = None, extra = True):
+      self.rest_ = rest
       pwm = PWM(pin, freq=50, device=device, extra=extra, convPin = lambda pin : f"(sp_({pin}))", convU16 = lambda u16: f"(su_({u16}))", convNS = lambda ns: f"(sn_({ns}))")
       super().__init__(pwm, Servo.Specs(1638, 8192, 180))
-      self.set(rest)
+      self.flash()
+
+    def park(self):
+      self.setSmooth(self.rest_)
 
 
 def BaseClassPatch_(caller, owner):
@@ -2857,18 +2865,20 @@ def BaseClassPatch_(caller, owner):
 
 class Ravel:
   @staticmethod
-  def init_(object, instanciation):
-    return object if object is not None else instanciation()
+  def init_(create, object, instanciation):
+    return object if object is not None else (instanciation() if create else None)
     
-  def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None, upper=None, lower=None):
+  def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None, upper=None, lower=None, create = None):
+    if create is None:
+      create =  all(x is None for x in (buzzer, ring, oled, lcd, upper, lower))
+
     cls = self.__class__
-    self.buzzer_ = cls.init_(buzzer, lambda : ravel.Buzzer(device, extra))
-    self.ring_ = cls.init_(ring, lambda : ravel.Ring(ringOffset, device, extra))
-    self.oled_ = cls.init_(oled, lambda : ravel.OLED(device, extra))
-    self.lcd_ = cls.init_(lcd, lambda : ravel.LCD(device, extra))
-    self.upper_ =  cls.init_(upper, lambda : ravel.Upper(device, extra))
-    self.lower_ =  cls.init_(lower, lambda : ravel.Lower(device, extra))
-    (servo.park() for servo in (self.upper_, self.lower_))
+    self.buzzer_ = cls.init_(create, buzzer, lambda : ravel.Buzzer(device, extra))
+    self.ring_ = cls.init_(create, ring, lambda : ravel.Ring(ringOffset, device, extra))
+    self.oled_ = cls.init_(create, oled, lambda : ravel.OLED(device, extra))
+    self.lcd_ = cls.init_(create, lcd, lambda : ravel.LCD(device, extra))
+    self.upper_ =  cls.init_(create, upper, lambda : ravel.Upper(device, extra))
+    self.lower_ =  cls.init_(create, lower, lambda : ravel.Lower(device, extra))
     
   def raz(self):
     self.__init__(self.ring_.getOffset())
@@ -2890,6 +2900,28 @@ class Ravel:
   
   def lower(self):
     return self.lower_
+  
+  def get(self, list):
+
+    components = []
+
+    for item in list:
+      match item.upper():
+        case "B":
+          components.append(self.buzzer())
+        case "L":
+          components.append(self.lcd())
+        case "O":
+          components.append(self.oled())
+        case "R":
+          components.append(self.ring())
+        case "S":
+          components.extend([self.upper(), self.lower()])
+        case _:
+          raise ValueError(f"Unknown '{item}' component!")
+        
+    return components
+
 
   def displayRingGauges(self, globalMax = 0, placeholder=".", addendum="  "):
     ravel.displayRingGauges(kit_.ensureSequence_(self.ring_), kit_.ensureSequence_(self.lcd_), globalMax, placeholder, addendum)
@@ -2900,15 +2932,17 @@ class ravel_:  # act as namespace
     def __init__(self, device=None, extra=True):
       return super().__init__(0, ravel.SERVO_MAX, device, extra)
     
-    def park(self):
-      self.set(ravel.SERVO_MAX)
+    def flash(self):
+      self.setSmooth(ravel.SERVO_MAX - 500)
+      self.park()
   
   class Lower(kit_.Servo180):
     def __init__(self, device=None, extra=True):
       return super().__init__(1, 0, device, extra)
     
-    def park(self):
-      self.set(0)
+    def flash(self):
+      self.setSmooth(500)
+      self.park()
 
 
 class ravel:  # act as namespace
@@ -2940,7 +2974,30 @@ class ravel:  # act as namespace
   class Lower(ravel_.Lower):
     def __new__(cls, device=None, extra=True):
       return super().__new__(BaseClassPatch_(cls, ravel.Lower), device=device, extra=extra)
+    
+  @staticmethod
+  def get(list):
 
+    components = []
+
+    for item in list:
+      match item.upper():
+        case "B":
+          components.append(ravel.Buzzer())
+        case "L":
+          components.append(ravel.LCD())
+        case "O":
+          components.append(ravel.OLED())
+        case "R":
+          components.append(ravel.Ring())
+        case "S":
+          components.extend([ravel.Upper(), ravel.Lower()])
+        case _:
+          raise ValueError(f"Unknown '{item}' component!")
+        
+    return components
+
+  @staticmethod
   def raz():
     Ravel()
     
