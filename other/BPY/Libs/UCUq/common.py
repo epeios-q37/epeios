@@ -1320,10 +1320,14 @@ class Buzzer(Multi_):
     
     return self
   
-  def ratio(self, ratio):
+  def ratio(self, ratio = None):
     prevRatio = self.u16_ / 65535
-    self.u16_ = int(65535 * ratio)
-    self.on_ = False
+
+    if ratio is not None:
+      self.u16_ = int(65535 * ratio)
+
+      if self.on_:
+        self.pwm_.setU16(self.u16_)
     
     return prevRatio
     
@@ -3003,6 +3007,7 @@ class ravel:  # act as namespace
     
   SERVO_MAX = 6554
   RING_MAX = 31
+  RING_SIZE = 8
   OLED_WIDTH = 128
   OLED_HEIGHT = 64
   LCD_WIDTH = 16

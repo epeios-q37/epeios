@@ -4,9 +4,11 @@ import types
 
 import ucuq
 
+import buzzer
 import cube
 import matrix
 import oled
+import ring
 import servos
 import shared
 
@@ -178,23 +180,7 @@ def indy(withSound=True):
 
 
 def Buzzer():
-  buzzer = ucuq.ravel.Buzzer()
-
-  coeff = 2 ** (1 / 12)
-
-  freq = 220
-  
-  for n in range(-12, 13):
-    buzzer.on(int(freq))
-    
-    if n < 0:
-      freq *= coeff
-    else:
-      freq /= coeff
-      
-    ucuq.sleep(0.1)
-    
-  buzzer.off()
+  buzzer.launch()
 
 
 def OLED(field):
@@ -206,26 +192,7 @@ def matrixSimulation():
 
 
 def Ring():
-  ring = ucuq.ravel.Ring()
-
-  count = len(RAINBOW_) // 8
-
-  delay = 5 / (count * 8)
-
-  for i in range(count):
-    for led in range(8):
-      ring[led] = getRainbowColor_(i * 8 + led)
-      ring.write()
-      ucuq.sleep(delay)
-
-  for led in range(8):
-    ring[led] = getRainbowColor_(led, 7)
-    ring.write()
-    ucuq.sleep(delay)
-
-  ucuq.sleep(1)
-
-  ring.fill((0, 0, 0)).write()
+  ring.launch()
   
   
 def Servos():

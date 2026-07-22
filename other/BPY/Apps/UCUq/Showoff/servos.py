@@ -118,15 +118,15 @@ def launch():
   ringEvents= []
   oledEvents = []
 
-  led_upper = tuple((i, SPEED_COLORS_[i]) for i in range(4))
-  led_lower = tuple((7 - i, SPEED_COLORS_[i]) for i in range(4))
+  ledUpper = tuple((i, SPEED_COLORS_[i]) for i in range(4))
+  ledLower = tuple((7 - i, SPEED_COLORS_[i]) for i in range(4))
 
   upperEvents, ringData, oledData = getServosEvents_(upper, (lcd, 0))
-  ringEvents.append(getRingEvents_(ring, ringData, led_upper))
+  ringEvents.append(getRingEvents_(ring, ringData, ledUpper))
   oledEvents.append(getOLEDEvents_(oled, oledData, 0))
 
   lowerEvents, ringData, oledData = getServosEvents_(lower, (lcd, 1))
-  ringEvents.append(getRingEvents_(ring, ringData, led_lower))
+  ringEvents.append(getRingEvents_(ring, ringData, ledLower))
   oledEvents.append(getOLEDEvents_(oled, oledData, ucuq.ravel.OLED_HEIGHT // 2))
 
   maxAmountOfOLEDEvents= max(len(oledEvents[0]), len(oledEvents[1]))

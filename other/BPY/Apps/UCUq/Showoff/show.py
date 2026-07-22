@@ -116,7 +116,7 @@ def countdownIfSelected(dom, timestamp, devices):
   if dom.getValue(W_COUNTDOWN_) != "true":
     return timestamp
   
-  leds = [False] * 8
+  leds = [False] * ucuq.ravel.RING_SIZE
   timestamp += .5
   
   allEvents = []
@@ -136,7 +136,7 @@ def countdownIfSelected(dom, timestamp, devices):
       ringEvents.append((
         lambda
           led=c,
-          color=(1,1,1) if leds[c % 8] else (0,0,0):
+          color=(1,1,1) if leds[c % ucuq.ravel.RING_SIZE] else (0,0,0):
             devices.rings.setValue(led, color).write(), 1/8))
       leds[c%8] = not leds[c%8]
       
@@ -198,13 +198,13 @@ def displayRingGauges(devices, addendum = "  "):
 def turnOffAndScrollDown(timestamp, devices):
   offset = random.randrange(len(RAINBOW_))
   
-  for i in range(offset, 8 + offset):
+  for i in range(offset, ucuq.ravel.RING_SIZE + offset):
     devices.rings.setValue(i, getRainbowColor_(i, 7))
     
   devices.rings.write()
   
   for i in range(64):
-    devices.rings.setValue(i // 8 + offset, (0,0,0)).write()
+    devices.rings.setValue(i //ucuq.ravel.RING_SIZE + offset, (0,0,0)).write()
     devices.oleds.scroll(0, 1).show()
     devices.ravel.displayRingGauges()
     timestamp += 0.09
