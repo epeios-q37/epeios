@@ -1618,7 +1618,6 @@ class HD44780_I2C(Multi_, Core_):
     charmap = [0b00000] * 7 + [0b11111]
     
     for c in range(7):
-      print(charmap)
       self.createChar(c, charmap)
       del charmap[0]
       charmap.append(0b0000)

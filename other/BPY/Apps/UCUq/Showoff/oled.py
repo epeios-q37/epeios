@@ -365,7 +365,16 @@ animations_ = tuple(
   for animation in ANIMATIONS_
 )
 
-def launch(field):
+WHOLE_ = tuple(i for i in range(len(animations_)))
+
+SHORT_ = (5, 6, 8)
+
+def launch(whole):
+  if whole:
+    list = WHOLE_
+  else:
+    list = SHORT_
+
   oled = ucuq.ravel.OLED()
 
   oled.addMethods("write_cmd(0xD5)")
@@ -373,8 +382,8 @@ def launch(field):
 
   oled.invert(True)
   
-  for animation in animations_:
-    if field & 1 << animations_.index(animation):
+  for item in list:
+      animation = animations_[item]
       for _ in range(60 * 2 // len(animation)):
         for picture in animation:
           oled.draw(picture, 128).show()

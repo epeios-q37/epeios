@@ -113,6 +113,11 @@ class Device_:
     return data["result"]
 
   def execute_(self, script):
+    # Below line is a workaround for issue
+    # https://github.com/micropython/micropython/issues/19529
+    # NOTA: above issue not really a bug, so workaround will remain.
+    script = script.replace('\x00', '" + chr(0) + "')
+
     ucuqjs.execute(self.device_, script, "", lambda code, result: executeCallback_(None, code, result))
 
   async def commitAwait(self, expression):

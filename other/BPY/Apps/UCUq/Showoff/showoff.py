@@ -34,6 +34,11 @@ def combinaisons_(A):
   return R
 
 
+def isPartnerWholeAnimationRequired_(dom):
+#  return True
+  return dom.getValue("PartnerFormat") == "true"
+
+
 def atk(dom):
   devices = "\n".join(HTML_OPTION_.format(device) for device in combinaisons_(DEVICES_))
   
@@ -50,37 +55,15 @@ def atkPartnerConnect(dom):
 
 
 def atkPartnerBuzzer(dom):
-  partner.Buzzer()
+  partner.Buzzer(isPartnerWholeAnimationRequired_(dom))
   
   
-def getPartnerOLEDAnimationsId():
-  return tuple(f"PartnerOLED{8-i}" for i in range(9))
-
-
 def atkPartnerOLED(dom):
-  field = 0
-  
-  for value in dom.getValues(getPartnerOLEDAnimationsId()).values():
-    field = field * 2
-    
-    if value == "true":
-      field += 1
-      
-  partner.OLED(field)
+  partner.OLED(isPartnerWholeAnimationRequired_(dom))
   
   
-def atkPartnerOLEDSelect(dom, id):
-  value = dom.getValue(id)
-  values= {}
-  
-  for id in getPartnerOLEDAnimationsId():
-    values[id] = value
-    
-  dom.setValues(values)
-
-
 def atkPartnerRing(dom):
-  partner.Ring()
+  partner.Ring(isPartnerWholeAnimationRequired_(dom))
 
 
 def atkPartnerLCD(dom):

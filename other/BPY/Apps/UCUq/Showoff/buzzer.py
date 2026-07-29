@@ -100,17 +100,31 @@ def chiptuneEffect_(buzzer, notesCount=24, duration=TARGET_DURATION):
     ucuq.sleep(pause)
 
 
-def launch():
+EFFECTS_ = (
+  singleToneEffect_,
+  morseEffect_,
+  alarmEffect_,
+  arpeggioEffect_,
+  sweepEffect_,
+  sirenEffect_,
+  policeSirenEffect_,
+  volumeFadeEffect_,
+  chiptuneEffect_,
+)
+
+FULL_ = tuple(i for i in range(len(EFFECTS_)))
+
+SHORT_ = (2, 3, 6)
+
+def launch(full):
   buzzer = ucuq.ravel.Buzzer()
 
-  singleToneEffect_(buzzer)
-  morseEffect_(buzzer)
-  alarmEffect_(buzzer)
-  arpeggioEffect_(buzzer)
-  sweepEffect_(buzzer)
-  sirenEffect_(buzzer)
-  policeSirenEffect_(buzzer)
-  volumeFadeEffect_(buzzer)
-  chiptuneEffect_(buzzer)
+  if full:
+    list = FULL_
+  else:
+    list = SHORT_
+
+  for item in list:
+    EFFECTS_[item](buzzer)
 
   buzzer.off()

@@ -179,20 +179,20 @@ def indy(withSound=True):
   return True
 
 
-def Buzzer():
-  buzzer.launch()
+def Buzzer(full):
+  buzzer.launch(full)
 
 
-def OLED(field):
-  oled.launch(field)
+def OLED(whole):
+  oled.launch(whole)
   
   
 def matrixSimulation():
   matrix.launch()
 
 
-def Ring():
-  ring.launch()
+def Ring(whole):
+  ring.launch(whole)
   
   
 def Servos():

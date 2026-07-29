@@ -258,20 +258,35 @@ def discoAnimation_(ring, frames=20, duration=TARGET_DURATION):
 
   ring.fill((0, 0, 0)).write()
 
+ANIMATIONS_ = (
+  wheelAnimation_,
+  blinkAnimation_,
+  twinkleAnimation_,
+  fillAnimation_,
+  breathingAnimation_,
+  sonarPulseAnimation_,
+  chaseAnimation_,
+  fireAnimation_,
+  cometAnimation_,
+  meteorRainAnimation_,
+  rainbowAnimation_,
+  discoAnimation_,
+)
 
-def launch():
+WHOLE_ = tuple(i for i in range(len(ANIMATIONS_)))
+
+SHORT_ = (1, 2, 7, 11)
+
+def launch(whole):
   ring = ucuq.ravel.Ring()
-  wheelAnimation_(ring)
-  blinkAnimation_(ring)
-  twinkleAnimation_(ring)
-  fillAnimation_(ring)
-  breathingAnimation_(ring)
-  sonarPulseAnimation_(ring)
-  chaseAnimation_(ring)
-  fireAnimation_(ring)
-  cometAnimation_(ring)
-  meteorRainAnimation_(ring)
-  rainbowAnimation_(ring)
-  discoAnimation_(ring)
+
+  if whole:
+    list = WHOLE_
+  else:
+    list = SHORT_
+
+  for item in list:
+    ANIMATIONS_[item](ring)
+
   ring.fill((0, 0, 0))
   ring.write()
