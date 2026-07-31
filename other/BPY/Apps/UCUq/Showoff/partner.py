@@ -179,8 +179,8 @@ def indy(withSound=True):
   return True
 
 
-def Buzzer(full):
-  buzzer.launch(full)
+def Buzzer(whole):
+  buzzer.launch(whole)
 
 
 def OLED(whole):

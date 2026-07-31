@@ -43,8 +43,6 @@ def atk(dom):
   devices = "\n".join(HTML_OPTION_.format(device) for device in combinaisons_(DEVICES_))
   
   dom.inner("", BODY.format(devices, DEVICES_[0], *SHOW_DEVICES_))  # type: ignore # noqa: F821
-  colors.fill(dom)
-  colors.update(dom)
   partner.set(dom)
   dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);")
 
@@ -114,38 +112,26 @@ def atkShowTest():
 
 def atkShowIndy(dom):
   devices = show.getDevices()
-  timestamp = show.countdownIfSelected(dom, time.time() + DELAY, devices)
+  timestamp = show.countdown(time.time() + DELAY, devices)
   indy.launch(timestamp, devices)
 
 
 def atkShowPink(dom):
   devices = show.getDevices()
-  timestamp = show.countdownIfSelected(dom, time.time() + DELAY, devices)
+  timestamp = show.countdown(time.time() + DELAY, devices)
   pink.launch(timestamp, devices)
 
 
 def atkShowFugue(dom):
   devices = show.getDevices()
-  timestamp = show.countdownIfSelected(dom, time.time() + DELAY, devices)
+  timestamp = show.countdown(time.time() + DELAY, devices)
   trio.launch(timestamp, devices)
 
 
-def atkShowColorUpdate(dom):
-  colors.update(dom)
-
-
-def atkShowColorOnce(dom):
+def atkShowColors(dom):
   devices = show.getDevices()
-  scheme, delay = dom.getValues((colors.W_SCHEMES, colors.W_DELAY)).values()
-  timestamp = show.countdownIfSelected(dom, time.time() + DELAY, devices)
-  colors.launch(int(scheme), timestamp, float(delay), 1, devices)
-
-
-def atkShowColorRepeat(dom):
-  devices = show.getDevices()
-  scheme, delay, repeat = dom.getValues((colors.W_SCHEMES, colors.W_DELAY, colors.W_REPEAT)).values()
-  timestamp = show.countdownIfSelected(dom, time.time() + DELAY, devices)
-  colors.launch(int(scheme), timestamp, float(delay), int(repeat), devices)
+  timestamp = show.countdown(time.time() + DELAY, devices)
+  colors.launch(timestamp, devices)
 
 if os.environ.get("PREFIX", "").startswith("/data/data/com.termux"):
   atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"')) 

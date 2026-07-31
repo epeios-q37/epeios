@@ -28,7 +28,7 @@ def rainbowGradient_(n, max):
     colors.append((r, g, b))
   return colors
 
-RAINBOW = rainbowGradient_(50, RGB_MAX)
+RAINBOW = rainbowGradient_(40, RGB_MAX)
 
 def getRainbowColor(index, max = None):
   if max is not None:

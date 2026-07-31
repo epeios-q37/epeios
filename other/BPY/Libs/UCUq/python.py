@@ -269,10 +269,10 @@ class Device_:
       writeStrings_(self.proxy.socket, modules)
 
   def execute_(self, script, expression = ""):
-    # Below line is a workaround for issue
     # https://github.com/micropython/micropython/issues/19529
-    # NOTA: above issue not really a bug, so workaround will remain.
-    # script = script.replace('\x00', '" + chr(0) + "')
+    if '\0' in script:
+      # print(script.replace(chr(0), ">NUL<"))
+      raise ValueError("NUL char detected!")
     
     if self.proxy.socket:
       with writeLock_:

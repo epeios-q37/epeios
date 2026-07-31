@@ -35,9 +35,11 @@ def launch(timestamp, devices):
   
   helper.start = timestamp = timestamp + 1
   
+  devices.lcds.backlightOff().uploadUpwardGaugeChars()
+
   sleepUntil_(timestamp)
-  
-  devices.lcds.uploadUpwardGaugeChars().backlightOn()
+
+  devices.lcds.backlightOn()
 
   timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper, devices), lambda _, cumul: durationCallback_(timestamp + cumul, helper, devices))
   

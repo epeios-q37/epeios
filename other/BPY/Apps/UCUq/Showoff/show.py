@@ -110,11 +110,8 @@ DIGITS_ = (
   "70888878088870",
 )  
 
-def countdownIfSelected(dom, timestamp, devices):
+def countdown(timestamp, devices):
   ucuq.gcCollect()
-  
-  if dom.getValue(W_COUNTDOWN_) != "true":
-    return timestamp
   
   leds = [False] * ucuq.ravel.RING_SIZE
   timestamp += .5
@@ -139,7 +136,6 @@ def countdownIfSelected(dom, timestamp, devices):
           color=(1,1,1) if leds[c % ucuq.ravel.RING_SIZE] else (0,0,0):
             devices.rings.setValue(led, color).write(), 1/8))
       leds[c%8] = not leds[c%8]
-      
 
   gauge = ()
 

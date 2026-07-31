@@ -5,6 +5,9 @@ import show
 from shared import RAINBOW as RAINBOW_, RGB_MAX as RGB_MAX_, getRainbowColor as getRainbowColor_
 from show import sleepUntil as sleepUntil_
 
+DELAY_ = 0.09
+REPEAT_ = 3
+
 W_SCHEMES = "ColorSchemes"
 W_DELAY = "ColorDelay"
 W_DELAY_DISPLAY = "ColorDelayDisplay"
@@ -223,21 +226,7 @@ def _(timestamp, delay, _):
 SCHEMES_.append(_)
     
 
-def fill(dom):
-  html = '\n<option value="0">All</option>'
-  
-  for i in range(1, len(SCHEMES_) + 1):
-    html += f'\n<option value="{i}">{i}</option>'
-    
-  dom.inner(W_SCHEMES, html)
-  
-  
-def update(dom):
-  delay, repeat = dom.getValues((W_DELAY, W_REPEAT)).values()
-  dom.setValues({W_DELAY_DISPLAY: float(delay), W_REPEAT_DISPLAY: int(repeat)})
-
-
-def launch(scheme, timestamp, delay, repeat, devices):
+def launch(timestamp, devices):
   global colors_
 
   colors_ = Colors_(devices)
@@ -249,13 +238,9 @@ def launch(scheme, timestamp, delay, repeat, devices):
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
-  if scheme == 0:
-    for scheme in SCHEMES_:
-      for _ in range(repeat):
-        timestamp = scheme(timestamp, delay, devices)
-  else:
-    for _ in range(repeat):
-      timestamp = SCHEMES_[scheme-1](timestamp, delay, devices)
+  for scheme in SCHEMES_:
+    for _ in range(REPEAT_):
+      timestamp = scheme(timestamp, DELAY_, devices)
       
   ucuq.setCommitBehavior(cb)
     
