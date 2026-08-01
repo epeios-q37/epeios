@@ -44,6 +44,7 @@ def atk(dom):
   
   dom.inner("", BODY.format(devices, DEVICES_[0], *SHOW_DEVICES_))  # type: ignore # noqa: F821
   partner.set(dom)
+  trio.set(dom)
   dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);")
 
 
@@ -122,10 +123,11 @@ def atkShowPink(dom):
   pink.launch(timestamp, devices)
 
 
-def atkShowFugue(dom):
+def atkShowPlay(dom):
   devices = show.getDevices()
-  timestamp = show.countdown(time.time() + DELAY, devices)
-  trio.launch(timestamp, devices)
+  timestamp = time.time() + DELAY
+#  timestamp = show.countdown(time.time() + DELAY, devices)
+  trio.launch(int(dom.getValue("ShowTrios")), timestamp, devices)
 
 
 def atkShowColors(dom):

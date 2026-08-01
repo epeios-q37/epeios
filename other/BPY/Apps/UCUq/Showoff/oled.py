@@ -377,8 +377,8 @@ def launch(whole):
 
   oled = ucuq.ravel.OLED()
 
-  oled.addMethods("write_cmd(0xD5)")
-  oled.addMethods("write_cmd(0xF0)")
+#  oled.addMethods("write_cmd(0xD5)")
+#  oled.addMethods("write_cmd(0xF0)")
 
   oled.invert(True)
   
