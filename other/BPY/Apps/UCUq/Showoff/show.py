@@ -15,7 +15,7 @@ from shared import (
   getRainbowColor as getRainbowColor_
 )
 
-W_COUNTDOWN_ = "Countdown"
+W_COUNTDOWN_ = "ShowCountdown"
 
 devices_ = None
 
@@ -110,7 +110,10 @@ DIGITS_ = (
   "70888878088870",
 )  
 
-def countdown(timestamp, devices):
+def countdownIfRequested(dom, timestamp, devices):
+  if dom.getValue(W_COUNTDOWN_) != "true":
+      return timestamp
+
   ucuq.gcCollect()
   
   leds = [False] * ucuq.ravel.RING_SIZE

@@ -269,7 +269,8 @@ def DisplayOrientation(dom, values):
 
   lcd.backlightOn().moveTo(0, 0).putString(f"{f"{int(z):+3d} {int(x):4d} {int(y):+4d}".center(16)}".ljust(32))
 
-  oled.draw(cube.draw3DCube(x, y, z), 128).show()
+  cube.draw3DCube(oled, x, y, z), 128
+  oled.show()
 
 
 def Listen(dom):

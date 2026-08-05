@@ -23,6 +23,397 @@ FLASH_DELAY_ = 0
 objectCounter_ = 0
 device_ = None
 
+####################################################################
+##### Begin of reimplementation form MicroPython's framebuffer #####
+####################################################################
+
+MONO_VLSB = 0
+MONO_HLSB = 1
+MONO_HMSB = 2
+RGB565 = 3
+GS2_HMSB = 4
+GS4_HMSB = 5
+GS8 = 6
+
+_FONT = bytes([
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # 32=espace
+  0x00, 0x00, 0x00, 0x4f, 0x4f, 0x00, 0x00, 0x00,  # 33=!
+  0x00, 0x07, 0x07, 0x00, 0x00, 0x07, 0x07, 0x00,  # 34="
+  0x14, 0x7f, 0x7f, 0x14, 0x14, 0x7f, 0x7f, 0x14,  # 35=#
+  0x00, 0x24, 0x2e, 0x6b, 0x6b, 0x3a, 0x12, 0x00,  # 36=$
+  0x00, 0x63, 0x33, 0x18, 0x0c, 0x66, 0x63, 0x00,  # 37=%
+  0x00, 0x32, 0x7f, 0x4d, 0x4d, 0x77, 0x72, 0x50,  # 38=&
+  0x00, 0x00, 0x00, 0x04, 0x06, 0x03, 0x01, 0x00,  # 39='
+  0x00, 0x00, 0x1c, 0x3e, 0x63, 0x41, 0x00, 0x00,  # 40=(
+  0x00, 0x00, 0x41, 0x63, 0x3e, 0x1c, 0x00, 0x00,  # 41=)
+  0x08, 0x2a, 0x3e, 0x1c, 0x1c, 0x3e, 0x2a, 0x08,  # 42=*
+  0x00, 0x08, 0x08, 0x3e, 0x3e, 0x08, 0x08, 0x00,  # 43=+
+  0x00, 0x00, 0x80, 0xe0, 0x60, 0x00, 0x00, 0x00,  # 44=,
+  0x00, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x00,  # 45=-
+  0x00, 0x00, 0x00, 0x60, 0x60, 0x00, 0x00, 0x00,  # 46=.
+  0x00, 0x40, 0x60, 0x30, 0x18, 0x0c, 0x06, 0x02,  # 47=/
+  0x00, 0x3e, 0x7f, 0x49, 0x45, 0x7f, 0x3e, 0x00,  # 48=0
+  0x00, 0x40, 0x44, 0x7f, 0x7f, 0x40, 0x40, 0x00,  # 49=1
+  0x00, 0x62, 0x73, 0x51, 0x49, 0x4f, 0x46, 0x00,  # 50=2
+  0x00, 0x22, 0x63, 0x49, 0x49, 0x7f, 0x36, 0x00,  # 51=3
+  0x00, 0x18, 0x18, 0x14, 0x16, 0x7f, 0x7f, 0x10,  # 52=4
+  0x00, 0x27, 0x67, 0x45, 0x45, 0x7d, 0x39, 0x00,  # 53=5
+  0x00, 0x3e, 0x7f, 0x49, 0x49, 0x7b, 0x32, 0x00,  # 54=6
+  0x00, 0x03, 0x03, 0x79, 0x7d, 0x07, 0x03, 0x00,  # 55=7
+  0x00, 0x36, 0x7f, 0x49, 0x49, 0x7f, 0x36, 0x00,  # 56=8
+  0x00, 0x26, 0x6f, 0x49, 0x49, 0x7f, 0x3e, 0x00,  # 57=9
+  0x00, 0x00, 0x00, 0x24, 0x24, 0x00, 0x00, 0x00,  # 58=:
+  0x00, 0x00, 0x80, 0xe4, 0x64, 0x00, 0x00, 0x00,  # 59=;
+  0x00, 0x08, 0x1c, 0x36, 0x63, 0x41, 0x41, 0x00,  # 60=<
+  0x00, 0x14, 0x14, 0x14, 0x14, 0x14, 0x14, 0x00,  # 61==
+  0x00, 0x41, 0x41, 0x63, 0x36, 0x1c, 0x08, 0x00,  # 62=>
+  0x00, 0x02, 0x03, 0x51, 0x59, 0x0f, 0x06, 0x00,  # 63=?
+  0x00, 0x3e, 0x7f, 0x41, 0x4d, 0x4f, 0x2e, 0x00,  # 64=@
+  0x00, 0x7c, 0x7e, 0x0b, 0x0b, 0x7e, 0x7c, 0x00,  # 65=A
+  0x00, 0x7f, 0x7f, 0x49, 0x49, 0x7f, 0x36, 0x00,  # 66=B
+  0x00, 0x3e, 0x7f, 0x41, 0x41, 0x63, 0x22, 0x00,  # 67=C
+  0x00, 0x7f, 0x7f, 0x41, 0x63, 0x3e, 0x1c, 0x00,  # 68=D
+  0x00, 0x7f, 0x7f, 0x49, 0x49, 0x41, 0x41, 0x00,  # 69=E
+  0x00, 0x7f, 0x7f, 0x09, 0x09, 0x01, 0x01, 0x00,  # 70=F
+  0x00, 0x3e, 0x7f, 0x41, 0x49, 0x7b, 0x3a, 0x00,  # 71=G
+  0x00, 0x7f, 0x7f, 0x08, 0x08, 0x7f, 0x7f, 0x00,  # 72=H
+  0x00, 0x00, 0x41, 0x7f, 0x7f, 0x41, 0x00, 0x00,  # 73=I
+  0x00, 0x20, 0x60, 0x41, 0x7f, 0x3f, 0x01, 0x00,  # 74=J
+  0x00, 0x7f, 0x7f, 0x1c, 0x36, 0x63, 0x41, 0x00,  # 75=K
+  0x00, 0x7f, 0x7f, 0x40, 0x40, 0x40, 0x40, 0x00,  # 76=L
+  0x00, 0x7f, 0x7f, 0x06, 0x0c, 0x06, 0x7f, 0x7f,  # 77=M
+  0x00, 0x7f, 0x7f, 0x0e, 0x1c, 0x7f, 0x7f, 0x00,  # 78=N
+  0x00, 0x3e, 0x7f, 0x41, 0x41, 0x7f, 0x3e, 0x00,  # 79=O
+  0x00, 0x7f, 0x7f, 0x09, 0x09, 0x0f, 0x06, 0x00,  # 80=P
+  0x00, 0x1e, 0x3f, 0x21, 0x61, 0x7f, 0x5e, 0x00,  # 81=Q
+  0x00, 0x7f, 0x7f, 0x19, 0x39, 0x6f, 0x46, 0x00,  # 82=R
+  0x00, 0x26, 0x6f, 0x49, 0x49, 0x7b, 0x32, 0x00,  # 83=S
+  0x00, 0x01, 0x01, 0x7f, 0x7f, 0x01, 0x01, 0x00,  # 84=T
+  0x00, 0x3f, 0x7f, 0x40, 0x40, 0x7f, 0x3f, 0x00,  # 85=U
+  0x00, 0x1f, 0x3f, 0x60, 0x60, 0x3f, 0x1f, 0x00,  # 86=V
+  0x00, 0x7f, 0x7f, 0x30, 0x18, 0x30, 0x7f, 0x7f,  # 87=W
+  0x00, 0x63, 0x77, 0x1c, 0x1c, 0x77, 0x63, 0x00,  # 88=X
+  0x00, 0x07, 0x0f, 0x78, 0x78, 0x0f, 0x07, 0x00,  # 89=Y
+  0x00, 0x61, 0x71, 0x59, 0x4d, 0x47, 0x43, 0x00,  # 90=Z
+  0x00, 0x00, 0x7f, 0x7f, 0x41, 0x41, 0x00, 0x00,  # 91=[
+  0x00, 0x02, 0x06, 0x0c, 0x18, 0x30, 0x60, 0x40,  # 92=(backslash)
+  0x00, 0x00, 0x41, 0x41, 0x7f, 0x7f, 0x00, 0x00,  # 93=]
+  0x00, 0x08, 0x0c, 0x06, 0x06, 0x0c, 0x08, 0x00,  # 94=^
+  0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0, 0xc0,  # 95=_
+  0x00, 0x00, 0x01, 0x03, 0x06, 0x04, 0x00, 0x00,  # 96=`
+  0x00, 0x20, 0x74, 0x54, 0x54, 0x7c, 0x78, 0x00,  # 97=a
+  0x00, 0x7f, 0x7f, 0x44, 0x44, 0x7c, 0x38, 0x00,  # 98=b
+  0x00, 0x38, 0x7c, 0x44, 0x44, 0x6c, 0x28, 0x00,  # 99=c
+  0x00, 0x38, 0x7c, 0x44, 0x44, 0x7f, 0x7f, 0x00,  # 100=d
+  0x00, 0x38, 0x7c, 0x54, 0x54, 0x5c, 0x58, 0x00,  # 101=e
+  0x00, 0x08, 0x7e, 0x7f, 0x09, 0x03, 0x02, 0x00,  # 102=f
+  0x00, 0x98, 0xbc, 0xa4, 0xa4, 0xfc, 0x7c, 0x00,  # 103=g
+  0x00, 0x7f, 0x7f, 0x04, 0x04, 0x7c, 0x78, 0x00,  # 104=h
+  0x00, 0x00, 0x00, 0x7d, 0x7d, 0x00, 0x00, 0x00,  # 105=i
+  0x00, 0x40, 0xc0, 0x80, 0x80, 0xfd, 0x7d, 0x00,  # 106=j
+  0x00, 0x7f, 0x7f, 0x30, 0x38, 0x6c, 0x44, 0x00,  # 107=k
+  0x00, 0x00, 0x41, 0x7f, 0x7f, 0x40, 0x00, 0x00,  # 108=l
+  0x00, 0x7c, 0x7c, 0x18, 0x30, 0x18, 0x7c, 0x7c,  # 109=m
+  0x00, 0x7c, 0x7c, 0x04, 0x04, 0x7c, 0x78, 0x00,  # 110=n
+  0x00, 0x38, 0x7c, 0x44, 0x44, 0x7c, 0x38, 0x00,  # 111=o
+  0x00, 0xfc, 0xfc, 0x24, 0x24, 0x3c, 0x18, 0x00,  # 112=p
+  0x00, 0x18, 0x3c, 0x24, 0x24, 0xfc, 0xfc, 0x00,  # 113=q
+  0x00, 0x7c, 0x7c, 0x04, 0x04, 0x0c, 0x08, 0x00,  # 114=r
+  0x00, 0x48, 0x5c, 0x54, 0x54, 0x74, 0x20, 0x00,  # 115=s
+  0x04, 0x04, 0x3f, 0x7f, 0x44, 0x64, 0x20, 0x00,  # 116=t
+  0x00, 0x3c, 0x7c, 0x40, 0x40, 0x7c, 0x3c, 0x00,  # 117=u
+  0x00, 0x1c, 0x3c, 0x60, 0x60, 0x3c, 0x1c, 0x00,  # 118=v
+  0x00, 0x1c, 0x7c, 0x30, 0x18, 0x30, 0x7c, 0x1c,  # 119=w
+  0x00, 0x44, 0x6c, 0x38, 0x38, 0x6c, 0x44, 0x00,  # 120=x
+  0x00, 0x9c, 0xbc, 0xa0, 0xa0, 0xfc, 0x7c, 0x00,  # 121=y
+  0x00, 0x44, 0x64, 0x74, 0x5c, 0x4c, 0x44, 0x00,  # 122=z
+  0x00, 0x08, 0x08, 0x3e, 0x77, 0x41, 0x41, 0x00,  # 123={
+  0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00,  # 124=|
+  0x00, 0x41, 0x41, 0x77, 0x3e, 0x08, 0x08, 0x00,  # 125=}
+  0x00, 0x02, 0x03, 0x01, 0x03, 0x02, 0x03, 0x01,  # 126=~
+  0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55,  # 127
+])
+
+
+def _mono_vlsb_set(fb, x, y, c):
+  index = (y >> 3) * fb.stride + x
+  offset = y & 0x07
+  fb.buf[index] = (fb.buf[index] & ~(1 << offset) & 0xFF) | ((c & 1) << offset)
+
+
+def _mono_vlsb_get(fb, x, y):
+  index = (y >> 3) * fb.stride + x
+  offset = y & 0x07
+  return (fb.buf[index] >> offset) & 1
+
+
+def _mono_hlsb_set(fb, x, y, c):
+  index = (x + y * fb.stride) >> 3
+  offset = 7 - (x & 7)
+  fb.buf[index] = (fb.buf[index] & ~(1 << offset) & 0xFF) | ((c & 1) << offset)
+
+
+def _mono_hlsb_get(fb, x, y):
+  index = (x + y * fb.stride) >> 3
+  offset = 7 - (x & 7)
+  return (fb.buf[index] >> offset) & 1
+
+
+def _mono_hmsb_set(fb, x, y, c):
+  index = (x + y * fb.stride) >> 3
+  offset = x & 7
+  fb.buf[index] = (fb.buf[index] & ~(1 << offset) & 0xFF) | ((c & 1) << offset)
+
+
+def _mono_hmsb_get(fb, x, y):
+  index = (x + y * fb.stride) >> 3
+  offset = x & 7
+  return (fb.buf[index] >> offset) & 1
+
+
+def _rgb565_set(fb, x, y, c):
+  index = (x + y * fb.stride) * 2
+  fb.buf[index] = c & 0xFF
+  fb.buf[index + 1] = (c >> 8) & 0xFF
+
+
+def _rgb565_get(fb, x, y):
+  index = (x + y * fb.stride) * 2
+  return fb.buf[index] | (fb.buf[index + 1] << 8)
+
+
+def _gs2_hmsb_set(fb, x, y, c):
+  index = (x + y * fb.stride) >> 2
+  shift = 6 - 2 * (x & 3)
+  mask = 0x03 << shift
+  fb.buf[index] = (fb.buf[index] & ~mask & 0xFF) | ((c & 0x03) << shift)
+
+
+def _gs2_hmsb_get(fb, x, y):
+  index = (x + y * fb.stride) >> 2
+  shift = 6 - 2 * (x & 3)
+  return (fb.buf[index] >> shift) & 0x03
+
+
+def _gs4_hmsb_set(fb, x, y, c):
+  index = (x + y * fb.stride) >> 1
+  if (x & 1) == 0:
+    fb.buf[index] = (fb.buf[index] & 0x0F) | ((c & 0x0F) << 4)
+  else:
+    fb.buf[index] = (fb.buf[index] & 0xF0) | (c & 0x0F)
+
+
+def _gs4_hmsb_get(fb, x, y):
+  index = (x + y * fb.stride) >> 1
+  if (x & 1) == 0:
+    return (fb.buf[index] >> 4) & 0x0F
+  return fb.buf[index] & 0x0F
+
+
+def _gs8_set(fb, x, y, c):
+  fb.buf[x + y * fb.stride] = c & 0xFF
+
+
+def _gs8_get(fb, x, y):
+  return fb.buf[x + y * fb.stride]
+
+
+_OPS = {
+  MONO_VLSB: (_mono_vlsb_set, _mono_vlsb_get),
+  MONO_HLSB: (_mono_hlsb_set, _mono_hlsb_get),
+  MONO_HMSB: (_mono_hmsb_set, _mono_hmsb_get),
+  RGB565: (_rgb565_set, _rgb565_get),
+  GS2_HMSB: (_gs2_hmsb_set, _gs2_hmsb_get),
+  GS4_HMSB: (_gs4_hmsb_set, _gs4_hmsb_get),
+  GS8: (_gs8_set, _gs8_get),
+}
+
+
+class FrameBuffer:
+  def __init__(self, buffer, width, height, format, stride=None):
+    if format not in _OPS:
+      raise ValueError("format de pixel inconnu")
+    self.buf = buffer
+    self.width = width
+    self.height = height
+    self.format = format
+    self.stride = width if stride is None else stride
+    self._set, self._get = _OPS[format]
+
+  def pixel(self, x, y, c=None):
+    if x < 0 or x >= self.width or y < 0 or y >= self.height:
+      return None
+    if c is None:
+      return self._get(self, x, y)
+    self._set(self, x, y, c)
+    return None
+
+  def fill(self, c):
+    self.fill_rect(0, 0, self.width, self.height, c)
+
+  def fill_rect(self, x, y, w, h, c):
+    if w < 1 or h < 1 or x + w <= 0 or y + h <= 0 or x >= self.width or y >= self.height:
+      return
+    xend = min(self.width, x + w)
+    yend = min(self.height, y + h)
+    x = max(x, 0)
+    y = max(y, 0)
+    set_ = self._set
+    for yy in range(y, yend):
+      for xx in range(x, xend):
+        set_(self, xx, yy, c)
+
+  def hline(self, x, y, w, c):
+    self.fill_rect(x, y, w, 1, c)
+
+  def vline(self, x, y, h, c):
+    self.fill_rect(x, y, 1, h, c)
+
+  def rect(self, x, y, w, h, c, f=False):
+    if w < 1 or h < 1:
+      return
+    if f:
+      self.fill_rect(x, y, w, h, c)
+    else:
+      self.fill_rect(x, y, w, 1, c)
+      self.fill_rect(x, y + h - 1, w, 1, c)
+      self.fill_rect(x, y, 1, h, c)
+      self.fill_rect(x + w - 1, y, 1, h, c)
+
+  def line(self, x0, y0, x1, y1, c):
+    dx = abs(x1 - x0)
+    dy = -abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx + dy
+    x, y = x0, y0
+    while True:
+      FrameBuffer.pixel(self, x, y, c)
+      if x == x1 and y == y1:
+        break
+      e2 = 2 * err
+      if e2 >= dy:
+        err += dy
+        x += sx
+      if e2 <= dx:
+        err += dx
+        y += sy
+
+  def ellipse(self, cx, cy, xr, yr, c, f=False, m=0x0F):
+    if xr <= 0 or yr <= 0:
+      return
+    for dy in range(-yr, yr + 1):
+      # bornes de l'ellipse sur cette ligne horizontale
+      ratio = dy / yr
+      span = xr * (1 - ratio * ratio) ** 0.5
+      if dy <= 0:
+        quad_right, quad_left = 0x01, 0x02  # Q1, Q2
+      else:
+        quad_right, quad_left = 0x08, 0x04  # Q4, Q3
+
+      if f:
+        if m & quad_right:
+          FrameBuffer.hline(self, cx, cy + dy, int(round(span)) + 1, c)
+        if m & quad_left:
+          FrameBuffer.hline(self, cx - int(round(span)), cy + dy, int(round(span)) + 1, c)
+      else:
+        xi = int(round(span))
+        if m & quad_right:
+          FrameBuffer(self, cx + xi, cy + dy, c)
+        if m & quad_left:
+          FrameBuffer.pixel(self, cx - xi, cy + dy, c)
+
+  def poly(self, x, y, coords, c, f=False):
+    n = len(coords) // 2
+    if n < 2:
+      return
+    pts = [(x + coords[2 * i], y + coords[2 * i + 1]) for i in range(n)]
+    if f:
+      self._fill_poly(pts, c)
+    else:
+      for i in range(n):
+        x0, y0 = pts[i]
+        x1, y1 = pts[(i + 1) % n]
+        FrameBuffer.line(self,x0, y0, x1, y1, c)
+
+  def _fill_poly(self, pts, c):
+    n = len(pts)
+    ys = [p[1] for p in pts]
+    ymin, ymax = min(ys), max(ys)
+    for yy in range(ymin, ymax + 1):
+      xs = []
+      for i in range(n):
+        x0, y0 = pts[i]
+        x1, y1 = pts[(i + 1) % n]
+        if y0 == y1:
+          continue
+        if min(y0, y1) <= yy < max(y0, y1):
+          t = (yy - y0) / (y1 - y0)
+          xs.append(x0 + t * (x1 - x0))
+      xs.sort()
+      for i in range(0, len(xs) - 1, 2):
+        xstart = int(round(xs[i]))
+        xend = int(round(xs[i + 1]))
+        FrameBuffer.hline(self, xstart, yy, max(xend - xstart, 1), c)
+
+  def text(self, s, x, y, c=1):
+    for i, ch in enumerate(s):
+      self._draw_char(ch, x + i * 8, y, c)
+
+  def _draw_char(self, ch, x, y, c):
+    o = ord(ch)
+    if o < 32 or o > 127:
+      return
+    offset = (o - 32) * 8
+    glyph = _FONT[offset:offset + 8]
+    for col in range(8):
+      byte = glyph[col]
+      if byte == 0:
+        continue
+      for row in range(8):
+        if byte & (1 << row):
+          FrameBuffer.pixel(self, x + col, y + row, c)
+
+  def scroll(self, xstep, ystep):
+    if xstep < 0:
+      sx, xend, dx = 0, self.width + xstep, 1
+    else:
+      sx, xend, dx = self.width - 1, xstep - 1, -1
+    if ystep < 0:
+      sy, yend, dy = 0, self.height + ystep, 1
+    else:
+      sy, yend, dy = self.height - 1, ystep - 1, -1
+
+    y = sy
+    while y != yend:
+      x = sx
+      while x != xend:
+        src = FrameBuffer.pixel(self, x - xstep, y - ystep)
+        if src is not None:
+          FrameBuffer.pixel(self, x, y, src)
+        x += dx
+      y += dy
+
+  def blit(self, fbuf, x, y, key=-1, palette=None):
+    for j in range(fbuf.height):
+      yy = y + j
+      if yy < 0 or yy >= self.height:
+        continue
+      for i in range(fbuf.width):
+        xx = x + i
+        if xx < 0 or xx >= self.width:
+          continue
+        src = fbuf.pixel(i, j)
+        if src == key:
+          continue
+        if palette is not None:
+          src = palette.pixel(src, 0)
+        FrameBuffer.pixel(self, xx, yy, src)
+
+##################################################################
+##### End of reimplementation form MicroPython's framebuffer #####
+##################################################################
+
 
 def unpack_(data):
   return zlib.decompress(base64.b64decode(data)).decode()
@@ -505,7 +896,8 @@ class Device(Device_):  # noqa: F821
       "gc.collect()",
       SLEEP_WAIT_SCRIPT_,
       NTP_SCRIPT_,
-      WOKWI_KIT_PATCH_SCRIPT_
+      WOKWI_KIT_PATCH_SCRIPT_,
+      OLED_SCRIPT
     ]
     self.commitBehavior_ = None
     self.timer_ = None
@@ -1821,7 +2213,7 @@ def hexImageToBytearray_(hex_string, width=128, height=64):
   return out
 
 
-class OLED_(Core_):
+class _OLED_(Core_):
   def show(self):
     return self.addMethods("show()")
 
@@ -1886,6 +2278,135 @@ class OLED_(Core_):
     self.getDevice().sleep(FLASH_DELAY_ if isinstance(extra, bool) else extra)
     return self.fill(0).show()
 
+OLED_SCRIPT = """
+def oled_show(self, buffer):
+  x0 = 0
+  x1 = self.width - 1
+  if self.width == 64:
+    # displays with width of 64 pixels are shifted by 32
+    x0 += 32
+    x1 += 32
+#  self.write_cmd(_SSD1306_SET_COL_ADDR)  # TOFIX
+  self.write_cmd(const(0x21))
+  self.write_cmd(x0)
+  self.write_cmd(x1)
+#  self.write_cmd(_SSD1306_SET_PAGE_ADDR) # TOFIX
+  self.write_cmd(const(0x22))
+  self.write_cmd(0)
+  self.write_cmd(self.pages - 1)
+  self.write_data(deflate.DeflateIO(io.BytesIO(ubinascii.a2b_base64(buffer)), deflate.AUTO, 10).read())
+"""
+
+class OLED_(Core_, FrameBuffer):
+  def __init__(self, width, height, device = None):
+    self.width = width
+    self.height = height
+    self.pages = self.height // 8
+    self.buffer = bytearray(self.pages * self.width)
+    Core_.__init__(self, device)
+    FrameBuffer.__init__(self, self.buffer, self.width, self.height, MONO_VLSB)
+  
+  def show(self, compress = True):
+    command = f'oled_show({self.getObject()}, "{base64.b64encode(zlib.compress(self.buffer, level = 9)).decode("ascii")}")'
+#    print(command)
+    self.addCommand(command)
+
+    return self
+
+  def show_(self, compress = True):
+    if compress:
+      self.addMethods(f'buffer[:] = deflate.DeflateIO(io.BytesIO(ubinascii.a2b_base64("{base64.b64encode(gzip.compress(self.buffer, compresslevel = 9)).decode("ascii")}")), deflate.AUTO, 10).read()')
+    else:
+      self.addMethods(f'buffer[:] = ubinascii.a2b_base64("{base64.b64encode(self.buffer).decode("ascii")}")')
+
+    return self.addMethods("show()")
+
+  def powerOff(self):
+    return self.addMethods("poweroff()")
+
+  def powerOn(self):
+    return self.addMethods("poweron()")
+
+  def contrast(self, contrast):
+    return self.addMethods(f"contrast({contrast})")
+
+  def invert(self, invert):
+    return self.addMethods(f"invert({invert})")
+
+  def fill(self, col):
+    FrameBuffer.fill(self, col)
+
+    return self
+
+  def pixel(self, x, y, col=1):
+    FrameBuffer.pixel(self, x, y, col)
+
+    return self
+
+  def scroll(self, dx, dy):
+    FrameBuffer.scroll(self, dx, dy)
+
+    return self
+
+  def text(self, string, x, y, col=1):
+    FrameBuffer.text(self, string, x, y, col)
+
+    return self
+
+  def hText(self, string, y, col=1, trueWidth=None):
+    trueWidth = trueWidth or self.width
+
+    return FrameBuffer.text(self, string, max(( {trueWidth} - len(string) * 8) // 2, 0), y, col)
+  
+  def rect(self, x, y, w, h, col, fill=False):
+    FrameBuffer.rect(self, x, y, w, h, col, fill)
+
+    return self
+
+  def hline(self, x, y, w, col):
+    FrameBuffer.hline(self, x, y, w, col)
+
+    return self
+
+  def vline(self, x, y, h, col):
+    FrameBuffer.vline(self, x, y, h, col)
+
+    return self
+
+  def line(self, x1, y1, x2, y2, col):
+    FrameBuffer.line(self, x1, y1, x2, y2, col)
+
+    return self
+
+  def ellipse(self, x, y, rx, ry, col, fill=False, quad=15):
+    FrameBuffer.ellipse(self, x, y, rx, ry, col, fill, quad)
+
+    return self
+  
+  def draw(self, pattern, width, ox=0, oy=0, mul=1):
+    if width % 4:
+      raise Exception("'width' must be a multiple of 4!")
+    py = width >> 2
+    for pos in range(len(pattern)):
+      char = int(pattern[pos],16) 
+      # y = oy + mul * int(pos / py)
+      y = oy + mul * ( pos // py )
+      px = ( pos << 2 ) % width
+      masq = 8
+      for offset in range(px, px + 4):
+        if mul == 1:
+          self.pixel(ox + offset, y, 1 if char & masq else 0)
+        else:
+          self.rect(ox + mul * offset, y, mul, mul, 1 if char & masq else 0, True)
+        masq = masq >> 1
+
+    return self
+
+  def flash(self, extra=True):
+    self.fill(1).show()
+    self.getDevice().sleep(FLASH_DELAY_ if isinstance(extra, bool) else extra)
+    return self.fill(0).show()
+
 
 class SSD1306(OLED_):
   def rotate(self, rotate=True):
@@ -1904,7 +2425,8 @@ class SSD1306_I2C(Multi_, SSD1306):
     external_vcc=False,
     extra=True,
   ):
-    super().__init__()
+    Multi.__init__(self)
+    SSD1306.__init__(self, width, height)
 
     if bool(width) != bool(height) != bool(i2c):
       raise Exception("All or none of width/height/i2c must be given!")
@@ -1916,7 +2438,8 @@ class SSD1306_I2C(Multi_, SSD1306):
       raise Exception("addr can not be given without i2c!")
 
   def init(self, width, height, /, i2c, external_vcc=False, addr=None, extra=True):
-    super().init(
+    SSD1306.init(
+      self,
       "SSD1306_I2C-1",
       f"SSD1306_I2C({width}, {height}, {i2c.getObject()}, {addr}, {external_vcc})",
       i2c.getDevice(),
@@ -2324,8 +2847,7 @@ def playEvents(polyEvents, durationCallback):
     if len(inspect.signature(durationCallback).parameters) > 1:
       params.append(cumul)
 
-    if not durationCallback(*params):
-      return
+    durationCallback(*params)
         
     for i in range(len(indexes)):
       if indexes[i] is not None and indexes[i] >= len(polyEvents[i]):

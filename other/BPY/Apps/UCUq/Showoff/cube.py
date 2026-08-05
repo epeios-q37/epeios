@@ -3,32 +3,6 @@ import math
 WIDTH_ = 128
 HEIGHT_ = 64
 
-buffer_ = [[0]*WIDTH_ for _ in range(HEIGHT_)]
-
-def setPixel_(x, y):
-  if 0 <= x < WIDTH_ and 0 <= y < HEIGHT_:
-    buffer_[y][x] = 1
-
-
-def drawLine_(x0, y0, x1, y1):
-  dx = abs(x1 - x0)
-  dy = -abs(y1 - y0)
-  sx = 1 if x0 < x1 else -1
-  sy = 1 if y0 < y1 else -1
-  err = dx + dy
-
-  while True:
-    setPixel_(x0, y0)
-    if x0 == x1 and y0 == y1:
-      break
-    e2 = 2 * err
-    if e2 >= dy:
-      err += dy
-      x0 += sx
-    if e2 <= dx:
-      err += dx
-      y0 += sy
-
 
 def rotatePoint_(x, y, z, pitch, roll, yaw):
   p = math.radians(pitch)
@@ -57,6 +31,7 @@ def project_(x, y, z, scale=40):
   yp = int(HEIGHT_/2 - y * factor)
   return xp, yp
 
+
 cubeVertices_ = [
   (-1,-1,-1), (1,-1,-1), (1,1,-1), (-1,1,-1),
   (-1,-1, 1), (1,-1, 1), (1,1, 1), (-1,1, 1)
@@ -69,27 +44,7 @@ cubeEdges_ = [
 ]
 
 
-def clearBuffer_():
-  for y in range(HEIGHT_):
-    for x in range(WIDTH_):
-      buffer_[y][x] = 0
-
-
-def bufferToHex_():
-  hex_string = []
-  for y in range(HEIGHT_):
-    for x in range(0, WIDTH_, 4):
-      nibble = (
-        (buffer_[y][x]   << 3) |
-        (buffer_[y][x+1] << 2) |
-        (buffer_[y][x+2] << 1) |
-        (buffer_[y][x+3] << 0)
-      )
-      hex_string.append(f"{nibble:X}")
-  return "".join(hex_string)
-
-
-def draw3DCube(x, y, z):
+def draw3DCube(oled, x, y, z):
   """
   x = alpha (0–360°)  → yaw
   y = beta  (-180–180°) → pitch
@@ -99,7 +54,7 @@ def draw3DCube(x, y, z):
   pitch = -y
   roll  = -z
 
-  clearBuffer_()
+  oled.fill(0)
 
   projected = []
   for (vx, vy, vz) in cubeVertices_:
@@ -110,7 +65,5 @@ def draw3DCube(x, y, z):
   for a, b in cubeEdges_:
     x0, y0 = projected[a]
     x1, y1 = projected[b]
-    drawLine_(x0, y0, x1, y1)
-    
-  return bufferToHex_()
+    oled.line(x0, y0, x1, y1, 1)
 

@@ -9,7 +9,7 @@ import os
 import partner
 import pink
 import show
-import trio
+import trios
 
 DELAY = 0.5
 
@@ -44,7 +44,7 @@ def atk(dom):
   
   dom.inner("", BODY.format(devices, DEVICES_[0], *SHOW_DEVICES_))  # type: ignore # noqa: F821
   partner.set(dom)
-  trio.set(dom)
+  trios.set(dom)
   dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);")
 
 
@@ -113,27 +113,27 @@ def atkShowTest():
 
 def atkShowIndy(dom):
   devices = show.getDevices()
-  timestamp = show.countdown(time.time() + DELAY, devices)
+  timestamp = show.countdownIfRequested(dom, time.time() + DELAY, devices)
   indy.launch(timestamp, devices)
 
 
 def atkShowPink(dom):
   devices = show.getDevices()
-  timestamp = show.countdown(time.time() + DELAY, devices)
+  timestamp = show.countdownIfRequested(dom, time.time() + DELAY, devices)
   pink.launch(timestamp, devices)
 
 
 def atkShowPlay(dom):
   devices = show.getDevices()
-  timestamp = time.time() + DELAY
-#  timestamp = show.countdown(time.time() + DELAY, devices)
-  trio.launch(int(dom.getValue("ShowTrios")), timestamp, devices)
+  timestamp = show.countdownIfRequested(dom, time.time() + DELAY, devices)
+  trios.launch(int(dom.getValue("ShowTrios")), timestamp, devices)
 
 
 def atkShowColors(dom):
   devices = show.getDevices()
-  timestamp = show.countdown(time.time() + DELAY, devices)
+  timestamp = show.countdownIfRequested(dom, time.time() + DELAY, devices)
   colors.launch(timestamp, devices)
+
 
 if os.environ.get("PREFIX", "").startswith("/data/data/com.termux"):
   atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"')) 

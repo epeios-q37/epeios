@@ -21,7 +21,7 @@ def show(script):
 
 
 def callback(script, expression):
-#  show(script)
+  # show(script)
   exec(script)
   if expression:
     return eval(expression)
