@@ -183,8 +183,12 @@ def Buzzer(whole):
   buzzer.launch(whole)
 
 
-def OLED(whole):
-  oled.launch(whole)
+def OLEDGeo(whole):
+  oled.launchGeo(whole)
+  
+  
+def Mov(whole):
+  oled.launchMov(whole)
   
   
 def matrixSimulation():

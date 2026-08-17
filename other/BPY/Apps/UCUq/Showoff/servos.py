@@ -2,11 +2,11 @@ import random
 
 import ucuq
 
-STEP_MIN_ = 50
-STEP_MAX_ = 300
+STEP_MIN_ = 100
+STEP_MAX_ = 250
 DURATION_ = 15
-DELAY_ = 1 / 15
-COMMIT_DELAY_ = 1 / 10
+DELAY_ = 1 / 10
+COMMIT_DELAY_ = 1 / 8
 MAX_ = ucuq.ravel.SERVO_MAX
 WIDTH_ = ucuq.ravel.LCD_WIDTH * 5
 COLOR_MAX_ = ucuq.ravel.RING_MAX // 7

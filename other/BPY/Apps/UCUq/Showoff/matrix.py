@@ -166,7 +166,7 @@ def getServosEvents_(upper, lower):
 def getCommitEvents_():
   elapsed = 0
   events = []
-  delay = .30
+  delay = 1/6
   
   while elapsed < DURATION_:
     events.append((lambda: ucuq.commit(), delay))

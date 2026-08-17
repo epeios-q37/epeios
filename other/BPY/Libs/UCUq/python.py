@@ -324,3 +324,4 @@ def getWebFileContent(url):
 def getKits():
   pass# With Python, the kits are already retrieved.
 
+OLED_SHOW_DEFAULT_COMPRESS_VALUE = True

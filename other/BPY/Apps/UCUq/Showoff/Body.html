@@ -17,11 +17,19 @@
       <button xdh:onevent="PartnerBuzzer">Buzzer</button>
       <button xdh:onevent="PartnerRing">Ring</button>
       <button xdh:onevent="PartnerLCD">LCD</button>
-      <button xdh:onevent="PartnerOLED">OLED</button>
+      <button xdh:onevent="PartnerOLEDGeo">OLED G</button>
+      <button xdh:onevent="PartnerOLEDMov">OLED M</button>
       <button xdh:onevent="PartnerServos">Servos</button>
       <button xdh:onevent="PartnerIndy">Indy</button>
       <button xdh:onevent="PartnerMatrix">Matrix</button>
       <button xdh:onevent="PartnerListen">Listen</button>
+      <span style="align-self: center;">
+        <label>
+          <span>Orient.:</span>
+          <input type="checkbox" id="PartnerOrientation">
+        </label>
+      </span>
+      <span></span>
       <label style="align-self: center;">
         <span>Whole:</span>
         <input type="checkbox" id="PartnerFormat">
@@ -30,13 +38,7 @@
     </span>
     <fieldset style="display: flex; justify-content: space-around;">
       <legend>Orientation</legend>
-      <span style="align-self: center;">
-        <label>
-          <span>Poll:</span>
-          <input type="checkbox" id="PartnerOrientation">
-        </label>
-      </span>
-      <fieldset>
+
         <span>
           <span>Z: </span>
           <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
@@ -52,7 +54,6 @@
           <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
             id="PartnerOrientationY"></output>
         </span>
-      </fieldset>
     </fieldset>
   </fieldset>
   <fieldset>

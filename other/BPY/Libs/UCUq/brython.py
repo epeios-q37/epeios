@@ -187,3 +187,5 @@ async def getKitsAwait():
   global KITS_
 
   KITS_ = json.loads(await getWebFileContentAwait("https://raw.githubusercontent.com/epeios-q37/ucuq-python/refs/heads/main/demos/assets/kits.json"))
+
+OLED_SHOW_DEFAULT_COMPRESS_VALUE = False # Due to https://github.com/brython-dev/brython/issues/2910
