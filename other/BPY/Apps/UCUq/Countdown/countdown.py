@@ -158,7 +158,7 @@ players = 0 # Amount of players.
 toFind = 0
 winner = 0 # if != 0, the role of the player which wins.
 
-class HW():
+class HW:
   def __init__(self, infos, device=None):
     self.device, self.lcd, self.oled, self.buzzer, self.ring = ucuq.getBits(infos, "LCD", "OLED", "Buzzer", "Ring", device=device)
     

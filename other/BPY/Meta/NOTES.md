@@ -5,6 +5,23 @@ Contient les applications qui sont communes à *Brython* et *Python*.
 Pour lancer la version *Brython* : `BPYB_Launch <app_dir>`.
 Pour lancer la version *Python* : `BPYP_Launch <app_dir>`.
 
+## Identification des microcontrôleurs
+
+Pour spécifier quel(s) microcontrôleur est utilisé, on utilise une chaîne de caractères contenant un ou plusieurs `<token>:<id>` séparés par un ou plusieurs espaces. `<token>` et `<id>` sont sensibles à la casse et constitués de caractère alphanumérique plus les caractères `_` et `-`.
+`<token>` est généralement un *UUID* pour pouvoir être utilisé comme paramètre pour le *NLE* et sera à priori génèré automatiquement. Les `<id>` seront à la discrétion de l'utilisateur.
+Les éléments par défaut sont ceux définis dans la config.
+Si la chaîne de caractère est vide, on utilisera le microcontrôleur par défaut.
+Si un token global n'a pas été fourni, c'est le token par défaut qui est le global.
+
+`<token>` | `:` | `<id>` | signification
+:---: | :---: | :---: | ---
+❌ | ❌ | ❌ | utilisation du microcontrôleur par défaut (chaine vide)
+✅ | ✅ | ❌ | `<token>` devient le token global
+❌ | ✅ | ❌ | le token par défaut redevient le token global
+❌ | ❌ | ✅ | utilisation de `<id>` avec le token global
+❌ | ✅ | ✅ | utilisation de `<id>` avec le token par défaut
+✅ | ✅ | ✅ | utilisation de `<token>` et `<id>`
+
 ## Utilisation des version de développement
 
 ### Version Python
@@ -19,7 +36,7 @@ Modifier le script *B/Launch*.
 
 ## Mise en œuvre de *UCUqXDevice*
 
-*UCUqXDevice* permet d'ajouter un *device*, servant généralement de mirroir.
+*UCUqXDevice* permet d'ajouter un *device*, servant généralement de miroir.
 
 Pour cela, placer un `xdh:onevent="dblclick|UCUqXDevice"` sur l'élément qui va servir de déclencheur de l'affichage de l'interface permettant de saisir les paramètre du nouveau *device*, et créer la fonction `async def UCUqXDevice(dom, device):` afin de créer, à partir de `device`, les différents composants utilisés.
 
@@ -144,7 +161,7 @@ Pilotage d'un *micro:bit* via un ESP32.
 
 Pour pouvoir téléverser un programme Python à partir de l'IDE en ligne, il faut utiliser *Chrome* (ou apparenté).
 
-Sous *Ubuntu*, il faut procèder aux modifications suivantes (<https://support.microbit.org/support/solutions/articles/19000105428-webusb-troubleshooting>, section *Linux*) :
+Sous *Ubuntu*, il faut procéder aux modifications suivantes (<https://support.microbit.org/support/solutions/articles/19000105428-webusb-troubleshooting>, section *Linux*) :
 
 ```bash
 # Create rule

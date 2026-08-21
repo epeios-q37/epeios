@@ -683,7 +683,7 @@ document.write('<script src="blocks/msg/' + Code.LANG + '.js"></script>\n');
 
 window.addEventListener('load', Code.init);
 
-function init() {
+function init(api) {
   const workspace = Blockly.getMainWorkspace();
 
   python.pythonGenerator.ucuqOriginalFinish = python.pythonGenerator.finish;
@@ -692,7 +692,19 @@ function init() {
     // const ws =  Blockly.getMainWorkspace();
     code = python.pythonGenerator.ucuqOriginalFinish(code);
 
-    return "import ucuq\n\n" + code;
+    if (api === "Ravel") {
+      code = 
+        `
+_ring = ucuq.ravel.Ring()
+_lcd = ucuq.ravel.LCD()
+_oled = ucuq.ravel.OLED()
+_upper = ucuq.ravel.Upper(smooth=True)
+_lower = ucuq.ravel.Lower(smooth=True)
+
+` + code;
+    }
+
+    return "import ucuq\n" + code + "\n";
   }
 
   // Fonction pour gérer l'événement `block_change`

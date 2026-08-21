@@ -262,7 +262,7 @@ async def atk(dom):
 
   if not hw:
     ucuq.setCommitBehavior(ucuq.CB_MANUAL)
-    hw= ucuq.Multi(HW(await ucuq.ATKConnectAwait(dom, body)))
+    hw = ucuq.Multi(HW(await ucuq.ATKConnectAwait(dom, body)))
   else:
     await dom.inner("", body)
 

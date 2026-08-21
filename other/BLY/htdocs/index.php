@@ -3,13 +3,16 @@
 $lang = $_REQUEST["lang"] ?? "";
 $demo = $_REQUEST["demo"] ?? "";
 $code = $_REQUEST["code"] ?? "";
+$api = $_REQUEST["api"] ?? "Ravel";
 $cxml = $_REQUEST["xml"] ?? ""; // Compressed with 'Q_COMPRESS'!!!
 $use_ucuq_demo_devices = isset($_REQUEST["useUCUqDemoDevices"]) ? "true" : "false";
 
-$use_ucuq_demo_devices_field = $use_ucuq_demo_devices === "true"? "<input type='hidden' name='useUCUqDemoDevices' value='' />\n" : '';
+$use_ucuq_demo_devices_field = $use_ucuq_demo_devices === "true" ? "<input type='hidden' name='useUCUqDemoDevices' value='' />\n" : '';
 
+$version = "13.2.1";
+$api_blocks = file_get_contents("api/$api.xml");
+?>
 
-echo <<<BODY
 <!DOCTYPE html>
 <html>
 
@@ -19,20 +22,21 @@ echo <<<BODY
   <meta name="google" value="notranslate">
   <title>UCUq with Blockly</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
-  <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
-  <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
-  <script src="https://unpkg.com/blockly/python_compressed.js"></script>
+  <script src="https://unpkg.com/blockly@<?= $version ?>/blockly_compressed.js"></script>
+  <script src="https://unpkg.com/blockly@<?= $version ?>/blocks_compressed.js"></script>
+  <script src="https://unpkg.com/blockly@<?= $version ?>/javascript_compressed.js"></script>
+  <script src="https://unpkg.com/blockly@<?= $version ?>/python_compressed.js"></script>
+  <script src="https://unpkg.com/blockly@<?= $version ?>/msg/fr"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-  <!--script src="https://unpkg.com/blockly/php_compressed.js"></script-->
-  <!--script src="https://unpkg.com/blockly/lua_compressed.js"></script-->
-  <!--script src="https://unpkg.com/blockly/dart_compressed.js"></script-->
+  <!--script src="https://unpkg.com/blockly@<?= $version ?>/php_compressed.js"></script-->
+  <!--script src="https://unpkg.com/blockly@<?= $version ?>/lua_compressed.js"></script-->
+  <!--script src="https://unpkg.com/blockly@<?= $version ?>/dart_compressed.js"></script-->
   <script type="text/javascript">
-    const LANG = `$lang`;
-    const DEMO = `$demo`;
-    const CODE = `$code`;
-    const CXML = `$cxml`;
-    const USE_UCUQ_DEMO_DEVICES = $use_ucuq_demo_devices;
+    const LANG = `<?= $lang ?>`;
+    const DEMO = `<?= $demo ?>`;
+    const CODE = `<?= $code ?>`;
+    const CXML = `<?= $cxml ?>`;
+    const USE_UCUQ_DEMO_DEVICES = <?= $use_ucuq_demo_devices ?>;
   </script>
   <script src="tools.js"></script>
   <script src="code.js"></script>
@@ -45,7 +49,8 @@ echo <<<BODY
     ucuq = require("ucuq");
   </script>
 </head>
-<body onload="init()">
+
+<body onload="init('<?= $api ?>')">
   <table width="100%" height="100%">
     <tr>
       <td>
@@ -382,102 +387,7 @@ echo <<<BODY
       </block>
       <block type="lists_sort"></block>
     </category>
-    <category name="UCUq" colour="#5C81A6">
-      <block type="ucuq_connect">
-        <value name="ID">
-          <shadow type="ucuq_connect_id"></shadow>
-        </value>
-        <value name="TOKEN">
-          <shadow type="ucuq_connect_token"></shadow>
-        </value>
-      </block>
-      <block type="ucuq_sleep">
-        <value name="SECONDS">
-          <shadow type="ucuq_sleep_seconds"></shadow>
-        </value>
-    </category>
-    <category name="GPIO" colour="#5C81A6">
-      <block type="gpio_init">
-        <value name="PIN">
-          <shadow type="gpio_init_pin"></shadow>
-        </value>
-      </block>
-      <block type="gpio_high">
-        <value name="STATE">
-          <shadow type="gpio_high_state"></shadow>
-        </value>
-      </block>
-      <block type="gpio_low"></block>
-    </category>
-    <category name="WS2812 (RGBs)" colour="#5C81A6">
-      <block type="ws2812_init">
-        <value name="PIN">
-          <shadow type="ws2812_init_pin"></shadow>
-        </value>
-        <value name="COUNT">
-          <shadow type="ws2812_init_count"></shadow>
-        </value>
-      </block>
-      <block type="ws2812_setValue">
-        <value name="INDEX">
-          <shadow type="ws2812_setValue_index"></shadow>
-        </value>
-        <value name="R">
-          <shadow type="ws2812_setValue_r"></shadow>
-        </value>
-        <value name="G">
-          <shadow type="ws2812_setValue_g"></shadow>
-        </value>
-        <value name="B">
-          <shadow type="ws2812_setValue_b"></shadow>
-        </value>
-      </block>
-      <block type="ws2812_fill">
-        <value name="R">
-          <shadow type="ws2812_fill_r"></shadow>
-        </value>
-        <value name="G">
-          <shadow type="ws2812_fill_g"></shadow>
-        </value>
-        <value name="B">
-          <shadow type="ws2812_fill_b"></shadow>
-        </value>
-      </block>
-      <block type="ws2812_write"></block>
-    </category>
-    <category name="HD44780 (LCD)" colour="#5C81A6">
-      <block type="hd44780_init">
-        <value name="SOFT">
-          <shadow type="hd44780_init_soft"></shadow>
-        </value>
-        <value name="SDA">
-          <shadow type="hd44780_init_sda"></shadow>
-        </value>
-        <value name="SCL">
-          <shadow type="hd44780_init_scl"></shadow>
-        </value>
-        <value name="COLS">
-          <shadow type="hd44780_init_cols"></shadow>
-        </value>
-        <value name="ROWS">
-          <shadow type="hd44780_init_rows"></shadow>
-        </value>
-      </block>
-      <block type="hd44780_moveTo">
-        <value name="X">
-          <shadow type="hd44780_moveTo_x"></shadow>
-        </value>
-        <value name="Y">
-          <shadow type="hd44780_moveTo_y"></shadow>
-        </value>
-      </block>
-      <block type="hd44780_putString">
-        <value name="STRING">
-          <shadow type="hd44780_putString_string"></shadow>
-        </value>
-      </block>
-      <block type="hd44780_clear"></block>
-    </category>
+    <?= $api_blocks ?>
     <sep></sep>
     <category name="%{BKY_CATVARIABLES}" colour="%{BKY_VARIABLES_HUE}" custom="VARIABLE"></category>
     <category name="%{BKY_CATFUNCTIONS}" colour="%{BKY_PROCEDURES_HUE}" custom="PROCEDURE"></category>
@@ -485,11 +395,9 @@ echo <<<BODY
   <form id="brython" action="https://faas.q37.info/brython/index.php" method="POST" target="brython_result">
     <input type="hidden" name="go" value="collapse">
     <input type="hidden" id="code" name="code">
-    $use_ucuq_demo_devices_field
+    <?= $use_ucuq_demo_devices_field ?>
   </form>
   <iframe name="brython_result"></iframe>
 </body>
 
 </html>
-BODY
-?>

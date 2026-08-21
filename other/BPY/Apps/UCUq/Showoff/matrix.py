@@ -33,7 +33,7 @@ ANIMATION_ = (
 
 animation_ = tuple(zlib.decompress(base64.b64decode(picture)).decode() for picture in ANIMATION_)
 
-DURATION_ = 20
+DURATION_ = 15
 
 def getBuzzerEvents_(buzzer):
   coeff = 2 ** (1/12)

@@ -1,4 +1,3 @@
-import atlastk
 import base64
 import copy
 import gzip
@@ -6,8 +5,11 @@ import inspect
 import json
 import math
 import re
+import string
 import time
 import zlib
+
+import atlastk
 
 ITEMS_ = "i_"
 
@@ -437,45 +439,43 @@ def displayMissingConfigMessage_():
   )
 
 
-def handlingConfig_(token, id):
+def handleConfig_():
   if not CONFIG_:  # noqa: F821
-    displayMissingConfigMessage_()
+    return "", ""
 
   if K_DEVICE not in CONFIG_:  # noqa: F821
     displayMissingConfigMessage_()
 
   device = CONFIG_[K_DEVICE]  # noqa: F821
 
-  if not token:
-    if K_DEVICE_TOKEN not in device:
-      displayMissingConfigMessage_()
+  if K_DEVICE_TOKEN not in device:
+    displayMissingConfigMessage_()
 
-    token = device[K_DEVICE_TOKEN]
+  token = device[K_DEVICE_TOKEN]
 
-  if not id:
-    if K_DEVICE_ID not in device:
-      displayMissingConfigMessage_()
+  if K_DEVICE_ID not in device:
+    displayMissingConfigMessage_()
 
-    id = device[K_DEVICE_ID]
+  id = device[K_DEVICE_ID]
 
   return token, id
 
 
-def getConfigToken_():
+def _getConfigToken_(): # deprecated
   try:
     return CONFIG_[K_DEVICE][K_DEVICE_TOKEN]  # noqa: F821
   except:
     return ""
 
 
-def setDevice(id=None, *, device=None, token=None):
+def setDevice(tokenId=None, *, device=None):
   if device != None:
     global device_
-    if id or token:
-      raise Exception("'device' can not be given together with 'id' or 'token'!")
+    if tokenId:
+      raise ValueError("'device' and tokenIid' can not set together!")
     device_ = device
   else:
-    getDevice(id=id, token=token)
+    getDevice(tokenId=tokenId)
 
 
 # Infos keys and subkeys
@@ -714,7 +714,7 @@ class Auto:
 
 
 def getBits(infos, *bitLabels, device=None):
-  bits = [getDevice(device)]
+  bits = [getDevice(device=device)]
 
   for label in bitLabels:
     match label:
@@ -847,52 +847,99 @@ class Multi:
   # Workaround for Brython (https://github.com/brython-dev/brython/issues/2590)
   def __bool__(self):
     return True
-  
+
+
+def testRawId_(rawId):
+  return set(rawId) <= set(string.ascii_letters + string.digits + "-_:")
+
+
+def parseRawIds_(defaultToken, rawIds):
+  items = []
+
+  for rawId in rawIds.split():
+    if not testRawId_(rawId):
+        raise ValueError(f"Misformed id: '{rawId}'!")
+
+    match rawId.split(':'):
+      case [token, id]:
+        items.append((token, id))
+      case [id]:
+        items.append((id,))
+      case _:
+        raise ValueError(f"Misformed id: '{rawId}'!")
+
+
+  token = defaultToken
+
+  tokenIds = []
+
+  for item in items:
+    if len(item) == 1:
+      tokenIds.append(TokenId_(token, item[0]))
+    elif not item[0] and not item[1]:
+      token = defaultToken
+    elif not item[0]:
+      tokenIds.append(TokenId_(defaultToken, item[1]))
+    elif not item[1]:
+      token = item[0]
+    else:
+      tokenIds.append(TokenId_(item[0], item[1]))
+      
+  return tokenIds
+
+
+class TokenId_:
+  def __init__(self, token ,id):
+    self.token = token
+    self.id = id
+
 
 class Device(Device_):  # noqa: F821
-  def __new__(cls, id=None, token=None, callback=None):
-    if not token or not id:
-      token, id = handlingConfig_(token, id)
+  def __new__(cls, tokenIds = None, *, callback=None):
+    token, configRawIds = handleConfig_()
 
-    if not token:
-      token = getConfigToken_()
+    if not tokenIds:
+      tokenIds = configRawIds
 
-    if isinstance(id, str):
-      id = "" if not id.strip() else (id[0] if len(id := id.split()) == 1 else tuple(id))
+    if isinstance(tokenIds, TokenId_):
+      tokenIds = (tokenIds,)
+    if not isinstance(tokenIds, (tuple, list)):
+      tokenIds = parseRawIds_(token, tokenIds)
 
-    if isinstance(token, str):
-      token = "" if not token.strip() else (token[0] if len(token := token.split()) == 1 else tuple(token))
+    match len(tokenIds):
+      case 0:
+        displayMissingConfigMessage_()
+      case 1:
+        tokenId = tokenIds[0]
 
-    if type(id) in (list, tuple):
-      ids = id
-      
-      if type(token) not in (list, tuple):
-        tokens = (token,) * len(ids)
-      else:
-        tokens = token
+        if not tokenId.token:
+          displayMissingConfigMessage_()
+
+        instance = object.__new__(Device)
+        instance.__init__(tokenId, callback=callback)
+        return instance
+      case _:
+        multi = Multi()
+
+        for tokenId in tokenIds:
+          multi.add(Device(tokenIds=tokenId, callback=callback))
         
-      if len(tokens) != len(ids):
-        raise Exception("'ids' and 'tokens' must be of same amount!")
-      
-      multi = Multi()
-      
-      for i in range(len(ids)):
-        multi.add(Device(id=ids[i], token=tokens[i], callback=callback))
+        return multi
         
-      return multi
-    else:
-      instance = object.__new__(Device)
-      instance.__init__(id = id, token = token, callback=callback)
-      return instance
-        
-  def __init__(self, *, id=None, token=None, callback=None):  # If id == "", using id and token from config.
+  def __init__(self, tokenIds=None, *, rawIds=None, callback=None):
+    if rawIds:
+      raise ValueError("'rawIds' can not be set !")
+
+    if not isinstance(tokenIds, TokenId_):
+      return  # method already called by '__new__'.
+    
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
     self.commands_ = []
     self.commitBehavior_ = None
     self.timer_ = None
 
-    super().__init__(id=id, token=token, callback=callback)
+    super().__init__(id=tokenIds.id, token=tokenIds.token, callback=callback)
 
     for script in START_SCRIPTS_:
       self.addCommand(script)
@@ -962,7 +1009,7 @@ class Device(Device_):  # noqa: F821
 
 
 async def getBaseInfosAwait_(device=None):
-  device = getDevice(device)
+  device = getDevice(device=device)
 
   device.addCommand(INFO_SCRIPT_, False)
 
@@ -1144,7 +1191,7 @@ async def ATKConnectAwait(dom, body, *, target="", device=None):
   )
 
   if device or CONFIG_:  # noqa: F821
-    device = getDevice(device)
+    device = getDevice(device=device)
 
   if not device:
     await dom.inner(
@@ -1174,16 +1221,18 @@ async def ATKConnectAwait(dom, body, *, target="", device=None):
 
   return infos
 
+def isDeviceAvailable():
+  return device_ != None
 
-def getDevice(device=None, *, id=None, token=None):
-  if device and (token or id):
-    displayExitMessage_("'device' can not be given together with 'token' or 'id'!")  # noqa: F821
+def getDevice(*, tokenId=None, device=None):
+  if device and tokenId:
+    displayExitMessage_("'device' and 'tokenId' can not be set together with 'token' or 'id'!")  # type: ignore # noqa: F821
 
   if device is None:
     global device_
 
-    if token or id:
-      device_ = Device(id=id, token=token)
+    if tokenId:
+      device_ = Device(tokenId)
     elif device_ is None:
       device_ = Device()
     return device_
@@ -1192,7 +1241,7 @@ def getDevice(device=None, *, id=None, token=None):
 
 
 def addCommand(command, commit=False, /, device=None):
-  getDevice(device).addCommand(command, commit)
+  getDevice(device=device).addCommand(command, commit)
 
 
 # does absolutely nothing whichever method is called but returns 'self'.
@@ -1272,7 +1321,7 @@ class Core_:
       if device and device != self.device_:
         raise Exception("'device' already given!")
     else:
-      self.device_ = getDevice(device)
+      self.device_ = getDevice(device=device)
 
     if modules:
       self.device_.addModules(modules)
@@ -2075,7 +2124,7 @@ class Servo(Multi_):
       if not specs:
         raise Exception("'domain' can not be given without 'specs'!")
 
-  def __init__(self, pwm=None, specs=None, /, *, tweak=None, domain=None, smooth = False):
+  def __init__(self, pwm=None, specs=None, /, *, tweak=None, domain=None, smooth=False):
     super().__init__()
 
     self.test_(specs, tweak, domain)
@@ -2084,9 +2133,9 @@ class Servo(Multi_):
     self.u16_ = None
 
     if pwm:
-      self.init(pwm, specs, smooth = smooth, tweak=tweak, domain=domain)
+      self.init(pwm, specs, smooth=smooth, tweak=tweak, domain=domain)
 
-  def init(self, pwm, specs, *, tweak=None, domain=None, smooth = False, extra=True):
+  def init(self, pwm, specs, *, tweak=None, domain=None, smooth=False, extra=True):
     self.test_(specs, tweak, domain)
 
     if not tweak:
@@ -2954,16 +3003,16 @@ def gcCollect():
   addCommand("gc.collect()")
 
 def ntpSetTime(device = None):
-  return getDevice(device).ntpSetTime()
+  return getDevice(device=device).ntpSetTime()
 
 def ntpSleepUntil(timestamp, device = None):
-  return getDevice(device).ntpSleepUntil(timestamp)
+  return getDevice(device=device).ntpSleepUntil(timestamp)
 
 def ntpSleep(delay, device = None):
-  return getDevice(device).ntpSleep(delay)
+  return getDevice(device=device).ntpSleep(delay)
 
 def ntpTime(device = None):
-  return getDevice(device).ntpTime()
+  return getDevice(device=device).ntpTime()
 
 ###### End of section high precision time handling based on NTP #####
 
@@ -3253,7 +3302,7 @@ class Microbit():
     self.init(device=device, extra=extra)
     
   def init(self, device=None, extra=True):
-    self.device_ = getDevice(device)
+    self.device_ = getDevice(device=device)
     self.device_.addCommand(MB_SCRIPT_)
     self.matrix_ = [[0] * 5 for _ in range(5)]
     self.flash()
@@ -3373,10 +3422,10 @@ class kit_: # Act as namespace.
     pass
   
   class Servo180(Servo):
-    def __init__(self, pin, rest, device = None, extra = True):
+    def __init__(self, pin, rest, smooth=False, device=None, extra=True):
       self.rest_ = rest
       pwm = PWM(pin, freq=50, device=device, extra=extra, convPin = lambda pin : f"(sp_({pin}))", convU16 = lambda u16: f"(su_({u16}))", convNS = lambda ns: f"(sn_({ns}))")
-      super().__init__(pwm, Servo.Specs(1638, 8192, 180))
+      super().__init__(pwm, Servo.Specs(1638, 8192, 180), smooth=smooth)
       self.flash()
 
     def park(self):
@@ -3457,16 +3506,16 @@ class Ravel:
 
 class ravel_:  # act as namespace
   class Upper(kit_.Servo180):
-    def __init__(self, device=None, extra=True):
-      return super().__init__(0, ravel.SERVO_MAX, device, extra)
+    def __init__(self, smooth=False, device=None, extra=True):
+      super().__init__(0, ravel.SERVO_MAX, smooth, device, extra)
     
     def flash(self):
       self.setSmooth(ravel.SERVO_MAX - 500)
       self.park()
   
   class Lower(kit_.Servo180):
-    def __init__(self, device=None, extra=True):
-      return super().__init__(1, 0, device, extra)
+    def __init__(self, smooth=False, device=None, extra=True):
+      super().__init__(1, 0, smooth, device, extra)
     
     def flash(self):
       self.setSmooth(500)
@@ -3496,12 +3545,12 @@ class ravel:  # act as namespace
       return super().__new__(BaseClassPatch_(cls, ravel.LCD), 16, 2, SoftI2C(6, 7, device=device), extra=extra)
     
   class Upper(ravel_.Upper):
-    def __new__(cls, device=None, extra=True):
-      return super().__new__(BaseClassPatch_(cls, ravel.Upper), device=device, extra=extra)
+    def __new__(cls, smooth=False, device=None, extra=True):
+      return super().__new__(BaseClassPatch_(cls, ravel.Upper), smooth=smooth, device=device, extra=extra)
     
   class Lower(ravel_.Lower):
-    def __new__(cls, device=None, extra=True):
-      return super().__new__(BaseClassPatch_(cls, ravel.Lower), device=device, extra=extra)
+    def __new__(cls, smooth=False, device=None, extra=True):
+      return super().__new__(BaseClassPatch_(cls, ravel.Lower), smooth=smooth, device=device, extra=extra)
     
   @staticmethod
   def get(list):

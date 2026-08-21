@@ -315,7 +315,7 @@
       "OLED": [
         {
           "Soft": false,
-          "SDA": 8,
+          "SDA": 10,
           "SCL": 9
         }
       ],

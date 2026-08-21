@@ -224,11 +224,10 @@ async def atkSave(dom):
         await dom.alert(dom.getL10N(6))
         await dom.focus(W_PORT)
         return
-    elif port:
-      if not host:
-        await dom.alert(dom.getL10n(7))
-        await dom.focus(W_HOST)
-        return
+    elif port and not host:
+      await dom.alert(dom.getL10n(7))
+      await dom.focus(W_HOST)
+      return
 
     proxyConfig[K_PROXY_HOST] = host
     proxyConfig[K_PROXY_PORT] = port

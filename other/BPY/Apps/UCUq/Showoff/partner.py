@@ -18,8 +18,8 @@ from shared import (
   getRainbowColor as getRainbowColor_,
 )
 
-def connect(device):
-  ucuq.setDevice(shared.handleDeviceInput(device))
+def connect(id):
+  ucuq.setDevice(id)
 
   ucuq.ravel.raz()
 

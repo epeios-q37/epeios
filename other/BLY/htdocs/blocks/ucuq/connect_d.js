@@ -3,20 +3,11 @@ Blockly.defineBlocksWithJsonArray([
     "type": "ucuq_connect",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "UCUq connect %1 Id %2 Token %3",
+    "message0": "UCUq connect %1",
     "args0": [
       {
-        "type": "input_dummy",
-        "name": ""
-      },
-      {
         "type": "input_value",
-        "name": "ID",
-        "align": "RIGHT"
-      },
-      {
-        "type": "input_value",
-        "name": "TOKEN",
+        "name": "TOKEN_ID",
         "align": "RIGHT"
       }
     ],
@@ -25,23 +16,12 @@ Blockly.defineBlocksWithJsonArray([
     "nextStatement": null,
   },
   {
-    "type": "ucuq_connect_id",
+    "type": "ucuq_connect_token_id",
     "message0": "%1",
     "args0": [
       {
         "type": "field_input",
-        "name": "ID"
-      }
-    ],
-    "output": null
-  },
-  {
-    "type": "ucuq_connect_token",
-    "message0": "%1",
-    "args0": [
-      {
-        "type": "field_input",
-        "name": "TOKEN"
+        "name": "TOKEN_ID"
       }
     ],
     "output": null

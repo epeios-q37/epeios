@@ -41,13 +41,6 @@ def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
-def handleDeviceInput(devices: str):
-  parts = devices.split()
-  if len(parts) == 1:
-    return parts[0]
-  return tuple(parts)
-
-
 INDY_VOICES = ("""
 E43. F42
 G43 C54. -C53 R2 D43. E42

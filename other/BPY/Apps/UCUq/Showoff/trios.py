@@ -96,14 +96,14 @@ def musicCallback_(note, turn, prev, counter, devices):
   else:
     prev[turn] = note
 
+  buzzer.play(note)
+
   if note > 0:
     if not devices.tracking.go[turn]:
       devices.tracking.go[turn] = True
     devices.lcds[turn].moveTo(15, 1).putString(chr(6 + counter % 2) )
   else:
     devices.lcds[turn].moveTo(15, 1).putString(" ")
-
-  buzzer.play(note)
 
   spots = MAP_[turn]
   
@@ -438,17 +438,6 @@ PARTS_ = (
   ),
   (
     (
-      "BWV 870a",
-      "Johann Sebastian Bach - Prelude and Fugue in C major (BWV 870) - Fugue",
-    ),
-    (
-      'eJzlVUuWxCAIvEpu0AYlmtz/YBMEBKLpN7OeTWh+JZZAp2v/wHbUW5TtQBaVjYnFee3dtIkuQWVKmYwQtGXC+QUFVnnLE8SYusDTaxoStBiC9UueQB+jwPHbPGQ/Q3E5IvBvkHwMV49EAAUw0emCrTJG3VkYyi0qAZOJ3WzQqMIaPx/5qMyRIQaNKqzB1gYQfp6HK9BOFc61g7RH99esOERE5ejGcE3uwsZa7XyrJrsLZg/u/NMNidt+zfTGhp0TjXvQlgn1DeWFSfEpoRAqLYOpt1dTnySk8O4z2F+uKW/nW+qpxRB/7JQn0GmRHjtbQh7acwvgaxsji1+vhnuasw31PeLZTfod0j83IjI+8sxiGQEkZFtQGwNDSeTYjh0YdL77oSNSFyhY6f991X5LW2zasW4h0MKkOWXi00bE7VxY763DRs4ydAbjMIQZ7E1M7m7tr5XHtseZR7C2HjtAmwJGG1QmBoUf+QSKkvZh5zJbx8JWmnYlN7jG5tDPvFLRcHgwno2LTWenixZaFa1V3f/acDfP1kNDf3XhI3nl8LaDDkhX+gENIal8', 
-      'eJzNVVHahCAIvEo3WEPUzfsf7E/Ripyo/fZh/5dsEEaREV2e04umRHl+8ZRmGQqiKaY6pJjnKfH6cYJHX67zgzEuygUGxGuWFh6CDH5HNPG7DmHdYjW1vXUnGkIGo1MIBiSDxaE4uILlMqZ2wcIL4mQUp42MMvo4v8YSVRw0arQgFBCLlQMKj+5obCgSQIOLL9oWiTc1RVkhNup0lN/JyJnKp/wfVmnKE0GWQeToMr1FqmsFhaAJl5s7Ff26Tb/Ad5eAMnJQCAW0w4QsHaEAqN/uacn/P9wznJHKlqM6QWFh6TnsFPIIKRevy2HU4bTdkGPP3OXQdUqi001IXV1uV81KT2o/aGlshLJ6IDK+zfEBNawoZrk/zAfUz8XyQdWs9g21BjMyCvflZR9Edn3BrKZsXeg7z70XSnOtTwJJDvTta75dhepWTD97kR80Gl182EyMJtRai49qPaXc01wAc71BwcaGFHjidMacv5almbuVnz5dul5PZxuMkzjtbM7yNh/eYQHrTsqv+wO+/x55',
-      'eJytVVuWwyAI3Up3UB/4iPtf2ERQkIQ6mTn9qQHuBUSgrsX4Dq/im3/DqwQ6lJSPizIuSkdSYSThApLHjyj6MYjEQIlt1Xc4OqmsmCgg6QQD2eKJQ0Z1rJgoIOkEZ7JBS3QwMnDwLAElOBAVuhQlh4VzHnhhij5LkOiQgtyUTiEsfHEbJ2DxtKQh4xWdksCSFCQdGx6VJld59vktFk68qrt5S9I3zVasYkkPIMevD2IXwyz3A8jDF/lLx/w7wdGauzy/2SupGJ1zka6Qvn1urqOiRxWhExJN4aCjT/Sy2oBccwk4EFWeKh2W7VTwe4yzsQnHi82FATss0Jb6tEp3hPzJS2BpsYWZA+c092y+eQ18535/ZgzFEruoyuBKnIwJRj1+YyjeyjO6VwULjVT7Li9rrS+F0y1sDsL3ZpN39GYAHoyIlYJ0rteN7Jf2BCmezlZsuHKlBY1Y7G7xref2DJ+UUyXpv23tCwxdUg8PrRvcD6b1m5g='
-    )
-  ),
-  (
-    (
         "BWV 847b",
         "Johann Sebastian Bach - Prelude and Fugue in C minor (BWV 847) - Fugue",
     ),
@@ -467,18 +456,6 @@ PARTS_ = (
       'eJztWFuOgzAMvAo3ICEhD+5/sC0gsarHaEKUdGFVPl17Yju2x2mcFrd942zWb4h5sWH9xrx+cYhRCoIUeCk4QK3ZUYMBiQdJlJL4DOcOCRylOCNtQKUqIiGwPOZ/Fs+rMoQkWdABV2Q5qTb0pIKYNRt+Es+/ZkO9q8o3w6jIgVKD0N/ynOSkwEiTxDSSDI9jtEhigIwABuQ9ywEIjiklTDS6BIcm9CqbYIBjEAtggEYLjG8+3gWyTUED67QFBphAgmA6AAa0RwuMP8oHJ+yAVKrMGORWv/24q2SNkIFKA5JgmxF5lTIKJmLJNlE1V/nS9am88bbnjaBRuvAsLzG4bMbkgw3bKbNLNo9xMnmahxfzRrdru1gWfMluflj5syWINlOA+614fIBnYT7f+/wR4NXtC++/YuvmBcGrjBNDxd4kQfG+jVyTnvFwvLVzT3wFqvGwVuF1z6uabuH4buFE1iNnWjMJwSwFMG1ghqlTmo1TSi+NnjKdKPfCVDovT8htxfLdBAMuHVINjcTrVZrghULx3SQfN+rOd66QTFfD/PRvsBoMPkUr/lS6jvHNRw9u5p4VcHOjfeR2OHVbVZedD5lM1emwEkAfwqCSW+9v3o7RZkb7A9n6aTU=',
       'eJzll2tywyAMhK+SGxhiA3buf7DWSZpp95Mr4oGJ0/qnDJJWz6WcL+P1G1JYv1PJl5jXb1jWr5zKpIKzCiJP3JXGcNOaAyQTJEUl5T2ce0gMU3BX7wBRUUEfzDV4YMhw5SB4PrWqhAh9PNYd35KRZhiqiXaLeoo7vKuJt4/Qy/tSUYOLZ2ceVRD0yuydmBWer6NF0WZEBDoQ90UHIBzTiAEcY9oGHFMnrlqV6F6yhmofS2zJUSVz1Es4wg7kJTZpG0uZKI3yoKXp+vN2ZDnlir7MCJbRu8wCgcNWncdUs6OkFUE/3FZe3EhgPGRF+Zx/SQ1NdwFCoyMVJ+BJxcSAUiYgba/sL1/9QeTP0Cb0wirlDivCT3nQ/L4HRz60c3+GwHuEA57AsF/VLuEgRfMpSY+YWc0kgqQCtcIZxbUB1zgusZ5Aa9uwtpoKd/EYa0ZjndS7lKTR2YCYBUaP1kSbmNgJvzy3sBa/0YyjVOlPV3XiV7wjXvUIf/7dyBasoUH/HX+DHbSDSGkPbVOR1ou5mZ59tKDNIGCx+Ja77DTwBEyY7VH9SH0Y4gesaXih',
       'eJzVllsWgyAMRLfSHYhKtHb/C2tR0ZprgHL0o/yZE4ZJJg/989XPpxEXzsO9pvk0rVsMfvOIFulgEW3xN+HShzh+hKW/gl8VrmwunawP6ZAAsge5kcunyqk7OzfZqK0hWqh+slFX9rsiEZVJqUAR3oH0pFtQQfQhDEUsEPo2Nmwl5IY+LBBafN7nIjaoRTYXCoDsRBdNFlWg28kASTyU0J/DoOoWU94TWTcuVRlsNrEt62TKB4mp8tNQTMy8xFNfOH5RfBE+CN4O4SyGMaAoQ68NnTY4Zbhrdf3hSjx+22sJDrFlzVJG21uboWSOlZXOcflhL3/IZ9Zj4cta1DEXUWpwmKWCO3WwSg6tV2Fq06i2Q0kJXwh6T3j8JTr589IQrmnf5Ac4QQ=='
-    )
-
-  ),
-  (
-    (
-      "Gimo 359b",
-      "Anonymous (~1760) ~ Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) ~ II. Largo"
-    ),
-    (
-      'eJztVtFuwyAM/JX+QTAQG/L/HzZC2m26gzmNOm2TxlPlFPt8Phtb3VI/yxr2czPbRPez1P3YzRQNGQ0RDEUeTiXcvVa0BHRS3bgYpgHBMHQHs1GjO4YM6B/A+tlLPx+WTJb4sMT1ng9l7MEf1I+RoIWEIhfcMnEITrEcrD92G8mC4JQ6wQ3cwPZfdQ6WSSHeuO6qWz78Hu4ZG0Mhri8gseIqf1Qel9lXgKUrKGLmiGQ+kuyZdNzp1oi70B5pHnx9j32CSmj/SpZClqfGyJwJJSYUxysNn4wGqr2bdAtimmpYSlbRLp8Yyu7SJMc+wC0d/05dS199PSEKehBcdY4a1muTERHMt0Td0acSpQ0GyEWI/B8BrtxEF6YEz0XS0v8283u3Ga74cJtxqzPTwPz5ZD36shhsQE9fCfhq++vOoLuQAh759ErjlUId6l5hopm0gdb8FeM7xOe+GINsyIuup5SEAzUs8ga0dKpg',
-      'eJztVltSwzAMvEpv4LcU9/4HI3YxlF0lCvAFU390OooeuytZifZ7mSe0OM5N9Z5knNDH0ZsKGioaMhp0JU3xPaugJbpJqC55JCpDLohVGFpFBfIfwPqUBSyCDRTKG5GxAb/Ov6HmrWkyep7QA+lIXx7ztz9BXWUTE/ZGDUMMRUhp1nHH5uT91OgkSwOGLL1bx58C7jC7GFfUnROm/AOwV7QmcJ2gbP6+MChd8fFpazkOOhxUS6p5vjQJLJksFDUSg0WXJbel56Hmbe0rwG+sOG/+keFeRKX0GLYqSaZDjttIqanmuSO1PLzLzHf21OqKt3PdVWDdPrf5FyZ6VyLLQF+2nPZbTkxR/N8Dv7DUqT8cQ/SNy4n8G+ZtDWfn9cXwT74YcFscj8keMyv0450jjTVwB9LgyHh5aC183qsL8V4YUuPF9e0mEh0TPPpwFKl7luejsTGkN0oCYI4=',
-      'eJy1VMkRwyAQayUdcK6x6b+wBIJhIoEPxtmfNYv2kuzXuOVQolO8xEaXowIOAL1/G10yBBG/Isl/WCWaJYXKI4TECoBFQAPQSK18qwQEBMt67uNkmEY6HIbfbLQSPXojow2NW61l3IVmb7RSM/z4ovVN0V7NoMqyEGLvKIX73RFHOR412RMLAAEBlOSH9Ndgbbujo/EqD8zxJCsv4BmDnfxhLrR6cOHiUmJlEhaOIwFyzoTQaY8dR/FEeMEZR3FldkJvDaf77jhziqdza63MGxr1RQY='
     )
   ),
   (

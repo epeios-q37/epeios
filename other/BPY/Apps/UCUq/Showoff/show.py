@@ -63,7 +63,7 @@ def connect(deviceList):
   
   print(f"Décalage horaire : {ntpOffset_} s.")
   
-  ucuq.setDevice(tuple(shared.handleDeviceInput(device) for device in deviceList))
+  ucuq.setDevice(deviceList)
 
   devices_ = setDevices_()
 

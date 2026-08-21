@@ -3,12 +3,8 @@ Blockly.defineBlocksWithJsonArray([
     "type": "ucuq_sleep",
     "tooltip": "",
     "helpUrl": "",
-    "message0": "UCUq sleep %1 Seconds %2",
+    "message0": "UCUq sleep %1",
     "args0": [
-      {
-        "type": "input_dummy",
-        "name": ""
-      },
       {
         "type": "input_value",
         "name": "SECONDS",
@@ -28,6 +24,7 @@ Blockly.defineBlocksWithJsonArray([
         "type": "field_number",
         "name": "SECONDS",
         "min": 0,
+        "value": 1
       }
     ],
     "output": null
