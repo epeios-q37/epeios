@@ -170,7 +170,7 @@ def countdownIfRequested(dom, timestamp, devices):
   
   ucuq.gcCollect()
   
-  return timestamp + 1.5
+  return timestamp + 0.5
 
 
 def unpack(data):

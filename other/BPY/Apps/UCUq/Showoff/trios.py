@@ -19,8 +19,11 @@ REGULAR_SCROLL_DELAY_ = .15
 RING_RAINBOW_DELAY_ = 1/3
 FAST_SCROLL_= 9 * ucuq.ravel.OLED_HEIGHT // 10
 START_DELAY_ = (FAST_SCROLL_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELAY_ * (ucuq.ravel.OLED_HEIGHT - FAST_SCROLL_)
-LCD_WIDTH = ucuq.ravel.LCD_WIDTH
-KIT_COUNT = 3
+LCD_WIDTH_ = ucuq.ravel.LCD_WIDTH
+KIT_COUNT_ = 3
+
+OLED_WIDTH_ = ucuq.ravel.OLED_WIDTH
+OLED_HEIGHT_ = ucuq.ravel.OLED_HEIGHT
 
 TILDE_CHARMAP_ = (
   0b00000,
@@ -143,12 +146,31 @@ def set(dom):
   dom.inner("ShowTrios", html)
 
 
+OLED_VOICE_WIDTH = ( OLED_WIDTH_ - ( KIT_COUNT_ - 1 ) ) // KIT_COUNT_
+OLED_VOICES_START = tuple(i * ( OLED_VOICE_WIDTH + 1 ) for i in range(KIT_COUNT_) )
+
+print(OLED_VOICES_START)
+
+
 def oledDrawNote_(oled, index, note, minNote, maxNote):
-  oled.pixel(128 // KIT_COUNT * index + 128  // KIT_COUNT * (note - minNote) // (maxNote - minNote + 1), 0, 1)
+  pos = OLED_VOICES_START[index] + ( OLED_VOICE_WIDTH - 1 ) * (note - minNote) // (maxNote - minNote )
+  oled.pixel(pos, 0, 1)
+
+  return pos
 
 
 def oledDrawMarker_(oled, turn, color):
-  oled.hline(128 // KIT_COUNT * turn, 0, 128 // KIT_COUNT, color)
+  for x in range(OLED_VOICE_WIDTH):
+    oled.pixel(OLED_VOICES_START[turn] + x, 0, color if x % ( KIT_COUNT_ * 2 ) == KIT_COUNT_ else 0)
+
+mn = [100, 100, 100]
+mx = [-1, -1, -1]
+
+
+def oledDrawSeparators_(oleds):
+  for i in range(1, KIT_COUNT_):
+    for y in range(OLED_HEIGHT_):
+      oleds.pixel(OLED_VOICES_START[i] - 1, y, 1 if y % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
 
 
 def oledCallback_(oleds, notes, minNotes, maxNotes):
@@ -157,7 +179,9 @@ def oledCallback_(oleds, notes, minNotes, maxNotes):
       minNote = minNotes[j]
       maxNote = maxNotes[j]
       if note:
-        oledDrawNote_(oled, j, note, minNote, maxNote)
+        pos = oledDrawNote_(oled, j, note, minNote, maxNote)
+        mx[j] = max(mx[j], pos)
+        mn[j] = min(mn[j], pos)
 
   for i, oled in enumerate(oleds):
     oledDrawMarker_(oled, i, 1)
@@ -169,8 +193,8 @@ def oledCallback_(oleds, notes, minNotes, maxNotes):
     if note:
       oledDrawNote_(oled, i, note, minNotes[i], maxNotes[i])
 
-  oleds.scroll(dx=0, dy=1)
-  oleds.hline(0, 0 ,128, 0)
+  oleds.scroll(dx=0, dy=1).hline(0, 0, 128, 0)
+  oledDrawSeparators_(oleds)
 
 
 def oledDrawAllMarkers_(oleds):
@@ -179,8 +203,8 @@ def oledDrawAllMarkers_(oleds):
 
 
 def getOLEDEvents_(part, oleds):
-  minNotes = [100] * KIT_COUNT
-  maxNotes = [0] * KIT_COUNT
+  minNotes = [100] * KIT_COUNT_
+  maxNotes = [0] * KIT_COUNT_
   elapsed = 0
 
   for voice in part:
@@ -215,7 +239,10 @@ def getOLEDEvents_(part, oleds):
       (
         lambda: (
           oledDrawAllMarkers_(oleds),
-          oleds.show().hline(0, 0 ,128, 0).scroll(dx=0, dy=1)),
+          oleds.show().hline(0, 0, 128, 0),
+          oledDrawSeparators_(oleds),
+          oleds.scroll(dx=0, dy=1)
+        ),
         REGULAR_SCROLL_DELAY_
       )
     )
@@ -226,7 +253,7 @@ def getOLEDEvents_(part, oleds):
 def ringRainbowCallback_(rings, counter, go):
   for index, ring in enumerate(rings):
       if go[index]:
-        color = shared.getRainbowColor(counter + index * len(shared.RAINBOW) // KIT_COUNT)
+        color = shared.getRainbowColor(counter + index * len(shared.RAINBOW) // KIT_COUNT_)
         ring.setValue(5, color).setValue(6, color).write()
 
 
@@ -255,21 +282,21 @@ def getCommitEvents_(duration):
 
 
 def getLCDTitleEvent_(title, counter, lcds):
-  string = title[counter % (len(title) - KIT_COUNT * LCD_WIDTH):][:KIT_COUNT * LCD_WIDTH]
+  string = title[counter % (len(title) - KIT_COUNT_ * LCD_WIDTH_):][:KIT_COUNT_ * LCD_WIDTH_]
 
   return lambda: (
-    lcds[0].moveTo(0,0).putString(string[:LCD_WIDTH]),
-    lcds[1].moveTo(0,0).putString(string[LCD_WIDTH:][:LCD_WIDTH]),
-    lcds[2].moveTo(0,0).putString(string[LCD_WIDTH * 2:][:LCD_WIDTH])
+    lcds[0].moveTo(0,0).putString(string[:LCD_WIDTH_]),
+    lcds[1].moveTo(0,0).putString(string[LCD_WIDTH_:][:LCD_WIDTH_]),
+    lcds[2].moveTo(0,0).putString(string[LCD_WIDTH_ * 2:][:LCD_WIDTH_])
   )
 
 
 def getPrologLCDTitleEvents_(title, duration, lcds):
-  title = KIT_COUNT * LCD_WIDTH // 4 * "\06\07\06 " + KIT_COUNT * (title + LCD_WIDTH * " ")
+  title = KIT_COUNT_ * LCD_WIDTH_ // 4 * "\06\07\06 " + KIT_COUNT_ * (title + LCD_WIDTH_ * " ")
   counter = 0
   events = []
 
-  while duration > 0 and counter < KIT_COUNT * LCD_WIDTH:
+  while duration > 0 and counter < KIT_COUNT_ * LCD_WIDTH_:
     events.append(
       (
         getLCDTitleEvent_(title, counter, lcds),
@@ -284,7 +311,7 @@ def getPrologLCDTitleEvents_(title, duration, lcds):
 
 
 def getMainLCDTitleEvents_(title, duration, lcds):
-  title = KIT_COUNT * (title + LCD_WIDTH * " ")
+  title = KIT_COUNT_ * (title + LCD_WIDTH_ * " ")
   counter = 0
   events = []
 
@@ -319,7 +346,7 @@ def getLCDDurationEvents_(duration, lcds):
 
 def launch(part, timestamp, devices):
   devices.tracking = types.SimpleNamespace(
-    go = [False] * KIT_COUNT
+    go = [False] * KIT_COUNT_
   )
 
   devices.lcds.uploadUpwardGaugeChars()\
@@ -358,6 +385,9 @@ def launch(part, timestamp, devices):
         sleepUntil_(timestamp + cumul),
     )
   )
+
+  print(mn, mx)
+
 
   devices.oleds.fill(0).show()
   devices.lcds.clear().backlightOff()

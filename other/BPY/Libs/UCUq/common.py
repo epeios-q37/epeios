@@ -3454,8 +3454,8 @@ class Ravel:
     self.ring_ = cls.init_(create, ring, lambda : ravel.Ring(ringOffset, device, extra))
     self.oled_ = cls.init_(create, oled, lambda : ravel.OLED(device, extra))
     self.lcd_ = cls.init_(create, lcd, lambda : ravel.LCD(device, extra))
-    self.upper_ =  cls.init_(create, upper, lambda : ravel.Upper(device, extra))
-    self.lower_ =  cls.init_(create, lower, lambda : ravel.Lower(device, extra))
+    self.upper_ =  cls.init_(create, upper, lambda : ravel.Upper(False, device, extra))
+    self.lower_ =  cls.init_(create, lower, lambda : ravel.Lower(False, device, extra))
     
   def raz(self):
     self.__init__(self.ring_.getOffset())
@@ -3583,6 +3583,8 @@ class ravel:  # act as namespace
   RING_SIZE = 8
   OLED_WIDTH = 128
   OLED_HEIGHT = 64
+  OLED_BLACK = 0
+  OLED_WHITE = 1
   LCD_WIDTH = 16
   LCD_HEIGHT = 2
 
