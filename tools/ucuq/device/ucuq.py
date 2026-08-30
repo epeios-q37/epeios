@@ -337,12 +337,11 @@ def ledCallback(status, tries, pin, onValue):
     handleLed(pin, not( tries % 2), onValue )
   elif status == _S_UCUQ:
     handleLed(pin, False, onValue)
-  elif status == _S_FAILURE:
-    handleLed(pin, True, onValue)
-  elif status == _S_DECONNECTION:
+  elif status == _S_FAILURE or status == _S_DECONNECTION:
     handleLed(pin, True, onValue)
   elif status == _S_SUCCESS:
     ledBlink(pin, 3, onValue)
+    
   return defaultStatusCallback(status, tries) and not ( ( status == _S_UCUQ) and ( tries > 5 ) )
 
 
@@ -414,11 +413,13 @@ def main(callback):
 
   try:
     asyncio.run(serve(callback))
-  except Exception as exception:
-    try:
-      writeUInt(_A_DISCONNECTED_)
-    except:
-      pass
+  except Exception as e:
+  #  try:
+  #    writeUInt(_A_DISCONNECTED_)
+  #  except:
+  #    pass
 
+    sys.print_exception(e)
+    print(e)
     getStatusCallback(deviceId)(_S_DECONNECTION, 0)
-    raise exception
+    raise

@@ -39,21 +39,21 @@
     <fieldset style="display: flex; justify-content: space-around;">
       <legend>Orientation</legend>
 
-        <span>
-          <span>Z: </span>
-          <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
-            id="PartnerOrientationZ"></output>
-        </span>
-        <span>
-          <span>X: </span>
-          <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
-            id="PartnerOrientationX"></output>
-        </span>
-        <span>
-          <span>Y: </span>
-          <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
-            id="PartnerOrientationY"></output>
-        </span>
+      <span>
+        <span>Z: </span>
+        <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
+          id="PartnerOrientationZ"></output>
+      </span>
+      <span>
+        <span>X: </span>
+        <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
+          id="PartnerOrientationX"></output>
+      </span>
+      <span>
+        <span>Y: </span>
+        <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
+          id="PartnerOrientationY"></output>
+      </span>
     </fieldset>
   </fieldset>
   <fieldset>
@@ -73,14 +73,16 @@
     </fieldset>
     <div style="display: flex; flex-direction: column; width: 100%;">
       <span style="display:flex; width: 100%; justify-content: space-around; margin-top: 8px;">
-        <button xdh:onevent="ShowIndy">Indy</button>
-        <button xdh:onevent="ShowPink">Pink</button>
-        <button xdh:onevent="ShowColors">Colors</button>
+        <!--button xdh:onevent="ShowIndy">Indy</button>
+        <button xdh:onevent="ShowPink">Pink</button-->
+          <select id="ShowTrios">
+          </select>
+          <button xdh:onevent="ShowPlay">Play</button>
       </span>
       <span style="display:flex; width: 100%; justify-content: space-around;margin-top: 8px;">
-        <select id="ShowTrios">
-        </select>
-        <button xdh:onevent="ShowPlay">Play</button>
+        <span style="align-self: baseline;">
+          <button xdh:onevent="ShowColors">Colors</button>
+        </span>
         <label>
           <span>Countdown:</span>
           <input id="ShowCountdown" type="checkbox" checked_>

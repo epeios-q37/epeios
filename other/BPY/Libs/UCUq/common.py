@@ -935,7 +935,7 @@ class Device(Device_):  # noqa: F821
     
     self.pendingModules_ = ["Init-1"]
     self.handledModules_ = []
-    self.commands_ = []
+    self.commands_ = ["gc.collect()"]
     self.commitBehavior_ = None
     self.timer_ = None
 
@@ -997,9 +997,10 @@ class Device(Device_):  # noqa: F821
     self.addCommand("ntp_set_time()")
     
   def ntpSleepUntil(self, timestamp):
-    # self.addCommand(f"sleep_until_us({timestamp})")
-    self.addCommand(f"time.sleep_us({int(timestamp * 1_000_000)} - precise_time_us())")
-    
+    # self.addCommand(f"_sleep_until_us({timestamp})")
+    # self.addCommand(f"time.sleep_us({int(timestamp * 1_000_000)} - precise_time_us())")
+    self.addCommand(f"sleep_until_us({int(timestamp * 1_000_000)})")
+      
   def ntpSleep(self, delay):
     self.addCommand(f"time.sleep_us({int(delay * 1_000_000)})")
     
@@ -2984,11 +2985,15 @@ def set_rtc_from_us(timestamp_us):
   machine.RTC().datetime(rtc_tuple)
 
 
-def sleep_until_us(target_time_us):
+def _sleep_until_us(target_time_us):
   while precise_time_us() < target_time_us:
     pass
         
-        
+
+def sleep_until_us(target_time_us):
+  time.sleep_us(target_time_us - precise_time_us())
+
+    
 def ntp_set_time():
   global TIME_ANCHOR_US
   gc.collect()

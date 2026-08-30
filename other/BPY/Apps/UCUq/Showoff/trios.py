@@ -1,4 +1,5 @@
 import base64  # noqa: I001
+import copy
 import types
 import zlib
 
@@ -10,20 +11,29 @@ from show import sleepUntil as sleepUntil_
 from fractions import Fraction
 
 # No debug if == 0
-DEBUG_DURATION = 0
+DEBUG_DURATION_ = 0
+
+LCD_WIDTH_ = ucuq.ravel.LCD_WIDTH
+
+OLED_HEIGHT_ = ucuq.ravel.OLED_HEIGHT
+OLED_WIDTH_ = ucuq.ravel.OLED_WIDTH
+
+PIANO_ROLL_HEIGHT_ = 60
+FAST_SCROLL_HEIGHT_= 9 * PIANO_ROLL_HEIGHT_ // 10
+MARKER_WIDTH_ = 20
+
+REGULAR_SCROLL_DELAY_ = .10
+START_SCROLL_DELAY_ = .05
+
+LCD_TITLE_DELAY_ = 1/3
+
+RING_RAINBOW_DELAY_ = 1/3
+
+START_DELAY_ = (FAST_SCROLL_HEIGHT_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELAY_ * (PIANO_ROLL_HEIGHT_ - FAST_SCROLL_HEIGHT_)
 
 COMMIT_DELAY_ = 1/4
-LCD_TITLE_DELAY_ = 1/3
-START_SCROLL_DELAY_ = .05
-REGULAR_SCROLL_DELAY_ = .15
-RING_RAINBOW_DELAY_ = 1/3
-FAST_SCROLL_= 9 * ucuq.ravel.OLED_HEIGHT // 10
-START_DELAY_ = (FAST_SCROLL_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELAY_ * (ucuq.ravel.OLED_HEIGHT - FAST_SCROLL_)
-LCD_WIDTH_ = ucuq.ravel.LCD_WIDTH
+OLED_ANTICIPATION_ = 0
 KIT_COUNT_ = 3
-
-OLED_WIDTH_ = ucuq.ravel.OLED_WIDTH
-OLED_HEIGHT_ = ucuq.ravel.OLED_HEIGHT
 
 TILDE_CHARMAP_ = (
   0b00000,
@@ -60,7 +70,12 @@ NOTE2_CHARMAP_ = (
 
 
 def isDebug_():
-  return DEBUG_DURATION != 0
+  return DEBUG_DURATION_ != 0
+
+
+def unpack_(ns):
+  return vars(ns).values()
+
 
 def decompressVoiceString_(compressed_string):
     decoded_base64 = base64.b64decode(compressed_string.encode('ascii'))
@@ -102,38 +117,37 @@ def musicCallback_(note, turn, prev, counter, devices):
   buzzer.play(note)
 
   if note > 0:
-    if not devices.tracking.go[turn]:
-      devices.tracking.go[turn] = True
     devices.lcds[turn].moveTo(15, 1).putString(chr(6 + counter % 2) )
   else:
     devices.lcds[turn].moveTo(15, 1).putString(" ")
 
   spots = MAP_[turn]
   
-  for index, ring in enumerate(devices.rings):
-    if devices.tracking.go[index]:
-      for spot in spots:
-        ring.setValue(spot, (0, 0, 0))
-        if note != 0:
-          ring.setValue(spots[counter % len(spots)], COLORS_[turn])
+  for ring in devices.rings:
+    for spot in spots:
+      ring.setValue(spot, (0, 0, 0))
+      if note != 0:
+        ring.setValue(spots[counter % len(spots)], COLORS_[turn])
 
   devices.rings.write()
 
 
-def getMusicEvents_(voice, turn, prev, devices ):
-  events = []
-  duration = 0
-
+def getMusicEvents_(voice, turn, prev, tracking, devices ):
   events=[(lambda: None, START_DELAY_)]
+  duration = 0
+  noteCounter = 0
 
-  for index, note in enumerate(parseVoice_(decompressVoiceString_(voice))):
-    events.append((lambda note = note, turn = turn, index = index: musicCallback_(note[0], turn, prev, index, devices), note[1]))
+  for note in voice:
+    events.append((lambda note = note, turn = turn, counter = noteCounter: musicCallback_(note[0], turn, prev, counter, devices), note[1]))
     duration += note[1]
 
     if isDebug_():  # noqa: SIM102
-      if duration >= DEBUG_DURATION:
+      if duration >= DEBUG_DURATION_:
         events.append((lambda turn = turn: musicCallback_(0, turn, prev, 0, devices), 0))
         break
+      
+    if note[0]:
+      noteCounter += 1
 
   return events, duration
 
@@ -141,87 +155,80 @@ def getMusicEvents_(voice, turn, prev, devices ):
 def set(dom):
   html = ""
   for part in PARTS_:
-    html += f'<option value="{PARTS_.index(part)}">{part[0][0]}</option>'
+    html += f'<option value="{PARTS_.index(part)}" {" selected" if PARTS_.index(part) == len(PARTS_) - 1 else "" }>{part[0][0]}</option>'
 
   dom.inner("ShowTrios", html)
 
 
-OLED_VOICE_WIDTH = ( OLED_WIDTH_ - ( KIT_COUNT_ - 1 ) ) // KIT_COUNT_
-OLED_VOICES_START = tuple(i * ( OLED_VOICE_WIDTH + 1 ) for i in range(KIT_COUNT_) )
-
-print(OLED_VOICES_START)
+OLED_VOICE_WIDTH_ = ( OLED_WIDTH_ - ( KIT_COUNT_ - 1 ) ) // KIT_COUNT_
+OLED_VOICES_START_ = tuple(i * ( OLED_VOICE_WIDTH_ + 1 ) for i in range(KIT_COUNT_) )
 
 
-def oledDrawNote_(oled, index, note, minNote, maxNote):
-  pos = OLED_VOICES_START[index] + ( OLED_VOICE_WIDTH - 1 ) * (note - minNote) // (maxNote - minNote )
-  oled.pixel(pos, 0, 1)
-
-  return pos
+def oledComputeNotePos_(turn, note, minNote, maxNote ):
+  return OLED_VOICES_START_[turn] + ( OLED_VOICE_WIDTH_ - 1 ) * ( note - minNote ) // ( maxNote - minNote ) 
 
 
-def oledDrawMarker_(oled, turn, color):
-  for x in range(OLED_VOICE_WIDTH):
-    oled.pixel(OLED_VOICES_START[turn] + x, 0, color if x % ( KIT_COUNT_ * 2 ) == KIT_COUNT_ else 0)
-
-mn = [100, 100, 100]
-mx = [-1, -1, -1]
+def oledDrawNote_(oled, index, pitch, minNote, maxNote):
+  oled.pixel(oledComputeNotePos_(index, pitch, minNote, maxNote), 0, 1)
 
 
-def oledDrawSeparators_(oleds):
+def oledDrawMarker_(oled, turn, color, counter):
+  width = OLED_VOICE_WIDTH_ - MARKER_WIDTH_
+  trueX = abs((counter % width * 2 ) - width * 2 + width)
+  oled.hline( OLED_VOICES_START_[turn] + trueX, 0, MARKER_WIDTH_, color)
+
+
+def oledDrawSeparators_(oleds, counter):
   for i in range(1, KIT_COUNT_):
     for y in range(OLED_HEIGHT_):
-      oleds.pixel(OLED_VOICES_START[i] - 1, y, 1 if y % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
+      oleds.pixel(OLED_VOICES_START_[i] - 1, y, 1 if ( y + counter ) % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
 
 
-def oledCallback_(oleds, notes, minNotes, maxNotes):
-  for i, oled in enumerate(oleds):
-    for j, note in enumerate(notes):
-      minNote = minNotes[j]
-      maxNote = maxNotes[j]
-      if note:
-        pos = oledDrawNote_(oled, j, note, minNote, maxNote)
-        mx[j] = max(mx[j], pos)
-        mn[j] = min(mn[j], pos)
+def oledPianoRollCallback_(oleds, pitches, tracking, separatorCounter):
+  minNotes, maxNotes = unpack_(tracking.extrema)
 
-  for i, oled in enumerate(oleds):
-    oledDrawMarker_(oled, i, 1)
+  for turn, pitch in enumerate(pitches):
+    if pitch:
+      oledDrawNote_(oleds, turn, pitch, minNotes[turn], maxNotes[turn])
+
+  for turn, oled in enumerate(oleds):
+    oledDrawMarker_(oled, turn, 1, separatorCounter)
   oleds.show()
 
-  for i, oled in enumerate(oleds):
-    note = notes[i]
-    oledDrawMarker_(oled, i, 0)
-    if note:
-      oledDrawNote_(oled, i, note, minNotes[i], maxNotes[i])
+  for turn, oled in enumerate(oleds):
+    pitch = pitches[turn]
+    oledDrawMarker_(oled, turn, 0, separatorCounter)
+    if pitch:
+      oledDrawNote_(oled, turn, pitch, minNotes[turn], maxNotes[turn])
 
-  oleds.scroll(dx=0, dy=1).hline(0, 0, 128, 0)
-  oledDrawSeparators_(oleds)
-
-
-def oledDrawAllMarkers_(oleds):
-  for i, oled in enumerate(oleds):
-    oledDrawMarker_(oled, i, 1)
+  oleds.scroll(dx=0, dy=1).hline(0, 0, OLED_WIDTH_, 0).hline(0, PIANO_ROLL_HEIGHT_, OLED_WIDTH_, 0)
+  oledDrawSeparators_(oleds, separatorCounter)
 
 
-def getOLEDEvents_(part, oleds):
-  minNotes = [100] * KIT_COUNT_
-  maxNotes = [0] * KIT_COUNT_
+def getExtremaNotes_(voices):
+  minNotes = [100] * len(voices)
+  maxNotes = [0] * len(voices)
+
+  for i, voice in enumerate(voices):
+    for note in voice:
+      pitch = note[0]
+      if pitch:
+        minNotes[i] = min(minNotes[i], pitch)
+        maxNotes[i] = max(maxNotes[i], pitch)
+
+  return minNotes, maxNotes
+
+
+def getPacedNotes_(tracking):
   elapsed = 0
+  pacedNotes = []
 
-  for voice in part:
-    for note in parseVoice_(decompressVoiceString_(voice)):
-      minNotes[part.index(voice)] = min(minNotes[part.index(voice)], note[0] if note[0] else minNotes[part.index(voice)])
-      maxNotes[part.index(voice)] = max(maxNotes[part.index(voice)], note[0])
-
-  events = []
-  voices =[]
-
-  for voice in part:
-    voices.append(parseVoice_(decompressVoiceString_(voice)))
+  voices = copy.deepcopy(tracking.voices)
 
   while len(voices[0]) and len(voices[1]) and len(voices[2]):
-    notes = (voices[0][0][0], voices[1][0][0], voices[2][0][0])
-    start = elapsed < FAST_SCROLL_ * REGULAR_SCROLL_DELAY_
-    events.append((lambda notes = notes, start = start: oledCallback_(oleds, notes, minNotes, maxNotes), START_SCROLL_DELAY_ if start else REGULAR_SCROLL_DELAY_))
+    pitches = (voices[0][0][0], voices[1][0][0], voices[2][0][0])
+    start = elapsed < FAST_SCROLL_HEIGHT_ * REGULAR_SCROLL_DELAY_
+    pacedNotes.append((pitches, START_SCROLL_DELAY_ if start else REGULAR_SCROLL_DELAY_))
     for voice in voices:
       voice[0][1] -= REGULAR_SCROLL_DELAY_
       while len(voice) and voice[0][1] <= 0:
@@ -231,30 +238,44 @@ def getOLEDEvents_(part, oleds):
     elapsed += REGULAR_SCROLL_DELAY_
 
     if isDebug_():  # noqa: SIM102
-      if elapsed >= DEBUG_DURATION:
+      if elapsed >= DEBUG_DURATION_:
         break
 
-  for _ in range(ucuq.ravel.OLED_HEIGHT):
-    events.append(
-      (
-        lambda: (
-          oledDrawAllMarkers_(oleds),
-          oleds.show().hline(0, 0, 128, 0),
-          oledDrawSeparators_(oleds),
-          oleds.scroll(dx=0, dy=1)
-        ),
-        REGULAR_SCROLL_DELAY_
-      )
-    )
+  for _ in range(PIANO_ROLL_HEIGHT_):
+    pacedNotes.append(((0,) * len(tracking.voices), START_SCROLL_DELAY_ if start else REGULAR_SCROLL_DELAY_))
+
+  return pacedNotes
+
+
+def oledActiveNotesCallback_(pitches, tracking, oleds):
+  minNotes, maxNotes = unpack_(tracking.extrema)
+
+  for start in OLED_VOICES_START_:
+    oleds.rect(start, PIANO_ROLL_HEIGHT_, OLED_VOICE_WIDTH_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_, 0, True )
+
+  for index, pitch in enumerate(pitches):
+    if pitch:
+      oleds.vline(oledComputeNotePos_(index, pitch, minNotes[index], maxNotes[index]), PIANO_ROLL_HEIGHT_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_, 1)    
+
+
+def getOLEDEvents_(pacedNotes, tracking, oleds):
+  events = []
+
+  for i in range(len(pacedNotes)):
+    events.append((
+      lambda pacedNotes = pacedNotes, i = i: (
+        oledActiveNotesCallback_(pacedNotes[i-PIANO_ROLL_HEIGHT_][0], tracking, oleds) if i >= PIANO_ROLL_HEIGHT_ else None,
+        oledPianoRollCallback_(oleds, pacedNotes[i][0], tracking, i)
+      ),
+      pacedNotes[i][1] - ( OLED_ANTICIPATION_ if i == 0 else 0 )))
 
   return events
 
 
-def ringRainbowCallback_(rings, counter, go):
+def ringRainbowCallback_(rings, counter):
   for index, ring in enumerate(rings):
-      if go[index]:
-        color = shared.getRainbowColor(counter + index * len(shared.RAINBOW) // KIT_COUNT_)
-        ring.setValue(5, color).setValue(6, color).write()
+    color = shared.getRainbowColor(counter + index * len(shared.RAINBOW) // KIT_COUNT_)
+    ring.setValue(5, color).setValue(6, color).write()
 
 
 def getRingRainbowEvents_(devices, duration):
@@ -263,7 +284,7 @@ def getRingRainbowEvents_(devices, duration):
   counter = 0
 
   while elapsed < duration:
-    events.append((lambda counter = counter: ringRainbowCallback_(devices.rings, counter, devices.tracking.go), RING_RAINBOW_DELAY_))
+    events.append((lambda counter = counter: ringRainbowCallback_(devices.rings, counter), RING_RAINBOW_DELAY_))
     elapsed += RING_RAINBOW_DELAY_
     counter += 1
 
@@ -275,7 +296,7 @@ def getCommitEvents_(duration):
   elapsed = 0
 
   while elapsed <= duration:
-    events.append((lambda: ucuq.commit(), COMMIT_DELAY_))
+    events.append((lambda: (ucuq.gcCollect(), ucuq.commit()), COMMIT_DELAY_))
     elapsed += COMMIT_DELAY_
 
   return events
@@ -345,8 +366,9 @@ def getLCDDurationEvents_(duration, lcds):
 
 
 def launch(part, timestamp, devices):
-  devices.tracking = types.SimpleNamespace(
-    go = [False] * KIT_COUNT_
+  tracking = types.SimpleNamespace(
+    voices = [],
+    extrema = types.SimpleNamespace()
   )
 
   devices.lcds.uploadUpwardGaugeChars()\
@@ -363,17 +385,24 @@ def launch(part, timestamp, devices):
 
   maxDuration = 0
 
-  eventList.append(getOLEDEvents_(PARTS_[part][1], devices.oleds))
-
   for voice in PARTS_[part][1]:
-      events, duration = getMusicEvents_(voice, PARTS_[part][1].index(voice), prev, devices)
-      eventList.append(events)
-      maxDuration = max(maxDuration, duration)
+    tracking.voices.append(parseVoice_(decompressVoiceString_(voice)))
 
-  eventList.append(getCommitEvents_(maxDuration))
+  tracking.extrema.minNote, tracking.extrema.maxNotes = getExtremaNotes_(tracking.voices)
+
+  pacedNotes = getPacedNotes_(tracking)
+
+
+  for i, voice in enumerate(tracking.voices):
+    events, duration = getMusicEvents_(voice, i, prev, tracking, devices)
+    eventList.append(events)
+    maxDuration = max(maxDuration, duration)
+
+  eventList.append(getOLEDEvents_(pacedNotes, tracking, devices.oleds))
   eventList.append(getLCDTitleEvents_(PARTS_[part][0][1].replace("~", chr(5)), maxDuration + START_DELAY_, devices.lcds))
   eventList.append(getLCDDurationEvents_(maxDuration, devices.lcds))
   eventList.append(getRingRainbowEvents_(devices, maxDuration))
+  eventList.append(getCommitEvents_(maxDuration))
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
@@ -386,9 +415,6 @@ def launch(part, timestamp, devices):
     )
   )
 
-  print(mn, mx)
-
-
   devices.oleds.fill(0).show()
   devices.lcds.clear().backlightOff()
   devices.rings.fill((0, 0, 0)).write()
@@ -396,8 +422,6 @@ def launch(part, timestamp, devices):
   ucuq.setCommitBehavior(cb)
 
   ucuq.commit()
-
-  del devices.tracking
 
 
 PARTS_ = (

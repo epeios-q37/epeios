@@ -268,7 +268,7 @@ class Device_:
       writeString_(self.proxy.socket, R_UPLOAD_)
       writeStrings_(self.proxy.socket, modules)
 
-  def execute_(self, script, expression = ""):
+  def execute_(self, script, expression):
     # https://github.com/micropython/micropython/issues/19529
     if '\0' in script:
       # print(script.replace(chr(0), ">NUL<"))
