@@ -71,23 +71,18 @@
         <button xdh:onevent="ShowTest">Test</button>
       </div>
     </fieldset>
-    <div style="display: flex; flex-direction: column; width: 100%;">
-      <span style="display:flex; width: 100%; justify-content: space-around; margin-top: 8px;">
-        <!--button xdh:onevent="ShowIndy">Indy</button>
-        <button xdh:onevent="ShowPink">Pink</button-->
-          <select id="ShowTrios">
-          </select>
-          <button xdh:onevent="ShowPlay">Play</button>
-      </span>
-      <span style="display:flex; width: 100%; justify-content: space-around;margin-top: 8px;">
-        <span style="align-self: baseline;">
-          <button xdh:onevent="ShowColors">Colors</button>
-        </span>
-        <label>
-          <span>Countdown:</span>
-          <input id="ShowCountdown" type="checkbox" checked_>
-        </label>
-      </span>
+    <div style="display:flex; width: 100%; justify-content: space-around; margin-top: 8px;">
+      <label>
+        <span>⌛:</span>
+        <input id="ShowCountdown" type="checkbox" checked>
+      </label>
+      <select id="Show">
+        <optgroup label="Misc.">
+          <option value="Colors">Colors</option>
+        </optgroup>
+        <optgroup label="Trios" id="ShowTrios"></optgroup>
+      </select>
+      <button xdh:onevent="ShowPlay">Play</button>
     </div>
   </fieldset>
 </fieldset>

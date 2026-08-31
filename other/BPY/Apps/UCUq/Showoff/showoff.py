@@ -8,7 +8,7 @@ import colors
 import indy
 import partner
 import pink
-import show
+from show import getDevices as getDevices_, countdownIfRequested as countdownIfRequested_, connect as connect_, syncTest as syncTest_
 import trios
 
 
@@ -109,7 +109,7 @@ def atkShowConnect(dom):
   while cont:
     cont = False
     try:
-      offset = show.connect(tuple(dom.getValues(("ShowLeftDevice", "ShowMiddleDevice", "ShowRightDevice")).values()))
+      offset = connect_(tuple(dom.getValues(("ShowLeftDevice", "ShowMiddleDevice", "ShowRightDevice")).values()))
     except RuntimeError as e:
       dom.alert(f"RuntimeError: {e!s}")
       cont = True
@@ -122,33 +122,43 @@ def atkShowConnect(dom):
 
 def atkShowSync(dom):
   ucuq.ntpSetTime()
-  show.syncTest()
+  syncTest_()
 
 
 def atkShowTest():
-  show.syncTest()  
+  syncTest_()  
+
 
 def atkShowIndy(dom):
-  devices = show.getDevices()
-  timestamp = show.countdownIfRequested(dom, time.time() + DELAY_, devices)
+  devices = getDevices_()
+  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, devices)
   indy.launch(timestamp, devices)
 
 
 def atkShowPink(dom):
-  devices = show.getDevices()
-  timestamp = show.countdownIfRequested(dom, time.time() + DELAY_, devices)
+  devices = getDevices_()
+  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, devices)
   pink.launch(timestamp, devices)
 
 
+SHOWS_ = {
+  "Colors": lambda timestamp, devices: colors.launch(timestamp, devices)
+}
+
+
 def atkShowPlay(dom):
-  devices = show.getDevices()
-  timestamp = show.countdownIfRequested(dom, time.time() + DELAY_, devices)
-  trios.launch(int(dom.getValue("ShowTrios")), timestamp, devices)
+  devices = getDevices_()
+  show = dom.getValue("Show")
+  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, devices)
+  if show in SHOWS_:
+    SHOWS_[show](timestamp, devices)
+  else:
+    trios.launch(int(show), timestamp, devices)
 
 
-def atkShowColors(dom):
-  devices = show.getDevices()
-  timestamp = show.countdownIfRequested(dom, time.time() + DELAY_, devices)
+def _atkShowColors(dom):
+  devices = getDevices_()
+  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, devices)
   colors.launch(timestamp, devices)
 
 

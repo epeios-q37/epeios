@@ -20,7 +20,11 @@ OLED_WIDTH_ = ucuq.ravel.OLED_WIDTH
 
 PIANO_ROLL_HEIGHT_ = 60
 FAST_SCROLL_HEIGHT_= 9 * PIANO_ROLL_HEIGHT_ // 10
-MARKER_WIDTH_ = 20
+PIANO_ROLL_MARKER_WIDTH_ = 20
+PIANO_ROLL_VOICE_WIDTH_ = 39
+PIANO_ROLL_VOICES_START_ = (2, 44, 86)
+PIANO_ROLL_SEPARATOR_POSITIONS_ = (0, 42, 84, 126)
+
 
 REGULAR_SCROLL_DELAY_ = .10
 START_SCROLL_DELAY_ = .05
@@ -31,22 +35,11 @@ RING_RAINBOW_DELAY_ = 1/3
 
 START_DELAY_ = (FAST_SCROLL_HEIGHT_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELAY_ * (PIANO_ROLL_HEIGHT_ - FAST_SCROLL_HEIGHT_)
 
-COMMIT_DELAY_ = 1/4
+COMMIT_DELAY_ = 2/5
 OLED_ANTICIPATION_ = 0
 KIT_COUNT_ = 3
 
-TILDE_CHARMAP_ = (
-  0b00000,
-  0b00000,
-  0b01000,
-  0b10101,
-  0b00010,
-  0b00000,
-  0b00000,
-  0b00000,
-)
-
-NOTE1_CHARMAP_ = (
+NOTE_UP_CHARMAP_ = (
   0b00001,
   0b00001,
   0b00001,
@@ -57,7 +50,7 @@ NOTE1_CHARMAP_ = (
   0b00000,
 )
 
-NOTE2_CHARMAP_ = (
+NOTE_DOWN_CHARMAP_ = (
   0b00000,
   0b00001,
   0b00001,
@@ -77,132 +70,130 @@ def unpack_(ns):
   return vars(ns).values()
 
 
-def decompressVoiceString_(compressed_string):
-    decoded_base64 = base64.b64decode(compressed_string.encode('ascii'))
-    decompressed_bytes = zlib.decompress(decoded_base64)
-    return decompressed_bytes.decode('utf-8')
+def decompressVoiceString_(compressedString):
+  decoded_base64 = base64.b64decode(compressedString.encode('ascii'))
+  decompressed_bytes = zlib.decompress(decoded_base64)
+
+  return decompressed_bytes.decode('utf-8')
 
 
-def parseVoice_(decompressed_str):
-    if not decompressed_str.strip():
-        return []
-        
-    note_array = []
-    tokens = decompressed_str.split(" ")
-    
-    for token in tokens:
-        if not token:
-            continue
-        midi_str, fraction_str = token.split(":")
-        midi_note = int(midi_str)
-        
-        num, den = map(int, (fraction_str if '/' in fraction_str else fraction_str + "/1").split("/"))
-        duration_fraction = Fraction(num, den)
-        
-        note_array.append([midi_note, duration_fraction])
-        
-    return note_array
-
-
-def musicCallback_(note, turn, prev, counter, devices):
-  buzzer = devices.buzzers[turn]
+def parseVoice_(decompressedString):
+  if not decompressedString.strip():
+    return []
+      
+  note_array = []
+  tokens = decompressedString.split(" ")
   
+  for token in tokens:
+    if not token:
+        continue
+    midi_str, fraction_str = token.split(":")
+    midi_note = int(midi_str)
+    
+    num, den = map(int, (fraction_str if '/' in fraction_str else fraction_str + "/1").split("/"))
+    duration_fraction = Fraction(num, den)
+    
+    note_array.append([midi_note, duration_fraction])
+      
+  return note_array
+
+
+def buzzerCallback_(note, turn, prev, buzzer):
   if note != 0 and prev[turn] == note:
     buzzer.off()
-    devices.lcds[turn].moveTo(15, 1).putString(" ")
     ucuq.getDevice()[turn].sleep(0.015)
   else:
     prev[turn] = note
 
   buzzer.play(note)
 
-  if note > 0:
-    devices.lcds[turn].moveTo(15, 1).putString(chr(6 + counter % 2) )
-  else:
-    devices.lcds[turn].moveTo(15, 1).putString(" ")
 
-  spots = MAP_[turn]
+def getBuzzerEvents_(voice, turn, prev, buzzer):
+  events=[(lambda: None, START_DELAY_)]
+  duration = 0
+
+  for note in voice:
+    events.append((lambda note = note, turn = turn: buzzerCallback_(note[0], turn, prev, buzzer), note[1]))
+    duration += note[1]
+
+    if isDebug_():  # noqa: SIM102
+      if duration >= DEBUG_DURATION_:
+        events.append((lambda turn = turn: buzzerCallback_(0, turn, prev, buzzer), 0))
+        break
+
+  return events, duration
+
+
+def ringsActiveNotesCallback_(note, turn, counter, rings):
+  spots = VOICES_MAP_[turn]
   
-  for ring in devices.rings:
-    for spot in spots:
-      ring.setValue(spot, (0, 0, 0))
-      if note != 0:
-        ring.setValue(spots[counter % len(spots)], COLORS_[turn])
+  for spot in spots:
+    rings.setValue(spot, (0, 0, 0))
+    if note != 0:
+      rings.setValue(spots[counter % len(spots)], VOICES_COLORS_[turn])
 
-  devices.rings.write()
+  rings.write()
 
 
-def getMusicEvents_(voice, turn, prev, tracking, devices ):
+def getRingsActiveNotesEvents_(voice, turn, rings):
   events=[(lambda: None, START_DELAY_)]
   duration = 0
   noteCounter = 0
 
   for note in voice:
-    events.append((lambda note = note, turn = turn, counter = noteCounter: musicCallback_(note[0], turn, prev, counter, devices), note[1]))
+    events.append((lambda note = note, turn = turn, counter = noteCounter: ringsActiveNotesCallback_(note[0], turn, counter, rings), note[1]))
     duration += note[1]
 
     if isDebug_():  # noqa: SIM102
       if duration >= DEBUG_DURATION_:
-        events.append((lambda turn = turn: musicCallback_(0, turn, prev, 0, devices), 0))
+        events.append((lambda turn = turn: ringsActiveNotesCallback_(0, turn, 0, rings), 0))
         break
       
     if note[0]:
       noteCounter += 1
 
-  return events, duration
+  return events
 
 
-def set(dom):
-  html = ""
-  for part in PARTS_:
-    html += f'<option value="{PARTS_.index(part)}" {" selected" if PARTS_.index(part) == len(PARTS_) - 1 else "" }>{part[0][0]}</option>'
-
-  dom.inner("ShowTrios", html)
+def oledComputeNotePos_(turn, note, minNote, maxNote):
+  return PIANO_ROLL_VOICES_START_[turn] + ( PIANO_ROLL_VOICE_WIDTH_ - 1 ) * ( note - minNote ) // ( maxNote - minNote )
 
 
-OLED_VOICE_WIDTH_ = ( OLED_WIDTH_ - ( KIT_COUNT_ - 1 ) ) // KIT_COUNT_
-OLED_VOICES_START_ = tuple(i * ( OLED_VOICE_WIDTH_ + 1 ) for i in range(KIT_COUNT_) )
-
-
-def oledComputeNotePos_(turn, note, minNote, maxNote ):
-  return OLED_VOICES_START_[turn] + ( OLED_VOICE_WIDTH_ - 1 ) * ( note - minNote ) // ( maxNote - minNote ) 
-
-
-def oledDrawNote_(oled, index, pitch, minNote, maxNote):
+def oledDrawNote_(index, pitch, minNote, maxNote, oled):
   oled.pixel(oledComputeNotePos_(index, pitch, minNote, maxNote), 0, 1)
 
 
-def oledDrawMarker_(oled, turn, color, counter):
-  width = OLED_VOICE_WIDTH_ - MARKER_WIDTH_
+def oledDrawMarker_(turn, color, counter, oled):
+  width = PIANO_ROLL_VOICE_WIDTH_ - PIANO_ROLL_MARKER_WIDTH_
   trueX = abs((counter % width * 2 ) - width * 2 + width)
-  oled.hline( OLED_VOICES_START_[turn] + trueX, 0, MARKER_WIDTH_, color)
+  oled.hline( PIANO_ROLL_VOICES_START_[turn] + trueX, 0, PIANO_ROLL_MARKER_WIDTH_, color)
 
 
-def oledDrawSeparators_(oleds, counter):
-  for i in range(1, KIT_COUNT_):
+def oledDrawSeparators_(counter, oleds):
+  for position in PIANO_ROLL_SEPARATOR_POSITIONS_:
     for y in range(OLED_HEIGHT_):
-      oleds.pixel(OLED_VOICES_START_[i] - 1, y, 1 if ( y + counter ) % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
+      oleds.pixel(position, y, 1 if ( y + counter ) % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
 
 
-def oledPianoRollCallback_(oleds, pitches, tracking, separatorCounter):
+def oledPianoRollCallback_(pitches, tracking, separatorCounter, oleds):
   minNotes, maxNotes = unpack_(tracking.extrema)
 
   for turn, pitch in enumerate(pitches):
     if pitch:
-      oledDrawNote_(oleds, turn, pitch, minNotes[turn], maxNotes[turn])
+      oledDrawNote_(turn, pitch, minNotes[turn], maxNotes[turn], oleds)
 
   for turn, oled in enumerate(oleds):
-    oledDrawMarker_(oled, turn, 1, separatorCounter)
+    oledDrawMarker_(turn, 1, separatorCounter, oled)
   oleds.show()
 
   for turn, oled in enumerate(oleds):
     pitch = pitches[turn]
-    oledDrawMarker_(oled, turn, 0, separatorCounter)
+    oledDrawMarker_(turn, 0, separatorCounter, oled)
     if pitch:
-      oledDrawNote_(oled, turn, pitch, minNotes[turn], maxNotes[turn])
+      oledDrawNote_(turn, pitch, minNotes[turn], maxNotes[turn], oled)
 
   oleds.scroll(dx=0, dy=1).hline(0, 0, OLED_WIDTH_, 0).hline(0, PIANO_ROLL_HEIGHT_, OLED_WIDTH_, 0)
-  oledDrawSeparators_(oleds, separatorCounter)
+  oledDrawSeparators_(separatorCounter, oleds)
 
 
 def getExtremaNotes_(voices):
@@ -250,8 +241,8 @@ def getPacedNotes_(tracking):
 def oledActiveNotesCallback_(pitches, tracking, oleds):
   minNotes, maxNotes = unpack_(tracking.extrema)
 
-  for start in OLED_VOICES_START_:
-    oleds.rect(start, PIANO_ROLL_HEIGHT_, OLED_VOICE_WIDTH_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_, 0, True )
+  for start in PIANO_ROLL_VOICES_START_:
+    oleds.rect(start, PIANO_ROLL_HEIGHT_, PIANO_ROLL_VOICE_WIDTH_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_, 0, True )
 
   for index, pitch in enumerate(pitches):
     if pitch:
@@ -263,28 +254,45 @@ def getOLEDEvents_(pacedNotes, tracking, oleds):
 
   for i in range(len(pacedNotes)):
     events.append((
-      lambda pacedNotes = pacedNotes, i = i: (
+      lambda pacedNotes = pacedNotes, i = i:(
         oledActiveNotesCallback_(pacedNotes[i-PIANO_ROLL_HEIGHT_][0], tracking, oleds) if i >= PIANO_ROLL_HEIGHT_ else None,
-        oledPianoRollCallback_(oleds, pacedNotes[i][0], tracking, i)
+        oledPianoRollCallback_(pacedNotes[i][0], tracking, i, oleds),
       ),
       pacedNotes[i][1] - ( OLED_ANTICIPATION_ if i == 0 else 0 )))
 
   return events
 
 
-def ringRainbowCallback_(rings, counter):
+def getLCDActiveNoteEvents_(notes, minNote, maxNote, lcd):
+  events=[(lambda: None, START_DELAY_)]
+  counter = 0
+
+  for note in notes:
+    events.append((
+      lambda note = note, counter = counter: (
+        lcd.moveTo(9,1).putString(lcd.getForwardPeak(( note[0] - minNote ) * (7 * 5 - 1) // ( maxNote - minNote) , 7 * 5 ) if note[0] else lcd.getEmptyPeak(7 * 5)),
+        lcd.moveTo(7, 1).putString(chr(6 + counter % 2) if note[0] else " ")
+      ),
+      note[1]))
+    if note[0]:
+      counter += 1
+
+  return events
+
+
+def ringsRainbowCallback_(counter, rings):
   for index, ring in enumerate(rings):
     color = shared.getRainbowColor(counter + index * len(shared.RAINBOW) // KIT_COUNT_)
     ring.setValue(5, color).setValue(6, color).write()
 
 
-def getRingRainbowEvents_(devices, duration):
+def getRingsRainbowEvents_(duration, rings):
   events=[(lambda: None, START_DELAY_)]
   elapsed = 0
   counter = 0
 
   while elapsed < duration:
-    events.append((lambda counter = counter: ringRainbowCallback_(devices.rings, counter), RING_RAINBOW_DELAY_))
+    events.append((lambda counter = counter: ringsRainbowCallback_(counter, rings), RING_RAINBOW_DELAY_))
     elapsed += RING_RAINBOW_DELAY_
     counter += 1
 
@@ -356,13 +364,29 @@ def getLCDTitleEvents_(title, duration, lcds):
 
 
 def getLCDDurationEvents_(duration, lcds):
-  lcds.uploadForwardGaugeChars()
   events=[(lambda: None, START_DELAY_)]
 
-  for i in range(15 * 5 + 1):
-    events.append((lambda i = i: lcds.moveTo(0,1).putString(lcds[0].getForwardGauge(i)), duration / (15 * 5 + 1)))
+  for i in range(6 * 5):
+    events.append((lambda i = i: lcds.moveTo(0,1).putString(lcds[0].getForwardPeak(i, 6 * 5)), duration / (6 * 5 )))
 
   return events
+
+
+def getOLEDDurationEvents_(duration, oleds):
+  events=[(lambda: None, START_DELAY_)]
+
+  for y in range(OLED_HEIGHT_):
+    events.append((lambda y = y: oleds.vline(OLED_WIDTH_ -1, 0, y)), duration / OLED_HEIGHT_)
+
+  return events
+
+
+def set(dom):
+  html = ""
+  for part in PARTS_:
+    html += f'<option value="{PARTS_.index(part)}">{part[0][0]}</option>'
+
+  dom.inner("ShowTrios", html)
 
 
 def launch(part, timestamp, devices):
@@ -371,10 +395,9 @@ def launch(part, timestamp, devices):
     extrema = types.SimpleNamespace()
   )
 
-  devices.lcds.uploadUpwardGaugeChars()\
-    .createChar(5, TILDE_CHARMAP_)\
-    .createChar(6, NOTE1_CHARMAP_)\
-    .createChar(7, NOTE2_CHARMAP_)
+  devices.lcds.uploadHPeakChars()\
+    .createChar(6, NOTE_UP_CHARMAP_)\
+    .createChar(7, NOTE_DOWN_CHARMAP_)
 
   timestamp = timestamp + 1
   prev = [None] * len(devices.buzzers)
@@ -388,23 +411,30 @@ def launch(part, timestamp, devices):
   for voice in PARTS_[part][1]:
     tracking.voices.append(parseVoice_(decompressVoiceString_(voice)))
 
-  tracking.extrema.minNote, tracking.extrema.maxNotes = getExtremaNotes_(tracking.voices)
+  tracking.extrema.minNotes, tracking.extrema.maxNotes = getExtremaNotes_(tracking.voices)
 
   pacedNotes = getPacedNotes_(tracking)
 
-
-  for i, voice in enumerate(tracking.voices):
-    events, duration = getMusicEvents_(voice, i, prev, tracking, devices)
+  for turn, voice in enumerate(tracking.voices):
+    events, duration = getBuzzerEvents_(voice, turn, prev, devices.buzzers[turn])
     eventList.append(events)
+    eventList.append(getRingsActiveNotesEvents_(voice, turn, devices.rings))
     maxDuration = max(maxDuration, duration)
 
-  eventList.append(getOLEDEvents_(pacedNotes, tracking, devices.oleds))
-  eventList.append(getLCDTitleEvents_(PARTS_[part][0][1].replace("~", chr(5)), maxDuration + START_DELAY_, devices.lcds))
-  eventList.append(getLCDDurationEvents_(maxDuration, devices.lcds))
-  eventList.append(getRingRainbowEvents_(devices, maxDuration))
-  eventList.append(getCommitEvents_(maxDuration))
+  tracking.maxDuration = maxDuration
 
-  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  eventList.append(getOLEDEvents_(pacedNotes, tracking, devices.oleds))
+  eventList.append(getLCDTitleEvents_(PARTS_[part][0][1], maxDuration + START_DELAY_, devices.lcds))
+  eventList.append(getLCDDurationEvents_(maxDuration, devices.lcds))
+  for turn, lcd in enumerate(devices.lcds):
+    eventList.append(getLCDActiveNoteEvents_(tracking.voices[turn], tracking.extrema.minNotes[turn], tracking.extrema.maxNotes[turn], lcd))
+  eventList.append(getRingsRainbowEvents_(maxDuration, devices.rings))
+
+  cb = ucuq.getCommitBehavior()
+
+  if True:
+    eventList.append(getCommitEvents_(maxDuration))
+    cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
   devices.lcds.backlightOn()
 
@@ -428,7 +458,7 @@ PARTS_ = (
   (
     (
     "Titelouze",
-    "Jehan Titelouze ~ Ave Maris Stella ~ 3rd verset"
+    "Jehan Titelouze / Ave Maris Stella / 3rd verset"
     ),
     (
       'eJyFUtsVwyAIXaUbNAqSxP0HqwKKGHL6E4PAfYB01/Q5U//kmr6Z/9tBfI/tHyWDe5QqaF0/ztklOa0Ei7TScooJG6ZGl/C1g6SPIhG7pIXI+MBJ2itRxHPkHcFirLF/DgHEMSyHOrJeGM0WyYGf8EJQ5JBKyhah5ERmZxkAvLWHhbm8cVVcgUYKnGfEmZ2+k5F5YwEBQiTUW3oOYnlqwTNxhgInLOjN1G35Oyr711/McHYrQh1HLxKAYjt8DgYcQvEMr8/uGksNn4btjCmp5ib1+AHFELlH', 
@@ -439,7 +469,7 @@ PARTS_ = (
   (
     (
       "BWV 528a",
-      "Johann Sebastian Bach ~ Sonata No. 4 in E minor (BWV 528) ~ I. Adagio - Vivace"),
+      "Johann Sebastian Bach / Sonata No. 4 in E minor (BWV 528) / I. Adagio - Vivace"),
     (
       'eJzFWFmW4zAIvMrcwFpAS+5/sJFnYmdS1UkNz6/T/jMSCBWLgHSrXqblzdL+/WqGhA6EnnFHuuXkY5S6jTul3Mqi9LbNWmvyXSoQiMcnUvigeRAG6nYQGhIMCL0gIasdfGylC79G7aVmXWG0NCvZevK5jWHD5q4J8JCQpnZ0ss1XwCPF0QkaEk6Qyp0wEFdEgHf4SxY7d+SSbGm+5fSXlG6ecp91a73Vugtt5rnlc8MS0nMbttn+5V3G879ar/CfBf8Q68C/LHRN/gyez/zZam3jJJT7hmxj+R8rjAeyws8CG51guKM/H9lA5xUbz/+MKQikE+Z71OlS5f16mF95gQB1nQcY4pV7QgLBPiQLmjIJU5tYj/JjrCn5uJ8uVCkdRFWE9TZihlXpg1w96DgSMpW+mP8HYhMIkIEa6OwYjIzps0CnE1BpRB3XMdyv8isvEKDShRbK3qv1vnlar2GXfiv9XvkVmjnqh0pe0I/DCVo8w5flKX62+GcSPLF8ul5S9QqsD5R3lX+8Xx9Z8J/J5aiP0FMhF8h1VQoECzq8wGX+JtYRcH7kATABQBQgqqCDBpDJPSpfpTLNX9MoVvvWqyerq8nJs7qNurL7nyAdVNeQ26b3VsF15SUqLJTX0KWj8i12/hf8kPmgrpFWY4VFV/MznVXM1dC1r/IrL1ChEs2NuE4vIPVNhCGyMKiN3sjvTvl+Bvw/zzI95aBVtGT5j5IEtYYT00F4zAY/rVP0LQk6nOS/6PAPZzt6HQVAECDsTMI5R7TgUX7aHwwlHoR8PDppBMAQqCgQEtSQgYwcbUaQH5vFoPyraXvx3xEr/jqRIKV/MdvhZuZOecyY38crahrthqLhdLEW/u78pqbT0vPWs9VnyTltw63NKUcbPA3So1YxxcQ7OjgFdcmuigaqltktVGvu2BVxHvv8a3o+6I5R93jhyTpAoAKLdpCFsaXehyF5eYvbMc5Kt7Tl37HutwY=',
       'eJztWVGO4zAIvUpvEGNjY+f+B9tEStLpI80blI5mV9r0K2DAhhcMNM1FrGkbk6b1edQxl5qHyk5oigQDQrVZUu09l6kfSvJCsTaNUkqqj5aAcCJTT7Q4QxvhKQMERUIGQsMVrdAVaLa1Dygt6NZG/exCI4fL3JJ+LAGHOCVtblqlySTp2KtJ6zrp+si61dd3xpfX98XktXy75qP8EvV7+i1m/0RetJTWD0LaFoh2UfMbNrrhV4XVWci4ooJJ9FmGd+9TUOgs4KbR6+jFRA4dlWcoIE51B1q8XK2o2VSTjWIUtxT3DFcY5igOmb4ojvO1xx0f5dn6qD4ifxJxF1EgFCAYgsCEidBdIh+jcFceURjNTg73PsHfTYDsSPGE+le50CXHBTWvqcMQ6v31HfmLAojBUhBpsbxURK0vv/GwgktMqNJLPm4Kj+nkyzWfwiCqX2P2T+QB6TsOtksxGnefHJwFRMbhg90kq328T+HadRb+/XzkoL8R9MA5Jih20928CS0TpCEfgXJXHtcjH/eL5zlAssMuWkoESwX3ZaRZRqnay5IRvxtETEeMz/Y4rp3q9LNyJqifgeAb8vClQ00f/nJPkpNLkL/QucSKxEr4QXnaHBKn+gMNbCMYbgnuKa4wGQRxSPUFcexyCUaMJWu2PqqPyUc/I4LAilf2IkDKBifiUVXpFObD3dQ6klsfGdPoKrmtQCAVaDjl3r2WjNiLTqqi1yCffNFe66eHaXddeFeelDYUMoqlTDTh86lBLOa+1vqsPCkzaLrL6DD+oYcchIO6dXSd+tqtTlZq0vKl+PuCcsT9T4eRD+f+j7Wj8pvHcn3/z8BGef6LEUu40fYYfYa1VDBmYT76KPitnVST1zHnQ3HXTENl4WoPrE5c7eFHDu+V7n0CJiHs6Z9gOrAThWM8tLDHk0kKn/26+/ydyLNJE9E2qu79QJrTJH8A+PjYhg==',
@@ -449,7 +479,7 @@ PARTS_ = (
   (
     (
       "BWV 528b",
-      "Johann Sebastian Bach ~ Sonata No. 4 in E minor (BWV 528) ~ II. Andante",
+      "Johann Sebastian Bach / Sonata No. 4 in E minor (BWV 528) / II. Andante",
     ),
     (
       'eJztmmlu2zAUhK/SG4ikxM33P1iluCjg+dgOxQaoWyT/QgzfxrfL4VFy3/e+tVzjEb+VIgc16gEQu9I49KDrFUWAS0l6UPWKImp4pNhrbdv1f9ovSeXg0IP9EfPejhK3GD7+Lkla7THWrZ+Qlj4wobfWf00lykGxiNofx97zyXdvoef9MpFwiXqwK5euB8khalO2VbiM5BCiVQ/U7kCcD/HKlk8FA6m25xWhEeUAgIMWNC/ZwFV9G0xA075bg64/Nakl9lCWXK45Xz91exW9qaQt6AEkBZeq9lAPgwVPxOtBU8Qpx90c1IBQLhM5CAj1Y7gHDHSZUBMKJCkac41BKK+rmSxbxKmehLqGw0gOk8cyYn+QUYVtUi4DOUwey9khkAwKroALtM1KQ9PWMz56CNsRWizjYL8buaxSPuoG5SRd3nU5Wcp7L3P1xCBYPlQZImDlQQlSUWdqkCBwBb6sCKi7QgOuu0DDIkjDRsyosWEx/JGY2jMvBT2AZKMCett3vUMA4ZOMZnvqoil1QjkgEHZQ3wcmkoxP3Gw5VLmZyPV5ycUHTLhAAzZdoJFdaa8YDXAFbBGWqu2oGTJXwMV3WJQDNHAFbLMeaMnlFXToMBCIDq64aEC7hLZ/1FC9VoepEusr2+fX3EuZP665uDLqBV0RWqCBErNAo6HVRd+uPegox0IylDb/upilZYTHO9hJucC79UpTthOeqk3pSrlMZItmUNRfKIZIIbbEsNNRSTlOYpWUdRIufMq/Mgoql4l11KAquUXAoFnGOAmL4HUXmnJFNETuQruEaQElxO4o6IcDOUygYhScCGVcARdoq9Mjll6YHifqhd/ovc1INsgH7mGsP4w2idofzDjm7YYBCFuFPQ02kAs0bItJSe/nBy7xdF0NX56Sw6U/ZCEgkDCA8BGjqRzz1YKR2enb7pgIqA+EXyZprfuUyXjgQXdHoRUafuDyNLQl5bJZ6za3zwsW8wkF+XOBqI6GE+M22KLPx+CHZ1ADfa1F36UG/9NrUbcFtEtP7gkHa1H//cIgRt8eBDH4wOfGTXxDtQh+AlKL8WuNtSmvWAQ/zuCrkX0ob1Mknf/qhwqjbGCyIQRDs/D1Q4bfLwHf6IcMMfZwlCciPr87Hr1uKaej5bO+ptQ+7ofzv6tAm71bOQChSRGDOgRnVM/wCFv8DsXNSu4=',
@@ -460,7 +490,7 @@ PARTS_ = (
   (
     (
       "BWV 528c",
-      "Johann Sebastian Bach ~ Sonata No. 4 in E minor (BWV 528) ~ III. Un poco allegro",
+      "Johann Sebastian Bach / Sonata No. 4 in E minor (BWV 528) / III. Un poco allegro",
     ),
     (
       'eJztmWuS2yAQhK/iG0hIgED3P1i0TuxE/WG3xMpVSVX8b7XTME+mGZawTlOqdRri9kvhtuQ1THGqMQwlxBKW25JEZJS/y7iGMNUahrz94nIrs34I+kEhS9EPWT/ENeQaa3xuO68px1qemkc1ZXaKw/hpDeN9lyGM999tURmCqn4olLjbkv+QkA9ZP6QXEr/9oT59QN64EBBIIAyAQKKejj4hfhevadQPqkczpc5CoCkyWSFZNc1q/oHIPVMq1DEulU72HiPEmk+IN9/vAgdBwip2ANIRbBgHCVh7BQSaIj9szR2wFhI+UFcUoS91hTDpJltAWNRDfFp2hMHqwW2vOJNVD6ieYdxyGuJznRB/sHkn+9SGk1VTGgfzOxxkJa5Ih69Ff1GS8pORbP1kx3s2iT0PCus8l1rmIT0BH1A0q15bsPd6ZPm7CIGDQPq2wMM1eY51/jJr/++q+ABXCse0KxQYLQL0Skc/2AeUEgiXD3njtJddjhxVAoEeICFBiAwXbbSQ/S68TdjOdQDS0NRB4kOx6XlX6Cmjs03mfFv2DLzz2H1fLOfPZUp0HLKe6F3QQcgwbEshRPXIVo9WRklB+UrHGj4MkOjoqB2szZJndmXPt6+gC58gWID44/TAeXI+pZqBkrGIjlI23WXmETFHcuOYv+fYEr104gPFMQGiwzJk/NgoNxz0nv/ojGzhjOzbzYQXNsz/zt/xig7vMGZDxuHw7OD0WMPetTh5aHQXoQXnS5AebKwhLN93ShyNViKDel5BcXDOeYlGFe+YvhSCHzj3SFge0bFGxy4+BiPH2OdnKCMO8KxUw6pKRQ60Qa3BhjWoSiTua5dMqT3Y///y8ZmXj4vvyx03ggPEyjYT6qGzLaQcu4uHeNb4uhE8Swz7+icJQLxT7bUCqiZL1g9ArHGE+GGIJ9r2/Oy5AGFR+87BRb3EBQXjbemBQHWYDwg0hQuPDDuljdmRHNfwTsaiPnJ2nu5DmSBhFTsA6Qi2T8uOXPcQX9nnr799V3lh577BTJKW3h+4AzCTWw8wu3677aIjcFnT8xNs4l9WL3jUORQ4uTO+tP7lNPofHsZ3TJL9uzKeYApvXu/JKihhg/E5zigss/EuVOISUxpSmEqoG/8dh/AD7KRwLA==',
@@ -470,8 +500,8 @@ PARTS_ = (
   ),
   (
     (
-      "Ano. Loeb Gott", 
-      "Anonymous (18th) ~ Lobt Gott, ihr Christen, allzugleich"
+      "Ano. Lobt Gott", 
+      "Anonymous (18th) / Lobt Gott, ihr Christen, allzugleich"
     ),
     (
     'eJzVWmt64yAMvMreoPiF7d7/YBu34JRRJoMM7n77UxHoLSHJievnsgzz+jGMSwjhzzoDPBD8AR3wCPAg8Eh/J/TjAVv2oxBXqRMFPcTD/U3JA/iI6g2lehn9hX3AG8CIHwAeK9kxcZFfJPKgt5i87D7DzwBPQl/E4319ftpiGPdqgZjBExyZg7JDbPwNcZnnodpCTo0jeqzI12d+1Oo/Sns4DSoIGoOyCHwmJBgUGaqQ3L0eUTlqzycGTAV0MRDc0OZWgNIH5oK3yjg1VvzcCjQLgOcxJjpngSm78IrYIPXWUW9ads7CuL7Hm/toYFU2dVcABlQKXBWAGVBFDOItvbIIhISfDtgeV/HgzOiKDOz7jl+Vn5RElN+UTKYPScjw87h9Y69qh01irTdU1zW/lV63yFBdRU+D4mxlz7oF4qvU0jJjODvedHwCZbbXzGTa5R9UO3X15Ul5nNGV1GYRGIjP0k9radsEn+wzjIHEzJWKopgmYiT4r+s/im6Go8Cz2Q/pfzvbsF/fi+sdjpCenOWUPIgHeUJ756qKJCT+3dOYd1rzdtbKAOLVaJ1em+kp/Xt3hd5X2T/89aXXuUs95SFN1tVRNJFr1XYvyTU65xGckO13zRi1uyAcrGn6sGUUex6Yv3BIwfrvHGKkQbzpfdcMke0DvRJ2Xr89Y1ydQWjPXmr/qPYQX+E9Q4Vv9Zehp+4vuBjy1vOrawwICL61eI1P19UqvvdUpFb7iEf+OErg/d6vHfMOMa+Zq7Cgb2waqIx3086Ewp9oH0OukT09TyY91Yx2XjnYIRuSc3trrUcyv46+Z7I3VVv5eLJqWWktlYzC+XKBpPDM2+ec33mB6h1NWntHf/OE90sDnAz2Y9Z/0s+T//gajcGej0eA1/I6ovH6CDBIcwqb4RXOi488WMhUZ6r2GGzQz7ZtXR6rlwzl142fC4+VWvJ39h0m+Z0fTRXeFJ/aj65pT/Sf/aWhF3vVN9XiGb3av0zgLr/2LxMk+8yUH8l5MhU1/sWCLkGZeGhO9a2wcul5EzvpDTUkq1rQugP07wwbP4brzgH2LHdv9W5ufLt9a7tqcPMHDPb96apBvfhfD7nWf5B021w5X7BWdldfpH/1YoH632D4DB/DX5csFvQ=',
@@ -482,7 +512,7 @@ PARTS_ = (
   (
     (
       "BWV 848b",
-      "Johann Sebastian Bach ~ Prelude and Fugue in C-sharp major (BWV 848) ~ Fugue",
+      "Johann Sebastian Bach / Prelude and Fugue in C-sharp major (BWV 848) / Fugue",
     ),
     (
       "eJzVV1m23iAI3sq/gyiOyf4X1piIAkr1tj33nj4ZBg3DB6i5bDhs/MR8PWsy9+rgpcsaOZ1S1XMX29f0AtlX9EKVB7GvrgkqbYm8/AfqinQg/y9rtSdXe9Mp5KeQZyHv5wFnOEVRGqbxkTaXNedxmvAxF6TDWgfORVMEzt78dPNDSocLPrrUAoEBewz2rxm+cC2LH1PPPX0J9dJoTk/wu9H2E4gD91ECEg5DNLr4xhiqgkxGBpEEJYlqrCud/WtJNiJGs9gXPeBBavtwPQl4iSODg8DlTR8Uuz3na+C7+TEcKeby1cDgvTfeHZDARQuvGzOkZOrlDsS9oFd6ae71UOI1ShEEHYR+Xpy3kvfzYG6AZphd8JE2ir44d78QhlB0QMEUcbG3M5jbaNuvYB613vjqL6JIJzXWv/t92WZZg4611iI2+lUNyKxp6JG1rUSgoTNeUzeyIz3hlVvuZ1nzB0sd3bCKG4bsKnro/u5cOxegxlYF5DwM9wwpuE+bez/UIgc7kxJHmU6llW63Wol3DPCyW6y6FuXzaUfhE4WZhkmNkMZHirFvMcWZffJfDeOytxEOdYpRUiIDX8OMUnIDP8/tSFk5V/K1O5vEhIaVlX9ykEm+9E/w1YETv8c/bTA2vpw/8rxVD6MQJrWs9abV//7JG8CR+SpLTx/0Pb5/0js1nGu9dHENvXHoOSAVgMp7bjbDQdwwSa8eOeM98kv/a7QGoMVja/J4+m1BNFrYKe8Kw51i89HXGhQC5H9/xK4a4Q88YlmA//JximIM0zPbab4w/g4vpT1BlrcyzBBUQegphDGHpFncNsFWLHa777eCa+bYbteTU06TK7eR5U0tED83/Hn4/r5KmcP+AnHTmwY=",
@@ -504,7 +534,7 @@ PARTS_ = (
   (
     (
       "Gimo 359a",
-      "Anonymous (~1760) ~ Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) ~ I. (no indication)"
+      "Anonymous (c. 1760) / Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) / I. (no indication)"
     ),
     (
       'eJztWFuOgzAMvAo3ICEhD+5/sC0gsarHaEKUdGFVPl17Yju2x2mcFrd942zWb4h5sWH9xrx+cYhRCoIUeCk4QK3ZUYMBiQdJlJL4DOcOCRylOCNtQKUqIiGwPOZ/Fs+rMoQkWdABV2Q5qTb0pIKYNRt+Es+/ZkO9q8o3w6jIgVKD0N/ynOSkwEiTxDSSDI9jtEhigIwABuQ9ywEIjiklTDS6BIcm9CqbYIBjEAtggEYLjG8+3gWyTUED67QFBphAgmA6AAa0RwuMP8oHJ+yAVKrMGORWv/24q2SNkIFKA5JgmxF5lTIKJmLJNlE1V/nS9am88bbnjaBRuvAsLzG4bMbkgw3bKbNLNo9xMnmahxfzRrdru1gWfMluflj5syWINlOA+614fIBnYT7f+/wR4NXtC++/YuvmBcGrjBNDxd4kQfG+jVyTnvFwvLVzT3wFqvGwVuF1z6uabuH4buFE1iNnWjMJwSwFMG1ghqlTmo1TSi+NnjKdKPfCVDovT8htxfLdBAMuHVINjcTrVZrghULx3SQfN+rOd66QTFfD/PRvsBoMPkUr/lS6jvHNRw9u5p4VcHOjfeR2OHVbVZedD5lM1emwEkAfwqCSW+9v3o7RZkb7A9n6aTU=',
@@ -515,7 +545,7 @@ PARTS_ = (
   (
     (
       "Gimo 359c",
-      "Anonymous (~1760) ~ Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) ~ III. Allegro"
+      "Anonymous (c. 1760) / Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) / III. Allegro"
     ),
     (
       'eJztlusJwzAMhFfJBn4kkZ3sP1ipodDqMz03hEBL9fNQpJMsnVLyvjULKTabygLE9mR3Cw0vUyke2BxQk/Jg0GWfmz3n9Ujp+HwRt8UD2X8TdZDsAdQDD5IFEx/E0BSk6TVFMGHv60CPFBFQRVBdDDyQ9kAWHeOXapnVY9cox0HGwHwcySJjXFQLuq4VAx7y5c7YOapBZyu9GkDchmS0Atl6OtPsRc8ckoGAoSGyFRy//4G8kNvnt8307K4nZJFMzbd14ICCh972Xg9Htkw9KIZi5N9FzgAV4I1KrI8/oBjSDTwtKRQ=',
@@ -527,13 +557,13 @@ PARTS_ = (
 
 PICTURE_ = shared.unpack("eJytkmEOwyAIha8EtSvsPETvf4Q9EWz1z7Jkpm366ROeCJGPQuv4mXVj27hu3HRj23gVgJcI3FYB1hdB5xb/kqy3VZ7MnpjfYLtPxkrBF6VKnHWy72SaTDa3Dz7xHhtfD6ZvfGxcZjyyOEpZ1m1ejMUsa5arF6iGSS8WZk5P0C/D9VJ7Dm54vJiHKAJIr0X1KD0NfsuoTfGAvvzg2jjZwGxee0ub8CzzLrAXtzNZmvsJPftsDfN5YYMrvV6nhxh8d0/demMwrfxoNun5IOdoH1iCxbs/vJO5BxgK/0puxWgaRY7aowoXPdYh0Ew9BOEuM+LY7me6OmUcNy3q0s7Zcv8ZH/vm6ME=")
 
-COLORS_ = (
+VOICES_COLORS_ = (
   (10,0,0),
   (0,10,0),
   (0,0,10)
 )
 
-MAP_ = (
+VOICES_MAP_ = (
   (0,7),
   (1,2),
   (3,4)

@@ -414,10 +414,10 @@ def main(callback):
   try:
     asyncio.run(serve(callback))
   except Exception as e:
-  #  try:
-  #    writeUInt(_A_DISCONNECTED_)
-  #  except:
-  #    pass
+    try:
+      writeUInt(_A_DISCONNECTED_)
+    except:
+      pass
 
     sys.print_exception(e)
     print(e)

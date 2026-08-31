@@ -2089,12 +2089,16 @@ class HD44780_I2C(Multi_, Core_):
         
     return self
     
-  def getForwardPeak(self, peak, max):
+  def getEmptyPeak(self, width):
     table = self.HORIZONTAL_PEAKS_TABLE_
-    return table[0] * (peak // 5) +  table[peak % 5 + 1] + table[0] * ((max - peak - 1) // 5)
+    return table[0] * (width // 5)
 
-  def getBackwardPeak(self, peak, max):
-    return self.getForwardPeak(max - peak, max)
+  def getForwardPeak(self, peak, width):
+    table = self.HORIZONTAL_PEAKS_TABLE_
+    return table[0] * (peak // 5) + table[peak % 5 + 1] + table[0] * ((width - peak - 1) // 5)
+
+  def getBackwardPeak(self, peak, width):
+    return self.getForwardPeak(width - peak, width)
 
 
 class Servo(Multi_):
@@ -3444,71 +3448,6 @@ def BaseClassPatch_(caller, owner):
 ##### End of generic section for kits #####
 
 ##### Begin of section dedicated to the Ravel kit #####
-
-class Ravel:
-  @staticmethod
-  def init_(create, object, instanciation):
-    return object if object is not None else (instanciation() if create else None)
-    
-  def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None, upper=None, lower=None, create = None):
-    if create is None:
-      create =  all(x is None for x in (buzzer, ring, oled, lcd, upper, lower))
-
-    cls = self.__class__
-    self.buzzer_ = cls.init_(create, buzzer, lambda : ravel.Buzzer(device, extra))
-    self.ring_ = cls.init_(create, ring, lambda : ravel.Ring(ringOffset, device, extra))
-    self.oled_ = cls.init_(create, oled, lambda : ravel.OLED(device, extra))
-    self.lcd_ = cls.init_(create, lcd, lambda : ravel.LCD(device, extra))
-    self.upper_ =  cls.init_(create, upper, lambda : ravel.Upper(False, device, extra))
-    self.lower_ =  cls.init_(create, lower, lambda : ravel.Lower(False, device, extra))
-    
-  def raz(self):
-    self.__init__(self.ring_.getOffset())
-    
-  def buzzer(self):
-    return self.buzzer_
-  
-  def ring(self):
-    return self.ring_
-  
-  def oled(self):
-    return self.oled_
-  
-  def lcd(self):
-    return self.lcd_
-
-  def upper(self):
-    return self.upper_
-  
-  def lower(self):
-    return self.lower_
-  
-  def get(self, list):
-
-    components = []
-
-    for item in list:
-      match item.upper():
-        case "B":
-          components.append(self.buzzer())
-        case "L":
-          components.append(self.lcd())
-        case "O":
-          components.append(self.oled())
-        case "R":
-          components.append(self.ring())
-        case "S":
-          components.extend([self.upper(), self.lower()])
-        case _:
-          raise ValueError(f"Unknown '{item}' component!")
-        
-    return components
-
-
-  def displayRingGauges(self, globalMax = 0, placeholder=".", addendum="  "):
-    ravel.displayRingGauges(kit_.ensureSequence_(self.ring_), kit_.ensureSequence_(self.lcd_), globalMax, placeholder, addendum)
-    
-
 class ravel_:  # act as namespace
   class Upper(kit_.Servo180):
     def __init__(self, smooth=False, device=None, extra=True):
@@ -3528,6 +3467,68 @@ class ravel_:  # act as namespace
 
 
 class ravel:  # act as namespace
+  class Kit:
+    @staticmethod
+    def init_(create, object, instanciation):
+      return object if object is not None else (instanciation() if create else None)
+      
+    def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None, upper=None, lower=None, create = None):
+      if create is None:
+        create =  all(x is None for x in (buzzer, ring, oled, lcd, upper, lower))
+
+      cls = self.__class__
+      self.buzzer_ = cls.init_(create, buzzer, lambda : ravel.Buzzer(device, extra))
+      self.ring_ = cls.init_(create, ring, lambda : ravel.Ring(ringOffset, device, extra))
+      self.oled_ = cls.init_(create, oled, lambda : ravel.OLED(device, extra))
+      self.lcd_ = cls.init_(create, lcd, lambda : ravel.LCD(device, extra))
+      self.upper_ =  cls.init_(create, upper, lambda : ravel.Upper(False, device, extra))
+      self.lower_ =  cls.init_(create, lower, lambda : ravel.Lower(False, device, extra))
+      
+    def raz(self):
+      self.__init__(self.ring_.getOffset())
+      
+    def buzzer(self):
+      return self.buzzer_
+    
+    def ring(self):
+      return self.ring_
+    
+    def oled(self):
+      return self.oled_
+    
+    def lcd(self):
+      return self.lcd_
+
+    def upper(self):
+      return self.upper_
+    
+    def lower(self):
+      return self.lower_
+    
+    def get(self, list):
+
+      components = []
+
+      for item in list:
+        match item.upper():
+          case "B":
+            components.append(self.buzzer())
+          case "L":
+            components.append(self.lcd())
+          case "O":
+            components.append(self.oled())
+          case "R":
+            components.append(self.ring())
+          case "S":
+            components.extend([self.upper(), self.lower()])
+          case _:
+            raise ValueError(f"Unknown '{item}' component!")
+          
+      return components
+
+    def displayRingGauges(self, globalMax = 0, placeholder=".", addendum="  "):
+      ravel.displayRingGauges(kit_.ensureSequence_(self.ring_), kit_.ensureSequence_(self.lcd_), globalMax, placeholder, addendum)
+
   @staticmethod
   def displayRingGauges(rings, lcds, globalMax, placeholder, addendum):
     for ring in rings:
@@ -3559,7 +3560,6 @@ class ravel:  # act as namespace
     
   @staticmethod
   def get(list):
-
     components = []
 
     for item in list:
@@ -3581,7 +3581,7 @@ class ravel:  # act as namespace
 
   @staticmethod
   def raz():
-    Ravel()
+    ravel.Kit()
     
   SERVO_MAX = 6554
   RING_MAX = 31

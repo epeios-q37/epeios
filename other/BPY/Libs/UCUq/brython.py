@@ -95,6 +95,10 @@ class Device_:
 
 
   async def executeAwait_(self, script, expression):
+    # https://github.com/micropython/micropython/issues/19529
+    if '\0' in script:
+      raise ValueError("NUL char detected!")
+
     lock = Lock_()
 
     await lock.acquireAwait()

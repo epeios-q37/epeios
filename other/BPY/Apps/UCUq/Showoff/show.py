@@ -22,7 +22,7 @@ devices_ = None
 def setDevices_():
   devices = types.SimpleNamespace()
 
-  devices.ravel = ucuq.Ravel()
+  devices.ravel = ucuq.ravel.Kit()
   devices.buzzers, devices.rings, devices.lcds, devices.oleds = devices.ravel.get("BRLO")
 
   return devices

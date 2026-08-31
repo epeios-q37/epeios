@@ -277,7 +277,7 @@ class Device_:
     if self.proxy.socket:
       with writeLock_:
         writeString_(self.proxy.socket, R_EXECUTE_)
-        writeString_(self.proxy.socket, script)
+        writeString_(self.proxy.socket, script + "\ngc.collect()")
         writeString_(self.proxy.socket, expression)
 
       if expression:

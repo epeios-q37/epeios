@@ -109,7 +109,7 @@ def set(dom):
 
 def indy(withSound=True):
   buzzer, ring, oled, lcd = ucuq.ravel.get("BROL")
-  ravel = ucuq.Ravel(buzzer = buzzer, ring = ring, oled = oled, lcd = lcd)
+  ravel = ucuq.ravel.Kit(buzzer = buzzer, ring = ring, oled = oled, lcd = lcd)
 
   ringOffset = int(time.time())
   ring.flash()
@@ -261,7 +261,7 @@ def DisplayOrientation(dom, values):
 
   if dom.partner.orientation.counter != counter - 1:
     ring, lcd, oled = ucuq.ravel.get("RLO")
-    dom.partner.orientation.ravel = ucuq.Ravel(ring = ring, oled = oled, lcd = lcd)
+    dom.partner.orientation.ravel = ucuq.ravel.Kit(ring = ring, oled = oled, lcd = lcd)
 
   dom.partner.orientation.counter = counter
 
@@ -286,7 +286,7 @@ def Listen(dom):
     ring.fill((0, 0, 0)).write()
     oled.fill(0).show()
     dom.partner.colors.led = 0
-    dom.partner.colors.ravel = ucuq.Ravel(ring = ring, oled = oled, lcd = lcd)
+    dom.partner.colors.ravel = ucuq.ravel.Kit(ring = ring, oled = oled, lcd = lcd)
 
   dom.partner.colors.counter = counter
 
