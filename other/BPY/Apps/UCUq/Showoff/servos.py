@@ -151,7 +151,7 @@ def launch():
   oledData0 = extend_(oledData0, maxAmountOfOLEDData)
   oledData1 = extend_(oledData1, maxAmountOfOLEDData)
   
-#  oledEvents.append(tuple((lambda: oled.scroll(-1, 0).vline(ucuq.ravel.OLED_WIDTH - 1, 0, ucuq.ravel.OLED_HEIGHT, 0).show(), DELAY_) for _ in range(maxAmountOfOLEDEvents)))
+#  oledEvents.append(tuple((lambda: oled.scroll(-1, 0).vLine(ucuq.ravel.OLED_WIDTH - 1, 0, ucuq.ravel.OLED_HEIGHT, 0).show(), DELAY_) for _ in range(maxAmountOfOLEDEvents)))
 
   oledEvents = getOLEDEvents_(oled, oledData0, oledData1)
 
@@ -162,7 +162,7 @@ def launch():
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
   ucuq.sleepStart()
-  ucuq.playEvents(eventList, lambda _, cumul: ucuq.sleepWait(cumul))
+  ucuq.playEvents(eventList, lambda tracking: ucuq.sleepWait(tracking.cumul))
   
   upper.park()
   lower.park()

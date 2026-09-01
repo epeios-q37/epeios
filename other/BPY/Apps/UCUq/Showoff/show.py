@@ -8,14 +8,14 @@ import zlib
 
 import ucuq
 
-import shared
-
 from shared import (
   RAINBOW as RAINBOW_,
   getRainbowColor as getRainbowColor_
 )
 
 W_COUNTDOWN_ = "ShowCountdown"
+
+COMMIT_DELAY_ = 2/3
 
 devices_ = None
 
@@ -67,19 +67,21 @@ def connect(deviceList):
 
   devices_ = setDevices_()
 
-  ucuq.ntpSetTime()
+  ucuq.ntpSync()
   
   return ntpOffset_
 
-prevLocalTimeStamp_ = 0
+lastCommitTimestamp_ = 0
   
+def sleepUntil(timestamp, commitDelay):
+  global lastCommitTimestamp_
   
-def sleepUntil(timestamp):
-  global prevLocalTimeStamp_
-  
-  if timestamp - prevLocalTimeStamp_ > 0.66:
-    prevLocalTimeStamp_ = timestamp
-    ucuq.commit()
+  if commitDelay > 0:
+    if lastCommitTimestamp_ == 0:
+      lastCommitTimestamp_ = timestamp
+    if timestamp - lastCommitTimestamp_ > commitDelay:
+      lastCommitTimestamp_ = timestamp
+      ucuq.commit()
 
   ucuq.ntpSleepUntil(timestamp - ntpOffset_)
 
@@ -157,11 +159,11 @@ def countdownIfRequested(dom, timestamp, devices):
   
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
-  sleepUntil(timestamp)
+  sleepUntil(timestamp, 0)
   devices.rings.flash()
   devices.rings.fill((1,1,1)).write()
   devices.lcds.backlightOn()
-  timestamp += ucuq.playEvents(allEvents, lambda _, cumul: sleepUntil(timestamp + cumul))
+  timestamp += ucuq.playEvents(allEvents, lambda tracking: sleepUntil(timestamp + tracking.cumul, COMMIT_DELAY_))
   devices.oleds.fill(0).show()
   devices.rings.fill((0,0,0)).write()
   devices.lcds.clear().backlightOff()
@@ -194,7 +196,7 @@ def turnOffAndScrollDown(timestamp, devices):
     devices.oleds.scroll(0, 1).show()
     devices.ravel.displayRingGauges()
     timestamp += 0.09
-    sleepUntil(timestamp) 
+    sleepUntil(timestamp, 0) 
     
   return timestamp
     
@@ -206,11 +208,11 @@ def syncTest():
   
   timestamp = time.time() + 1.5
   
-  sleepUntil(timestamp)
+  sleepUntil(timestamp,0)
   
   devices.rings.flash()
   
-  sleepUntil(timestamp + 1)
+  sleepUntil(timestamp + 1,0)
   
   devices.rings.flash()
 

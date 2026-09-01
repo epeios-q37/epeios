@@ -199,7 +199,7 @@ def launch():
   
   ucuq.sleepStart()
   
-  ucuq.playEvents(allEvents, lambda _, cumul: ucuq.sleepWait(cumul))
+  ucuq.playEvents(allEvents, lambda tracking: ucuq.sleepWait(tracking.cumul))
   
   ucuq.setCommitBehavior(cb)
 

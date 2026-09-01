@@ -8,6 +8,8 @@ import show
 from shared import getRainbowColor as getRainbowColor_
 from show import sleepUntil as sleepUntil_
 
+COMMIT_DELAY_ = 0 # No delayed commit
+
 
 def callback_(freq, helper, devices):
   if freq == 0:
@@ -31,14 +33,14 @@ def launch(timestamp, devices):
   devices.oleds.powerOff().draw(INDY_, 128).show()
   devices.lcds.backlightOff().uploadUpwardGaugeChars()
 
-  sleepUntil_(timestamp)
+  sleepUntil_(timestamp, COMMIT_DELAY_)
 
   devices.oleds.powerOn()
   devices.lcds.backlightOn()
 
   timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, devices), lambda _, cumul: sleepUntil_(timestamp + cumul))
   
-  devices.oleds.hline(0, 0, 128, 0)
+  devices.oleds.hLine(0, 0, 128, 0)
   
   timestamp = show.turnOffAndScrollDown(timestamp, devices)
   

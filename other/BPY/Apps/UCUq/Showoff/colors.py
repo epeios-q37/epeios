@@ -14,6 +14,8 @@ W_DELAY_DISPLAY = "ColorDelayDisplay"
 W_REPEAT = "ColorRepeat"
 W_REPEAT_DISPLAY = "ColorRepeatDisplay"
 
+COMMIT_DELAY_ = 2/3
+
 class Colors_:
   def __init__(self, devices):
     self.devices_ = devices
@@ -55,7 +57,7 @@ def _(timestamp, delay, _):
   oleds = ucuq.Nothing()
 
   for color in RAINBOW_:
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     colors_.fill(color)
     colors_.write()
@@ -76,7 +78,7 @@ def _(timestamp, delay, devices):
   oleds = ucuq.Nothing()
   
   for r in range(len(RAINBOW_)):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     for i in range(len(rings)):
       color = RAINBOW_[(r + i * len(RAINBOW_) // len(rings)) % len(RAINBOW_)]
@@ -95,7 +97,7 @@ SCHEMES_.append(_)
 # 3
 def _(timestamp, delay, _):
   for x in range(12):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     colors_.fill((0,0,0))
     col = getRainbowColor_(x, 11)
@@ -103,7 +105,7 @@ def _(timestamp, delay, _):
     colors_.write()
     
   for x in range(11, -1, -1):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     colors_.fill((0,0,0))
     col = getRainbowColor_(x, 11)
@@ -118,7 +120,7 @@ SCHEMES_.append(_)
 # 4
 def _(timestamp, delay, _):
   for i in range(12):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     colors_.fill((0,0,0))
     colors_.set(i, (i // 4) % 2, (10,0,0))
@@ -126,7 +128,7 @@ def _(timestamp, delay, _):
     colors_.write()
     
   for i in range(11, -1, -1):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     colors_.fill((0,0,0))
     colors_.set(i, (i // 4 + 1) % 2, (10,0,0))
@@ -141,7 +143,7 @@ SCHEMES_.append(_)
 # 5
 def _(timestamp, delay, _):
   for i in range(12):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     colors_.fill((0,0,0))
     col = getRainbowColor_(i, 11)
@@ -149,7 +151,7 @@ def _(timestamp, delay, _):
     colors_.write()
 
   for i in range(10, -1, -1):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     colors_.fill((0,0,0))
     col = getRainbowColor_(i, 10)
@@ -165,7 +167,7 @@ SCHEMES_.append(_)
 def _(timestamp, delay, _):
   for c in range(2):
     for i in range(12):
-      sleepUntil_(timestamp)
+      sleepUntil_(timestamp, COMMIT_DELAY_)
       timestamp += delay
       colors_.fill((0,0,0))
       colA = getRainbowColor_(i, 11)
@@ -189,7 +191,7 @@ SCHEMES_.append(_)
 def _(timestamp, delay, _):
   for _ in range(2):
     for i in range(12):
-      sleepUntil_(timestamp)
+      sleepUntil_(timestamp, COMMIT_DELAY_)
       timestamp += delay
       colors_.fill((0,0,0))
       col = getRainbowColor_(i, 11)
@@ -207,14 +209,14 @@ def _(timestamp, delay, _):
 # 7
 def _(timestamp, delay, _):
   for i in range(6):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     col = getRainbowColor_(5 - i, 5)
     colors_.set(i, 0, col).set(11 - i, 0, col).set(i, 1, col).set(11 - i, 1, col)
     colors_.write()
     
   for i in range(5, -1, -1):
-    sleepUntil_(timestamp)
+    sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     col = (0,0,0)
     colors_.set(i, 0, col).set(11 - i, 0, col).set(i, 1, col).set(11 - i, 1, col)
@@ -233,7 +235,7 @@ def launch(timestamp, devices):
 
   timestamp += 1
   
-  sleepUntil_(timestamp)
+  sleepUntil_(timestamp, 0)
   devices.lcds.uploadUpwardGaugeChars().backlightOn()
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)

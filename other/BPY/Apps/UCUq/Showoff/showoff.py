@@ -4,6 +4,7 @@ import time
 import atlastk
 import ucuq
 
+import bouncing
 import colors
 import indy
 import partner
@@ -121,7 +122,7 @@ def atkShowConnect(dom):
 
 
 def atkShowSync(dom):
-  ucuq.ntpSetTime()
+  ucuq.ntpSync()
   syncTest_()
 
 
@@ -142,7 +143,8 @@ def atkShowPink(dom):
 
 
 SHOWS_ = {
-  "Colors": lambda timestamp, devices: colors.launch(timestamp, devices)
+  "Colors": lambda timestamp, devices: colors.launch(timestamp, devices),
+  "Bouncing": lambda timestamp, devices: bouncing.launch(timestamp, devices)
 }
 
 

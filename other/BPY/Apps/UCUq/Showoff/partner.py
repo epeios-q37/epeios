@@ -160,10 +160,10 @@ def indy(withSound=True):
 
   ucuq.playEvents(
     polyEvents,
-    lambda duration: (
-      ucuq.sleepWait(duration),
+    lambda tracking: (
+      ucuq.sleepWait(tracking.duration),
       ucuq.sleepStart(),
-      ucuq.commit() if duration > 0.05 else None,
+      ucuq.commit() if tracking.duration > 0.05 else None,
     ),
   )
 

@@ -8,6 +8,8 @@ import show
 from shared import getRainbowColor as getRainbowColor_
 from show import sleepUntil as sleepUntil_
 
+COMMIT_DELAY_ = 0 # No delayed commit
+
 def eventCallback_(freq, helper, devices):
     if freq !=-1:
       devices.buzzers.off()
@@ -25,9 +27,9 @@ def durationCallback_(timestamp, helper, devices):
     devices.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
     helper.pantherPict += 1
     
-  show.displayRingGauges(devices, )
+  show.displayRingGauges(devices)
   
-  sleepUntil_(timestamp)
+  sleepUntil_(timestamp, COMMIT_DELAY_)
 
 
 def launch(timestamp, devices):
@@ -37,7 +39,7 @@ def launch(timestamp, devices):
   
   devices.lcds.backlightOff().uploadUpwardGaugeChars()
 
-  sleepUntil_(timestamp)
+  sleepUntil_(timestamp, COMMIT_DELAY_)
 
   devices.lcds.backlightOn()
 

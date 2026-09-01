@@ -18,7 +18,7 @@ LCD_WIDTH_ = ucuq.ravel.LCD_WIDTH
 OLED_HEIGHT_ = ucuq.ravel.OLED_HEIGHT
 OLED_WIDTH_ = ucuq.ravel.OLED_WIDTH
 
-PIANO_ROLL_HEIGHT_ = 60
+PIANO_ROLL_HEIGHT_ = 57
 FAST_SCROLL_HEIGHT_= 9 * PIANO_ROLL_HEIGHT_ // 10
 PIANO_ROLL_MARKER_WIDTH_ = 20
 PIANO_ROLL_VOICE_WIDTH_ = 39
@@ -35,7 +35,9 @@ RING_RAINBOW_DELAY_ = 1/3
 
 START_DELAY_ = (FAST_SCROLL_HEIGHT_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELAY_ * (PIANO_ROLL_HEIGHT_ - FAST_SCROLL_HEIGHT_)
 
-COMMIT_DELAY_ = 2/5
+COMMIT_MAX_DELAY_ = 1/2
+COMMIT_MAX_EVENTS_ = 4
+
 OLED_ANTICIPATION_ = 0
 KIT_COUNT_ = 3
 
@@ -166,7 +168,7 @@ def oledDrawNote_(index, pitch, minNote, maxNote, oled):
 def oledDrawMarker_(turn, color, counter, oled):
   width = PIANO_ROLL_VOICE_WIDTH_ - PIANO_ROLL_MARKER_WIDTH_
   trueX = abs((counter % width * 2 ) - width * 2 + width)
-  oled.hline( PIANO_ROLL_VOICES_START_[turn] + trueX, 0, PIANO_ROLL_MARKER_WIDTH_, color)
+  oled.hLine( PIANO_ROLL_VOICES_START_[turn] + trueX, OLED_HEIGHT_ - 1, PIANO_ROLL_MARKER_WIDTH_, color)
 
 
 def oledDrawSeparators_(counter, oleds):
@@ -192,7 +194,7 @@ def oledPianoRollCallback_(pitches, tracking, separatorCounter, oleds):
     if pitch:
       oledDrawNote_(turn, pitch, minNotes[turn], maxNotes[turn], oled)
 
-  oleds.scroll(dx=0, dy=1).hline(0, 0, OLED_WIDTH_, 0).hline(0, PIANO_ROLL_HEIGHT_, OLED_WIDTH_, 0)
+  oleds.scroll(dx=0, dy=1).hLine(0, 0, OLED_WIDTH_, 0).hLine(0, PIANO_ROLL_HEIGHT_, OLED_WIDTH_, 0)
   oledDrawSeparators_(separatorCounter, oleds)
 
 
@@ -246,7 +248,7 @@ def oledActiveNotesCallback_(pitches, tracking, oleds):
 
   for index, pitch in enumerate(pitches):
     if pitch:
-      oleds.vline(oledComputeNotePos_(index, pitch, minNotes[index], maxNotes[index]), PIANO_ROLL_HEIGHT_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_, 1)    
+      oleds.vLine(oledComputeNotePos_(index, pitch, minNotes[index], maxNotes[index]), PIANO_ROLL_HEIGHT_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_ - 1, 1)    
 
 
 def getOLEDEvents_(pacedNotes, tracking, oleds):
@@ -295,17 +297,6 @@ def getRingsRainbowEvents_(duration, rings):
     events.append((lambda counter = counter: ringsRainbowCallback_(counter, rings), RING_RAINBOW_DELAY_))
     elapsed += RING_RAINBOW_DELAY_
     counter += 1
-
-  return events
-
-
-def getCommitEvents_(duration):
-  events = []
-  elapsed = 0
-
-  while elapsed <= duration:
-    events.append((lambda: (ucuq.gcCollect(), ucuq.commit()), COMMIT_DELAY_))
-    elapsed += COMMIT_DELAY_
 
   return events
 
@@ -376,7 +367,18 @@ def getOLEDDurationEvents_(duration, oleds):
   events=[(lambda: None, START_DELAY_)]
 
   for y in range(OLED_HEIGHT_):
-    events.append((lambda y = y: oleds.vline(OLED_WIDTH_ -1, 0, y)), duration / OLED_HEIGHT_)
+    events.append((lambda y = y: oleds.vLine(OLED_WIDTH_ -1, 0, y)), duration / OLED_HEIGHT_)
+
+  return events
+
+
+def getCommitEvents_(duration):
+  events = []
+  elapsed = 0
+
+  while elapsed <= duration:
+    events.append((lambda elapsed=elapsed: (ucuq.commit(), print(elapsed)), COMMIT_MAX_DELAY_))
+    elapsed += COMMIT_MAX_DELAY_
 
   return events
 
@@ -387,6 +389,26 @@ def set(dom):
     html += f'<option value="{PARTS_.index(part)}">{part[0][0]}</option>'
 
   dom.inner("ShowTrios", html)
+
+
+def sleepCallback_(tracking, timestamp):
+  if False and tracking.cumul - tracking.commitTimestamp >= COMMIT_MAX_DELAY_:
+    ucuq.commit()
+    tracking.commitTimestamp = tracking.cumul
+
+
+  for i in range(3):
+    if tracking.eventsAmounts[i*2] - tracking.amounts[i] >= COMMIT_MAX_EVENTS_ or tracking.cumul - tracking.commitTimestamps[i] >= COMMIT_MAX_DELAY_:
+      ucuq.getDevice()[i].commit()
+      tracking.commitAmounts[i] += 1
+      tracking.maxs[i] = max(tracking.maxs[i], tracking.eventsAmounts[i*2] - tracking.amounts[i])
+      tracking.mins[i] = min(tracking.mins[i], tracking.eventsAmounts[i*2] - tracking.amounts[i])
+      tracking.amounts[i] = tracking.eventsAmounts[i*2]
+      tracking.commitTimestamps[i] = tracking.cumul
+      print(i, tracking.cumul, tracking.mins[i], tracking.maxs[i], tracking.commitAmounts[i])
+
+
+  sleepUntil_(timestamp + tracking.cumul, 0)  # The commits are handled directly.
 
 
 def launch(part, timestamp, devices):
@@ -402,7 +424,7 @@ def launch(part, timestamp, devices):
   timestamp = timestamp + 1
   prev = [None] * len(devices.buzzers)
 
-  sleepUntil_(timestamp)
+  sleepUntil_(timestamp, 0)
 
   eventList = []
 
@@ -433,16 +455,19 @@ def launch(part, timestamp, devices):
   cb = ucuq.getCommitBehavior()
 
   if True:
-    eventList.append(getCommitEvents_(maxDuration))
+#    eventList.append(getCommitEvents_(maxDuration + START_DELAY_))
     cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
   devices.lcds.backlightOn()
 
   timestamp += ucuq.playEvents(
     eventList,
-    lambda _, cumul: (
-        sleepUntil_(timestamp + cumul),
-    )
+    lambda tracking: sleepCallback_(tracking, timestamp),
+    amounts = [0] * 3,
+    commitTimestamps = [0] * 3,
+    maxs = [0] * 3,
+    mins = [1000] * 3,
+    commitAmounts = [0] * 3,
   )
 
   devices.oleds.fill(0).show()
@@ -458,7 +483,7 @@ PARTS_ = (
   (
     (
     "Titelouze",
-    "Jehan Titelouze / Ave Maris Stella / 3rd verset"
+    "Jehan Titelouze * Ave Maris Stella * 3rd verset"
     ),
     (
       'eJyFUtsVwyAIXaUbNAqSxP0HqwKKGHL6E4PAfYB01/Q5U//kmr6Z/9tBfI/tHyWDe5QqaF0/ztklOa0Ei7TScooJG6ZGl/C1g6SPIhG7pIXI+MBJ2itRxHPkHcFirLF/DgHEMSyHOrJeGM0WyYGf8EJQ5JBKyhah5ERmZxkAvLWHhbm8cVVcgUYKnGfEmZ2+k5F5YwEBQiTUW3oOYnlqwTNxhgInLOjN1G35Oyr711/McHYrQh1HLxKAYjt8DgYcQvEMr8/uGksNn4btjCmp5ib1+AHFELlH', 
@@ -469,7 +494,7 @@ PARTS_ = (
   (
     (
       "BWV 528a",
-      "Johann Sebastian Bach / Sonata No. 4 in E minor (BWV 528) / I. Adagio - Vivace"),
+      "Johann Sebastian Bach * Sonata No. 4 in E minor (BWV 528) * I. Adagio - Vivace"),
     (
       'eJzFWFmW4zAIvMrcwFpAS+5/sJFnYmdS1UkNz6/T/jMSCBWLgHSrXqblzdL+/WqGhA6EnnFHuuXkY5S6jTul3Mqi9LbNWmvyXSoQiMcnUvigeRAG6nYQGhIMCL0gIasdfGylC79G7aVmXWG0NCvZevK5jWHD5q4J8JCQpnZ0ss1XwCPF0QkaEk6Qyp0wEFdEgHf4SxY7d+SSbGm+5fSXlG6ecp91a73Vugtt5rnlc8MS0nMbttn+5V3G879ar/CfBf8Q68C/LHRN/gyez/zZam3jJJT7hmxj+R8rjAeyws8CG51guKM/H9lA5xUbz/+MKQikE+Z71OlS5f16mF95gQB1nQcY4pV7QgLBPiQLmjIJU5tYj/JjrCn5uJ8uVCkdRFWE9TZihlXpg1w96DgSMpW+mP8HYhMIkIEa6OwYjIzps0CnE1BpRB3XMdyv8isvEKDShRbK3qv1vnlar2GXfiv9XvkVmjnqh0pe0I/DCVo8w5flKX62+GcSPLF8ul5S9QqsD5R3lX+8Xx9Z8J/J5aiP0FMhF8h1VQoECzq8wGX+JtYRcH7kATABQBQgqqCDBpDJPSpfpTLNX9MoVvvWqyerq8nJs7qNurL7nyAdVNeQ26b3VsF15SUqLJTX0KWj8i12/hf8kPmgrpFWY4VFV/MznVXM1dC1r/IrL1ChEs2NuE4vIPVNhCGyMKiN3sjvTvl+Bvw/zzI95aBVtGT5j5IEtYYT00F4zAY/rVP0LQk6nOS/6PAPZzt6HQVAECDsTMI5R7TgUX7aHwwlHoR8PDppBMAQqCgQEtSQgYwcbUaQH5vFoPyraXvx3xEr/jqRIKV/MdvhZuZOecyY38crahrthqLhdLEW/u78pqbT0vPWs9VnyTltw63NKUcbPA3So1YxxcQ7OjgFdcmuigaqltktVGvu2BVxHvv8a3o+6I5R93jhyTpAoAKLdpCFsaXehyF5eYvbMc5Kt7Tl37HutwY=',
       'eJztWVGO4zAIvUpvEGNjY+f+B9tEStLpI80blI5mV9r0K2DAhhcMNM1FrGkbk6b1edQxl5qHyk5oigQDQrVZUu09l6kfSvJCsTaNUkqqj5aAcCJTT7Q4QxvhKQMERUIGQsMVrdAVaLa1Dygt6NZG/exCI4fL3JJ+LAGHOCVtblqlySTp2KtJ6zrp+si61dd3xpfX98XktXy75qP8EvV7+i1m/0RetJTWD0LaFoh2UfMbNrrhV4XVWci4ooJJ9FmGd+9TUOgs4KbR6+jFRA4dlWcoIE51B1q8XK2o2VSTjWIUtxT3DFcY5igOmb4ojvO1xx0f5dn6qD4ifxJxF1EgFCAYgsCEidBdIh+jcFceURjNTg73PsHfTYDsSPGE+le50CXHBTWvqcMQ6v31HfmLAojBUhBpsbxURK0vv/GwgktMqNJLPm4Kj+nkyzWfwiCqX2P2T+QB6TsOtksxGnefHJwFRMbhg90kq328T+HadRb+/XzkoL8R9MA5Jih20928CS0TpCEfgXJXHtcjH/eL5zlAssMuWkoESwX3ZaRZRqnay5IRvxtETEeMz/Y4rp3q9LNyJqifgeAb8vClQ00f/nJPkpNLkL/QucSKxEr4QXnaHBKn+gMNbCMYbgnuKa4wGQRxSPUFcexyCUaMJWu2PqqPyUc/I4LAilf2IkDKBifiUVXpFObD3dQ6klsfGdPoKrmtQCAVaDjl3r2WjNiLTqqi1yCffNFe66eHaXddeFeelDYUMoqlTDTh86lBLOa+1vqsPCkzaLrL6DD+oYcchIO6dXSd+tqtTlZq0vKl+PuCcsT9T4eRD+f+j7Wj8pvHcn3/z8BGef6LEUu40fYYfYa1VDBmYT76KPitnVST1zHnQ3HXTENl4WoPrE5c7eFHDu+V7n0CJiHs6Z9gOrAThWM8tLDHk0kKn/26+/ydyLNJE9E2qu79QJrTJH8A+PjYhg==',
@@ -479,7 +504,7 @@ PARTS_ = (
   (
     (
       "BWV 528b",
-      "Johann Sebastian Bach / Sonata No. 4 in E minor (BWV 528) / II. Andante",
+      "Johann Sebastian Bach * Sonata No. 4 in E minor (BWV 528) * II. Andante",
     ),
     (
       'eJztmmlu2zAUhK/SG4ikxM33P1iluCjg+dgOxQaoWyT/QgzfxrfL4VFy3/e+tVzjEb+VIgc16gEQu9I49KDrFUWAS0l6UPWKImp4pNhrbdv1f9ovSeXg0IP9EfPejhK3GD7+Lkla7THWrZ+Qlj4wobfWf00lykGxiNofx97zyXdvoef9MpFwiXqwK5euB8khalO2VbiM5BCiVQ/U7kCcD/HKlk8FA6m25xWhEeUAgIMWNC/ZwFV9G0xA075bg64/Nakl9lCWXK45Xz91exW9qaQt6AEkBZeq9lAPgwVPxOtBU8Qpx90c1IBQLhM5CAj1Y7gHDHSZUBMKJCkac41BKK+rmSxbxKmehLqGw0gOk8cyYn+QUYVtUi4DOUwey9khkAwKroALtM1KQ9PWMz56CNsRWizjYL8buaxSPuoG5SRd3nU5Wcp7L3P1xCBYPlQZImDlQQlSUWdqkCBwBb6sCKi7QgOuu0DDIkjDRsyosWEx/JGY2jMvBT2AZKMCett3vUMA4ZOMZnvqoil1QjkgEHZQ3wcmkoxP3Gw5VLmZyPV5ycUHTLhAAzZdoJFdaa8YDXAFbBGWqu2oGTJXwMV3WJQDNHAFbLMeaMnlFXToMBCIDq64aEC7hLZ/1FC9VoepEusr2+fX3EuZP665uDLqBV0RWqCBErNAo6HVRd+uPegox0IylDb/upilZYTHO9hJucC79UpTthOeqk3pSrlMZItmUNRfKIZIIbbEsNNRSTlOYpWUdRIufMq/Mgoql4l11KAquUXAoFnGOAmL4HUXmnJFNETuQruEaQElxO4o6IcDOUygYhScCGVcARdoq9Mjll6YHifqhd/ovc1INsgH7mGsP4w2idofzDjm7YYBCFuFPQ02kAs0bItJSe/nBy7xdF0NX56Sw6U/ZCEgkDCA8BGjqRzz1YKR2enb7pgIqA+EXyZprfuUyXjgQXdHoRUafuDyNLQl5bJZ6za3zwsW8wkF+XOBqI6GE+M22KLPx+CHZ1ADfa1F36UG/9NrUbcFtEtP7gkHa1H//cIgRt8eBDH4wOfGTXxDtQh+AlKL8WuNtSmvWAQ/zuCrkX0ob1Mknf/qhwqjbGCyIQRDs/D1Q4bfLwHf6IcMMfZwlCciPr87Hr1uKaej5bO+ptQ+7ofzv6tAm71bOQChSRGDOgRnVM/wCFv8DsXNSu4=',
@@ -490,7 +515,7 @@ PARTS_ = (
   (
     (
       "BWV 528c",
-      "Johann Sebastian Bach / Sonata No. 4 in E minor (BWV 528) / III. Un poco allegro",
+      "Johann Sebastian Bach * Sonata No. 4 in E minor (BWV 528) * III. Un poco allegro",
     ),
     (
       'eJztmWuS2yAQhK/iG0hIgED3P1i0TuxE/WG3xMpVSVX8b7XTME+mGZawTlOqdRri9kvhtuQ1THGqMQwlxBKW25JEZJS/y7iGMNUahrz94nIrs34I+kEhS9EPWT/ENeQaa3xuO68px1qemkc1ZXaKw/hpDeN9lyGM999tURmCqn4olLjbkv+QkA9ZP6QXEr/9oT59QN64EBBIIAyAQKKejj4hfhevadQPqkczpc5CoCkyWSFZNc1q/oHIPVMq1DEulU72HiPEmk+IN9/vAgdBwip2ANIRbBgHCVh7BQSaIj9szR2wFhI+UFcUoS91hTDpJltAWNRDfFp2hMHqwW2vOJNVD6ieYdxyGuJznRB/sHkn+9SGk1VTGgfzOxxkJa5Ih69Ff1GS8pORbP1kx3s2iT0PCus8l1rmIT0BH1A0q15bsPd6ZPm7CIGDQPq2wMM1eY51/jJr/++q+ABXCse0KxQYLQL0Skc/2AeUEgiXD3njtJddjhxVAoEeICFBiAwXbbSQ/S68TdjOdQDS0NRB4kOx6XlX6Cmjs03mfFv2DLzz2H1fLOfPZUp0HLKe6F3QQcgwbEshRPXIVo9WRklB+UrHGj4MkOjoqB2szZJndmXPt6+gC58gWID44/TAeXI+pZqBkrGIjlI23WXmETFHcuOYv+fYEr104gPFMQGiwzJk/NgoNxz0nv/ojGzhjOzbzYQXNsz/zt/xig7vMGZDxuHw7OD0WMPetTh5aHQXoQXnS5AebKwhLN93ShyNViKDel5BcXDOeYlGFe+YvhSCHzj3SFge0bFGxy4+BiPH2OdnKCMO8KxUw6pKRQ60Qa3BhjWoSiTua5dMqT3Y///y8ZmXj4vvyx03ggPEyjYT6qGzLaQcu4uHeNb4uhE8Swz7+icJQLxT7bUCqiZL1g9ArHGE+GGIJ9r2/Oy5AGFR+87BRb3EBQXjbemBQHWYDwg0hQuPDDuljdmRHNfwTsaiPnJ2nu5DmSBhFTsA6Qi2T8uOXPcQX9nnr799V3lh577BTJKW3h+4AzCTWw8wu3677aIjcFnT8xNs4l9WL3jUORQ4uTO+tP7lNPofHsZ3TJL9uzKeYApvXu/JKihhg/E5zigss/EuVOISUxpSmEqoG/8dh/AD7KRwLA==',
@@ -501,7 +526,7 @@ PARTS_ = (
   (
     (
       "Ano. Lobt Gott", 
-      "Anonymous (18th) / Lobt Gott, ihr Christen, allzugleich"
+      "Anonymous (18th) * Lobt Gott, ihr Christen, allzugleich"
     ),
     (
     'eJzVWmt64yAMvMreoPiF7d7/YBu34JRRJoMM7n77UxHoLSHJievnsgzz+jGMSwjhzzoDPBD8AR3wCPAg8Eh/J/TjAVv2oxBXqRMFPcTD/U3JA/iI6g2lehn9hX3AG8CIHwAeK9kxcZFfJPKgt5i87D7DzwBPQl/E4319ftpiGPdqgZjBExyZg7JDbPwNcZnnodpCTo0jeqzI12d+1Oo/Sns4DSoIGoOyCHwmJBgUGaqQ3L0eUTlqzycGTAV0MRDc0OZWgNIH5oK3yjg1VvzcCjQLgOcxJjpngSm78IrYIPXWUW9ads7CuL7Hm/toYFU2dVcABlQKXBWAGVBFDOItvbIIhISfDtgeV/HgzOiKDOz7jl+Vn5RElN+UTKYPScjw87h9Y69qh01irTdU1zW/lV63yFBdRU+D4mxlz7oF4qvU0jJjODvedHwCZbbXzGTa5R9UO3X15Ul5nNGV1GYRGIjP0k9radsEn+wzjIHEzJWKopgmYiT4r+s/im6Go8Cz2Q/pfzvbsF/fi+sdjpCenOWUPIgHeUJ756qKJCT+3dOYd1rzdtbKAOLVaJ1em+kp/Xt3hd5X2T/89aXXuUs95SFN1tVRNJFr1XYvyTU65xGckO13zRi1uyAcrGn6sGUUex6Yv3BIwfrvHGKkQbzpfdcMke0DvRJ2Xr89Y1ydQWjPXmr/qPYQX+E9Q4Vv9Zehp+4vuBjy1vOrawwICL61eI1P19UqvvdUpFb7iEf+OErg/d6vHfMOMa+Zq7Cgb2waqIx3086Ewp9oH0OukT09TyY91Yx2XjnYIRuSc3trrUcyv46+Z7I3VVv5eLJqWWktlYzC+XKBpPDM2+ec33mB6h1NWntHf/OE90sDnAz2Y9Z/0s+T//gajcGej0eA1/I6ovH6CDBIcwqb4RXOi488WMhUZ6r2GGzQz7ZtXR6rlwzl142fC4+VWvJ39h0m+Z0fTRXeFJ/aj65pT/Sf/aWhF3vVN9XiGb3av0zgLr/2LxMk+8yUH8l5MhU1/sWCLkGZeGhO9a2wcul5EzvpDTUkq1rQugP07wwbP4brzgH2LHdv9W5ufLt9a7tqcPMHDPb96apBvfhfD7nWf5B021w5X7BWdldfpH/1YoH632D4DB/DX5csFvQ=',
@@ -512,7 +537,7 @@ PARTS_ = (
   (
     (
       "BWV 848b",
-      "Johann Sebastian Bach / Prelude and Fugue in C-sharp major (BWV 848) / Fugue",
+      "Johann Sebastian Bach * Prelude and Fugue in C-sharp major (BWV 848) * Fugue",
     ),
     (
       "eJzVV1m23iAI3sq/gyiOyf4X1piIAkr1tj33nj4ZBg3DB6i5bDhs/MR8PWsy9+rgpcsaOZ1S1XMX29f0AtlX9EKVB7GvrgkqbYm8/AfqinQg/y9rtSdXe9Mp5KeQZyHv5wFnOEVRGqbxkTaXNedxmvAxF6TDWgfORVMEzt78dPNDSocLPrrUAoEBewz2rxm+cC2LH1PPPX0J9dJoTk/wu9H2E4gD91ECEg5DNLr4xhiqgkxGBpEEJYlqrCud/WtJNiJGs9gXPeBBavtwPQl4iSODg8DlTR8Uuz3na+C7+TEcKeby1cDgvTfeHZDARQuvGzOkZOrlDsS9oFd6ae71UOI1ShEEHYR+Xpy3kvfzYG6AZphd8JE2ir44d78QhlB0QMEUcbG3M5jbaNuvYB613vjqL6JIJzXWv/t92WZZg4611iI2+lUNyKxp6JG1rUSgoTNeUzeyIz3hlVvuZ1nzB0sd3bCKG4bsKnro/u5cOxegxlYF5DwM9wwpuE+bez/UIgc7kxJHmU6llW63Wol3DPCyW6y6FuXzaUfhE4WZhkmNkMZHirFvMcWZffJfDeOytxEOdYpRUiIDX8OMUnIDP8/tSFk5V/K1O5vEhIaVlX9ykEm+9E/w1YETv8c/bTA2vpw/8rxVD6MQJrWs9abV//7JG8CR+SpLTx/0Pb5/0js1nGu9dHENvXHoOSAVgMp7bjbDQdwwSa8eOeM98kv/a7QGoMVja/J4+m1BNFrYKe8Kw51i89HXGhQC5H9/xK4a4Q88YlmA//JximIM0zPbab4w/g4vpT1BlrcyzBBUQegphDGHpFncNsFWLHa777eCa+bYbteTU06TK7eR5U0tED83/Hn4/r5KmcP+AnHTmwY=",
@@ -534,7 +559,7 @@ PARTS_ = (
   (
     (
       "Gimo 359a",
-      "Anonymous (c. 1760) / Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) / I. (no indication)"
+      "Anonymous (c. 1760) * Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) * I. (no indication)"
     ),
     (
       'eJztWFuOgzAMvAo3ICEhD+5/sC0gsarHaEKUdGFVPl17Yju2x2mcFrd942zWb4h5sWH9xrx+cYhRCoIUeCk4QK3ZUYMBiQdJlJL4DOcOCRylOCNtQKUqIiGwPOZ/Fs+rMoQkWdABV2Q5qTb0pIKYNRt+Es+/ZkO9q8o3w6jIgVKD0N/ynOSkwEiTxDSSDI9jtEhigIwABuQ9ywEIjiklTDS6BIcm9CqbYIBjEAtggEYLjG8+3gWyTUED67QFBphAgmA6AAa0RwuMP8oHJ+yAVKrMGORWv/24q2SNkIFKA5JgmxF5lTIKJmLJNlE1V/nS9am88bbnjaBRuvAsLzG4bMbkgw3bKbNLNo9xMnmahxfzRrdru1gWfMluflj5syWINlOA+614fIBnYT7f+/wR4NXtC++/YuvmBcGrjBNDxd4kQfG+jVyTnvFwvLVzT3wFqvGwVuF1z6uabuH4buFE1iNnWjMJwSwFMG1ghqlTmo1TSi+NnjKdKPfCVDovT8htxfLdBAMuHVINjcTrVZrghULx3SQfN+rOd66QTFfD/PRvsBoMPkUr/lS6jvHNRw9u5p4VcHOjfeR2OHVbVZedD5lM1emwEkAfwqCSW+9v3o7RZkb7A9n6aTU=',
@@ -545,7 +570,7 @@ PARTS_ = (
   (
     (
       "Gimo 359c",
-      "Anonymous (c. 1760) / Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) / III. Allegro"
+      "Anonymous (c. 1760) * Trio for 2 Mandolins and Continuo in C major (S-Uu Gimo 359) * III. Allegro"
     ),
     (
       'eJztlusJwzAMhFfJBn4kkZ3sP1ipodDqMz03hEBL9fNQpJMsnVLyvjULKTabygLE9mR3Cw0vUyke2BxQk/Jg0GWfmz3n9Ujp+HwRt8UD2X8TdZDsAdQDD5IFEx/E0BSk6TVFMGHv60CPFBFQRVBdDDyQ9kAWHeOXapnVY9cox0HGwHwcySJjXFQLuq4VAx7y5c7YOapBZyu9GkDchmS0Atl6OtPsRc8ckoGAoSGyFRy//4G8kNvnt8307K4nZJFMzbd14ICCh972Xg9Htkw9KIZi5N9FzgAV4I1KrI8/oBjSDTwtKRQ=',
