@@ -2872,12 +2872,20 @@ def voicesExtractNotes_(voice_str):
 
 
 def playEvents(polyEvents, durationCallback, **kwargs):
-  tracking = types.SimpleNamespace(cumul =  0, eventsAmount = 0, eventsAmounts=[0] * len(polyEvents))
-  tracking.__dict__.update(kwargs)
+  tracking = types.SimpleNamespace(cumul =  0, eventsAmounts=[0] * len(polyEvents))
+  user = types.SimpleNamespace(**kwargs)
 
   indexes = [0] * len(polyEvents)
   events = indexes.copy()
   delays = indexes.copy()
+
+  params = []
+
+  if len(inspect.signature(durationCallback).parameters) >= 1:
+    params.append(tracking)
+
+  if len(inspect.signature(durationCallback).parameters) >= 2:
+    params.append(user)
 
   while any(i is not None for i in indexes):
     tracking.duration = sys.maxsize
@@ -2891,9 +2899,8 @@ def playEvents(polyEvents, durationCallback, **kwargs):
         tracking.duration = min(tracking.duration, delays[i])
         
     tracking.cumul += tracking.duration
-    tracking.eventsAmount += 1
 
-    durationCallback(tracking)
+    durationCallback(*params)
         
     for i in range(len(indexes)):
       if indexes[i] is not None and indexes[i] >= len(polyEvents[i]):
@@ -2904,7 +2911,7 @@ def playEvents(polyEvents, durationCallback, **kwargs):
   return tracking.cumul
         
 
-def voicesToEvents(voices, tempo, callback, **kwargs):
+def voicesToEvents(voices, tempo, callback):
   voiceNotes = [voicesExtractNotes_(v) for v in voices]
   
   raws = []
@@ -2929,8 +2936,8 @@ def voicesToEvents(voices, tempo, callback, **kwargs):
   return raws
 
 
-def playVoices(voices, tempo, voiceCallback, durationCallback):
-  return playEvents(voicesToEvents(voices, tempo, voiceCallback), durationCallback)
+def playVoices(voices, tempo, voiceCallback, durationCallback, **kwargs):
+  return playEvents(voicesToEvents(voices, tempo, voiceCallback), durationCallback, **kwargs)
 
 
 ###### Begin of section high precision time handling based on NTP #####

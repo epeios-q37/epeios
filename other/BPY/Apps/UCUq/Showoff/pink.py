@@ -43,7 +43,7 @@ def launch(timestamp, devices):
 
   devices.lcds.backlightOn()
 
-  timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper, devices), lambda _, cumul: durationCallback_(timestamp + cumul, helper, devices))
+  timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper, devices), lambda tracking: durationCallback_(timestamp + tracking.cumul, helper, devices))
   
   timestamp = show.turnOffAndScrollDown(timestamp, devices)
   

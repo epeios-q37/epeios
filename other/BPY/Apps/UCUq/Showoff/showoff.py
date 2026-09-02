@@ -7,6 +7,7 @@ import ucuq
 import bouncing
 import colors
 import indy
+import life
 import partner
 import pink
 from show import getDevices as getDevices_, countdownIfRequested as countdownIfRequested_, connect as connect_, syncTest as syncTest_
@@ -144,7 +145,9 @@ def atkShowPink(dom):
 
 SHOWS_ = {
   "Colors": lambda timestamp, devices: colors.launch(timestamp, devices),
-  "Bouncing": lambda timestamp, devices: bouncing.launch(timestamp, devices)
+  "Bouncing": lambda timestamp, devices: bouncing.launch(timestamp, devices),
+  "Pink":  lambda timestamp, devices: pink.launch(timestamp, devices),
+  "Life":  lambda timestamp, devices: life.launch(timestamp, devices),
 }
 
 
