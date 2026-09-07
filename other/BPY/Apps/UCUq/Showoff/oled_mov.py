@@ -1,5 +1,5 @@
-import zlib
 import base64
+import zlib
 
 import ucuq
 
@@ -365,16 +365,13 @@ animations_ = tuple(
   for animation in ANIMATIONS_
 )
 
-WHOLE_ = tuple(i for i in range(len(animations_)))
+VERSIONS_ = (
+  (5,),
+  (5, 6, 8),
+  tuple(i for i in range(len(animations_)))
+)
 
-SHORT_ = (5, 6, 8)
-
-def launch(whole):
-  if whole:
-    list = WHOLE_
-  else:
-    list = SHORT_
-
+def launch(length):
   oled = ucuq.ravel.OLED()
 
 #  oled.addMethods("write_cmd(0xD5)")
@@ -382,7 +379,7 @@ def launch(whole):
 
   oled.invert(True)
   
-  for item in list:
+  for item in VERSIONS_[length]:
       animation = animations_[item]
       for _ in range(60 * 2 // len(animation)):
         for picture in animation:

@@ -23,11 +23,11 @@
 # include "common.h"
 
 # include "sck.h"
-# include "tol.h"
-# include "sdr.h"
 
 namespace remote {
-  void Process(sck::rRWDriver &Driver);
+  void Process(
+    sck::rRWDriver &Driver,
+    csdcmn::sVersion RemoteProtocolVersion);
 }
 
 #endif

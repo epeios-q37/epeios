@@ -242,16 +242,16 @@ class FrameBuffer_:
     self.height = height
     self.format = format
     self.stride = width if stride is None else stride
-    self._set, self._get = _OPS[format]
+    self.set_, self.get_ = _OPS[format]
 
   def pixel(self, x, y, c=None):
     if x < 0 or x >= self.width or y < 0 or y >= self.height:
       return None
     
     if c is None:
-      return self._get(self, x, y)
+      return self.get_(self, x, y)
     
-    self._set(self, x, y, c)
+    self.set_(self, x, y, c)
     return self
 
   def fill(self, c):
@@ -266,7 +266,7 @@ class FrameBuffer_:
     yend = min(self.height, y + h)
     x = max(x, 0)
     y = max(y, 0)
-    set_ = self._set
+    set_ = self.set_
     for yy in range(y, yend):
       for xx in range(x, xend):
         set_(self, xx, yy, c)
@@ -315,27 +315,71 @@ class FrameBuffer_:
 
   def ellipse(self, cx, cy, xr, yr, c, f=False, m=0x0F):
     if xr <= 0 or yr <= 0:
-      return
-    for dy in range(-yr, yr + 1):
-      # bornes de l'ellipse sur cette ligne horizontale
-      ratio = dy / yr
-      span = xr * (1 - ratio * ratio) ** 0.5
-      if dy <= 0:
-        quad_right, quad_left = 0x01, 0x02  # Q1, Q2
-      else:
-        quad_right, quad_left = 0x08, 0x04  # Q4, Q3
+      return self
 
+    x = 0
+    y = yr
+
+    # Région 1
+    d1 = (yr * yr) - (xr * xr * yr) + (0.25 * xr * xr)
+    dx = 2 * yr * yr * x
+    dy = 2 * xr * xr * y
+
+    while dx < dy:
+      # Tracé des 4 points
+      if m & 0x01: self.pixel(cx + x, cy - y, c)
+      if m & 0x02: self.pixel(cx - x, cy - y, c)
+      if m & 0x04: self.pixel(cx - x, cy + y, c)
+      if m & 0x08: self.pixel(cx + x, cy + y, c)
+
+      # Remplissage
       if f:
-        if m & quad_right:
-          self.hLine(cx, cy + dy, round(span) + 1, c)
-        if m & quad_left:
-          self.hLine(cx - round(span), cy + dy, round(span) + 1, c)
+        # Ligne haute
+        if (m & 0x01) or (m & 0x02):
+          self.hLine(cx - x, cy - y, 2 * x + 1, c)
+        # Ligne basse
+        if (m & 0x04) or (m & 0x08):
+          self.hLine(cx - x, cy + y, 2 * x + 1, c)
+
+      if d1 < 0:
+        x += 1
+        dx += 2 * yr * yr
+        d1 += dx + (yr * yr)
       else:
-        xi = round(span)
-        if m & quad_right:
-          self.pixel(cx + xi, cy + dy, c)
-        if m & quad_left:
-          self.pixel(cx - xi, cy + dy, c)
+        x += 1
+        y -= 1
+        dx += 2 * yr * yr
+        dy -= 2 * xr * xr
+        d1 += dx - dy + (yr * yr)
+
+    # Région 2
+    d2 = ((yr * yr) * ((x + 0.5) * (x + 0.5))) + ((xr * xr) * ((y - 1) * (y - 1))) - (xr * xr * yr * yr)
+
+    while y >= 0:
+      if m & 0x01: self.pixel(cx + x, cy - y, c)
+      if m & 0x02: self.pixel(cx - x, cy - y, c)
+      if m & 0x04: self.pixel(cx - x, cy + y, c)
+      if m & 0x08: self.pixel(cx + x, cy + y, c)
+
+      # Remplissage
+      if f:
+        # Ligne haute
+        if (m & 0x01) or (m & 0x02):
+          self.hLine(cx - x, cy - y, 2 * x + 1, c)
+        # Ligne basse
+        if (m & 0x04) or (m & 0x08):
+          self.hLine(cx - x, cy + y, 2 * x + 1, c)
+
+      if d2 > 0:
+        y -= 1
+        dy -= 2 * xr * xr
+        d2 += (xr * xr) - dy
+      else:
+        y -= 1
+        x += 1
+        dx += 2 * yr * yr
+        dy -= 2 * xr * xr
+        d2 += dx - dy + (xr * xr)
 
     return self
 
@@ -376,12 +420,6 @@ class FrameBuffer_:
 
     return self
 
-  def text(self, s, x, y, c=1):
-    for i, ch in enumerate(s):
-      self.drawChar_(ch, x + i * 8, y, c)
-
-    return self
-
   def drawChar_(self, ch, x, y, c):
     o = ord(ch)
     if o < 32 or o > 127:
@@ -396,7 +434,13 @@ class FrameBuffer_:
         if byte & (1 << row):
           self.pixel(x + col, y + row, c)
 
-      return self
+    return self
+
+  def text(self, s, x, y, c=1):
+    for i, ch in enumerate(s):
+      self.drawChar_(ch, x + i * 8, y, c)
+
+    return self
 
   def scroll(self, dx, dy):
     if dx < 0:
@@ -439,7 +483,7 @@ class FrameBuffer_:
     return self
 
 ##################################################################
-##### End of reimplementation form MicroPython's framebuffer #####
+##### End of reimplementation of MicroPython's framebuffer #####
 ##################################################################
 
 

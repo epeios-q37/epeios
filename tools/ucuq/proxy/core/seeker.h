@@ -23,8 +23,6 @@
 
 # include "common.h"
 
-# include "idxbtq.h"
-# include "lstbch.h"
 
 namespace seeker {
   qROW(Row);

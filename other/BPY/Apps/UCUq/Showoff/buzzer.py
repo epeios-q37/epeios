@@ -47,7 +47,7 @@ def alarmEffect_(buzzer, freqLow=800, freqHigh=1200, repetitions=6, duration=TAR
 
 
 def arpeggioEffect_(buzzer, duration=TARGET_DURATION):
-  notes = [262, 294, 330, 392, 440, 392, 330, 294]
+  notes = [262, 294, 330, 392, 440, 392, 330, 294, 262]
   pause = duration / len(notes)
   for freq in notes:
     buzzer.on(freq)
@@ -112,19 +112,16 @@ EFFECTS_ = (
   chiptuneEffect_,
 )
 
-FULL_ = tuple(i for i in range(len(EFFECTS_)))
+VERSIONS_ = (
+  (3,),
+  (2, 3, 6),
+  tuple(i for i in range(len(EFFECTS_)))
+)
 
-SHORT_ = (2, 3, 6)
-
-def launch(full):
+def launch(length):
   buzzer = ucuq.ravel.Buzzer()
 
-  if full:
-    list = FULL_
-  else:
-    list = SHORT_
-
-  for item in list:
+  for item in VERSIONS_[length]:
     EFFECTS_[item](buzzer)
 
   buzzer.off()

@@ -23,7 +23,6 @@
 
 # include "common.h"
 
-# include "sdr.h"
 # include "sck.h"
 
 namespace device {
@@ -56,6 +55,7 @@ namespace device {
   bso::sBool New(
     const str::dString &Token,
     const str::dString &Id,
+    csdcmn::sVersion ProtocolVersion,
     sck::rRWDriver *Driver,
     qRPD);
   common::sRow Hire(
@@ -64,7 +64,8 @@ namespace device {
     bso::sBool *BreakFlag); // 'BreakFlag' acts also as discriminator.
   sck::rRWDriver &GetDriver(
     common::sRow Row,
-    const bso::sBool *BreakFlag);
+    const bso::sBool *BreakFlag,
+    csdcmn::sVersion &ProtocolVersion);
   // Return 'true' if device withdrawed.
   bso::sBool Release(
     common::sRow Row,

@@ -21,6 +21,7 @@
 #include "seeker.h"
 
 #include "cio.h"
+#include "idxbtq.h"
 
 using namespace seeker;
 

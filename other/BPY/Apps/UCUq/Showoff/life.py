@@ -5,12 +5,12 @@ import ucuq
 from show import sleepUntil as sleepUntil_
 
 
-GRID_WIDTH_ = 32 * 3
+GRID_WIDTH_ = 32
 GRID_HEIGHT_ = 16
 CELL_SIZE_ = 4
 FILL_PROBABILITY_ = 0.25
 TARGET_DURATION_ = 0.15
-MAX_GENERATIONS_ = 500
+MAX_GENERATIONS_ = 300
 STAGNATION_WINDOW_ = 4
 MASS_EVENT_THRESHOLD_ = 0.15
 
@@ -147,4 +147,5 @@ def runDemo_(oled, ring, lcd, timestamp):
 
 def launch(timestamp, devices):
   oleds = devices.oleds
-  runDemo_(ucuq.OLEDS_Wall(((oleds[0], oleds[1], oleds[2]),)), devices.rings, devices.lcds.backlightOn(), timestamp)
+#  runDemo_(ucuq.OLEDS_Wall(((oleds[0], oleds[1], oleds[2]),)), devices.rings, devices.lcds.backlightOn(), timestamp)
+  runDemo_(oleds, devices.rings, devices.lcds.backlightOn(), timestamp)

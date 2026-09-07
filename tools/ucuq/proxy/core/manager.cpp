@@ -22,7 +22,6 @@
 
 #include "device.h"
 #include "messages.h"
-#include "remote.h"
 
 #include "ucumng.h"
 
@@ -64,6 +63,7 @@ namespace {
     common::sRow Row = qNIL;
     bso::sBool Cont = true;
     bso::sBool DummyBreakFlagAsDiscrimitator = false;
+    csdcmn::sVersion ProtocolVersion = csdcmn::UnknownVersion;
   qRB;
     tol::Init(RToken, Id, Script, Expression);
 
@@ -83,8 +83,7 @@ namespace {
       common::Put(Message, Manager);
       common::Commit(Manager);
     } else {
-
-      Device.Init(device::GetDriver(Row, &DummyBreakFlagAsDiscrimitator));
+      Device.Init(device::GetDriver(Row, &DummyBreakFlagAsDiscrimitator, ProtocolVersion));
 
       common::Put(device::rExecute, Device);
       common::Put(Script, Device);

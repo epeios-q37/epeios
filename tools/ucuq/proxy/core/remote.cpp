@@ -361,7 +361,9 @@ namespace routine_ {
   }
 }
 
-void remote::Process(sck::rRWDriver &RemoteDriver)
+void remote::Process(
+  sck::rRWDriver &RemoteDriver,
+  csdcmn::sVersion RemoteProtocolVersion)
 {
 qRH;
   flw::rDressedRWFlow<> Remote;
@@ -378,6 +380,7 @@ qRH;
     RemoteThreadExited = false,
     RemoteBreakFlag = false,
     DeviceBreakFlag = false;
+  csdcmn::sVersion DeviceProtocolVersion = csdcmn::UnknownVersion;
 qRB;
   RemoteDriver.SetBreakFlag(common::BreakFlagTimeout, &RemoteBreakFlag);
 
@@ -395,12 +398,15 @@ qRB;
     common::Put(Message, Remote);
     common::Commit(Remote);
   } else {
+    Device.Init(device::GetDriver(Row, &DeviceBreakFlag, DeviceProtocolVersion));
+
     common::Put("", Remote);
+    if ( RemoteProtocolVersion >= 1 )
+      common::Put(DeviceProtocolVersion, Remote);
     common::Commit(Remote);
 
     common::Dismiss(Remote);
 
-    Device.Init(device::GetDriver(Row, &DeviceBreakFlag));
     Blocker.Init();
 
     RemoteToDeviceData.Remote = &Remote;

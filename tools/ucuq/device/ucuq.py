@@ -1,6 +1,6 @@
-__version__ = "2025-08-21"
+__version__ = "2026-09-07"
 
-import asyncio, sys, uos, time, network, json, binascii, io
+import asyncio, deflate, sys, uos, time, network, json, binascii, io
 from machine import Pin
 
 import settings
@@ -13,7 +13,7 @@ _WLAN = "" # Connects to one of the WLAN defined in 'ucuq.json'.
 _WLAN_FALLBACK = "q37"
 
 _PROTOCOL_LABEL = "c37cc83e-079f-448a-9541-5c63ce00d960"
-_PROTOCOL_VERSION = "0"
+_PROTOCOL_VERSION = "1"
 
 # Connection status.
 _S_FAILURE = const(0)
@@ -209,6 +209,15 @@ async def readString():
     return ""
   
 
+async def readBytes():
+  size = await readUInt()
+
+  if size:
+    return (await recv(size))
+  else:
+    return ""
+  
+
 def exit(message=None):
   if (message):
     print(message, file=sys.stderr)
@@ -267,16 +276,24 @@ def ignition(deviceId):
     sys.exit(error)
 
 
+def decompress(buffer):
+  try:
+    with deflate.DeflateIO(io.BytesIO(buffer), deflate.RAW, 10) as decompressor:
+      decompressed = decompressor.read()
+    return decompressed.decode('utf-8')
+  except:
+    return buffer.decode('utf-8')
+
 async def serve(callback):
   while True:
     request = await readUInt()
 
     if request == _R_EXECUTE:
-      script = await readString()
+      script = await readBytes()
       expression = await readString()
       returned = ""
       try:
-        result = callback(script, expression)
+        result = callback(decompress(script), expression)
         if expression:
           returned = json.dumps(result)
       except Exception as exception:
@@ -337,11 +354,12 @@ def ledCallback(status, tries, pin, onValue):
     handleLed(pin, not( tries % 2), onValue )
   elif status == _S_UCUQ:
     handleLed(pin, False, onValue)
-  elif status == _S_FAILURE or status == _S_DECONNECTION:
+  elif status == _S_FAILURE:
+    handleLed(pin, True, onValue)
+  elif status == _S_DECONNECTION:
     handleLed(pin, True, onValue)
   elif status == _S_SUCCESS:
     ledBlink(pin, 3, onValue)
-    
   return defaultStatusCallback(status, tries) and not ( ( status == _S_UCUQ) and ( tries > 5 ) )
 
 
@@ -369,7 +387,7 @@ def getParams(paramSet, device, default):
 def getStatusCallback(deviceId):
   onBoardLed = settings.getOnboardLed(deviceId)
 
-  if onBoardLed[0] is not None:
+  if onBoardLed[0]:
     return lambda status, tries: ledCallback(status, tries, onBoardLed[0], onBoardLed[1])
     
   return defaultStatusCallback
@@ -413,13 +431,11 @@ def main(callback):
 
   try:
     asyncio.run(serve(callback))
-  except Exception as e:
+  except Exception as exception:
     try:
       writeUInt(_A_DISCONNECTED_)
     except:
       pass
 
-    sys.print_exception(e)
-    print(e)
     getStatusCallback(deviceId)(_S_DECONNECTION, 0)
-    raise
+    raise exception

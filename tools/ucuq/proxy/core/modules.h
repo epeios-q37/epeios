@@ -21,7 +21,10 @@
 #ifndef MODULES_INC_
 # define MODULES_INC_
 
-# include "rgstry.h"
+#include "bso.h"
+#include "fnm.h"
+#include "str.h"
+#include "tol.h"
 
 namespace modules {
   void Load(const fnm::rName & Name);

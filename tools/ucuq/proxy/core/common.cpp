@@ -21,11 +21,7 @@
 #include "common.h"
 
 #include "messages.h"
-#include "registry.h"
 
-#include "sclm.h"
-
-#include "mtk.h"
 
 using namespace common;
 
@@ -35,6 +31,7 @@ class common::rCaller_
 {
 private:
   bso::sBool *BreakFlag_;   // Acts also as discriminator.
+	csdcmn::sVersion ProtocolVersion_ = csdcmn::UnknownVersion;
   sck::rRWDriver *Driver_;
 	bso::sBool IsAlive_(void) const
 	{
@@ -56,12 +53,14 @@ public:
   qCDTOR(rCaller_);
   void Init(
     sck::rRWDriver *Driver,
+		csdcmn::sVersion ProtocolVersion,
     sRow Row)
   {
     reset();
 
     Driver_ = Driver;
     BreakFlag_ = NULL;
+		ProtocolVersion_ = ProtocolVersion;
   }
 	// If returning 'false', a break is send and the hire must be tried again after a little while.
   bso::sBool Hire(bso::sBool *BreakFlag)
@@ -118,13 +117,17 @@ public:
 
 		return true;
 	}
-	sck::rRWDriver *GetDriver(const bso::sBool *BreakFlag) const
+	sck::rRWDriver *GetDriver(
+		const bso::sBool *BreakFlag,
+		csdcmn::sVersion &ProtocolVersion) const
 	{
 		if ( !IsAlive_() )
 			qRGnr();
 
 		if ( BreakFlag_ != BreakFlag )
 			qRGnr();
+
+		ProtocolVersion = ProtocolVersion_;
 
 		return Driver_;
 	}
@@ -137,7 +140,9 @@ namespace {
 	}
 }
 
-sRow common::rCallers::New(sck::rRWDriver *Driver)
+sRow common::rCallers::New(
+	csdcmn::sVersion ProtocolVersion,
+	sck::rRWDriver *Driver)
 {
 	sRow Row = qNIL;
 qRH;
@@ -146,7 +151,7 @@ qRH;
 qRB;
 	Caller = qNEW(rCaller_);
 
-	Caller->Init(Driver, Row);
+	Caller->Init(Driver, ProtocolVersion, Row);
 
 	Locker.InitAndLock(Mutex_);
 
@@ -212,7 +217,8 @@ qRE;
 
 sck::rRWDriver *common::rCallers::GetDriver(
 	sRow Row,
-	const bso::sBool *BreakFlag) const
+	const bso::sBool *BreakFlag,
+	csdcmn::sVersion &ProtocolVersion) const
 {
 	sck::rRWDriver *Driver = NULL;
 qRH;
@@ -226,7 +232,7 @@ qRB;
 	if ( Caller == NULL )
 		qRGnr();
 
-	Driver = Caller->GetDriver(BreakFlag);
+	Driver = Caller->GetDriver(BreakFlag, ProtocolVersion);
 
 	if ( Driver == NULL )
 		qRGnr();

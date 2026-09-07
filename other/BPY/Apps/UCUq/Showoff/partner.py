@@ -1,4 +1,4 @@
-import json
+import json  # noqa: I001
 import time
 import types
 
@@ -6,27 +6,18 @@ import ucuq
 
 import buzzer
 import cube
+import lcd
 import matrix
 import oled
 import ring
 import servos
 import shared
 
-from shared import (
-  RAINBOW as RAINBOW_,
-  RGB_MAX as RGB_MAX_,
-  getRainbowColor as getRainbowColor_,
-)
 
 def connect(id):
   ucuq.setDevice(id)
 
   ucuq.ravel.raz()
-
-
-LINE1_ = "En route pour".center(16)
-#        "1234567890123456"
-LINE2_ = "l'aventure !".center(16)
 
 JUNIOR_ = """000000000004001100000000000c008200000000000340080000000000018082000000000002d0080000000000016082000000000002b828000000000010b60200000000000abbc80000000005e952a000000000100abbc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d7dba00004000017ffffff8006000000b6013fc000000000600017f00000000008000bf000000000380007f8000000000e0001f8000000103e0433fc0000005e1f2c79fd0000003e2f8ffffe4000037917e3fffe8800008617fffffe9e00215d23fffffefe00057c2bfffffffe00437541fffffffe0008d411ffffffff0003a429fffffffe20055c61fffffffe10145c71fffffffe1002b061f7fffffe10083000f7fffffe3002e000fbfffffe380040007cfffffe3005480629fffffe10009407fd7ffffe10028005fcfffffe0800a815ff3ffffc18028047ff7ffffc10008001ffbffff808034046bfffff7000008013ffffff00000300007ffffe08000080000dfffe020001000003fffe000001800020fffe0000000957fe7ffc000001002fffbffc000000215ffffff800000004007ffff800000040003ffff002000028002ffff80000000055dffff0000000249fffffb0000000003feffff000"""
 
@@ -136,7 +127,7 @@ def indy(withSound=True):
   for c in range(ringCount):
     ringEvents.append(
       (
-        lambda c=c, color=getRainbowColor_(
+        lambda c=c, color=shared.getRainbowColor(
           c + ringOffset
         ), ringCount=ringCount: (
           ring.setValue(c, color).setValue(ringCount - c, color).write(),
@@ -172,31 +163,31 @@ def indy(withSound=True):
   lcd.hideCursor()
 
   for i in range(8):
-    ring.setValue(i, getRainbowColor_(ringOffset + i, 7)).write()
+    ring.setValue(i, shared.getRainbowColor(ringOffset + i, 7)).write()
 
   ravel.displayRingGauges()
 
   return True
 
 
-def Buzzer(whole):
-  buzzer.launch(whole)
+def Buzzer(length):
+  buzzer.launch(length)
 
 
-def OLEDGeo(whole):
-  oled.launchGeo(whole)
+def OLEDGeo(length):
+  oled.launchGeo(length)
   
   
-def Mov(whole):
-  oled.launchMov(whole)
+def Mov(length):
+  oled.launchMov(length)
   
   
 def matrixSimulation():
   matrix.launch()
 
 
-def Ring(whole):
-  ring.launch(whole)
+def Ring(length):
+  ring.launch(length)
   
   
 def Servos():
@@ -240,7 +231,7 @@ def DisplaySpokenColor(dom):
       ucuq.sleepStart()
       ring.setValue(dom.partner.colors.led, ((255, 255, 255))).write()
       r, g, b = map(
-        lambda c: RGB_MAX_ * int(c) // 255, [c for c in SPOKEN_COLORS_[color]]
+        lambda c: shared.RGB_MAX_ * int(c) // 255, [c for c in SPOKEN_COLORS_[color]]
       )
       ucuq.sleepWait(0.05)
       ring.setValue(dom.partner.colors.led, (r, g, b)).write()
@@ -293,61 +284,5 @@ def Listen(dom):
   dom.executeVoid("partnerListen()")
 
 
-def spacesMerging_(s1: str, s2: str) -> str:
-  i = 0
-  while i < len(s2) and s2[i] == " ":
-    i += 1
-
-  if i >= len(s1):
-    return s1 + s2[len(s1) :]
-  else:
-    return s1 + s2.lstrip()
-
-
-DELAY_TEXT_ = 0.2
-DELAY_WAVE_ = 0.1
-
-
-def LCD():
-  lcd = ucuq.ravel.LCD()
-
-  lcd.uploadUpwardGaugeChars().backlightOn().showCursor().moveTo(0, 0)
-
-  lcd.ttyWrite(LINE1_ + LINE2_, DELAY_TEXT_)
-
-  wave2 = ""
-
-  for i in range(8):
-    wave2 = chr(i) + wave2
-    lcd.moveTo(0, 1).putString(spacesMerging_(wave2, LINE2_)[:16])
-    ucuq.sleep(DELAY_WAVE_)
-
-  wave1 = ""
-
-  for i in range(8):
-    wave1 = chr(i) + wave1
-    wave2 = chr(7) + wave2
-    lcd.putString(
-      spacesMerging_(wave1, LINE1_)[:16] + spacesMerging_(wave2, LINE2_)[:16]
-    )
-    ucuq.sleep(DELAY_WAVE_)
-
-  for i in range(7, -1, -1):
-    wave1 = chr(i) + wave1
-    wave2 = chr(7) + wave2
-    lcd.putString(spacesMerging_(wave1, LINE1_)[:16] + wave2[:16])
-    ucuq.sleep(DELAY_WAVE_)
-
-  for i in range(7, -1, -1):
-    wave1 = " " + wave1
-    wave2 = chr(i) + wave2
-    lcd.putString(wave1[:16] + wave2[:16])
-    ucuq.sleep(DELAY_WAVE_)
-
-  for i in range(16):
-    wave1 = " " + wave1
-    wave2 = " " + wave2
-    lcd.putString(wave1[:16] + wave2[:16])
-    ucuq.sleep(DELAY_WAVE_)
-
-  lcd.backlightOff()
+def LCD(length):
+  lcd.launch(length)

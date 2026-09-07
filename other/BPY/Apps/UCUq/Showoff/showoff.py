@@ -40,9 +40,8 @@ def combinaisons_(A):
   return R
 
 
-def isPartnerWholeAnimationRequired_(dom):
-#  return True
-  return dom.getValue("PartnerFormat") == "true"
+def partnerLength_(dom):
+  return int(dom.getValue("PartnerLength"))
 
 
 def atk(dom):
@@ -60,23 +59,23 @@ def atkPartnerConnect(dom):
 
 
 def atkPartnerBuzzer(dom):
-  partner.Buzzer(isPartnerWholeAnimationRequired_(dom))
+  partner.Buzzer(partnerLength_(dom))
   
   
 def atkPartnerOLEDGeo(dom):
-  partner.OLEDGeo(isPartnerWholeAnimationRequired_(dom))
+  partner.OLEDGeo(partnerLength_(dom))
   
   
 def atkPartnerOLEDMov(dom):
-  partner.Mov(isPartnerWholeAnimationRequired_(dom))
+  partner.Mov(partnerLength_(dom))
   
   
 def atkPartnerRing(dom):
-  partner.Ring(isPartnerWholeAnimationRequired_(dom))
+  partner.Ring(partnerLength_(dom))
 
 
 def atkPartnerLCD(dom):
-  partner.LCD()
+  partner.LCD(partnerLength_(dom))
 
 
 def atkPartnerServos(dom):

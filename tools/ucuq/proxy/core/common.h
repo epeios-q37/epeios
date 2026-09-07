@@ -24,9 +24,7 @@
 # include "ucucmn.h"
 
 # include "csdcmn.h"
-# include "csdbns.h"
 
-# include "sdr.h"
 # include "tol.h"
 # include "sck.h"
 # include "lstbch.h"
@@ -67,14 +65,17 @@ namespace common {
       Mutex_ = mtx::Create();
       tol::Init(List_);
     }
-    sRow New(sck::rRWDriver *Driver);
+    sRow New(
+      csdcmn::sVersion ProtocolVersion,
+      sck::rRWDriver *Driver);
     void Withdraw(sRow Row); // The corresponding caller is made inaccessible and deleted if applied.
     bso::sBool Hire(
       sRow Row,
       bso::sBool *BreakFlag) const;
     sck::rRWDriver *GetDriver(
       sRow Row,
-      const bso::sBool *BreakFlag) const;
+      const bso::sBool *BreakFlag,
+      csdcmn::sVersion &ProtocolVersion) const;
     bso::sBool Release(
       sRow Row,
       const bso::sBool *BreakFlag);

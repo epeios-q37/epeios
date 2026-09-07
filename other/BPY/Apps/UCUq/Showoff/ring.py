@@ -273,19 +273,18 @@ ANIMATIONS_ = (
   discoAnimation_,
 )
 
-WHOLE_ = tuple(i for i in range(len(ANIMATIONS_)))
 
-SHORT_ = (1, 2, 7, 11)
 
-def launch(whole):
+VERSIONS_ = (
+  (1,),
+  (1, 2, 7, 11),
+  tuple(i for i in range(len(ANIMATIONS_)))
+)
+
+def launch(length):
   ring = ucuq.ravel.Ring()
 
-  if whole:
-    list = WHOLE_
-  else:
-    list = SHORT_
-
-  for item in list:
+  for item in VERSIONS_[length]:
     ANIMATIONS_[item](ring)
 
   ring.fill((0, 0, 0))

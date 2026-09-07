@@ -2,8 +2,8 @@ import oled_geo
 import oled_mov
 
 
-def launchGeo(whole):
-  oled_geo.launch(whole)
+def launchGeo(length):
+  oled_geo.launch(length)
 
-def launchMov(whole):
-  oled_mov.launch(whole)
+def launchMov(length):
+  oled_mov.launch(length)

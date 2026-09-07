@@ -19,15 +19,9 @@
 
 
 #include "device.h"
-
-#include "registry.h"
 #include "seeker.h"
 
-#include "sclm.h"
-
-#include "lstcrt.h"
 #include "str.h"
-#include "idxbtq.h"
 
 using namespace device;
 
@@ -69,6 +63,7 @@ namespace {
 bso::sBool device::New(
   const str::dString &RToken,
   const str::dString &Id,
+  csdcmn::sVersion ProtocolVersion,
   sck::rRWDriver *Driver,
   qRPN)
 {
@@ -87,7 +82,7 @@ qRB;
     if ( SRow != qNIL )
       Withdraw_(SRow);
 
-    SRow = seeker::New(RToken, Id, CRow = Callers_.New(Driver));
+    SRow = seeker::New(RToken, Id, CRow = Callers_.New(ProtocolVersion, Driver));
   } else
     SRow = qNIL;
 
@@ -141,7 +136,8 @@ qRE;
 
 sck::rRWDriver &device::GetDriver(
   common::sRow Row,
-  const bso::sBool *BreakFlag)
+  const bso::sBool *BreakFlag,
+  csdcmn::sVersion &ProtocolVersion)
 {
   sck::rRWDriver *Driver = NULL;
 qRH;
@@ -150,7 +146,7 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Driver = Callers_.GetDriver(Row, BreakFlag);
+  Driver = Callers_.GetDriver(Row, BreakFlag, ProtocolVersion);
 
   if ( Driver == NULL )
     qRGnr();

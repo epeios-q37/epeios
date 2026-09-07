@@ -174,12 +174,12 @@ namespace {
 
 			Get_(*Driver, RToken, Id);
 
-			device::New(RToken, Id, Driver);
+			device::New(RToken, Id, Features.ProtocolVersion, Driver);
 				
 			Driver = NULL;	// To avoid deleting when exiting this method.
 			break;
 		case common::cRemote:
-			remote::Process(*Driver);
+			remote::Process(*Driver, Features.ProtocolVersion);
 			break;
 		case common::cManager:
 			manager::Process(*Driver, Features.ProtocolVersion);

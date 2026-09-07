@@ -366,42 +366,38 @@ def animVectorField(oled, duration=2.0):
     oled.show()
     t += 0.15
 
+VERSIONS_ = (
+  (animNeuronal,),
+  (
+    animTunnel,
+    animLightning,
+    animSpiral,
+    animPlasmaFractal,
+    animNeuronal,
+    animVectorField
+  ),
+  (
+    animStarfield,
+    animTunnel,
+    animFire,
+    animMetaballs,
+    animMatrixRain,
+    animLightning,
+    animWaves,
+    animSpiral,
+    animGravityParticles,
+    animPlasmaFractal,
+    animConcentricWaves,
+    animNeuronal,
+    animOpticalDistortion,
+    animVectorField
+  )  
+)  
 
-WHOLE_ = (
-  animStarfield,
-  animTunnel,
-  animFire,
-  animMetaballs,
-  animMatrixRain,
-  animLightning,
-  animWaves,
-  animSpiral,
-  animGravityParticles,
-  animPlasmaFractal,
-  animConcentricWaves,
-  animNeuronal,
-  animOpticalDistortion,
-  animVectorField
-)
-
-SHORT_ = (
-  animTunnel,
-  animLightning,
-  animSpiral,
-  animPlasmaFractal,
-  animNeuronal,
-  animVectorField
-)
-
-def launch(whole):
-  if whole:
-    list = WHOLE_
-  else:
-    list = SHORT_  
-
+def launch(length):
   oled = ucuq.ravel.OLED()
 
-  for anim in list:
+  for anim in VERSIONS_[length]:
     anim(oled)
 
   oled.fill(0).show()

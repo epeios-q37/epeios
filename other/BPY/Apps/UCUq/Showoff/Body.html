@@ -23,22 +23,27 @@
       <button xdh:onevent="PartnerIndy">Indy</button>
       <button xdh:onevent="PartnerMatrix">Matrix</button>
       <button xdh:onevent="PartnerListen">Listen</button>
-      <span style="align-self: center;">
-        <label>
-          <span>Orient.:</span>
-          <input type="checkbox" id="PartnerOrientation">
-        </label>
-      </span>
-      <span></span>
-      <label style="align-self: center;">
-        <span>Whole:</span>
-        <input type="checkbox" id="PartnerFormat">
-      </label>
       <input id="PartnerColors" type="hidden">
+    </span>
+      <fieldset style="display: flex; justify-content: space-between;" id="PartnerLength" xdh:radio="PartnerLength">
+        <legend>Duration</legend>
+          <label>
+            <input type="radio" name="PartnerLength" value="0" checked>
+            <span>Short</span>
+          </label>
+          <label>
+            <input type="radio" name="PartnerLength" value="1">
+            <span>Middle</span>
+          </label>
+          <label>
+            <input type="radio" name="PartnerLength" value="2">
+            <span>Long</span>
+          </label>
+      </fieldset>
     </span>
     <fieldset style="display: flex; justify-content: space-around;">
       <legend>Orientation</legend>
-
+      <input type="checkbox" id="PartnerOrientation">
       <span>
         <span>Z: </span>
         <output style="display: inline-block; font-family: monospace; width: 4ch; font-size: larger;"
