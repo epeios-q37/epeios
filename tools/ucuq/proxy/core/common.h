@@ -67,6 +67,7 @@ namespace common {
     }
     sRow New(
       csdcmn::sVersion ProtocolVersion,
+      const str::dString &Specs,
       sck::rRWDriver *Driver);
     void Withdraw(sRow Row); // The corresponding caller is made inaccessible and deleted if applied.
     bso::sBool Hire(
@@ -75,7 +76,8 @@ namespace common {
     sck::rRWDriver *GetDriver(
       sRow Row,
       const bso::sBool *BreakFlag,
-      csdcmn::sVersion &ProtocolVersion) const;
+      csdcmn::sVersion &ProtocolVersion,
+      str::dString *Specs = NULL) const;
     bso::sBool Release(
       sRow Row,
       const bso::sBool *BreakFlag);

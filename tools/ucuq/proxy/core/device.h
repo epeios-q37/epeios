@@ -56,6 +56,7 @@ namespace device {
     const str::dString &Token,
     const str::dString &Id,
     csdcmn::sVersion ProtocolVersion,
+    const str::dString &Specs,
     sck::rRWDriver *Driver,
     qRPD);
   common::sRow Hire(
@@ -65,7 +66,8 @@ namespace device {
   sck::rRWDriver &GetDriver(
     common::sRow Row,
     const bso::sBool *BreakFlag,
-    csdcmn::sVersion &ProtocolVersion);
+    csdcmn::sVersion &ProtocolVersion,
+    str::dString *Specs = NULL);
   // Return 'true' if device withdrawed.
   bso::sBool Release(
     common::sRow Row,

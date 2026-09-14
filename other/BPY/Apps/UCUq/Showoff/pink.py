@@ -10,46 +10,46 @@ from show import sleepUntil as sleepUntil_
 
 COMMIT_DELAY_ = 0 # No delayed commit
 
-def eventCallback_(freq, helper, devices):
-    if freq !=-1:
-      devices.buzzers.off()
-      if freq != 0:
-        devices.buzzers.on(freq)
-        helper.led += 1    
+def eventCallback_(freq, helper, parts):
+  if freq !=-1:
+    parts.buzzers.off()
+    if freq != 0:
+      parts.buzzers.on(freq)
+      helper.led += 1    
         
 
-def durationCallback_(timestamp, helper, devices):
-  devices.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
-  devices.rings.setValue(helper.led + 1,(0,0,0)).write()
+def durationCallback_(timestamp, helper, parts):
+  parts.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
+  parts.rings.setValue(helper.led + 1,(0,0,0)).write()
   
   if (timestamp - helper.start) > PANTHER_DELAY_ * helper.pantherPict:
-    devices.oleds.fill(0).show()
-    devices.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
+    parts.oleds.fill(0).show()
+    parts.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
     helper.pantherPict += 1
     
-  show.displayRingGauges(devices)
+  show.displayRingGauges(parts)
   
   sleepUntil_(timestamp, COMMIT_DELAY_)
 
 
-def launch(timestamp, devices):
+def launch(timestamp, parts):
   helper = types.SimpleNamespace(pantherPict = 0, led = -1)
   
   helper.start = timestamp = timestamp + 1
   
-  devices.lcds.backlightOff().uploadUpwardGaugeChars()
+  parts.lcds.backlightOff().uploadUpwardGaugeChars()
 
   sleepUntil_(timestamp, COMMIT_DELAY_)
 
-  devices.lcds.backlightOn()
+  parts.lcds.backlightOn()
 
-  timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper, devices), lambda tracking: durationCallback_(timestamp + tracking.cumul, helper, devices))
+  timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper, parts), lambda tracking: durationCallback_(timestamp + tracking.cumul, helper, parts))
   
-  timestamp = show.turnOffAndScrollDown(timestamp, devices)
+  timestamp = show.turnOffAndScrollDown(timestamp, parts)
   
-  devices.oleds.fill(0).show()
+  parts.oleds.fill(0).show()
 
-  devices.lcds.clear().backlightOff()
+  parts.lcds.clear().backlightOff()
   
   return timestamp
 

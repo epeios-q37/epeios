@@ -87,10 +87,17 @@
           <option value="Colors">Colors</option>
           <option value="Pink">Pink</option>
           <option value="Life">Life</option>
+          <option value="Canon">Canon</option>
         </optgroup>
         <optgroup label="Trios" id="ShowTrios"></optgroup>
       </select>
       <button xdh:onevent="ShowPlay">Play</button>
     </div>
+  </fieldset>
+  <fieldset>
+    <legend>QR Codes</legend>
+    <select id="QRCodesList" xdh:onevent="QRCodesSelect"></select>
+    <input id="QRCodesText" xdh:onevent="QRCodesDisplay" type="text">
+    <button xdh:onevent="QRCodesDisplay">Display</button>
   </fieldset>
 </fieldset>

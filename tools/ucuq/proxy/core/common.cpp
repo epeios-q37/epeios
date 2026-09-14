@@ -31,7 +31,8 @@ class common::rCaller_
 {
 private:
   bso::sBool *BreakFlag_;   // Acts also as discriminator.
-	csdcmn::sVersion ProtocolVersion_ = csdcmn::UnknownVersion;
+	csdcmn::sVersion ProtocolVersion_;
+	str::wString Specs_;
   sck::rRWDriver *Driver_;
 	bso::sBool IsAlive_(void) const
 	{
@@ -49,11 +50,14 @@ public:
 
     Driver_ = NULL;
     BreakFlag_ = NULL;
+		ProtocolVersion_ = csdcmn::UnknownVersion;
+		Specs_.reset(P);
   }
   qCDTOR(rCaller_);
   void Init(
     sck::rRWDriver *Driver,
 		csdcmn::sVersion ProtocolVersion,
+		const str::dString &Specs,
     sRow Row)
   {
     reset();
@@ -61,6 +65,7 @@ public:
     Driver_ = Driver;
     BreakFlag_ = NULL;
 		ProtocolVersion_ = ProtocolVersion;
+		Specs_.Init(Specs);
   }
 	// If returning 'false', a break is send and the hire must be tried again after a little while.
   bso::sBool Hire(bso::sBool *BreakFlag)
@@ -119,7 +124,8 @@ public:
 	}
 	sck::rRWDriver *GetDriver(
 		const bso::sBool *BreakFlag,
-		csdcmn::sVersion &ProtocolVersion) const
+		csdcmn::sVersion &ProtocolVersion,
+		str::dString *Specs) const
 	{
 		if ( !IsAlive_() )
 			qRGnr();
@@ -128,6 +134,9 @@ public:
 			qRGnr();
 
 		ProtocolVersion = ProtocolVersion_;
+
+		if ( Specs != NULL )
+			*Specs = Specs_;
 
 		return Driver_;
 	}
@@ -142,6 +151,7 @@ namespace {
 
 sRow common::rCallers::New(
 	csdcmn::sVersion ProtocolVersion,
+	const str::dString &Specs,
 	sck::rRWDriver *Driver)
 {
 	sRow Row = qNIL;
@@ -151,7 +161,7 @@ qRH;
 qRB;
 	Caller = qNEW(rCaller_);
 
-	Caller->Init(Driver, ProtocolVersion, Row);
+	Caller->Init(Driver, ProtocolVersion, Specs, Row);
 
 	Locker.InitAndLock(Mutex_);
 
@@ -218,7 +228,8 @@ qRE;
 sck::rRWDriver *common::rCallers::GetDriver(
 	sRow Row,
 	const bso::sBool *BreakFlag,
-	csdcmn::sVersion &ProtocolVersion) const
+	csdcmn::sVersion &ProtocolVersion,
+	str::dString *Specs) const
 {
 	sck::rRWDriver *Driver = NULL;
 qRH;
@@ -232,7 +243,7 @@ qRB;
 	if ( Caller == NULL )
 		qRGnr();
 
-	Driver = Caller->GetDriver(BreakFlag, ProtocolVersion);
+	Driver = Caller->GetDriver(BreakFlag, ProtocolVersion, Specs);
 
 	if ( Driver == NULL )
 		qRGnr();

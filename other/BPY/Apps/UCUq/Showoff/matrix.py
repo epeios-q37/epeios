@@ -35,13 +35,12 @@ animation_ = tuple(zlib.decompress(base64.b64decode(picture)).decode() for pictu
 
 DURATION_ = 15
 
-def getBuzzerEvents_(buzzer):
+def buzzerEvents_(buzzer):
   coeff = 2 ** (1/12)
   delay = 1/4
   previousFreq = None
   
   elapsed = 0
-  events = []
   
   while elapsed <= DURATION_:
     while True:
@@ -49,37 +48,33 @@ def getBuzzerEvents_(buzzer):
       if freq != previousFreq:
         break
     previousFreq = freq
-    events.append((lambda freq = freq: buzzer.on(freq), delay))
+    buzzer.on(freq)
+    yield delay
     elapsed += delay
     
-  events.append((lambda: buzzer.off(), 0))
-
-  return events
+  buzzer.off()
 
 
-def getOLEDEvents_(oled):
+def oledEvents_(oled):
   elapsed = 0
-  events = []
   counter = 0
   delay = 1/8
 
   while elapsed <= DURATION_:
-    events.append((lambda animation = animation_[counter % len(animation_)]: oled.draw(animation, 128).show(), delay))
+    oled.draw(animation_[counter % len(animation_)], 128).show()
+    yield delay
     elapsed += delay
     counter += 1
 
-  events.append((lambda: oled.fill(1).show(), 0))
-  
-  return events
+  oled.fill(1).show()
 
 
-def getRingEvents_(ring):
+def ringEvents_(ring):
   elapsed = 0
   delay = 1/5
   step = 1
   limit = 15
   current = 0
-  events = []
   rotation = 0
   
   while elapsed <= DURATION_:
@@ -90,29 +85,26 @@ def getRingEvents_(ring):
       
     rotation += .2
       
-    events.append((lambda green = current, rotation = int(rotation): ring.fill((0, green, 0)).setValue(rotation, (0,0,31)).setValue(rotation + 4, (10,0,0)).write(), delay))
+    ring.fill((0, current, 0)).setValue(int(rotation), (0,0,31)).setValue(int(rotation) + 4, (10,0,0)).write()
+    yield delay
     elapsed += delay
     
     current += step
     
-  events.append((lambda: ring.fill((0, 0, 0)).write(), 0))
-  elapsed += delay
-    
-    
-  return events
+  ring.fill((0, 0, 0)).write()
 
 
-def getLCDEvents_(lcd):
+def lcdEvents_(lcd):
   delay = 1 / 7
   ups = [random.randrange(2, 16)] * 16
   downs = [random.randrange(1, limit) for limit in ups]
   levels = [random.randrange(downs[i], ups[i] + 1) for i in range(16)]
   coeffs = [-1 if random.randrange(2) else 1 for _ in range(16)]
   elapsed = 0
-  events = []
   
   while elapsed <= DURATION_:
-    events.append((lambda levels = levels.copy(): lcd.putUpwardGauges(0, levels), delay))
+    lcd.putUpwardGauges(0, levels)
+    yield delay
     
     for i in range(len(levels)):
       levels[i] += coeffs[i]
@@ -125,24 +117,24 @@ def getLCDEvents_(lcd):
       
     elapsed += delay
     
-  events.append((lambda: lcd.backlightOff().clear(), 0))
-    
-  return events
+  lcd.backlightOff().clear()
+
 
 LIMIT_ = ucuq.ravel.SERVO_MAX
 DELTA_ = LIMIT_ // 2
 
-def getServosEvents_(upper, lower):
+def servosEvents_(upper, lower):
   delay = 1 / 10
   ups = [LIMIT_// 2, random.randrange(1, DELTA_)]
   downs = [random.randrange(LIMIT_-DELTA_, LIMIT_), LIMIT_ // 2]
   levels = [upper.get(), lower.get()]
   coeffs = [-100,100]
   elapsed = 0
-  events = []
   
   while elapsed <= DURATION_:
-    events.append((lambda levels = levels.copy(): (upper.set(levels[0]), lower.set(levels[1])), delay))
+    upper.set(levels[0])
+    lower.set(levels[1])
+    yield delay
     
     for i in range(len(levels)):
       levels[i] += coeffs[i]
@@ -158,50 +150,42 @@ def getServosEvents_(upper, lower):
   while levels != [LIMIT_,0]:
     levels[0] = min(levels[0] + 100, LIMIT_)
     levels[1] = max(levels[1] - 100, 0)
-    events.append((lambda levels = levels.copy(): (upper.set(levels[0]), lower.set(levels[1])), 1/30))
-    
-  return events
+    upper.set(levels[0])
+    lower.set(levels[1])
+    yield 1/30
 
 
-def getCommitEvents_():
+def commitEvents_():
   elapsed = 0
-  events = []
-  delay = 1/6
+  delay = 1/2
   
   while elapsed < DURATION_:
-    events.append((lambda: ucuq.commit(), delay))
+    ucuq.commit()
+    yield delay
     elapsed += delay
-  
-  return events  
+
 
 def launch():
   oled, buzzer, ring, lcd, upper, lower = ucuq.ravel.get("OBRLS")
   
-#  upper.setSmooth(ucuq.ravel.SERVO_MAX // 2)
-#  lower.setSmooth(ucuq.ravel.SERVO_MAX // 2)
   oled.invert(True)
   lcd.uploadUpwardGaugeChars().backlightOn()
   
   allEvents = [
-    getBuzzerEvents_(buzzer),
-    getOLEDEvents_(oled),
-    getRingEvents_(ring),
-    getLCDEvents_(lcd),
-    getServosEvents_(upper, lower),
-    getCommitEvents_()
+    buzzerEvents_(buzzer),
+    oledEvents_(oled),
+    ringEvents_(ring),
+    lcdEvents_(lcd),
+    servosEvents_(upper, lower)
   ]
   
   ratioBackup = buzzer.off().ratio(.992)
-  
-  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
   ucuq.commit()
   
   ucuq.sleepStart()
   
-  ucuq.playEvents(allEvents, lambda tracking: ucuq.sleepWait(tracking.cumul))
-  
-  ucuq.setCommitBehavior(cb)
+  ucuq.dispatchEvents(allEvents, lambda tracking: ucuq.sleepWait(tracking.cumul))
 
   buzzer.off().ratio(ratioBackup)
 

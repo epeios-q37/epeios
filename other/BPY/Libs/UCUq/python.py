@@ -5,6 +5,7 @@ import os
 import socket
 import ssl
 import sys
+import types
 import threading
 import urllib
 import zlib
@@ -193,19 +194,19 @@ def ignition_(socket, token, deviceId, errorAsException):
 
   deviceProtocolVersion = readUInt_(socket)
 
-  if deviceProtocolVersion != 0:
-    print(f"{deviceId}: {deviceProtocolVersion} !")
+  specs = readString_(socket)
     
-  return deviceProtocolVersion
+  return deviceProtocolVersion, json.loads( specs if specs != "" else "{}")
 
 
 def connect_(token, deviceId, errorAsException):
   socket = init_()
   handshake_(socket)
-  if ( deviceProtocoleVersion := ignition_(socket, token, deviceId, errorAsException) ) is not None:
-    return socket, deviceProtocoleVersion
+  deviceProtocolVersion, deviceSpecs = ignition_(socket, token, deviceId, errorAsException)
+  if ( deviceProtocolVersion ) is not None:
+    return socket, deviceProtocolVersion, deviceSpecs
   else:
-    return None, None
+    return None, None, None
 
 
 class Error(Exception):
@@ -250,9 +251,10 @@ def readingThread(proxy):
 
 
 class Proxy:
-  def __init__(self, socket, deviceProtocoleVersion, id):
+  def __init__(self, socket, deviceProtocolVersion, deviceSpecs, id):
     self.socket = socket
-    self.deviceProtocoleVersion = deviceProtocoleVersion
+    self.deviceProtocolVersion_ = deviceProtocolVersion
+    self.deviceSpecs_ = deviceSpecs
     self.id = id
     if socket is not None:
       self.resultBegin = threading.Event()
@@ -301,7 +303,7 @@ class Device_:
     if self.proxy.socket:
       with writeLock_:
         writeString_(self.proxy.socket, R_EXECUTE_)
-        if self.proxy.deviceProtocoleVersion == 0:
+        if self.proxy.deviceProtocolVersion_ == 0:
           writeString_(self.proxy.socket, script + "\ngc.collect()")
         else:
           writeBytes_(self.proxy.socket, self.compress_(script + "\ngc.collect()"))
@@ -320,6 +322,9 @@ class Device_:
             return json.loads(result)
           else:
             return None
+
+  def getDeviceSpecs(self):
+    return types.SimpleNamespace(scriptsCompressed = self.proxy.deviceProtocolVersion_ >= 1)
           
   def commit(self, expression = ""):
     result = ""

@@ -7,10 +7,17 @@ import ucuq
 import bouncing
 import colors
 import indy
+import canon
 import life
 import partner
 import pink
-from show import getDevices as getDevices_, countdownIfRequested as countdownIfRequested_, connect as connect_, syncTest as syncTest_
+import qrcodes
+from show import (
+  getParts as getParts_,
+  countdownIfRequested as countdownIfRequested_,
+  connect as connect_,
+  syncTest as syncTest_
+)
 import trios
 
 
@@ -50,7 +57,8 @@ def atk(dom):
   dom.inner("", BODY.format(devices, DEVICES_[0], *SHOW_DEVICES_))  # type: ignore # noqa: F821
   partner.set(dom)
   trios.set(dom)
-  dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);")
+  qrcodes.set(dom)
+  dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);toggleFieldsetByLegend('QR Codes', true);")
 
 
 def atkPartnerConnect(dom):
@@ -131,39 +139,42 @@ def atkShowTest():
 
 
 def atkShowIndy(dom):
-  devices = getDevices_()
-  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, devices)
-  indy.launch(timestamp, devices)
+  parts = getParts_()
+  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, parts)
+  indy.launch(timestamp, parts)
 
 
 def atkShowPink(dom):
-  devices = getDevices_()
-  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, devices)
-  pink.launch(timestamp, devices)
+  parts = getParts_()
+  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, parts)
+  pink.launch(timestamp, parts)
 
 
 SHOWS_ = {
-  "Colors": lambda timestamp, devices: colors.launch(timestamp, devices),
-  "Bouncing": lambda timestamp, devices: bouncing.launch(timestamp, devices),
-  "Pink":  lambda timestamp, devices: pink.launch(timestamp, devices),
-  "Life":  lambda timestamp, devices: life.launch(timestamp, devices),
+  "Colors": lambda timestamp, parts: colors.launch(timestamp, parts),
+  "Bouncing": lambda timestamp, parts: bouncing.launch(timestamp, parts),
+  "Pink":  lambda timestamp, parts: pink.launch(timestamp, parts),
+  "Life":  lambda timestamp, parts: life.launch(timestamp, parts),
+  "Canon":  lambda timestamp, parts: canon.launch(timestamp, parts),
 }
 
 
 def atkShowPlay(dom):
-  devices = getDevices_()
+  parts = getParts_()
   show = dom.getValue("Show")
-  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, devices)
+  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, parts)
   if show in SHOWS_:
-    SHOWS_[show](timestamp, devices)
+    SHOWS_[show](timestamp, parts)
   else:
-    trios.launch(int(show), timestamp, devices)
+    trios.launch(int(show), timestamp, parts)
 
 
-def _atkShowColors(dom):
-  devices = getDevices_()
-  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, devices)
-  colors.launch(timestamp, devices)
+def atkQRCodesSelect(dom, id):
+  dom.setValue("QRCodesText", dom.getValue(id))
+
+
+def atkQRCodesDisplay(dom):
+  dom.executeVoid(f"window.open('http://api.qrserver.com/v1/create-qr-code/?data={dom.getValue('QRCodesText')}', '_blank')")
 
 
 if os.environ.get("PREFIX", "").startswith("/data/data/com.termux"):

@@ -64,6 +64,7 @@ bso::sBool device::New(
   const str::dString &RToken,
   const str::dString &Id,
   csdcmn::sVersion ProtocolVersion,
+  const str::dString &Specs,
   sck::rRWDriver *Driver,
   qRPN)
 {
@@ -82,7 +83,7 @@ qRB;
     if ( SRow != qNIL )
       Withdraw_(SRow);
 
-    SRow = seeker::New(RToken, Id, CRow = Callers_.New(ProtocolVersion, Driver));
+    SRow = seeker::New(RToken, Id, CRow = Callers_.New(ProtocolVersion, Specs, Driver));
   } else
     SRow = qNIL;
 
@@ -137,7 +138,8 @@ qRE;
 sck::rRWDriver &device::GetDriver(
   common::sRow Row,
   const bso::sBool *BreakFlag,
-  csdcmn::sVersion &ProtocolVersion)
+  csdcmn::sVersion &ProtocolVersion,
+  str::dString *Specs)
 {
   sck::rRWDriver *Driver = NULL;
 qRH;
@@ -146,7 +148,7 @@ qRH;
 qRB;
   Locker.InitAndLock(Mutex_);
 
-  Driver = Callers_.GetDriver(Row, BreakFlag, ProtocolVersion);
+  Driver = Callers_.GetDriver(Row, BreakFlag, ProtocolVersion, Specs);
 
   if ( Driver == NULL )
     qRGnr();

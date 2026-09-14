@@ -12,36 +12,24 @@ DELAY_WAVE_ = .05
 def scrollToLeftEvents_(lcd, text, x, y, delay):
   text = " " * 16 + text
 
-  events = []
-
   for i in range(len(text) - 15):
-    events.append((
-      lambda i = i: lcd.moveTo(x,y).putString(text[i:][:16]),
-      delay))
-
-  return events
+    lcd.moveTo(x,y).putString(text[i:][:16])
+    yield delay
 
 
 def scrollToRightEvents_(lcd, text, x, y, delay):
   text += " " * 16
 
-  events = []
-
   for i in range(len(text) - 15):
-    events.append((
-      lambda i = i: lcd.moveTo(x,y).putString(text[len(text) - i - 16:][:16]),
-      delay))
-
-  return events
+    lcd.moveTo(x,y).putString(text[len(text) - i - 16:][:16])
+    yield delay
 
 
 def mixedScrollWrite_(lcd):
-  line1 = LINE1_
-  line2 = LINE2_
   ucuq.sleepStart()
-  ucuq.playEvents((
-      scrollToLeftEvents_(lcd, line1, 0, 0, DELAY_SCROLL_WRITE_),
-      scrollToRightEvents_(lcd, line2, 0, 1, DELAY_SCROLL_WRITE_)
+  ucuq.dispatchEvents((
+      scrollToLeftEvents_(lcd, LINE1_, 0, 0, DELAY_SCROLL_WRITE_),
+      scrollToRightEvents_(lcd, LINE2_, 0, 1, DELAY_SCROLL_WRITE_)
     ),
     lambda tracking: ucuq.sleepWait(tracking.cumul)
   )

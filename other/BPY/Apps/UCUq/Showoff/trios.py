@@ -24,6 +24,7 @@ PIANO_ROLL_MARKER_WIDTH_ = 20
 PIANO_ROLL_VOICE_WIDTH_ = 39
 PIANO_ROLL_VOICES_START_ = (2, 44, 86)
 PIANO_ROLL_SEPARATOR_POSITIONS_ = (0, 42, 84, 126)
+LCD_ACTIVE_NOTES_WIDTH_ = 7
 
 REGULAR_SCROLL_DELAY_ = .10
 START_SCROLL_DELAY_ = .05
@@ -98,7 +99,7 @@ def parseVoice_(decompressedString):
   return note_array
 
 
-def buzzerCallback_(note, turn, prev, buzzer):
+def buzzerEvent(note, turn, prev, buzzer):
   if note != 0 and prev[turn] == note:
     buzzer.off()
     ucuq.getDevice()[turn].sleep(0.015)
@@ -108,23 +109,15 @@ def buzzerCallback_(note, turn, prev, buzzer):
   buzzer.play(note)
 
 
-def getBuzzerEvents_(voice, turn, prev, buzzer):
-  events=[(lambda: None, START_DELAY_)]
-  duration = 0
+def buzzerEvents_(voice, turn, prev, buzzer):
+  yield START_DELAY_
 
   for note in voice:
-    events.append((lambda note = note, turn = turn: buzzerCallback_(note[0], turn, prev, buzzer), note[1]))
-    duration += note[1]
-
-    if isDebug_():  # noqa: SIM102
-      if duration >= DEBUG_DURATION_:
-        events.append((lambda turn = turn: buzzerCallback_(0, turn, prev, buzzer), 0))
-        break
-
-  return events, duration
+    buzzerEvent(note[0], turn, prev, buzzer)
+    yield note[1]
 
 
-def ringsActiveNotesCallback_(note, turn, counter, rings):
+def ringsActiveNotesEvent_(note, turn, counter, rings):
   spots = VOICES_MAP_[turn]
   
   for spot in spots:
@@ -135,24 +128,19 @@ def ringsActiveNotesCallback_(note, turn, counter, rings):
   rings.write()
 
 
-def getRingsActiveNotesEvents_(voice, turn, rings):
-  events=[(lambda: None, START_DELAY_)]
+def ringsActiveNotesEvents_(voice, turn, rings):
   duration = 0
-  noteCounter = 0
+  counter = 0
+
+  yield START_DELAY_
 
   for note in voice:
-    events.append((lambda note = note, turn = turn, counter = noteCounter: ringsActiveNotesCallback_(note[0], turn, counter, rings), note[1]))
+    ringsActiveNotesEvent_(note[0], turn, counter, rings)
+    yield note[1]
     duration += note[1]
 
-    if isDebug_():  # noqa: SIM102
-      if duration >= DEBUG_DURATION_:
-        events.append((lambda turn = turn: ringsActiveNotesCallback_(0, turn, 0, rings), 0))
-        break
-      
     if note[0]:
-      noteCounter += 1
-
-  return events
+      counter += 1
 
 
 def oledComputeNotePos_(turn, note, minNote, maxNote):
@@ -175,7 +163,7 @@ def oledDrawSeparators_(counter, oleds):
       oleds.pixel(position, y, 1 if ( y + counter ) % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
 
 
-def oledPianoRollCallback_(pitches, tracking, separatorCounter, oleds):
+def oledPianoRollEvent_(pitches, tracking, separatorCounter, oleds):
   minNotes, maxNotes = unpack_(tracking.extrema)
 
   for turn, pitch in enumerate(pitches):
@@ -238,7 +226,7 @@ def getPacedNotes_(tracking):
   return pacedNotes
 
 
-def oledActiveNotesCallback_(pitches, tracking, oleds):
+def oledActiveNotesEvent_(pitches, tracking, oleds):
   minNotes, maxNotes = unpack_(tracking.extrema)
 
   for start in PIANO_ROLL_VOICES_START_:
@@ -249,136 +237,98 @@ def oledActiveNotesCallback_(pitches, tracking, oleds):
       oleds.vLine(oledComputeNotePos_(index, pitch, minNotes[index], maxNotes[index]), PIANO_ROLL_HEIGHT_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_ - 1, 1)    
 
 
-def getOLEDEvents_(pacedNotes, tracking, oleds):
-  events = []
-
+def oledEvents_(pacedNotes, tracking, oleds):
   for i in range(len(pacedNotes)):
-    events.append((
-      lambda pacedNotes = pacedNotes, i = i:(
-        oledActiveNotesCallback_(pacedNotes[i-PIANO_ROLL_HEIGHT_][0], tracking, oleds) if i >= PIANO_ROLL_HEIGHT_ else None,
-        oledPianoRollCallback_(pacedNotes[i][0], tracking, i, oleds),
-      ),
-      pacedNotes[i][1] - ( OLED_ANTICIPATION_ if i == 0 else 0 )))
-
-  return events
+    if i >= PIANO_ROLL_HEIGHT_:
+      oledActiveNotesEvent_(pacedNotes[i-PIANO_ROLL_HEIGHT_][0], tracking, oleds)
+    oledPianoRollEvent_(pacedNotes[i][0], tracking, i, oleds)
+    yield pacedNotes[i][1] - ( OLED_ANTICIPATION_ if i == 0 else 0 )
 
 
-def getLCDActiveNoteEvents_(notes, minNote, maxNote, lcd):
-  events=[(lambda: None, START_DELAY_)]
+def lcdActiveNotesEvents_(notes, minNote, maxNote, width, lcd):
   counter = 0
+  yield START_DELAY_
 
   for note in notes:
-    events.append((
-      lambda note = note, counter = counter: (
-        lcd.moveTo(9,1).putString(lcd.getForwardPeak(( note[0] - minNote ) * (7 * 5 - 1) // ( maxNote - minNote) , 7 * 5 ) if note[0] else lcd.getEmptyPeak(7 * 5)),
-        lcd.moveTo(7, 1).putString(chr(6 + counter % 2) if note[0] else " ")
-      ),
-      note[1]))
+    lcd.moveTo(LCD_WIDTH_ - width, 1).putString(lcd.getForwardPeak(( note[0] - minNote ) * (width * 5 - 1) // ( maxNote - minNote) , width * 5 ) if note[0] else lcd.getEmptyPeak(width * 5)),
+    lcd.moveTo(LCD_WIDTH_ - width - 2, 1).putString(chr(6 + counter % 2) if note[0] else " ")
+
+    yield note[1]
+
     if note[0]:
       counter += 1
 
-  return events
 
-
-def ringsRainbowCallback_(counter, rings):
+def ringsRainbowEvent_(counter, rings):
   for index, ring in enumerate(rings):
     color = shared.getRainbowColor(counter + index * len(shared.RAINBOW) // KIT_COUNT_)
     ring.setValue(5, color).setValue(6, color).write()
 
 
-def getRingsRainbowEvents_(duration, rings):
-  events=[(lambda: None, START_DELAY_)]
+def ringsRainbowEvents_(duration, rings):
   elapsed = 0
   counter = 0
 
+  yield START_DELAY_
+
   while elapsed < duration:
-    events.append((lambda counter = counter: ringsRainbowCallback_(counter, rings), RING_RAINBOW_DELAY_))
+    ringsRainbowEvent_(counter, rings)
+    yield RING_RAINBOW_DELAY_
     elapsed += RING_RAINBOW_DELAY_
     counter += 1
 
-  return events
 
-
-def getLCDTitleEvent_(title, counter, lcds):
+def lcdTitleEvent_(title, counter, lcdStrip):
   string = title[counter % (len(title) - KIT_COUNT_ * LCD_WIDTH_):][:KIT_COUNT_ * LCD_WIDTH_]
 
-  return lambda: (
-    lcds[0].moveTo(0,0).putString(string[:LCD_WIDTH_]),
-    lcds[1].moveTo(0,0).putString(string[LCD_WIDTH_:][:LCD_WIDTH_]),
-    lcds[2].moveTo(0,0).putString(string[LCD_WIDTH_ * 2:][:LCD_WIDTH_])
-  )
+  lcdStrip.moveTo(0,0).putString(string)
 
 
-def getPrologLCDTitleEvents_(title, duration, lcds):
+def lcdTitlePrologEvents_(title, t, lcds):
   title = KIT_COUNT_ * LCD_WIDTH_ // 4 * "\06\07\06 " + KIT_COUNT_ * (title + LCD_WIDTH_ * " ")
   counter = 0
-  events = []
 
-  while duration > 0 and counter < KIT_COUNT_ * LCD_WIDTH_:
-    events.append(
-      (
-        getLCDTitleEvent_(title, counter, lcds),
-        LCD_TITLE_DELAY_
-      )
-    )
+  while t.duration > 0 and counter < KIT_COUNT_ * LCD_WIDTH_:
+    lcdTitleEvent_(title, counter, lcds)
+    yield LCD_TITLE_DELAY_
 
-    duration -= LCD_TITLE_DELAY_
+    t.duration -= LCD_TITLE_DELAY_
     counter += 1
 
-  return events, duration
 
-
-def getMainLCDTitleEvents_(title, duration, lcds):
+def lcdTitleMainEvents_(title, duration, lcds):
   title = KIT_COUNT_ * (title + LCD_WIDTH_ * " ")
   counter = 0
-  events = []
 
   while duration > 0:
-    events.append(
-    (
-      getLCDTitleEvent_(title, counter, lcds),
-      LCD_TITLE_DELAY_
-      )
-    )
+    lcdTitleEvent_(title, counter, lcds)
+    yield LCD_TITLE_DELAY_
 
     duration -= LCD_TITLE_DELAY_
     counter += 1
 
-  return events
+
+def lcdTitleEvents_(title, duration, lcds):
+  lcdStrip = ucuq.LCD_Strip(lcds)
+  t = types.SimpleNamespace(duration = duration)
+  yield from lcdTitlePrologEvents_(title, t, lcdStrip)
+  yield from lcdTitleMainEvents_(title, t.duration, lcdStrip)
 
 
-def getLCDTitleEvents_(title, duration, lcds):
-  events, duration = getPrologLCDTitleEvents_(title, duration, lcds)
-  return events + getMainLCDTitleEvents_(title, duration, lcds)
+def lcdDurationEvents_(duration, width, lcds):
+  yield START_DELAY_
+
+  for i in range(width * 5):
+    lcds.moveTo(0,1).putString(lcds[0].getForwardPeak(i, width * 5))
+    yield duration / (width * 5 )
 
 
-def getLCDDurationEvents_(duration, lcds):
-  events=[(lambda: None, START_DELAY_)]
-
-  for i in range(6 * 5):
-    events.append((lambda i = i: lcds.moveTo(0,1).putString(lcds[0].getForwardPeak(i, 6 * 5)), duration / (6 * 5 )))
-
-  return events
-
-
-def getOLEDDurationEvents_(duration, oleds):
-  events=[(lambda: None, START_DELAY_)]
+def oledDurationEvents_(duration, oleds):
+  yield START_DELAY_
 
   for y in range(OLED_HEIGHT_):
-    events.append((lambda y = y: oleds.vLine(OLED_WIDTH_ -1, 0, y)), duration / OLED_HEIGHT_)
-
-  return events
-
-
-def getCommitEvents_(duration):
-  events = []
-  elapsed = 0
-
-  while elapsed <= duration:
-    events.append((lambda elapsed=elapsed: (ucuq.commit(), print(elapsed)), COMMIT_MAX_DELAY_))
-    elapsed += COMMIT_MAX_DELAY_
-
-  return events
+    oleds.vLine(OLED_WIDTH_ -1, 0, y)
+    yield duration / OLED_HEIGHT_
 
 
 def set(dom):
@@ -396,69 +346,81 @@ def sleepCallback_(tracking, user, timestamp):
 
   sleepUntil_(timestamp + tracking.cumul, 0)  # The commits are handled directly.
 
+  return True
 
-def launch(part, timestamp, devices):
-    tracking = types.SimpleNamespace(
+
+def getDuration_(voice):
+  duration = 0
+
+  for note in voice:
+    duration += note[1]
+
+  return duration
+
+
+def launch(part, timestamp, parts):
+  tracking = types.SimpleNamespace(
     voices = [],
     extrema = types.SimpleNamespace()
   )
 
-    devices.lcds.uploadHPeakChars()\
+  parts.lcds.uploadHPeakChars()\
     .createChar(6, NOTE_UP_CHARMAP_)\
     .createChar(7, NOTE_DOWN_CHARMAP_)
 
-    timestamp = timestamp + 1
-    prev = [None] * len(devices.buzzers)
+  timestamp = timestamp + 1
+  prev = [None] * len(parts.buzzers)
 
-    sleepUntil_(timestamp, 0)
+  sleepUntil_(timestamp, 0)
 
-    eventList = []
+  maxDuration = 0
 
-    maxDuration = 0
+  for voice in PARTS_[part][1]:
+    tracking.voices.append(parseVoice_(decompressVoiceString_(voice)))
 
-    for voice in PARTS_[part][1]:
-        tracking.voices.append(parseVoice_(decompressVoiceString_(voice)))
+  tracking.extrema.minNotes, tracking.extrema.maxNotes = getExtremaNotes_(tracking.voices)
 
-    tracking.extrema.minNotes, tracking.extrema.maxNotes = getExtremaNotes_(tracking.voices)
+  pacedNotes = getPacedNotes_(tracking)
 
-    pacedNotes = getPacedNotes_(tracking)
+  for voice in tracking.voices:
+    maxDuration = max(maxDuration, getDuration_(voice))
 
-    for turn, voice in enumerate(tracking.voices):
-        events, duration = getBuzzerEvents_(voice, turn, prev, devices.buzzers[turn])
-        eventList.append(events)
-        eventList.append(getRingsActiveNotesEvents_(voice, turn, devices.rings))
-        maxDuration = max(maxDuration, duration)
+  tracking.maxDuration = maxDuration
 
-    tracking.maxDuration = maxDuration
+  ambitus = max([( tracking.extrema.maxNotes[i] - tracking.extrema.minNotes[i] ) // 5 + 1 for i in range(3)])
 
-    eventList.append(getOLEDEvents_(pacedNotes, tracking, devices.oleds))
-    eventList.append(getLCDTitleEvents_(PARTS_[part][0][1], maxDuration + START_DELAY_, devices.lcds))
-    eventList.append(getLCDDurationEvents_(maxDuration, devices.lcds))
-    for turn, lcd in enumerate(devices.lcds):
-        eventList.append(getLCDActiveNoteEvents_(tracking.voices[turn], tracking.extrema.minNotes[turn], tracking.extrema.maxNotes[turn], lcd))
-    eventList.append(getRingsRainbowEvents_(maxDuration, devices.rings))
+  cb = ucuq.getCommitBehavior()
 
-    cb = ucuq.getCommitBehavior()
+  if True:
+    #    eventList.append(getCommitEvents_(maxDuration + START_DELAY_))
+    cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
-    if True:
-        #    eventList.append(getCommitEvents_(maxDuration + START_DELAY_))
-        cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+  parts.lcds.backlightOn()
 
-    devices.lcds.backlightOn()
-
-    timestamp += ucuq.playEvents(
-    eventList,
+  timestamp += ucuq.dispatchEvents(
+    (
+      *(element for turn, voice in enumerate(tracking.voices) for element in (
+        buzzerEvents_(voice, turn, prev, parts.buzzers[turn]),
+        ringsActiveNotesEvents_(voice, turn, parts.rings),
+        lcdActiveNotesEvents_(voice, tracking.extrema.minNotes[turn], tracking.extrema.maxNotes[turn], ambitus, parts.lcds[turn])
+        )
+      ),
+      oledEvents_(pacedNotes, tracking, parts.oleds),
+      lcdTitleEvents_(PARTS_[part][0][1], maxDuration + START_DELAY_, parts.lcds),
+      lcdDurationEvents_(maxDuration, LCD_WIDTH_ - ambitus - 3, parts.lcds),
+      ringsRainbowEvents_(maxDuration, parts.rings)
+    ),
     lambda tracking, user: sleepCallback_(tracking, user, timestamp),
     timestamp = 0
   )
 
-    devices.oleds.fill(0).show()
-    devices.lcds.clear().backlightOff()
-    devices.rings.fill((0, 0, 0)).write()
+  parts.oleds.fill(0).show()
+  parts.lcds.clear().backlightOff()
+  parts.rings.fill((0, 0, 0)).write()
 
-    ucuq.setCommitBehavior(cb)
+  ucuq.setCommitBehavior(cb)
 
-    ucuq.commit()
+  ucuq.commit()
 
 
 PARTS_ = (
@@ -525,7 +487,7 @@ PARTS_ = (
   (
     (
       "BWV 847b",
-      "Johann Sebastian Bach - Prelude and Fugue in C minor (BWV 847) - Fugue",
+      "Johann Sebastian Bach * Prelude and Fugue in C minor (BWV 847) * Fugue",
     ),
     (
       "eJzNl1luxTAIRbfSHdROPKX7X1irSvGTcgBjy69qPhFcwFyGhK/arlTPzyP8fh/1uCXplkRIjqdVqZC0Pcg1jX1tQ85Pq5evLul5RV2HOKceT5dckDRdh7l3SYZkCbnF8YvtQi7FwSjgWFZ3dQJKQQlKwXI5qXGcpaV47YfmOwc6W416rOMgdCERp9oy6las2FTMPR4ODodOgAq7wOOK3eSYSC6rtblhZIHe6SpoOCFRVOJllVQrNneld/JAagt1qDuGxMw+EyS0IjPgK+NRM6wEHeKAK/lcsSrUQaaumClhPIx5l3fqeKwYoUGfTkMQXGACOQZfi8iO1tmFPLc8o64DHFZZWHDESTN5zW1TQq8uau48OFuNelxnI2isuKi6ssJRYbjuhRwwAQjz/39J2MqMhzocLX/wA/K+Hz19m75vuXue2ThV9efhPHrOLNdxz6wcKsDN414TyMSSgxYVQ463rIe4wtFHX8Z1BOpMpeW569Gza1zixWDsSAOZEsc16WgsofM9v6Bcf8wrPRr9J5zwDciImJw=",
@@ -599,6 +561,14 @@ PARTS_ = (
       "eJztWFGSwyAIvUpvoBgVzP0PtmDdbYUkJNuZ/diJfnQUfTwQITWuCaWHEqU9altzkxZKWii2R1xzyaWERRqKvEXuIT3Xx7Uu0gPEAVANAMiKFGSSmixwECwFhUAa4Tl8AxgTqQz5wBvy4ikoHsXsIWQPweWAHxqJzkEafJ/hDOA6yWNgAJSFntwJVUwOQVwcgMUDsGEwA7hR0NT1w2jvo+cEg3DMaUNDqhJ7oSFhSrwhVYy5hFYa0LLhx5kC4gpFdLzsMkuKZpks7WMlaYVKmBuFSiwohuYpX6oVywla187jFIKacG76CdO1exlSTdDWqUswwu6hWdQND3/ujJaJOPhqYxOtaRZCm4aaFYGe+MHoqbKvOOTNcgLpuzosi6onst1y0VlahzVM6yB9ZFS16U5SNQhX3LtLy34TTDmJN4zitZtAdPxu0fLO1NA+3mDMuqoBvVzxexvGaW7FpZer9+70gDyRjRSHz0tWul6yvMI97m/+pqC/DLyP3Lsk3iXxLol3SfzDkjj//7tr4lUN/70mzvFxpiiqHder4tCQXySBLWDBIj885iGPkO2Qd51ZWiep3ktDCkOag2Q6gE7GvtTkRAVBVlRp3abW3xCgt5djqfbx21MNK4baFfMPj0ugTot6Pp+EOIQgwrbW9hTGAF+9fsSM",
       "eJztWGuSgyAMvkpvwCsh0PsfbIlatZESXNrd6Yz6QwnJlxeEqL174tug5etGXhLonhzfKwFVEXvPttzGz+PH0NlVwMVEkJOJqUxg4fCRLKDJmF0Kt5iPkM+EwtHWETqsPAnZgyAINBwJGe0CKQipYkUM5XarHqn3iFoJ+HgwMqQUg4m5uHh0rbbUBEHJSHJCIK2QHh8cnQiLAB0CoacQMl8GfUg2FwZAQDSBL7oRaGEABWBVEB2GBLXN0rRwy+0x/TuePCt5uWSioiWKSHaY1fS7tq7bgKgAoiIfFHltXkmkOj8eME1ei197pW6lx0051iO6ZmQyMRwsps6M4RP8tsDaGyeoR8SYPLS9453fJ//Se1GK4OyOOBQzWXLVM0+rfkoGO+Tb81bWZ01AKVMkyxQpa7gjiwLQj6VdndeX7Ri+7nB70SkZGi7T4/Kj85+2v7Ms7CIuKFr3FqELQ1JKJ2IDFBwCCjHXOpHlW6HdaZyqWR2Nx6eP1asPufqQqw/5sj7E8SewN0xM+WpEvqIRETn7+07k2YBfHOWnAd7di7zfA5Xhn9qRWn/iI1tnMiXyvvbHKRjkretYin3hR9l5E3mZZapf50rPE8pbZG7I00spVgsjP8pozx/ucxXelTpBsILAANO1hWcZ7xwLBmaFMKsHDhGaNOlN049E9imWsTXuB3PvTro=",
       "eJztWlty6zAI3crdgS0J9Oj+F3aRkyYOqByraT86I2cmGT1AcHhZTCh8tF0+W9z782+/D8N+G+f9g1p/No6p7k02EBPzlvpT+rpLzwnyj6V/tsi3CUBAWGDFkCHBfeIgeKznPsTHJYNPSDnluPXJ2qA+EKCADgASIg24KMC4vgVYg8e5DiXrPj1yOK1OjoAgfhKw0u9ri80RwHXWFgAYEHBpZoAxoKesNEROSkUToBPq5AlMioCAlxJiiCX0jUYw7O4CW52tJ529N/f43lqpJUZhy7mGHuuVj2xbQ/+8sHAILklh9nSwHaaSILQU4X0pfgCLhggGJ1gpPM0B2kYrssDEXHbirXELNR0kU8gNrPWWzD35+NQwGc5ZHtQH8o3IFuL3GP6Wb6r01jQHKUt/z1n9ME9GQvKdi9io5KPCswSoUiYLAhbZE3CHJlHyW43sHp8pGVdBScVfZoDAMGCmHA05rvV0y2I2Gq5E9aWQAA4M/MMQZP+EbNM9enEB5svfSCNzqSv+hpNbe08j/Q2x4Vvvj/q9RdoHJVsdbdkYevlcFpcr255INC9UUm5aT1CxTemDFRvgajV6HPFZbn0VB0FlbWWwRS8SDouLYlnj6WsSst2wnL3KACqUjTP9LoMSzDC0X2XwOXgJ5JoW47z8wsH6gL3R5d5oSYNr8detACP6IEaterOZYpwNtST6emQ9ejqB6Xu+ddknrte7I4rgAepnB+dyy89/OzCRBKuU2YOqte7koPbp6hKsLsHqEqwuwdM1ba34c866ugSrS7C6BKtLsLoE++oSrC7B6hKsLoHiuroEq0twFt12CV7/43PlT09BFmUh9R8Zy7CzkS1dq9NI1vLGHb/TpBww2MJqkmRS7tPy3fcfz1Oi+/gh0uOPURRF6dB35P4cOrVyCOCzELl5q8f59cBUlvKhovzI+LlI54GYVUDoZjnNJZmjrhGXG5N9C/8BgV2zBw==",
+    ),
+  ),
+  (
+    ("BVW 530", "Johann Sebastian Bach * Sonata No. 6 in G major (BWV 530)"),
+    (
+      "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",
     ),
   ),
 )

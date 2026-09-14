@@ -17,25 +17,25 @@ W_REPEAT_DISPLAY = "ColorRepeatDisplay"
 COMMIT_DELAY_ = 2/3
 
 class Colors_:
-  def __init__(self, devices):
-    self.devices_ = devices
+  def __init__(self, parts):
+    self.parts_ = parts
 
   def set(self, x, y, col):
     x = x % 12
     index = x // 4
     x = x % 4
-    self.devices_.rings[index].setValue(x if y == 0 else -x - 1, col)
+    self.parts_.rings[index].setValue(x if y == 0 else -x - 1, col)
     
     return self
     
   def fill(self, col):
-    self.devices_.rings.fill(col)
+    self.parts_.rings.fill(col)
 
     return self
     
   def write(self):
-    self.devices_.rings.write()
-    show.displayRingGauges(self.devices_)
+    self.parts_.rings.write()
+    show.displayRingGauges(self.parts_)
     
     return self
   
@@ -53,7 +53,7 @@ SCHEMES_ = []
 def _(timestamp, delay, _):
   delay /= 1.5
   
-  # oleds = devices_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
+  # oleds = parts_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
   oleds = ucuq.Nothing()
 
   for color in RAINBOW_:
@@ -70,11 +70,11 @@ def _(timestamp, delay, _):
 SCHEMES_.append(_)
 
 # 2
-def _(timestamp, delay, devices):
+def _(timestamp, delay, parts):
   delay /= 1.5
   
-  rings = devices.rings
-  # oleds = devices_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
+  rings = parts.rings
+  # oleds = parts_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
   oleds = ucuq.Nothing()
   
   for r in range(len(RAINBOW_)):
@@ -228,26 +228,26 @@ def _(timestamp, delay, _):
 SCHEMES_.append(_)
     
 
-def launch(timestamp, devices):
+def launch(timestamp, parts):
   global colors_
 
-  colors_ = Colors_(devices)
+  colors_ = Colors_(parts)
 
   timestamp += 1
   
   sleepUntil_(timestamp, 0)
-  devices.lcds.uploadUpwardGaugeChars().backlightOn()
+  parts.lcds.uploadUpwardGaugeChars().backlightOn()
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
   for scheme in SCHEMES_:
     for _ in range(REPEAT_):
-      timestamp = scheme(timestamp, DELAY_, devices)
+      timestamp = scheme(timestamp, DELAY_, parts)
       
   ucuq.setCommitBehavior(cb)
     
   colors_.fill((0,0,0)).write()
-  devices.lcds.clear().backlightOff()
+  parts.lcds.clear().backlightOff()
   
   return timestamp
 

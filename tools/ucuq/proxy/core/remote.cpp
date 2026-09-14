@@ -369,7 +369,7 @@ qRH;
   flw::rDressedRWFlow<> Remote;
   flw::rNoWCacheDressedRWFlow Device;
   str::wString Message, Command;
-  str::wString RToken, Id;
+  str::wString RToken, Id, Specs;
   common::sRow Row = qNIL;
   bso::sBool Cont = true;
   routine_::data::gRemoteToDevice RemoteToDeviceData;
@@ -386,7 +386,7 @@ qRB;
 
   Remote.Init(RemoteDriver);
 
-  tol::Init(RToken, Id);
+  tol::Init(RToken, Id, Specs);
   common::Get(Remote, RToken);
   common::Get(Remote, Id);
 
@@ -398,11 +398,14 @@ qRB;
     common::Put(Message, Remote);
     common::Commit(Remote);
   } else {
-    Device.Init(device::GetDriver(Row, &DeviceBreakFlag, DeviceProtocolVersion));
+    Device.Init(device::GetDriver(Row, &DeviceBreakFlag, DeviceProtocolVersion, &Specs));
 
     common::Put("", Remote);
-    if ( RemoteProtocolVersion >= 1 )
+    if ( RemoteProtocolVersion >= 1 ) {
       common::Put(DeviceProtocolVersion, Remote);
+      common::Put(Specs, Remote);
+    }
+
     common::Commit(Remote);
 
     common::Dismiss(Remote);

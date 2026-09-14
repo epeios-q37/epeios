@@ -83,15 +83,15 @@ def animateLoopingBouncingBall_(fb, width, height, timestamp, bounceCount=3):
     
     fb.show()
       
-    timestamp += .05
+    timestamp += .075
     sleepUntil_(timestamp, 0)
 
 
-def launch(timestamp, devices):
+def launch(timestamp, parts):
   timestamp += 1
   
   sleepUntil_(timestamp, 0)
 
-  timestamp = animateLoopingBouncingBall_(ucuq.OLEDS_Wall((tuple(oled for oled in devices.oleds),)), ucuq.ravel.OLED_WIDTH * 3, ucuq.ravel.OLED_HEIGHT, timestamp)
+  timestamp = animateLoopingBouncingBall_(ucuq.OLED_Wall((tuple(oled for oled in parts.oleds),)), ucuq.ravel.OLED_WIDTH * 3, ucuq.ravel.OLED_HEIGHT, timestamp)
 
   return timestamp

@@ -14,6 +14,7 @@ _WLAN_FALLBACK = "q37"
 
 _PROTOCOL_LABEL = "c37cc83e-079f-448a-9541-5c63ce00d960"
 _PROTOCOL_VERSION = "1"
+SPECS_VERSION_ = 0
 
 # Connection status.
 _S_FAILURE = const(0)
@@ -121,7 +122,7 @@ def wlanConnect(wlan, wifiPower, wlans, callback):
     # RPi Pico does not support a float.
   
     if wifiPower:
-      wifi.config(txpower=wifiPower)
+      wifi.config(txpower=wifiPower, pm=network.WLAN.PM_NONE)
 
     wifi.connect(wlan[0], wlan[1])
 
@@ -155,8 +156,7 @@ async def send(data):
   while amountSent < totalAmount:
     amount = totalAmount - amountSent
 
-    if amount > 4096:
-      amount = 4096
+    amount = min(amount, 4096)
 
     proxy[_P_WRITER].write(data[amountSent:amountSent + amount])	
     await proxy[_P_WRITER].drain()
@@ -269,6 +269,7 @@ def handshake():
 def ignition(deviceId):
   blockingWriteString(settings.getIdentificationToken())
   blockingWriteString(deviceId)
+  blockingWriteString(json.dumps({"Version": SPECS_VERSION_}))
 
   error = blockingReadString()
 

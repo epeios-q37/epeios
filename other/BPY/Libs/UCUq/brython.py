@@ -1,4 +1,4 @@
-import javascript, json, sys
+import javascript, json, sys, types
 
 from browser import aio, ajax, alert, console
 from browser.local_storage import storage
@@ -122,6 +122,9 @@ class Device_:
       raise ValueError("NUL char detected!")
 
     ucuqjs.execute(self.device_, script, "", lambda code, result: executeCallback_(None, code, result))
+
+  def getDeviceSpecs(self):
+    return types.SimpleNamespace(scriptsCompressed = False)    
 
   async def commitAwait(self, expression):
     result = ""

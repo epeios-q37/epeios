@@ -62,7 +62,7 @@ namespace {
     str::wString Script, Expression, Message, Response;
     common::sRow Row = qNIL;
     bso::sBool Cont = true;
-    bso::sBool DummyBreakFlagAsDiscrimitator = false;
+    bso::sBool DummyBreakFlagAsDiscriminator = false;
     csdcmn::sVersion ProtocolVersion = csdcmn::UnknownVersion;
   qRB;
     tol::Init(RToken, Id, Script, Expression);
@@ -72,7 +72,7 @@ namespace {
     common::Get(Manager, Script);
     common::Get(Manager, Expression);
 
-    Row = device::Hire(RToken, Id, &DummyBreakFlagAsDiscrimitator);
+    Row = device::Hire(RToken, Id, &DummyBreakFlagAsDiscriminator);
 
     if ( Row == qNIL ) {
       Message.Init();
@@ -83,7 +83,7 @@ namespace {
       common::Put(Message, Manager);
       common::Commit(Manager);
     } else {
-      Device.Init(device::GetDriver(Row, &DummyBreakFlagAsDiscrimitator, ProtocolVersion));
+      Device.Init(device::GetDriver(Row, &DummyBreakFlagAsDiscriminator, ProtocolVersion));
 
       common::Put(device::rExecute, Device);
       common::Put(Script, Device);
@@ -128,10 +128,10 @@ namespace {
     }
   qRR;
   qRT;
-    DummyBreakFlagAsDiscrimitator = true;
+    DummyBreakFlagAsDiscriminator = true;
 
     if ( Row != qNIL )
-      device::Release(Row, &DummyBreakFlagAsDiscrimitator);
+      device::Release(Row, &DummyBreakFlagAsDiscriminator);
   qRE;
   }
 

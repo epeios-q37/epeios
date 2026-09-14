@@ -11,42 +11,42 @@ from show import sleepUntil as sleepUntil_
 COMMIT_DELAY_ = 0 # No delayed commit
 
 
-def callback_(freq, helper, devices):
+def callback_(freq, helper, parts):
   if freq == 0:
-    devices.buzzers.off()
+    parts.buzzers.off()
     helper.prev = 0
   elif freq > 0:
-    devices.buzzers.on(freq)
+    parts.buzzers.on(freq)
     if helper.prev != freq:
       helper.prev = freq
-      devices.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
-      devices.rings.setValue(helper.led + 1,(0,0,0)).write()
-      show.displayRingGauges(devices, )
+      parts.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
+      parts.rings.setValue(helper.led + 1,(0,0,0)).write()
+      show.displayRingGauges(parts, )
       helper.led += 1    
   
       
-def launch(timestamp, devices):
+def launch(timestamp, parts):
   timestamp += 1
   
   helper = types.SimpleNamespace(prev = 0, led = 0)
   
-  devices.oleds.powerOff().draw(INDY_, 128).show()
-  devices.lcds.backlightOff().uploadUpwardGaugeChars()
+  parts.oleds.powerOff().draw(INDY_, 128).show()
+  parts.lcds.backlightOff().uploadUpwardGaugeChars()
 
   sleepUntil_(timestamp, COMMIT_DELAY_)
 
-  devices.oleds.powerOn()
-  devices.lcds.backlightOn()
+  parts.oleds.powerOn()
+  parts.lcds.backlightOn()
 
-  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, devices), lambda _, cumul: sleepUntil_(timestamp + cumul))
+  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, parts), lambda _, cumul: sleepUntil_(timestamp + cumul))
   
-  devices.oleds.hLine(0, 0, 128, 0)
+  parts.oleds.hLine(0, 0, 128, 0)
   
-  timestamp = show.turnOffAndScrollDown(timestamp, devices)
+  timestamp = show.turnOffAndScrollDown(timestamp, parts)
   
-  devices.oleds.fill(0).show()
+  parts.oleds.fill(0).show()
 
-  devices.lcds.backlightOff().clear()
+  parts.lcds.backlightOff().clear()
   
   return timestamp
 

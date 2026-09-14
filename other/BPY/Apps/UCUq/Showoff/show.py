@@ -1,4 +1,5 @@
 import base64  # noqa: I001
+import collections
 import random
 import socket
 import struct
@@ -17,19 +18,27 @@ W_COUNTDOWN_ = "ShowCountdown"
 
 COMMIT_DELAY_ = 2/3
 
-devices_ = None
+parts_ = None
 
-def setDevices_():
-  devices = types.SimpleNamespace()
+def setParts_():
+  parts = collections.OrderedDict((name, ucuq.Multi()) for name in ('buzzers', 'rings', 'lcds', 'oleds', 'uppers', 'lowers'))
 
-  devices.ravel = ucuq.ravel.Kit()
-  devices.buzzers, devices.rings, devices.lcds, devices.oleds = devices.ravel.get("BRLO")
+  kits = ucuq.Multi()
 
-  return devices
+  for device in ucuq.getDevice():
+    kits.add(ucuq.ravel.Kit(device=device))
+
+  for kit in kits:
+    for (_, value), param in zip(parts.items(), kit.get("BRLOS")):
+      value.add(param)
+
+  parts['kits'] = kits
+
+  return types.SimpleNamespace(**parts)
 
 
-def getDevices():
-  return devices_
+def getParts():
+  return parts_
 
 
 def getNTPTime_(host="pool.ntp.org"):
@@ -57,7 +66,7 @@ def getNTPTime_(host="pool.ntp.org"):
 ntpOffset_ = 0
   
 def connect(deviceList):
-  global ntpOffset_, devices_
+  global ntpOffset_, parts_
   
   ntpOffset_ = time.time() - getNTPTime_()
   
@@ -65,7 +74,7 @@ def connect(deviceList):
   
   ucuq.setDevice(deviceList)
 
-  devices_ = setDevices_()
+  parts_ = setParts_()
 
   ucuq.ntpSync()
   
@@ -99,7 +108,7 @@ DIGITS_ = (
   "70888878088870",
 )  
 
-def countdownIfRequested(dom, timestamp, devices):
+def countdownIfRequested(dom, timestamp, parts):
   if dom.getValue(W_COUNTDOWN_) != "true":
       return timestamp
 
@@ -114,19 +123,19 @@ def countdownIfRequested(dom, timestamp, devices):
   ringEvents = []
   lcdEvents = []
 
-  devices.lcds.uploadUpwardGaugeChars().backlightOn()
+  parts.lcds.uploadUpwardGaugeChars().backlightOn()
   
   for i in range(5, 0, -1):
     oledEvents.append((
       lambda digit=i:
-        devices.oleds.draw(DIGITS_[digit], 8, 48, 0, mul=9).show(),
+        parts.oleds.draw(DIGITS_[digit], 8, 48, 0, mul=9).show(),
       1))
     for c in range(2, 10):
       ringEvents.append((
         lambda
           led=c,
           color=(1,1,1) if leds[c % ucuq.ravel.RING_SIZE] else (0,0,0):
-            devices.rings.setValue(led, color).write(), 1/8))
+            parts.rings.setValue(led, color).write(), 1/8))
       leds[c%8] = not leds[c%8]
 
   gauge = ()
@@ -135,21 +144,21 @@ def countdownIfRequested(dom, timestamp, devices):
     gauge = ((j,) + gauge)[:16]
     lcdEvents.append((
       lambda gauge = gauge:
-        devices.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
+        parts.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
 
   for j in range(15, -1, -1):
     gauge = ((j,) + gauge)[:16]
     lcdEvents.append((
       lambda gauge = gauge:
-        devices.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
+        parts.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
       
   for j in range(16):
     gauge = ((0,) + gauge)[:16]
     lcdEvents.append((
       lambda gauge = gauge:
-        devices.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
+        parts.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
 
 
@@ -160,13 +169,13 @@ def countdownIfRequested(dom, timestamp, devices):
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
   sleepUntil(timestamp, 0)
-  devices.rings.flash()
-  devices.rings.fill((1,1,1)).write()
-  devices.lcds.backlightOn()
+  parts.rings.flash()
+  parts.rings.fill((1,1,1)).write()
+  parts.lcds.backlightOn()
   timestamp += ucuq.playEvents(allEvents, lambda tracking: sleepUntil(timestamp + tracking.cumul, COMMIT_DELAY_))
-  devices.oleds.fill(0).show()
-  devices.rings.fill((0,0,0)).write()
-  devices.lcds.clear().backlightOff()
+  parts.oleds.fill(0).show()
+  parts.rings.fill((0,0,0)).write()
+  parts.lcds.clear().backlightOff()
   
   ucuq.setCommitBehavior(cb)
   
@@ -179,41 +188,41 @@ def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
-def displayRingGauges(devices, addendum = "  "):
-  devices.ravel.displayRingGauges(addendum=addendum)  
+def displayRingGauges(parts, addendum = "  "):
+  parts.kits.displayRingGauges(addendum=addendum)  
 
 
-def turnOffAndScrollDown(timestamp, devices):
+def turnOffAndScrollDown(timestamp, parts):
   offset = random.randrange(len(RAINBOW_))
   
   for i in range(offset, ucuq.ravel.RING_SIZE + offset):
-    devices.rings.setValue(i, getRainbowColor_(i, 7))
+    parts.rings.setValue(i, getRainbowColor_(i, 7))
     
-  devices.rings.write()
+  parts.rings.write()
   
   for i in range(64):
-    devices.rings.setValue(i //ucuq.ravel.RING_SIZE + offset, (0,0,0)).write()
-    devices.oleds.scroll(0, 1).show()
-    devices.ravel.displayRingGauges()
+    parts.rings.setValue(i //ucuq.ravel.RING_SIZE + offset, (0,0,0)).write()
+    parts.oleds.scroll(0, 1).show()
+    parts.kits.displayRingGauges()
     timestamp += 0.09
     sleepUntil(timestamp, 0) 
     
   return timestamp
     
 def syncTest():
-  devices = getDevices()
+  parts = getParts()
 
   for i in range(3):  
-    devices.oleds[i].draw(DIGITS_[i+1], 8, 48, 0, mul=9).show(),
+    parts.oleds[i].draw(DIGITS_[i+1], 8, 48, 0, mul=9).show(),
   
   timestamp = time.time() + 1.5
   
   sleepUntil(timestamp,0)
   
-  devices.rings.flash()
+  parts.rings.flash()
   
   sleepUntil(timestamp + 1,0)
   
-  devices.rings.flash()
+  parts.rings.flash()
 
-  devices.oleds.fill(0).show(),
+  parts.oleds.fill(0).show()

@@ -231,7 +231,7 @@ def DisplaySpokenColor(dom):
       ucuq.sleepStart()
       ring.setValue(dom.partner.colors.led, ((255, 255, 255))).write()
       r, g, b = map(
-        lambda c: shared.RGB_MAX_ * int(c) // 255, [c for c in SPOKEN_COLORS_[color]]
+        lambda c: shared.RGB_MAX * int(c) // 255, [c for c in SPOKEN_COLORS_[color]]
       )
       ucuq.sleepWait(0.05)
       ring.setValue(dom.partner.colors.led, (r, g, b)).write()

@@ -126,7 +126,8 @@ namespace {
 		void Get_(
 			fdr::rRWDriver &Driver,
 			str::dString &RToken,
-			str::dString &Id)
+			str::dString &Id,
+			str::dString *Specs)
 		{
 		qRH;
 			flw::rDressedRWFlow<> Flow;
@@ -135,6 +136,9 @@ namespace {
 
 			common::Get(Flow, RToken);
 			common::Get(Flow, Id);
+
+			if ( Specs != NULL )
+				common::Get(Flow, *Specs);
 
 			common::Put("", Flow);
 			Flow.Commit();
@@ -153,7 +157,7 @@ namespace {
 		sck::rRWDriver *Driver = NULL;
 		sdr::tRow Row = qNIL;
 		rFeatures_ Features;
-		str::wString RToken, Id;
+		str::wString RToken, Id, Specs;
 	qRB;
 		Socket = Data.Socket;
 
@@ -170,11 +174,11 @@ namespace {
 
 		switch ( Handshake_(*Driver, Features ) ) {
 		case common::cDevice:
-			tol::Init(RToken, Id);
+			tol::Init(RToken, Id, Specs);
 
-			Get_(*Driver, RToken, Id);
+			Get_(*Driver, RToken, Id, Features.ProtocolVersion == 0 ? NULL : &Specs);
 
-			device::New(RToken, Id, Features.ProtocolVersion, Driver);
+			device::New(RToken, Id, Features.ProtocolVersion, Specs, Driver);
 				
 			Driver = NULL;	// To avoid deleting when exiting this method.
 			break;
