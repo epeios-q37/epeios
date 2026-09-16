@@ -64,6 +64,7 @@ def getNTPTime_(host="pool.ntp.org"):
 
 
 ntpOffset_ = 0
+
   
 def connect(deviceList):
   global ntpOffset_, parts_
@@ -81,7 +82,8 @@ def connect(deviceList):
   return ntpOffset_
 
 lastCommitTimestamp_ = 0
-  
+
+
 def sleepUntil(timestamp, commitDelay):
   global lastCommitTimestamp_
   

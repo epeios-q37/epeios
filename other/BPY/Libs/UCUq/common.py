@@ -3155,11 +3155,6 @@ def set_rtc_from_us(timestamp_us):
   machine.RTC().datetime(rtc_tuple)
 
 
-def _sleep_until_us(target_time_us):
-  while precise_time_us() < target_time_us:
-    pass
-        
-
 def sleep_until_us(target_time_us):
   time.sleep_us(target_time_us - precise_time_us())
 
@@ -3171,7 +3166,7 @@ def ntp_set_time():
   t0_ticks_us = time.ticks_us()
   TIME_ANCHOR_US = (t_ntp_us, t0_ticks_us)
 
-  set_rtc_from_us(precise_time_us())
+#  set_rtc_from_us(precise_time_us())
 """
 
 def gcCollect():
