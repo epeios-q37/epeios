@@ -40,8 +40,8 @@ class Colors_:
     return self
   
 
-def oledRGB_(oled,color):
-  return oled.fill(0)\
+def screenRGB_(screen,color):
+  return screen.fill(0)\
     .rect(0, 63 - color[0] * 63 // RGB_MAX_, 42, 64, 1, True)\
     .rect(43, 63 - color[1] * 63 // RGB_MAX_, 42, 64, 1, True)\
     .rect(86, 63 - color[2] * 63 // RGB_MAX_, 42, 64, 1, True)
@@ -53,18 +53,18 @@ SCHEMES_ = []
 def _(timestamp, delay, _):
   delay /= 1.5
   
-  # oleds = parts_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
-  oleds = ucuq.Nothing()
+  # screens = parts_.screens  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
+  screens = ucuq.Nothing()
 
   for color in RAINBOW_:
     sleepUntil_(timestamp, COMMIT_DELAY_)
     timestamp += delay
     colors_.fill(color)
     colors_.write()
-    oledRGB_(oleds, color).show()
+    screenRGB_(screens, color).show()
 
   colors_.fill((0,0,0))
-  oleds.fill(0).show()
+  screens.fill(0).show()
   return timestamp  
 
 SCHEMES_.append(_)
@@ -74,8 +74,8 @@ def _(timestamp, delay, parts):
   delay /= 1.5
   
   rings = parts.rings
-  # oleds = parts_.oleds  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
-  oleds = ucuq.Nothing()
+  # screens = parts_.screens  # Too slow, will be reintroduced when framebuffer implemented directly in ucuq.
+  screens = ucuq.Nothing()
   
   for r in range(len(RAINBOW_)):
     sleepUntil_(timestamp, COMMIT_DELAY_)
@@ -83,12 +83,12 @@ def _(timestamp, delay, parts):
     for i in range(len(rings)):
       color = RAINBOW_[(r + i * len(RAINBOW_) // len(rings)) % len(RAINBOW_)]
       rings[i].fill(color)
-      oledRGB_(oleds[i], color)
+      screenRGB_(screens[i], color)
     colors_.write()
-    oleds.show()
+    screens.show()
 
   colors_.fill((0,0,0))
-  oleds.fill(0).show()
+  screens.fill(0).show()
   
   return timestamp  
 
@@ -236,7 +236,7 @@ def launch(timestamp, parts):
   timestamp += 1
   
   sleepUntil_(timestamp, 0)
-  parts.lcds.uploadUpwardGaugeChars().backlightOn()
+  parts.panels.uploadUpwardGaugeChars().backlightOn()
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
@@ -247,7 +247,7 @@ def launch(timestamp, parts):
   ucuq.setCommitBehavior(cb)
     
   colors_.fill((0,0,0)).write()
-  parts.lcds.clear().backlightOff()
+  parts.panels.clear().backlightOff()
   
   return timestamp
 

@@ -372,17 +372,17 @@ VERSIONS_ = (
 )
 
 def launch(length):
-  oled = ucuq.ravel.OLED()
+  screen = ucuq.ravel.screen
 
-#  oled.addMethods("write_cmd(0xD5)")
-#  oled.addMethods("write_cmd(0xF0)")
+#  screen.addMethods("write_cmd(0xD5)")
+#  screen.addMethods("write_cmd(0xF0)")
 
-  oled.invert(True)
+  screen.invert(True)
   
   for item in VERSIONS_[length]:
       animation = animations_[item]
       for _ in range(60 * 2 // len(animation)):
         for picture in animation:
-          oled.draw(picture, 128).show()
+          screen.draw(picture, 128).show()
           
-  oled.fill(0).invert(False).show()
+  screen.fill(0).invert(False).show()

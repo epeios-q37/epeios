@@ -10,9 +10,9 @@ from show import sleepUntil as sleepUntil_
 MAX_ = ucuq.ravel.SERVO_MAX
 STEP_ = 50
 DELAY_ = 4/110
-LCD_DELAY_MULTIPLIER_ = 11
-REMAINDER_ = ucuq.ravel.LCD_WIDTH * 3
-AMOUNT_ = REMAINDER_ * LCD_DELAY_MULTIPLIER_
+PANEL_DELAY_MULTIPLIER_ = 11
+REMAINDER_ = ucuq.ravel.PANEL_WIDTH * 3
+AMOUNT_ = REMAINDER_ * PANEL_DELAY_MULTIPLIER_
 TOTAL_ITERATION_COUNT_ = 100
 PROLOG_ITERATION_COUNT_ = 14
 PROLOG_ACCELERATION_COEFF_ = 0.5
@@ -70,7 +70,7 @@ def handleLevels_(levels, method):
 
 
 def getLevelEvents__(tracking):
-  for i in range(TOTAL_ITERATION_COUNT_ * LCD_DELAY_MULTIPLIER_):
+  for i in range(TOTAL_ITERATION_COUNT_ * PANEL_DELAY_MULTIPLIER_):
     handleLevels_(tracking.tops, Level_.update)
     handleLevels_(tracking.bottoms, Level_.update)
 
@@ -82,7 +82,7 @@ def getLevelEvents__(tracking):
 
     yield tracking.getDelay(tracking)
 
-  for _ in range(REMAINDER_ * LCD_DELAY_MULTIPLIER_):
+  for _ in range(REMAINDER_ * PANEL_DELAY_MULTIPLIER_):
     handleLevels_(tracking.tops, Level_.epilog)
     handleLevels_(tracking.bottoms, Level_.epilog)
 
@@ -110,22 +110,22 @@ def getLevelChar_(level):
   if level == -1:
     return " "
   
-  return ucuq.ravel.LCD.getVPeakChar(levelTo8_(level))
+  return ucuq.ravel.panel.getVPeakChar(levelTo8_(level))
 
 
-def getLCDEvents_(tracking, lcds):
+def getPanelEvents_(tracking, panels):
   while (True):
     topGauges = ""
     bottomGauges = ""
-    for x in range(ucuq.ravel.LCD_WIDTH * 3):
-      topGauges += getLevelChar_(tracking.tops[(x + 1) * LCD_DELAY_MULTIPLIER_ - 1].value)
-      bottomGauges += getLevelChar_(tracking.bottoms[(x + 1) * LCD_DELAY_MULTIPLIER_ - 1].value)
+    for x in range(ucuq.ravel.PANEL_WIDTH * 3):
+      topGauges += getLevelChar_(tracking.tops[(x + 1) * PANEL_DELAY_MULTIPLIER_ - 1].value)
+      bottomGauges += getLevelChar_(tracking.bottoms[(x + 1) * PANEL_DELAY_MULTIPLIER_ - 1].value)
 
-    lcds.moveTo(0,0).putString(topGauges)
-    lcds.moveTo(0,1).putString(bottomGauges)
+    panels.moveTo(0,0).putString(topGauges)
+    panels.moveTo(0,1).putString(bottomGauges)
     tracking.counter += 1
 
-    yield tracking.getDelay(tracking) * LCD_DELAY_MULTIPLIER_
+    yield tracking.getDelay(tracking) * PANEL_DELAY_MULTIPLIER_
 
 
 def getColorSplit_(level):
@@ -170,7 +170,7 @@ def launch(timestamp, parts):
 
   uppers = parts.uppers
   lowers = parts.lowers
-  lcds = ucuq.LCD_Strip(parts.lcds.uploadVPeakChars().backlightOn())
+  panels = ucuq.PanelStrip(parts.panels.uploadVPeakChars().backlightOn())
   rings = parts.rings
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
@@ -185,7 +185,7 @@ def launch(timestamp, parts):
           getRingEvents_(tracking, i * AMOUNT_ // 3, rings[i]),
         )
       ),
-      getLCDEvents_(tracking, lcds),
+      getPanelEvents_(tracking, panels),
     ),
     lambda tracking, user: (sleepUntil_(timestamp + tracking.cumul, 1/3),  not user.tracking.stop)[-1],
     tracking = tracking,
@@ -196,4 +196,4 @@ def launch(timestamp, parts):
 
   uppers.park()
   lowers.park()
-  lcds.backlightOff()
+  panels.backlightOff()

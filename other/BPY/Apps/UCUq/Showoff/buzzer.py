@@ -119,7 +119,7 @@ VERSIONS_ = (
 )
 
 def launch(length):
-  buzzer = ucuq.ravel.Buzzer()
+  buzzer = ucuq.ravel.buzzer
 
   for item in VERSIONS_[length]:
     EFFECTS_[item](buzzer)

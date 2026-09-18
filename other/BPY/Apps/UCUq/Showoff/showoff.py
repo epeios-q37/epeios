@@ -70,20 +70,20 @@ def atkPartnerBuzzer(dom):
   partner.Buzzer(partnerLength_(dom))
   
   
-def atkPartnerOLEDGeo(dom):
-  partner.OLEDGeo(partnerLength_(dom))
+def atkPartnerScreenGeo(dom):
+  partner.screenGeo(partnerLength_(dom))
   
   
-def atkPartnerOLEDMov(dom):
-  partner.Mov(partnerLength_(dom))
+def atkPartnerScreenMov(dom):
+  partner.screenMov(partnerLength_(dom))
   
   
 def atkPartnerRing(dom):
   partner.Ring(partnerLength_(dom))
 
 
-def atkPartnerLCD(dom):
-  partner.LCD(partnerLength_(dom))
+def atkPartnerPanel(dom):
+  partner.Panel(partnerLength_(dom))
 
 
 def atkPartnerServos(dom):

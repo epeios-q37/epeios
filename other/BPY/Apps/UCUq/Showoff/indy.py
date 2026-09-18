@@ -30,23 +30,23 @@ def launch(timestamp, parts):
   
   helper = types.SimpleNamespace(prev = 0, led = 0)
   
-  parts.oleds.powerOff().draw(INDY_, 128).show()
-  parts.lcds.backlightOff().uploadUpwardGaugeChars()
+  parts.screens.powerOff().draw(INDY_, 128).show()
+  parts.panels.backlightOff().uploadUpwardGaugeChars()
 
   sleepUntil_(timestamp, COMMIT_DELAY_)
 
-  parts.oleds.powerOn()
-  parts.lcds.backlightOn()
+  parts.screens.powerOn()
+  parts.panels.backlightOn()
 
   timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, parts), lambda _, cumul: sleepUntil_(timestamp + cumul))
   
-  parts.oleds.hLine(0, 0, 128, 0)
+  parts.screens.hLine(0, 0, 128, 0)
   
   timestamp = show.turnOffAndScrollDown(timestamp, parts)
   
-  parts.oleds.fill(0).show()
+  parts.screens.fill(0).show()
 
-  parts.lcds.backlightOff().clear()
+  parts.panels.backlightOff().clear()
   
   return timestamp
 

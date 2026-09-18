@@ -6,9 +6,9 @@ import ucuq
 
 import buzzer
 import cube
-import lcd
+import panel
 import matrix
-import oled
+import screen
 import ring
 import servos
 import shared
@@ -67,10 +67,10 @@ def getDuration_(events):
   return duration
 
 
-def oledAnimation_():
-  oled = ucuq.ravel.OLED()
+def screenAnimation_():
+  screen = ucuq.ravel.screen
 
-  oled.powerOn()
+  screen.powerOn()
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
@@ -82,8 +82,8 @@ def oledAnimation_():
       (SENIOR_[16 * (63 - c) :] + "0" * 1024)[:1024],
     )
 
-    oled.draw(toDraw, 128)
-    oled.show()
+    screen.draw(toDraw, 128)
+    screen.show()
     sleepWait_(0.05)
 
   ucuq.setCommitBehavior(cb)
@@ -99,13 +99,13 @@ def set(dom):
 
 
 def indy(withSound=True):
-  buzzer, ring, oled, lcd = ucuq.ravel.get("BROL")
-  ravel = ucuq.ravel.Kit(buzzer = buzzer, ring = ring, oled = oled, lcd = lcd)
+  ravel = ucuq.ravel
+  buzzer, ring, screen, panel = ucuq.ravel.get("BRSP")
 
   ringOffset = int(time.time())
   ring.flash()
-  lcd.uploadUpwardGaugeChars().clear().backlightOff()
-  oled.powerOff()
+  panel.uploadUpwardGaugeChars().clear().backlightOff()
+  screen.powerOff()
 
   if withSound:
     polyEvents = ucuq.voicesToEvents(
@@ -141,11 +141,11 @@ def indy(withSound=True):
 
   ringOffset = int(time.time())
 
-  oledAnimation_()
+  screenAnimation_()
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
-  lcd.backlightOn()
+  panel.backlightOn()
 
   ucuq.sleepStart()
 
@@ -160,7 +160,7 @@ def indy(withSound=True):
 
   ucuq.setCommitBehavior(cb)
 
-  lcd.hideCursor()
+  panel.hideCursor()
 
   for i in range(8):
     ring.setValue(i, shared.getRainbowColor(ringOffset + i, 7)).write()
@@ -174,12 +174,12 @@ def Buzzer(length):
   buzzer.launch(length)
 
 
-def OLEDGeo(length):
-  oled.launchGeo(length)
+def screenGeo(length):
+  screen.launchGeo(length)
   
   
-def Mov(length):
-  oled.launchMov(length)
+def screenMov(length):
+  screen.launchMov(length)
   
   
 def matrixSimulation():
@@ -220,8 +220,8 @@ def DisplaySpokenColor(dom):
 
   ravel = dom.partner.colors.ravel
 
-  ring = ravel.ring()
-  oled = ravel.oled()
+  ring = ravel.ring
+  screen = ravel.screen
 
   colors = json.loads(dom.getValue("PartnerColors"))
 
@@ -230,19 +230,17 @@ def DisplaySpokenColor(dom):
     if color in SPOKEN_COLORS_:
       ucuq.sleepStart()
       ring.setValue(dom.partner.colors.led, ((255, 255, 255))).write()
-      r, g, b = map(
-        lambda c: shared.RGB_MAX * int(c) // 255, [c for c in SPOKEN_COLORS_[color]]
-      )
+      r, g, b = (shared.RGB_MAX * int(c) // 255 for c in [c for c in SPOKEN_COLORS_[color]])
       ucuq.sleepWait(0.05)
       ring.setValue(dom.partner.colors.led, (r, g, b)).write()
       ravel.displayRingGauges()
       y = dom.partner.colors.led % 8 * 8
-      oled.rect(0, y, 128, 8, 0, True).rect(0, 0, 8, 64, 0, True).text(
+      screen.rect(0, y, 128, 8, 0, True).rect(0, 0, 8, 64, 0, True).text(
         color, 64 - 8 * len(color) // 2, y
       )
       if dom.partner.colors.led >= 8:
-        oled.text(">", 0, y).show()
-      oled.show()
+        screen.text(">", 0, y).show()
+      screen.show()
       dom.partner.colors.led += 1
       break
 
@@ -251,38 +249,37 @@ def DisplayOrientation(dom, values):
   counter = dom.getCounter()
 
   if dom.partner.orientation.counter != counter - 1:
-    ring, lcd, oled = ucuq.ravel.get("RLO")
-    dom.partner.orientation.ravel = ucuq.ravel.Kit(ring = ring, oled = oled, lcd = lcd)
+    dom.partner.orientation.ravel = ucuq.ravel
 
   dom.partner.orientation.counter = counter
 
-  ring, lcd, oled = dom.partner.orientation.ravel.get("RLO")
+  ring, panel, screen = ucuq.ravel.get("RPS")
 
   x, y, z = (float(value) for value in values.split(","))
   
   ring.fill((0,0,0)).write()
 
-  lcd.backlightOn().moveTo(0, 0).putString(f"{f"{int(z):+3d} {int(x):4d} {int(y):+4d}".center(16)}".ljust(32))
+  panel.backlightOn().moveTo(0, 0).putString(f"{f"{int(z):+3d} {int(x):4d} {int(y):+4d}".center(16)}".ljust(32))
 
-  cube.draw3DCube(oled, x, y, z)
-  oled.show()
+  cube.draw3DCube(screen, x, y, z)
+  screen.show()
 
 
 def Listen(dom):
   counter = dom.getCounter()
 
   if dom.partner.colors.counter != counter - 1:
-    ring, oled, lcd = ucuq.ravel.get("ROL")
-    lcd.uploadUpwardGaugeChars().backlightOn()
+    ring, screen, panel = ucuq.ravel.get("RSP")
+    panel.uploadUpwardGaugeChars().backlightOn()
     ring.fill((0, 0, 0)).write()
-    oled.fill(0).show()
+    screen.fill(0).show()
     dom.partner.colors.led = 0
-    dom.partner.colors.ravel = ucuq.ravel.Kit(ring = ring, oled = oled, lcd = lcd)
+    dom.partner.colors.ravel = ucuq.ravel
 
   dom.partner.colors.counter = counter
 
   dom.executeVoid("partnerListen()")
 
 
-def LCD(length):
-  lcd.launch(length)
+def Panel(length):
+  panel.launch(length)

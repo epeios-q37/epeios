@@ -10,6 +10,7 @@ import sys
 import time
 import types
 import zlib
+from typing import TYPE_CHECKING, Any
 
 import atlastk
 
@@ -2710,27 +2711,27 @@ def splitFrameBuffer_(globalFb, layout, screenDim):
   return fbMatrix
 
 
-class OLED_Wall(FrameBuffer_):
-  def __init__(self, oleds):
-    self.oleds_ = oleds
-    self.layout_ = indexTwoDimensionalArray_(oleds)
+class ScreenWall(FrameBuffer_):
+  def __init__(self, screens):
+    self.oleds_ = screens
+    self.layout_ = indexTwoDimensionalArray_(screens)
 
-    super().__init__(bytearray(len(oleds) * len(oleds[0]) * ravel.OLED_WIDTH * ravel.OLED_HEIGHT // 8), len(oleds[0]) * ravel.OLED_WIDTH, len(oleds) * ravel.OLED_HEIGHT, MONO_VLSB)
+    super().__init__(bytearray(len(screens) * len(screens[0]) * ravel.SCREEN_WIDTH * ravel.SCREEN_HEIGHT // 8), len(screens[0]) * ravel.SCREEN_WIDTH, len(screens) * ravel.SCREEN_HEIGHT, MONO_VLSB)
 
   def show(self):
-    buffers = splitFrameBuffer_(self, self.layout_, (ravel.OLED_WIDTH, ravel.OLED_HEIGHT))
+    buffers = splitFrameBuffer_(self, self.layout_, (ravel.SCREEN_WIDTH, ravel.SCREEN_HEIGHT))
 
     for i, hbuffers in enumerate(buffers):
       for j, vbuffer in enumerate(hbuffers):
         self.oleds_[i][j].blit(vbuffer, 0, 0).show()
 
 
-class LCD_Strip:
+class PanelStrip:
   C_NONE_ = 0
   C_STEADY_ = 1
   C_BLINKING_ = 2
-  def __init__(self, lcds):
-    self.lcds_ = lcds
+  def __init__(self, panels):
+    self.lcds_ = panels
     self.x_ = 0
     self.y_ = 0
     self.cursor_ = False
@@ -3596,131 +3597,173 @@ def BaseClassPatch_(caller, owner):
 ##### End of generic section for kits #####
 
 ##### Begin of section dedicated to the Ravel kit #####
-class ravel:  # act as namespace
-  class Kit:
-    @staticmethod
-    def init_(create, object, instanciation):
-      return object if object is not None else (instanciation() if create else None)
-      
-    def __init__(self, ringOffset=0, device=None, extra=True, *, buzzer=None, ring=None, oled=None, lcd=None, upper=None, lower=None, create = None):
-      if create is None:
-        create =  all(x is None for x in (buzzer, ring, oled, lcd, upper, lower))
+# Fichier : ucuq.py
+# (Note : Importez vos dépendances PWM, I2C, Servo, kit_, etc. ici)
 
-      cls = self.__class__
-      self.buzzer_ = cls.init_(create, buzzer, lambda : ravel.Buzzer(device, extra))
-      self.ring_ = cls.init_(create, ring, lambda : ravel.Ring(ringOffset, device, extra))
-      self.oled_ = cls.init_(create, oled, lambda : ravel.OLED(device, extra))
-      self.lcd_ = cls.init_(create, lcd, lambda : ravel.LCD(device, extra))
-      self.upper_ =  cls.init_(create, upper, lambda : ravel.Upper(False, device, extra))
-      self.lower_ =  cls.init_(create, lower, lambda : ravel.Lower(False, device, extra))
-      
-    def raz(self):
-      self.__init__(self.ring_.getOffset())
-      
-    def buzzer(self):
-      return self.buzzer_
-    
-    def ring(self):
-      return self.ring_
-    
-    def oled(self):
-      return self.oled_
-    
-    def lcd(self):
-      return self.lcd_
-
-    def upper(self):
-      return self.upper_
-    
-    def lower(self):
-      return self.lower_
-    
-    def get(self, list):
-
-      components = []
-
-      for item in list:
-        match item.upper():
-          case "B":
-            components.append(self.buzzer())
-          case "L":
-            components.append(self.lcd())
-          case "O":
-            components.append(self.oled())
-          case "R":
-            components.append(self.ring())
-          case "S":
-            components.extend([self.upper(), self.lower()])
-          case _:
-            raise ValueError(f"Unknown '{item}' component!")
-          
-      return components
-
-    def displayRingGauges(self, globalMax = 0, placeholder=".", addendum="  "):
-      ravel.displayRingGauges(self.ring_, self.lcd_, globalMax, placeholder, addendum)
-
-  @staticmethod
-  def displayRingGauges(rings, lcds, globalMax, placeholder, addendum):
-    lcds.displayRingGauges(rings, 0, 0, 16, globalMax, placeholder, addendum)
-  
-  class Buzzer(kit_.Buzzer):
-    def __init__(self, device=None, extra=True):
-      super().__init__(PWM(5, device=device), extra=extra)
-      
-  class Ring(kit_.WS2812):
-    def __init__(self, offset=0, device=None, extra=True):
-      super().__init__(8, 20, offset=offset, device=device, extra=extra)
-    
-  class OLED(kit_.SSD1306_I2C):
-    def __init__(self, device=None, extra=True):
-      super().__init__(128, 64, I2C(10, 9, device=device), extra=extra)
-      
-  class LCD(kit_.HD44780_I2C):
-    def __init__(self, device=None, extra=True):
-      super().__init__(16, 2, SoftI2C(6, 7, device=device), extra=extra)
-    
-  class Upper(kit_.Servo):
-    def __init__(self, smooth=False, device=None, extra=True):
-      super().__init__(PWM(0, freq=50, device=device, extra=extra, convPin = lambda pin : f"(sp_({pin}))", convU16 = lambda u16: f"(su_({u16}))", convNS = lambda ns: f"(sn_({ns}))"), Servo.Specs(1638, 8192, 180, ravel.SERVO_MAX), smooth=smooth)
-    
-  class Lower(kit_.Servo):
-    def __init__(self, smooth=False, device=None, extra=True):
-      super().__init__(PWM(1, freq=50, device=device, extra=extra, convPin = lambda pin : f"(sp_({pin}))", convU16 = lambda u16: f"(su_({u16}))", convNS = lambda ns: f"(sn_({ns}))"), Servo.Specs(1638, 8192, 180, 0), smooth=smooth)
-    
-  @staticmethod
-  def get(list):
-    components = []
-
-    for item in list:
-      match item.upper():
-        case "B":
-          components.append(ravel.Buzzer())
-        case "L":
-          components.append(ravel.LCD())
-        case "O":
-          components.append(ravel.OLED())
-        case "R":
-          components.append(ravel.Ring())
-        case "S":
-          components.extend([ravel.Upper(), ravel.Lower()])
-        case _:
-          raise ValueError(f"Unknown '{item}' component!")
-        
-    return components
-
-  @staticmethod
-  def raz():
-    ravel.Kit()
-    
+class RavelFactory_:
+  """
+  Espace de noms isolé regroupant toute la logique du kit Ravel.
+  Sert à la fois de Namespace, de Kit par défaut et de constructeur.
+  """
+  # --- Constantes globales de ravel ---
   SERVO_MAX = 6554
   RING_MAX = 31
   RING_SIZE = 8
-  OLED_WIDTH = 128
-  OLED_HEIGHT = 64
-  OLED_BLACK = 0
-  OLED_WHITE = 1
-  LCD_WIDTH = 16
-  LCD_HEIGHT = 2
+  SCREEN_WIDTH = 128
+  SCREEN_HEIGHT = 64
+  SCREEN_BLACK = 0
+  SCRREN_WHITE = 1
+  PANEL_WIDTH = 16
+  PANEL_HEIGHT = 2
+
+  # --- Composants matériels internes ---
+  class Buzzer_(kit_.Buzzer):
+    def __init__(self, device=None, extra=True):
+      super().__init__(PWM(5, device=device), extra=extra)
+
+  class Ring_(kit_.WS2812):
+    def __init__(self, offset=0, device=None, extra=True):
+      super().__init__(8, 20, offset=offset, device=device, extra=extra)
+
+  class Screen_(kit_.SSD1306_I2C):
+    def __init__(self, device=None, extra=True):
+      super().__init__(128, 64, I2C(10, 9, device=device), extra=extra)
+
+  class Panel_(kit_.HD44780_I2C):
+    def __init__(self, device=None, extra=True):
+      super().__init__(16, 2, SoftI2C(6, 7, device=device), extra=extra)
+
+  class Upper_(kit_.Servo):
+    def __init__(self, smooth=False, device=None, extra=True):
+      super().__init__(PWM(
+          0, freq=50, device=device, extra=extra, 
+          convPin=lambda pin: f"(sp_({pin}))", 
+          convU16=lambda u16: f"(su_({u16}))", 
+          convNS=lambda ns: f"(sn_({ns}))"),
+        Servo.Specs(1638, 8192, 180, RavelFactory_.SERVO_MAX), smooth=smooth)
+
+  class Lower_(kit_.Servo):
+    def __init__(self, smooth=False, device=None, extra=True):
+      super().__init__(PWM(
+          1, freq=50, device=device, extra=extra, 
+          convPin=lambda pin: f"(sp_({pin}))", 
+          convU16=lambda u16: f"(su_({u16}))", 
+          convNS=lambda ns: f"(sn_({ns}))"),
+        Servo.Specs(1638, 8192, 180, 0),
+        smooth=smooth)
+
+  # --- Classe Kit interne ---
+  class Kit:
+    def __init__(self, ringOffset=0, device=None, extra=True):
+      self._ringOffset = ringOffset
+      self._device = device
+      self._extra = extra
+      self._components = {}
+
+    def __getattr__(self, name):
+      """Instanciation paresseuse des composants d'un kit."""
+      if name in self._components:
+        return self._components[name]
+
+      f = RavelFactory_
+      match name:
+        case 'buzzer': obj = f.Buzzer_(self._device, self._extra)
+        case 'ring':   obj = f.Ring_(self._ringOffset, self._device, self._extra)
+        case 'screen':   obj = f.Screen_(self._device, self._extra)
+        case 'panel':    obj = f.Panel_(self._device, self._extra)
+        case 'upper':  obj = f.Upper_(False, self._device, self._extra)
+        case 'lower':  obj = f.Lower_(False, self._device, self._extra)
+        case _: raise AttributeError(f"Le Kit Ravel n'a pas de composant nommé '{name}'")
+
+      self._components[name] = obj
+      return obj
+
+    def raz(self):
+      offset = self._components['ring'].getOffset() if 'ring' in self._components else self._ringOffset
+      self._components.clear()
+      self.__init__(offset, self._device, self._extra)
+      self.get("BPSRUL")
+
+    def get(self, list_components):
+      components = []
+      for item in list_components:
+        match item.upper():
+          case "B": components.append(self.buzzer)
+          case "P": components.append(self.panel)
+          case "S": components.append(self.screen)
+          case "R": components.append(self.ring)
+          case "U": components.append(self.upper)
+          case "L": components.append(self.lower)
+          case _: raise ValueError(f"Unknown '{item}' component!")
+      return components if len(components) != 1 else components[0]
+
+    def displayRingGauges(self, globalMax=0, placeholder=".",addendum="  "):
+      self.panel.displayRingGauges(self.ring, 0 ,0, 16, globalMax, placeholder, addendum)
+
+  # --- Initialisation de l'instance par défaut de RavelFactory ---
+  def __init__(self):
+    # L'objet racine possède son propre kit par défaut (chargement paresseux complet)
+    self._default_kit = RavelFactory_.Kit(ringOffset=0, device=None, extra=True)
+
+  def __getattr__(self, name):
+    """Permet d'accéder aux composants ou aux constantes depuis ucuq.ravel."""
+    # On cherche d'abord dans les constantes de la classe
+    if hasattr(self.__class__, name):
+      return getattr(self.__class__, name)
+    # Sinon, on délègue au kit par défaut (ex: ucuq.ravel.ring)
+    return getattr(self._default_kit, name)
+
+  def __call__(self, ringOffset=0, device=None, extra=True):
+    """Permet de créer un kit secondaire via ucuq.ravel(...)"""
+    return RavelFactory_.Kit(ringOffset=ringOffset, device=device, extra=extra)
+
+  def displayRingGauges(self, globalMax=0, placeholder=".", addendum="  "):
+    self._default_kit.displayRingGauges(globalMax, placeholder, addendum)
+
+
+# --- 5. Interception de l'import au niveau du module racine ucuq ---
+
+def __getattr__(name):
+  print(name)
+  """Appelé uniquement au premier accès d'une variable racine dans ucuq."""
+  if name == 'ravel':
+    # On instancie la factory isolée
+    ravel_instance = RavelFactory_()
+    # On l'injecte dans le module ucuq pour figer l'accès futur
+    globals()['ravel'] = ravel_instance
+    return ravel_instance
+    
+  # raise AttributeError(f"Le module '{__name__}' n'a pas d'attribut '{name}'")
+
+if TYPE_CHECKING:
+  class Kit:
+    buzzer: Any
+    ring: Any
+    scrren: Any
+    panel: Any
+    upper: Any
+    lower: Any
+    def __init__(self, ringOffset: int = ..., device: Any = ..., extra: bool = ...) -> None: ...
+    def raz(self) -> None: ...
+    def get(self, list_components: list[str]) -> list[Any]: ...
+    def displayRingGauges(self, globalMax: int = ..., placeholder: str = ..., addendum: str = ...) -> None: ...
+
+  class RavelNamespace(Kit):
+    SERVO_MAX: int
+    RING_MAX: int
+    RING_SIZE: int
+    SCREEN_WIDTH: int
+    SCREEN_HEIGHT: int
+    SCREEN_BLACK: int
+    SCREEN_WHITE: int
+    PANEL_WIDTH: int
+    PANEL_HEIGHT: int
+    def __call__(self, ringOffset: int = ..., device: Any = ..., extra: bool = ...) -> Kit: ...
+    @staticmethod
+    def displayRingGauges(rings: Any, panels: Any, globalMax: int, placeholder: str, addendum: str) -> None: ...
+
+  # On déclare explicitement l'existence et le type de ravel pour l'éditeur
+  ravel: RavelNamespace  
 
 ##### End of section dedicated to the Ravel kit #####
 

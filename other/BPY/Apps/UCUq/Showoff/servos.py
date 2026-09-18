@@ -8,7 +8,7 @@ DURATION_ = 10
 DELAY_ = 1 / 10
 COMMIT_DELAY_ = 1 / 8
 MAX_ = ucuq.ravel.SERVO_MAX
-WIDTH_ = ucuq.ravel.LCD_WIDTH * 5
+WIDTH_ = ucuq.ravel.PANEL_WIDTH * 5
 COLOR_MAX_ = ucuq.ravel.RING_MAX // 7
 SPEED_COLORS_ = ((0, COLOR_MAX_, 0), (COLOR_MAX_, COLOR_MAX_, 0), (COLOR_MAX_, COLOR_MAX_ // 3, 0), (COLOR_MAX_, 0, 0))
 
@@ -25,28 +25,28 @@ def setRing_(ring, step, list):
   ring.write()
 
 
-def setOLEDDots_(oled, value1, value2, pos, col):
-  pos = ucuq.ravel.OLED_WIDTH - 1 - pos
+def setScreenDots_(screen, value1, value2, pos, col):
+  pos = ucuq.ravel.SCREEN_WIDTH - 1 - pos
 
-  return oled\
-    .pixel(pos, value1 * ( ucuq.ravel.OLED_HEIGHT // 2  - 1 ) // ( MAX_ - 1 ), col )\
-    .pixel(pos, ucuq.ravel.OLED_HEIGHT // 2 + value2 * ( ucuq.ravel.OLED_HEIGHT // 2  - 1 ) // ( MAX_ - 1 ), col )
+  return screen\
+    .pixel(pos, value1 * ( ucuq.ravel.SCREEN_HEIGHT // 2  - 1 ) // ( MAX_ - 1 ), col )\
+    .pixel(pos, ucuq.ravel.SCREEN_HEIGHT // 2 + value2 * ( ucuq.ravel.SCREEN_HEIGHT // 2  - 1 ) // ( MAX_ - 1 ), col )
 
 
-def setOLED_(oled, data0, data1, pos):
+def setScreen_(screen, data0, data1, pos):
   if pos == 0:
-    setOLEDDots_(oled, data0[0], data1[0], pos, 1).show()
+    setScreenDots_(screen, data0[0], data1[0], pos, 1).show()
   else:
-    max = min(pos, ucuq.ravel.OLED_WIDTH - 1)
+    max = min(pos, ucuq.ravel.SCREEN_WIDTH - 1)
     for i in range(max+1):
       p = pos - i
-      setOLEDDots_(oled, data0[p-1], data1[p-1], i ,0)
-      setOLEDDots_(oled, data0[p], data1[p], i ,1)
+      setScreenDots_(screen, data0[p-1], data1[p-1], i ,0)
+      setScreenDots_(screen, data0[p], data1[p], i ,1)
 
-    oled.show()
+    screen.show()
 
 
-def getServosEvents_(servo, lcd):
+def getServosEvents_(servo, panel):
   elapsed = 0
   current = park = servo.get()
   rising = current == 0
@@ -55,7 +55,7 @@ def getServosEvents_(servo, lcd):
   step = random.randrange(STEP_MIN_, STEP_MAX_ + 1)
   parking = False
   ringData = []
-  oledData = []
+  screenData = []
   ringDelay = 0
 
   while True:
@@ -86,15 +86,15 @@ def getServosEvents_(servo, lcd):
         ringDelay = 0
         step = random.randrange(STEP_MIN_, STEP_MAX_ + 1)
 
-    oledData.append(current)
-    events.append((lambda pos = current, step = step: (servo.set(pos), lcd[0].moveTo(0, lcd[1]).putString(lcd[0].getForwardPeak(WIDTH_ * pos // (MAX_ + 1), WIDTH_))), DELAY_))
+    screenData.append(current)
+    events.append((lambda pos = current, step = step: (servo.set(pos), panel[0].moveTo(0, panel[1]).putString(panel[0].getForwardPeak(WIDTH_ * pos // (MAX_ + 1), WIDTH_))), DELAY_))
 
     elapsed += DELAY_
     ringDelay += DELAY_
 
   ringData.append((step, ringDelay))
 
-  return events, ringData, oledData
+  return events, ringData, screenData
 
 
 def getRingEvents_(ring, data, list):
@@ -106,11 +106,11 @@ def getRingEvents_(ring, data, list):
   return events
 
 
-def getOLEDEvents_(oled, data0, data1):
+def getScreenEvents_(screen, data0, data1):
   events = []
 
   for i in range(len(data0)):
-    events.append((lambda i = i: setOLED_(oled, data0, data1, i), DELAY_))
+    events.append((lambda i = i: setScreen_(screen, data0, data1, i), DELAY_))
 
   return events
 
@@ -131,33 +131,33 @@ def extend_(array, n):
 
 
 def launch():
-  oled, ring, lcd, upper, lower = ucuq.ravel.get("ORLS")
+  screen, ring, panel, upper, lower = ucuq.ravel.get("SRPUL")
 
   ringEvents= []
-  oledEvents = []
+  screenEvents = []
 
   ledUpper = tuple((i, SPEED_COLORS_[i]) for i in range(4))
   ledLower = tuple((7 - i, SPEED_COLORS_[i]) for i in range(4))
 
   
-  upperEvents, ringData, oledData0 = getServosEvents_(upper, (lcd, 0))
+  upperEvents, ringData, screenData0 = getServosEvents_(upper, (panel, 0))
   ringEvents.append(getRingEvents_(ring, ringData, ledUpper))
 
-  lowerEvents, ringData, oledData1 = getServosEvents_(lower, (lcd, 1))
+  lowerEvents, ringData, screenData1 = getServosEvents_(lower, (panel, 1))
   ringEvents.append(getRingEvents_(ring, ringData, ledLower))
 
-  maxAmountOfOLEDData= max(len(oledData0), len(oledData1))
+  maxAmountOfScreenData= max(len(screenData0), len(screenData1))
 
-  oledData0 = extend_(oledData0, maxAmountOfOLEDData)
-  oledData1 = extend_(oledData1, maxAmountOfOLEDData)
+  screenData0 = extend_(screenData0, maxAmountOfScreenData)
+  screenData1 = extend_(screenData1, maxAmountOfScreenData)
   
-#  oledEvents.append(tuple((lambda: oled.scroll(-1, 0).vLine(ucuq.ravel.OLED_WIDTH - 1, 0, ucuq.ravel.OLED_HEIGHT, 0).show(), DELAY_) for _ in range(maxAmountOfOLEDEvents)))
+#  screenEvents.append(tuple((lambda: screen.scroll(-1, 0).vLine(ucuq.ravel.SCREEN_WIDTH - 1, 0, ucuq.ravel.SCREEN_HEIGHT, 0).show(), DELAY_) for _ in range(maxAmountOfScreenEvents)))
 
-  oledEvents = getOLEDEvents_(oled, oledData0, oledData1)
+  screenEvents = getScreenEvents_(screen, screenData0, screenData1)
 
-  eventList = (upperEvents, lowerEvents, *ringEvents, oledEvents, getCommitEvents_())
+  eventList = (upperEvents, lowerEvents, *ringEvents, screenEvents, getCommitEvents_())
 
-  lcd.uploadHPeakChars().backlightOn()
+  panel.uploadHPeakChars().backlightOn()
 
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 

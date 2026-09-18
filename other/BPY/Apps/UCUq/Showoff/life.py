@@ -50,13 +50,13 @@ def gridSignature_(grid):
   return tuple(tuple(row) for row in grid)
 
 
-def drawGrid_(oled, grid):
-  oled.fill(0)
+def drawGrid_(screen, grid):
+  screen.fill(0)
   for row in range(GRID_HEIGHT_):
     for col in range(GRID_WIDTH_):
       if grid[row][col]:
-        oled.rect(col * CELL_SIZE_, row * CELL_SIZE_, CELL_SIZE_, CELL_SIZE_, 1)
-  oled.show()
+        screen.rect(col * CELL_SIZE_, row * CELL_SIZE_, CELL_SIZE_, CELL_SIZE_, 1)
+  screen.show()
 
 
 def hsvToRGB_(hue, saturation, value):
@@ -93,12 +93,12 @@ def setRingFromPopulation_(ring, population, referencePopulation, generation):
   ring.write()
 
 
-def updateLCD_(lcd, generation, population):
-  lcd.moveTo(0,0).putString(f"Gen: {str(generation).rjust(3)}".center(16))
-  lcd.moveTo(0,1).putString(f"Pop: {str(population).rjust(3)}".center(16))
+def updatePanel_(panel, generation, population):
+  panel.moveTo(0,0).putString(f"Gen: {str(generation).rjust(3)}".center(16))
+  panel.moveTo(0,1).putString(f"Pop: {str(population).rjust(3)}".center(16))
 
 
-def runDemo_(oled, ring, lcd, timestamp):
+def runDemo_(screen, ring, panel, timestamp):
   grid = createRandomGrid_()
   generation = 0
   previousPopulation = countPopulation_(grid)
@@ -110,11 +110,11 @@ def runDemo_(oled, ring, lcd, timestamp):
   sleepUntil_(timestamp, 0)
 
   while True:
-    drawGrid_(oled, grid)
+    drawGrid_(screen, grid)
     population = countPopulation_(grid)
     observedMaxPopulation = max(observedMaxPopulation, population)
     setRingFromPopulation_(ring, population, observedMaxPopulation, generation)
-    updateLCD_(lcd, generation, population)
+    updatePanel_(panel, generation, population)
 
     signature = gridSignature_(grid)
     isStagnant = signature in recentSignatures
@@ -146,6 +146,6 @@ def runDemo_(oled, ring, lcd, timestamp):
 
 
 def launch(timestamp, parts):
-  oleds = parts.oleds
-#  runDemo_(ucuq.OLED_Wall(((oleds[0], oleds[1], oleds[2]),)), parts.rings, parts.lcds.backlightOn(), timestamp)
-  runDemo_(oleds, parts.rings, parts.lcds.backlightOn(), timestamp)
+  screens = parts.screens
+#  runDemo_(ucuq.ScreenWall(((screens[0], screens[1], screens[2]),)), parts.rings, parts.panels.backlightOn(), timestamp)
+  runDemo_(screens, parts.rings, parts.panels.backlightOn(), timestamp)

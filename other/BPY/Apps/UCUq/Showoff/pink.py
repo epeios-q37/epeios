@@ -23,8 +23,8 @@ def durationCallback_(timestamp, helper, parts):
   parts.rings.setValue(helper.led + 1,(0,0,0)).write()
   
   if (timestamp - helper.start) > PANTHER_DELAY_ * helper.pantherPict:
-    parts.oleds.fill(0).show()
-    parts.oleds.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
+    parts.screens.fill(0).show()
+    parts.screens.draw(shared.unpack(PANTHERS_[helper.pantherPict % len(PANTHERS_)]), 128).show()
     helper.pantherPict += 1
     
   show.displayRingGauges(parts)
@@ -37,19 +37,19 @@ def launch(timestamp, parts):
   
   helper.start = timestamp = timestamp + 1
   
-  parts.lcds.backlightOff().uploadUpwardGaugeChars()
+  parts.panels.backlightOff().uploadUpwardGaugeChars()
 
   sleepUntil_(timestamp, COMMIT_DELAY_)
 
-  parts.lcds.backlightOn()
+  parts.panels.backlightOn()
 
   timestamp += ucuq.playVoices(VOICES_, 120, lambda freq: eventCallback_(freq, helper, parts), lambda tracking: durationCallback_(timestamp + tracking.cumul, helper, parts))
   
   timestamp = show.turnOffAndScrollDown(timestamp, parts)
   
-  parts.oleds.fill(0).show()
+  parts.screens.fill(0).show()
 
-  parts.lcds.clear().backlightOff()
+  parts.panels.clear().backlightOff()
   
   return timestamp
 

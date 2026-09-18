@@ -13,10 +13,10 @@ from fractions import Fraction
 # No debug if == 0
 DEBUG_DURATION_ = 0
 
-LCD_WIDTH_ = ucuq.ravel.LCD_WIDTH
+PANEL_WIDTH_ = ucuq.ravel.PANEL_WIDTH
 
-OLED_HEIGHT_ = ucuq.ravel.OLED_HEIGHT
-OLED_WIDTH_ = ucuq.ravel.OLED_WIDTH
+SCREEN_HEIGHT_ = ucuq.ravel.SCREEN_HEIGHT
+SCREEN_WIDTH_ = ucuq.ravel.SCREEN_WIDTH
 
 PIANO_ROLL_HEIGHT_ = 57
 FAST_SCROLL_HEIGHT_= 9 * PIANO_ROLL_HEIGHT_ // 10
@@ -24,12 +24,12 @@ PIANO_ROLL_MARKER_WIDTH_ = 20
 PIANO_ROLL_VOICE_WIDTH_ = 39
 PIANO_ROLL_VOICES_START_ = (2, 44, 86)
 PIANO_ROLL_SEPARATOR_POSITIONS_ = (0, 42, 84, 126)
-LCD_ACTIVE_NOTES_WIDTH_ = 7
+PANEL_ACTIVE_NOTES_WIDTH_ = 7
 
 REGULAR_SCROLL_DELAY_ = .10
 START_SCROLL_DELAY_ = .05
 
-LCD_TITLE_DELAY_ = 1/3
+PANEL_TITLE_DELAY_ = 1/3
 
 RING_RAINBOW_DELAY_ = 1/3
 
@@ -37,7 +37,7 @@ START_DELAY_ = (FAST_SCROLL_HEIGHT_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELA
 
 COMMIT_MAX_DELAY_ = 1/2
 
-OLED_ANTICIPATION_ = 0
+SCREEN_ANTICIPATION_ = 0
 KIT_COUNT_ = 3
 
 NOTE_UP_CHARMAP_ = (
@@ -143,45 +143,45 @@ def ringsActiveNotesEvents_(voice, turn, rings):
       counter += 1
 
 
-def oledComputeNotePos_(turn, note, minNote, maxNote):
+def screenComputeNotePos_(turn, note, minNote, maxNote):
   return PIANO_ROLL_VOICES_START_[turn] + ( PIANO_ROLL_VOICE_WIDTH_ - 1 ) * ( note - minNote ) // ( maxNote - minNote )
 
 
-def oledDrawNote_(index, pitch, minNote, maxNote, oled):
-  oled.pixel(oledComputeNotePos_(index, pitch, minNote, maxNote), 0, 1)
+def screenDrawNote_(index, pitch, minNote, maxNote, screen):
+  screen.pixel(screenComputeNotePos_(index, pitch, minNote, maxNote), 0, 1)
 
 
-def oledDrawMarker_(turn, color, counter, oled):
+def screenDrawMarker_(turn, color, counter, screen):
   width = PIANO_ROLL_VOICE_WIDTH_ - PIANO_ROLL_MARKER_WIDTH_
   trueX = abs((counter % width * 2 ) - width * 2 + width)
-  oled.hLine( PIANO_ROLL_VOICES_START_[turn] + trueX, OLED_HEIGHT_ - 1, PIANO_ROLL_MARKER_WIDTH_, color)
+  screen.hLine( PIANO_ROLL_VOICES_START_[turn] + trueX, SCREEN_HEIGHT_ - 1, PIANO_ROLL_MARKER_WIDTH_, color)
 
 
-def oledDrawSeparators_(counter, oleds):
+def screenDrawSeparators_(counter, screens):
   for position in PIANO_ROLL_SEPARATOR_POSITIONS_:
-    for y in range(OLED_HEIGHT_):
-      oleds.pixel(position, y, 1 if ( y + counter ) % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
+    for y in range(SCREEN_HEIGHT_):
+      screens.pixel(position, y, 1 if ( y + counter ) % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
 
 
-def oledPianoRollEvent_(pitches, tracking, separatorCounter, oleds):
+def screenPianoRollEvent_(pitches, tracking, separatorCounter, screens):
   minNotes, maxNotes = unpack_(tracking.extrema)
 
   for turn, pitch in enumerate(pitches):
     if pitch:
-      oledDrawNote_(turn, pitch, minNotes[turn], maxNotes[turn], oleds)
+      screenDrawNote_(turn, pitch, minNotes[turn], maxNotes[turn], screens)
 
-  for turn, oled in enumerate(oleds):
-    oledDrawMarker_(turn, 1, separatorCounter, oled)
-  oleds.show()
+  for turn, screen in enumerate(screens):
+    screenDrawMarker_(turn, 1, separatorCounter, screen)
+  screens.show()
 
-  for turn, oled in enumerate(oleds):
+  for turn, screen in enumerate(screens):
     pitch = pitches[turn]
-    oledDrawMarker_(turn, 0, separatorCounter, oled)
+    screenDrawMarker_(turn, 0, separatorCounter, screen)
     if pitch:
-      oledDrawNote_(turn, pitch, minNotes[turn], maxNotes[turn], oled)
+      screenDrawNote_(turn, pitch, minNotes[turn], maxNotes[turn], screen)
 
-  oleds.scroll(dx=0, dy=1).hLine(0, 0, OLED_WIDTH_, 0).hLine(0, PIANO_ROLL_HEIGHT_, OLED_WIDTH_, 0)
-  oledDrawSeparators_(separatorCounter, oleds)
+  screens.scroll(dx=0, dy=1).hLine(0, 0, SCREEN_WIDTH_, 0).hLine(0, PIANO_ROLL_HEIGHT_, SCREEN_WIDTH_, 0)
+  screenDrawSeparators_(separatorCounter, screens)
 
 
 def getExtremaNotes_(voices):
@@ -226,32 +226,32 @@ def getPacedNotes_(tracking):
   return pacedNotes
 
 
-def oledActiveNotesEvent_(pitches, tracking, oleds):
+def screenActiveNotesEvent_(pitches, tracking, screens):
   minNotes, maxNotes = unpack_(tracking.extrema)
 
   for start in PIANO_ROLL_VOICES_START_:
-    oleds.rect(start, PIANO_ROLL_HEIGHT_, PIANO_ROLL_VOICE_WIDTH_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_, 0, True )
+    screens.rect(start, PIANO_ROLL_HEIGHT_, PIANO_ROLL_VOICE_WIDTH_, SCREEN_HEIGHT_ - PIANO_ROLL_HEIGHT_, 0, True )
 
   for index, pitch in enumerate(pitches):
     if pitch:
-      oleds.vLine(oledComputeNotePos_(index, pitch, minNotes[index], maxNotes[index]), PIANO_ROLL_HEIGHT_, OLED_HEIGHT_ - PIANO_ROLL_HEIGHT_ - 1, 1)    
+      screens.vLine(screenComputeNotePos_(index, pitch, minNotes[index], maxNotes[index]), PIANO_ROLL_HEIGHT_, SCREEN_HEIGHT_ - PIANO_ROLL_HEIGHT_ - 1, 1)    
 
 
-def oledEvents_(pacedNotes, tracking, oleds):
+def screenEvents_(pacedNotes, tracking, screens):
   for i in range(len(pacedNotes)):
     if i >= PIANO_ROLL_HEIGHT_:
-      oledActiveNotesEvent_(pacedNotes[i-PIANO_ROLL_HEIGHT_][0], tracking, oleds)
-    oledPianoRollEvent_(pacedNotes[i][0], tracking, i, oleds)
-    yield pacedNotes[i][1] - ( OLED_ANTICIPATION_ if i == 0 else 0 )
+      screenActiveNotesEvent_(pacedNotes[i-PIANO_ROLL_HEIGHT_][0], tracking, screens)
+    screenPianoRollEvent_(pacedNotes[i][0], tracking, i, screens)
+    yield pacedNotes[i][1] - ( SCREEN_ANTICIPATION_ if i == 0 else 0 )
 
 
-def lcdActiveNotesEvents_(notes, minNote, maxNote, width, lcd):
+def panelActiveNotesEvents_(notes, minNote, maxNote, width, panel):
   counter = 0
   yield START_DELAY_
 
   for note in notes:
-    lcd.moveTo(LCD_WIDTH_ - width, 1).putString(lcd.getForwardPeak(( note[0] - minNote ) * (width * 5 - 1) // ( maxNote - minNote) , width * 5 ) if note[0] else lcd.getEmptyPeak(width * 5)),
-    lcd.moveTo(LCD_WIDTH_ - width - 2, 1).putString(chr(6 + counter % 2) if note[0] else " ")
+    panel.moveTo(PANEL_WIDTH_ - width, 1).putString(panel.getForwardPeak(( note[0] - minNote ) * (width * 5 - 1) // ( maxNote - minNote) , width * 5 ) if note[0] else panel.getEmptyPeak(width * 5)),
+    panel.moveTo(PANEL_WIDTH_ - width - 2, 1).putString(chr(6 + counter % 2) if note[0] else " ")
 
     yield note[1]
 
@@ -278,57 +278,57 @@ def ringsRainbowEvents_(duration, rings):
     counter += 1
 
 
-def lcdTitleEvent_(title, counter, lcdStrip):
-  string = title[counter % (len(title) - KIT_COUNT_ * LCD_WIDTH_):][:KIT_COUNT_ * LCD_WIDTH_]
+def panelTitleEvent_(title, counter, panelStrip):
+  string = title[counter % (len(title) - KIT_COUNT_ * PANEL_WIDTH_):][:KIT_COUNT_ * PANEL_WIDTH_]
 
-  lcdStrip.moveTo(0,0).putString(string)
+  panelStrip.moveTo(0,0).putString(string)
 
 
-def lcdTitlePrologEvents_(title, t, lcds):
-  title = KIT_COUNT_ * LCD_WIDTH_ // 4 * "\06\07\06 " + KIT_COUNT_ * (title + LCD_WIDTH_ * " ")
+def panelTitlePrologEvents_(title, t, panels):
+  title = KIT_COUNT_ * PANEL_WIDTH_ // 4 * "\06\07\06 " + KIT_COUNT_ * (title + PANEL_WIDTH_ * " ")
   counter = 0
 
-  while t.duration > 0 and counter < KIT_COUNT_ * LCD_WIDTH_:
-    lcdTitleEvent_(title, counter, lcds)
-    yield LCD_TITLE_DELAY_
+  while t.duration > 0 and counter < KIT_COUNT_ * PANEL_WIDTH_:
+    panelTitleEvent_(title, counter, panels)
+    yield PANEL_TITLE_DELAY_
 
-    t.duration -= LCD_TITLE_DELAY_
+    t.duration -= PANEL_TITLE_DELAY_
     counter += 1
 
 
-def lcdTitleMainEvents_(title, duration, lcds):
-  title = KIT_COUNT_ * (title + LCD_WIDTH_ * " ")
+def panelTitleMainEvents_(title, duration, panels):
+  title = KIT_COUNT_ * (title + PANEL_WIDTH_ * " ")
   counter = 0
 
   while duration > 0:
-    lcdTitleEvent_(title, counter, lcds)
-    yield LCD_TITLE_DELAY_
+    panelTitleEvent_(title, counter, panels)
+    yield PANEL_TITLE_DELAY_
 
-    duration -= LCD_TITLE_DELAY_
+    duration -= PANEL_TITLE_DELAY_
     counter += 1
 
 
-def lcdTitleEvents_(title, duration, lcds):
-  lcdStrip = ucuq.LCD_Strip(lcds)
+def panelTitleEvents_(title, duration, panels):
+  panelStrip = ucuq.PanelStrip(panels)
   t = types.SimpleNamespace(duration = duration)
-  yield from lcdTitlePrologEvents_(title, t, lcdStrip)
-  yield from lcdTitleMainEvents_(title, t.duration, lcdStrip)
+  yield from panelTitlePrologEvents_(title, t, panelStrip)
+  yield from panelTitleMainEvents_(title, t.duration, panelStrip)
 
 
-def lcdDurationEvents_(duration, width, lcds):
+def panelDurationEvents_(duration, width, panels):
   yield START_DELAY_
 
   for i in range(width * 5):
-    lcds.moveTo(0,1).putString(lcds[0].getForwardPeak(i, width * 5))
+    panels.moveTo(0,1).putString(panels[0].getForwardPeak(i, width * 5))
     yield duration / (width * 5 )
 
 
-def oledDurationEvents_(duration, oleds):
+def screenDurationEvents_(duration, screens):
   yield START_DELAY_
 
-  for y in range(OLED_HEIGHT_):
-    oleds.vLine(OLED_WIDTH_ -1, 0, y)
-    yield duration / OLED_HEIGHT_
+  for y in range(SCREEN_HEIGHT_):
+    screens.vLine(SCREEN_WIDTH_ -1, 0, y)
+    yield duration / SCREEN_HEIGHT_
 
 
 def set(dom):
@@ -364,7 +364,7 @@ def launch(part, timestamp, parts):
     extrema = types.SimpleNamespace()
   )
 
-  parts.lcds.uploadHPeakChars()\
+  parts.panels.uploadHPeakChars()\
     .createChar(6, NOTE_UP_CHARMAP_)\
     .createChar(7, NOTE_DOWN_CHARMAP_)
 
@@ -395,27 +395,27 @@ def launch(part, timestamp, parts):
     #    eventList.append(getCommitEvents_(maxDuration + START_DELAY_))
     cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
-  parts.lcds.backlightOn()
+  parts.panels.backlightOn()
 
   timestamp += ucuq.dispatchEvents(
     (
       *(element for turn, voice in enumerate(tracking.voices) for element in (
         buzzerEvents_(voice, turn, prev, parts.buzzers[turn]),
         ringsActiveNotesEvents_(voice, turn, parts.rings),
-        lcdActiveNotesEvents_(voice, tracking.extrema.minNotes[turn], tracking.extrema.maxNotes[turn], ambitus, parts.lcds[turn])
+        panelActiveNotesEvents_(voice, tracking.extrema.minNotes[turn], tracking.extrema.maxNotes[turn], ambitus, parts.panels[turn])
         )
       ),
-      oledEvents_(pacedNotes, tracking, parts.oleds),
-      lcdTitleEvents_(PARTS_[part][0][1], maxDuration + START_DELAY_, parts.lcds),
-      lcdDurationEvents_(maxDuration, LCD_WIDTH_ - ambitus - 3, parts.lcds),
+      screenEvents_(pacedNotes, tracking, parts.screens),
+      panelTitleEvents_(PARTS_[part][0][1], maxDuration + START_DELAY_, parts.panels),
+      panelDurationEvents_(maxDuration, PANEL_WIDTH_ - ambitus - 3, parts.panels),
       ringsRainbowEvents_(maxDuration, parts.rings)
     ),
     lambda tracking, user: sleepCallback_(tracking, user, timestamp),
     timestamp = 0
   )
 
-  parts.oleds.fill(0).show()
-  parts.lcds.clear().backlightOff()
+  parts.screens.fill(0).show()
+  parts.panels.clear().backlightOff()
   parts.rings.fill((0, 0, 0)).write()
 
   ucuq.setCommitBehavior(cb)

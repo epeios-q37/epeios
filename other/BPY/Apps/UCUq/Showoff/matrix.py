@@ -55,18 +55,18 @@ def buzzerEvents_(buzzer):
   buzzer.off()
 
 
-def oledEvents_(oled):
+def screenEvents_(screen):
   elapsed = 0
   counter = 0
   delay = 1/8
 
   while elapsed <= DURATION_:
-    oled.draw(animation_[counter % len(animation_)], 128).show()
+    screen.draw(animation_[counter % len(animation_)], 128).show()
     yield delay
     elapsed += delay
     counter += 1
 
-  oled.fill(1).show()
+  screen.fill(1).show()
 
 
 def ringEvents_(ring):
@@ -94,7 +94,7 @@ def ringEvents_(ring):
   ring.fill((0, 0, 0)).write()
 
 
-def lcdEvents_(lcd):
+def panelEvents_(panel):
   delay = 1 / 7
   ups = [random.randrange(2, 16)] * 16
   downs = [random.randrange(1, limit) for limit in ups]
@@ -103,7 +103,7 @@ def lcdEvents_(lcd):
   elapsed = 0
   
   while elapsed <= DURATION_:
-    lcd.putUpwardGauges(0, levels)
+    panel.putUpwardGauges(0, levels)
     yield delay
     
     for i in range(len(levels)):
@@ -117,7 +117,7 @@ def lcdEvents_(lcd):
       
     elapsed += delay
     
-  lcd.backlightOff().clear()
+  panel.backlightOff().clear()
 
 
 LIMIT_ = ucuq.ravel.SERVO_MAX
@@ -166,16 +166,16 @@ def commitEvents_():
 
 
 def launch():
-  oled, buzzer, ring, lcd, upper, lower = ucuq.ravel.get("OBRLS")
+  screen, buzzer, ring, panel, upper, lower = ucuq.ravel.get("SBRPUL")
   
-  oled.invert(True)
-  lcd.uploadUpwardGaugeChars().backlightOn()
+  screen.invert(True)
+  panel.uploadUpwardGaugeChars().backlightOn()
   
   allEvents = [
     buzzerEvents_(buzzer),
-    oledEvents_(oled),
+    screenEvents_(screen),
     ringEvents_(ring),
-    lcdEvents_(lcd),
+    panelEvents_(panel),
     servosEvents_(upper, lower)
   ]
   
@@ -189,9 +189,9 @@ def launch():
 
   buzzer.off().ratio(ratioBackup)
 
-  oled.invert(False).fill(0).show()
+  screen.invert(False).fill(0).show()
   ring.fill((0,0,0,)).write()
-  lcd.backlightOff().clear()
+  panel.backlightOff().clear()
   
   upper.park()
   lower.park()

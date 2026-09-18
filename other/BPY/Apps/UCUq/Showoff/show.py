@@ -21,15 +21,15 @@ COMMIT_DELAY_ = 2/3
 parts_ = None
 
 def setParts_():
-  parts = collections.OrderedDict((name, ucuq.Multi()) for name in ('buzzers', 'rings', 'lcds', 'oleds', 'uppers', 'lowers'))
+  parts = collections.OrderedDict((name, ucuq.Multi()) for name in ('buzzers', 'rings', 'panels', 'screens', 'uppers', 'lowers'))
 
   kits = ucuq.Multi()
 
   for device in ucuq.getDevice():
-    kits.add(ucuq.ravel.Kit(device=device))
+    kits.add(ucuq.ravel(device=device))
 
   for kit in kits:
-    for (_, value), param in zip(parts.items(), kit.get("BRLOS")):
+    for (_, value), param in zip(parts.items(), kit.get("BRPSUL")):
       value.add(param)
 
   parts['kits'] = kits
@@ -121,16 +121,16 @@ def countdownIfRequested(dom, timestamp, parts):
   
   allEvents = []
   
-  oledEvents = []
+  screenEvents = []
   ringEvents = []
-  lcdEvents = []
+  panelEvents = []
 
-  parts.lcds.uploadUpwardGaugeChars().backlightOn()
+  parts.panels.uploadUpwardGaugeChars().backlightOn()
   
   for i in range(5, 0, -1):
-    oledEvents.append((
+    screenEvents.append((
       lambda digit=i:
-        parts.oleds.draw(DIGITS_[digit], 8, 48, 0, mul=9).show(),
+        parts.screens.draw(DIGITS_[digit], 8, 48, 0, mul=9).show(),
       1))
     for c in range(2, 10):
       ringEvents.append((
@@ -144,40 +144,40 @@ def countdownIfRequested(dom, timestamp, parts):
 
   for j in range(16):
     gauge = ((j,) + gauge)[:16]
-    lcdEvents.append((
+    panelEvents.append((
       lambda gauge = gauge:
-        parts.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
+        parts.panels.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
 
   for j in range(15, -1, -1):
     gauge = ((j,) + gauge)[:16]
-    lcdEvents.append((
+    panelEvents.append((
       lambda gauge = gauge:
-        parts.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
+        parts.panels.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
       
   for j in range(16):
     gauge = ((0,) + gauge)[:16]
-    lcdEvents.append((
+    panelEvents.append((
       lambda gauge = gauge:
-        parts.lcds.moveTo(0,0).putUpwardGauges(0, gauge),
+        parts.panels.moveTo(0,0).putUpwardGauges(0, gauge),
       5/48))
 
 
   allEvents += (ringEvents,)
-  allEvents += (lcdEvents,)
-  allEvents += (oledEvents,)
+  allEvents += (panelEvents,)
+  allEvents += (screenEvents,)
   
   cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
   
   sleepUntil(timestamp, 0)
   parts.rings.flash()
   parts.rings.fill((1,1,1)).write()
-  parts.lcds.backlightOn()
+  parts.panels.backlightOn()
   timestamp += ucuq.playEvents(allEvents, lambda tracking: sleepUntil(timestamp + tracking.cumul, COMMIT_DELAY_))
-  parts.oleds.fill(0).show()
+  parts.screens.fill(0).show()
   parts.rings.fill((0,0,0)).write()
-  parts.lcds.clear().backlightOff()
+  parts.panels.clear().backlightOff()
   
   ucuq.setCommitBehavior(cb)
   
@@ -204,7 +204,7 @@ def turnOffAndScrollDown(timestamp, parts):
   
   for i in range(64):
     parts.rings.setValue(i //ucuq.ravel.RING_SIZE + offset, (0,0,0)).write()
-    parts.oleds.scroll(0, 1).show()
+    parts.screens.scroll(0, 1).show()
     parts.kits.displayRingGauges()
     timestamp += 0.09
     sleepUntil(timestamp, 0) 
@@ -215,7 +215,7 @@ def syncTest():
   parts = getParts()
 
   for i in range(3):  
-    parts.oleds[i].draw(DIGITS_[i+1], 8, 48, 0, mul=9).show(),
+    parts.screens[i].draw(DIGITS_[i+1], 8, 48, 0, mul=9).show(),
   
   timestamp = time.time() + 1.5
   
@@ -227,4 +227,4 @@ def syncTest():
   
   parts.rings.flash()
 
-  parts.oleds.fill(0).show()
+  parts.screens.fill(0).show()

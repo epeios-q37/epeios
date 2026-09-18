@@ -44,7 +44,7 @@ cubeEdges_ = [
 ]
 
 
-def draw3DCube(oled, x, y, z):
+def draw3DCube(screen, x, y, z):
   """
   x = alpha (0–360°)  → yaw
   y = beta  (-180–180°) → pitch
@@ -54,7 +54,7 @@ def draw3DCube(oled, x, y, z):
   pitch = -y
   roll  = -z
 
-  oled.fill(0)
+  screen.fill(0)
 
   projected = []
   for (vx, vy, vz) in cubeVertices_:
@@ -65,5 +65,5 @@ def draw3DCube(oled, x, y, z):
   for a, b in cubeEdges_:
     x0, y0 = projected[a]
     x1, y1 = projected[b]
-    oled.line(x0, y0, x1, y1, 1)
+    screen.line(x0, y0, x1, y1, 1)
 

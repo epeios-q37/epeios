@@ -282,7 +282,7 @@ VERSIONS_ = (
 )
 
 def launch(length):
-  ring = ucuq.ravel.Ring()
+  ring = ucuq.ravel.ring
 
   for item in VERSIONS_[length]:
     ANIMATIONS_[item](ring)
