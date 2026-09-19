@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 MIT License
 
@@ -23,7 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import os, sys, threading, time, html
+import html
+import sys
+import threading
+import time
 
 sys.path.append("./atlastk.zip")
 sys.path.append("../atlastk.zip")
@@ -54,30 +56,30 @@ body = """
     <fieldset id="Output" data-xdh-onevent="Focus"/>
 """
 
-_print = ""
-_printBuffer = "<span>"
-_printRead = threading.Lock()
-_printRead.acquire()
-_printWrite = threading.Lock()
-_printWrite.acquire()
+print_ = ""
+printBuffer_ = "<span>"
+printReadLock_ = threading.Lock()
+printReadLock_.acquire()
+printWriteLock = threading.Lock()
+printWriteLock.acquire()
 
-_flush = threading.Lock()
-_autoFlush = False
+flushLock = threading.Lock()
+autoFlush_ = False
 
-_input = ""
-_inputRead = threading.Lock()
-_inputRead.acquire()
-_inputWrite = threading.Lock()
-_inputWrite.acquire()
+input_ = ""
+inputRead_ = threading.Lock()
+inputRead_.acquire()
+inputWrite_ = threading.Lock()
+inputWrite_.acquire()
 
-_properties = {}
+properties_ = {}
 
 
 def getStyle_():
   style = ""
 
-  for name in _properties: 
-    style += name + ": " + _properties[name] + "; "
+  for name in properties_: 
+    style += name + ": " + properties_[name] + "; "
 
   return style
 
@@ -91,31 +93,29 @@ def closingTag_():
 
 
 def reset_properties():
-  global _properties, _printBuffer
+  global properties_, printBuffer_
 
-  _properties = {}
+  properties_ = {}
 
-  _printBuffer += closingTag_()
-  _printBuffer += openingTag_()
+  printBuffer_ += closingTag_()
+  printBuffer_ += openingTag_()
 
 
 def set_property(name, value):
-  global _properties, _printBuffer
+  properties_[name] = value
 
-  _properties[name] = value
-
-  _printBuffer += closingTag_()
-  _printBuffer += openingTag_()
+  printBuffer_ += closingTag_()
+  printBuffer_ += openingTag_()
   
 
 def set_properties(properties):
-  global _properties, _printBuffer
+  global printBuffer_
 
   for name in properties:
-    _properties[name] = properties[name]
+    properties_[name] = properties[name]
 
-  _printBuffer += closingTag_()
-  _printBuffer += openingTag_()
+  printBuffer_ += closingTag_()
+  printBuffer_ += openingTag_()
   
 
 def handleSpecialChars_(text):
@@ -123,28 +123,29 @@ def handleSpecialChars_(text):
 
 
 def flush_():
-  global _print, _printBuffer, _printRead, _printWrite, _autoFlush
-  if _printBuffer:
-    _flush.acquire()
-    _printWrite.acquire()
-    _print = _printBuffer + closingTag_()
-    _printBuffer = openingTag_()
-    _printRead.release()
-    _flush.release()
+  global print_, printBuffer_, autoFlush_
 
-  _autoFlush = False
+  if printBuffer_:
+    flushLock.acquire()
+    printWriteLock.acquire()
+    print_ = printBuffer_ + closingTag_()
+    printBuffer_ = openingTag_()
+    printReadLock_.release()
+    flushLock.release()
+
+  autoFlush_ = False
 
 
 def addToBuffer_(text):
-  global _printBuffer
+  global printBuffer_
 
   text= str(text)
 
-  _printBuffer += handleSpecialChars_(html.escape(text))
+  printBuffer_ += handleSpecialChars_(html.escape(text))
 
 
 def print(*args, sep=" ", end="\n"):
-  global _printBuffer, _printRead, _printWrite, _autoFlush
+  global autoFlush_
 
   first = True
 
@@ -158,25 +159,25 @@ def print(*args, sep=" ", end="\n"):
 
   addToBuffer_(end)
 
-  _autoFlush = True
+  autoFlush_ = True
 
 
 def input(prompt=""):
-  global _print, _printRead,_printWrite, _input, _inputRead,_inputWrite, _autoFlush
+  global input_, autoFlush_
 
-  _autoFlush = False
+  autoFlush_ = False
 
   if prompt:
     print(prompt,end="")
     flush_()
 
   result = ""
-  _printWrite.acquire()
-  _printRead.release()
-  _inputRead.acquire()
-  result = _input
-  _input = ""
-  _inputWrite.release()
+  printWriteLock.acquire()
+  printReadLock_.release()
+  inputRead_.acquire()
+  result = input_
+  input_ = ""
+  inputWrite_.release()
 
   return result
 
@@ -186,22 +187,23 @@ def scrollToBottom_(dom):
 
 
 def loop_(dom):
-  global _print, _printRead,_printWrite, _input, _inputRead,_inputWrite,_autoFlush
+  global print_, autoFlush_
+  
   cont = True
   
-  _autoFlush = True
+  autoFlush_ = True
 
   while cont:
-    _printRead.acquire()
+    printReadLock_.acquire()
 
-    if _print:
-      dom.appendLayout("Output", "<span>" + _print + "</span>")
+    if print_:
+      dom.appendLayout("Output", "<span>" + print_ + "</span>")
       scrollToBottom_(dom)
-      _print = ""
+      print_ = ""
     else:
       cont = False
 
-    _printWrite.release()
+    printWriteLock.release()
 
   dom.appendLayout("Output","<span><input type='text' id='Input' data-xdh-onevent='Submit'/><br/></span>")
   scrollToBottom_(dom)
@@ -209,22 +211,21 @@ def loop_(dom):
 
 
 def acConnect(dom):
-  global _printWrite, _inputWrite
   dom.setLayout("", body)
-  _printWrite.release()
-  _inputWrite.release()
+  printWriteLock.release()
+  inputWrite_.release()
   loop_(dom)
 
 
 def acSubmit(dom, id):
-  global _print, _printRead,_printWrite, _input, _inputRead,_inputWrite
+  global input_
 
-  _inputWrite.acquire()
-  _input = dom.getContent("Input")
+  inputWrite_.acquire()
+  input_ = dom.getContent("Input")
   dom.disableElement("Input")
   dom.removeAttribute("Input","data-xdh-onevent")
   dom.removeAttribute("Input","id")
-  _inputRead.release()
+  inputRead_.release()
   loop_(dom)
 
 
@@ -247,9 +248,9 @@ class Atlas_(threading.Thread):
     Atlas.launch(callbacks, None, head)
 
 
-_atlasThread = Atlas_()
+atlasThread_ = Atlas_()
 # _atlasThread.daemon = True
-_atlasThread.start()
+atlasThread_.start()
 
 
 class Flush_(threading.Thread):
@@ -259,10 +260,11 @@ class Flush_(threading.Thread):
   def run(self):
     while True:
       time.sleep(.1)
-      if _autoFlush:
+      if autoFlush_:
         flush_()
 
 
-_flushThread = Flush_()
+flushThread_ = Flush_()
 # _flushThread.daemon = True
-_flushThread.start()
+flushThread_.start()
+

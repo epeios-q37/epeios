@@ -21,7 +21,7 @@ def callback_(freq, helper, parts):
       helper.prev = freq
       parts.rings.setValue(helper.led, getRainbowColor_(helper.led)).write()
       parts.rings.setValue(helper.led + 1,(0,0,0)).write()
-      show.displayRingGauges(parts, )
+      show.displayRingGauges(parts)
       helper.led += 1    
   
       

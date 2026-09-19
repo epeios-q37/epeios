@@ -695,11 +695,11 @@ function init(api) {
     if (api === "Ravel") {
       code = 
         `
-_ring = ucuq.ravel.Ring()
-_lcd = ucuq.ravel.LCD()
-_oled = ucuq.ravel.OLED()
-_upper = ucuq.ravel.Upper(smooth=True)
-_lower = ucuq.ravel.Lower(smooth=True)
+_ring = ucuq.ravel.ring
+_panel = ucuq.ravel.panel
+_screen = ucuq.ravel.screen
+_upper = ucuq.ravel.upper
+_lower = ucuq.ravel.lower
 
 ` + code;
     }

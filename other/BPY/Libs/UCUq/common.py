@@ -9,6 +9,7 @@ import string
 import sys
 import time
 import types
+import typing
 import zlib
 from typing import TYPE_CHECKING, Any
 
@@ -891,7 +892,7 @@ class Multi:
   def __getattr__(self, methodName):
     def wrapper(*args, **kwargs):
       for object in self.objects_:
-        if hasattr(object, "__getattr__"):
+        if False and hasattr(object, "__getattr__"): # Useless?
           returned = object.__getattr__(methodName)(*args, **kwargs)
         else:
           returned = getattr(object, methodName)(*args, **kwargs)
@@ -2711,142 +2712,6 @@ def splitFrameBuffer_(globalFb, layout, screenDim):
   return fbMatrix
 
 
-class ScreenWall(FrameBuffer_):
-  def __init__(self, screens):
-    self.oleds_ = screens
-    self.layout_ = indexTwoDimensionalArray_(screens)
-
-    super().__init__(bytearray(len(screens) * len(screens[0]) * ravel.SCREEN_WIDTH * ravel.SCREEN_HEIGHT // 8), len(screens[0]) * ravel.SCREEN_WIDTH, len(screens) * ravel.SCREEN_HEIGHT, MONO_VLSB)
-
-  def show(self):
-    buffers = splitFrameBuffer_(self, self.layout_, (ravel.SCREEN_WIDTH, ravel.SCREEN_HEIGHT))
-
-    for i, hbuffers in enumerate(buffers):
-      for j, vbuffer in enumerate(hbuffers):
-        self.oleds_[i][j].blit(vbuffer, 0, 0).show()
-
-
-class PanelStrip:
-  C_NONE_ = 0
-  C_STEADY_ = 1
-  C_BLINKING_ = 2
-  def __init__(self, panels):
-    self.lcds_ = panels
-    self.x_ = 0
-    self.y_ = 0
-    self.cursor_ = False
-
-  def handleCursor_(self):
-    if self.cursor_ == self.C_NONE_:
-      return
-
-    index = self.x_ // ravel.LCD_WIDTH
-
-    for i, lcd in enumerate(self.lcds_):
-      if i == index:
-        if self.cursor_ == self.C_STEADY_:
-          lcd.showCursor()
-        else:
-          lcd.blinkCursorOn()
-      else:
-        lcd.hideCursor()
-
-  def moveTo(self, x, y):
-    self.x_ = x
-    self.y_ = y
-
-    return self
-
-  def putString(self, string):
-    while len(string) > 0:
-      index = self.x_ // ravel.LCD_WIDTH
-      localX = self.x_ % ravel.LCD_WIDTH
-      localY = self.y_
-
-      self.lcds_[index].moveTo(localX, localY)
-
-      localLen = min(len(string), ravel.LCD_WIDTH - localX)
-
-      localString = string[:localLen]
-
-      self.lcds_[index].moveTo(localX, localY).putString(localString)
-
-      self.x_ += localLen
-
-      if self.x_ >= ravel.LCD_WIDTH * len(self.lcds_):
-        self.x_ = 0
-        self.y_ += 1
-
-      if self.y_ >= ravel.LCD_HEIGHT:
-        self.y_ = 0
-
-      string = string[localLen:]
-
-    self.handleCursor_()
-
-    return self
-
-  def backlightOn(self):
-    self.lcds_.backlightOn()
-
-    return self
-  
-  def backlightOff(self):
-    self.lcds_.backlightOff()
-
-    return self
-
-  def displayOn(self):
-    self.lcds_.displayOn()
-
-    return self
-
-  def displayOff(self):
-    self.lcds_.displayOff()
-
-    return self
-
-  def blinkCursorOn(self):
-    self.lcds_.blinkCursorOn()
-    self.cursor_ = self.C_BLINKING_
-    self.handleCursor_()
-
-    return self
-
-  def blinkCursorOff(self):
-    self.lcds_.blinkCursorOff()
-    if self.cursor_ != self.C_NONE_:
-      self.cursor_ = self.C_STEADY_
-    self.handleCursor_()
-
-    return self
-
-  def hideCursor(self):
-    self.lcds_.hideCursor()
-    self.cursor_ = self.C_NONE_
-
-    return self
-
-  def showCursor(self):
-    self.cursor_ = self.C_STEADY_
-    self.handleCursor_()
-
-    return self
-
-  def putUpwardGauges(self, position, rawGauges):
-    gauges = rawGauges[:len(self.lcds_) * ravel.LCD_WIDTH - position]
-
-    index = position // ravel.LCD_WIDTH
-    x = position % ravel.LCD_WIDTH
-
-    while len(gauges):
-      self.lcds_[index].putUpwardGauges(x, gauges[:ravel.LCD_WIDTH - x])
-      index += 1
-      x = 0
-      gauges = gauges[ravel.LCD_WIDTH - x:]
-
-    return self
-
 def pwmJumps(jumps, step=100, delay=0.05):
   command = "pwmJumps([\n"
 
@@ -3597,54 +3462,49 @@ def BaseClassPatch_(caller, owner):
 ##### End of generic section for kits #####
 
 ##### Begin of section dedicated to the Ravel kit #####
-# Fichier : ucuq.py
-# (Note : Importez vos dépendances PWM, I2C, Servo, kit_, etc. ici)
 
-class RavelFactory_:
-  """
-  Espace de noms isolé regroupant toute la logique du kit Ravel.
-  Sert à la fois de Namespace, de Kit par défaut et de constructeur.
-  """
-  # --- Constantes globales de ravel ---
+class _RavelFactory:
   SERVO_MAX = 6554
   RING_MAX = 31
   RING_SIZE = 8
   SCREEN_WIDTH = 128
   SCREEN_HEIGHT = 64
   SCREEN_BLACK = 0
-  SCRREN_WHITE = 1
+  SCREEN_WHITE = 1
   PANEL_WIDTH = 16
   PANEL_HEIGHT = 2
 
-  # --- Composants matériels internes ---
-  class Buzzer_(kit_.Buzzer):
+  class _Buzzer(kit_.Buzzer):
     def __init__(self, device=None, extra=True):
       super().__init__(PWM(5, device=device), extra=extra)
 
-  class Ring_(kit_.WS2812):
+  class _Ring(kit_.WS2812):
     def __init__(self, offset=0, device=None, extra=True):
       super().__init__(8, 20, offset=offset, device=device, extra=extra)
 
-  class Screen_(kit_.SSD1306_I2C):
+  class _Screen(kit_.SSD1306_I2C):
     def __init__(self, device=None, extra=True):
       super().__init__(128, 64, I2C(10, 9, device=device), extra=extra)
 
-  class Panel_(kit_.HD44780_I2C):
+  class _Panel(kit_.HD44780_I2C):
     def __init__(self, device=None, extra=True):
       super().__init__(16, 2, SoftI2C(6, 7, device=device), extra=extra)
 
-  class Upper_(kit_.Servo):
+  class _Upper(kit_.Servo):
     def __init__(self, smooth=False, device=None, extra=True):
-      super().__init__(PWM(
+      super().__init__(
+        PWM(
           0, freq=50, device=device, extra=extra, 
           convPin=lambda pin: f"(sp_({pin}))", 
           convU16=lambda u16: f"(su_({u16}))", 
           convNS=lambda ns: f"(sn_({ns}))"),
-        Servo.Specs(1638, 8192, 180, RavelFactory_.SERVO_MAX), smooth=smooth)
+        Servo.Specs(1638, 8192, 180, _RavelFactory.SERVO_MAX),
+        smooth=smooth)
 
-  class Lower_(kit_.Servo):
+  class _Lower(kit_.Servo):
     def __init__(self, smooth=False, device=None, extra=True):
-      super().__init__(PWM(
+      super().__init__(
+        PWM(
           1, freq=50, device=device, extra=extra, 
           convPin=lambda pin: f"(sp_({pin}))", 
           convU16=lambda u16: f"(su_({u16}))", 
@@ -3652,118 +3512,241 @@ class RavelFactory_:
         Servo.Specs(1638, 8192, 180, 0),
         smooth=smooth)
 
-  # --- Classe Kit interne ---
-  class Kit:
+  class _Kit:
+    if TYPE_CHECKING:
+      buzzer: Any
+      ring: Any
+      screen: Any
+      panel: Any
+      upper: Any
+      lower: Any
+
+    _COMPONENT_FACTORY: typing.ClassVar[dict[str, object]] = {
+      'buzzer': lambda obj: _RavelFactory._Buzzer(obj._device, obj._extra),
+      'ring': lambda obj: _RavelFactory._Ring(obj._ringOffset, obj._device, obj._extra),
+      'screen': lambda obj: _RavelFactory._Screen(obj._device, obj._extra),
+      'panel': lambda obj: _RavelFactory._Panel(obj._device, obj._extra),
+      'upper': lambda obj: _RavelFactory._Upper(False, obj._device, obj._extra),
+      'lower': lambda obj: _RavelFactory._Lower(False, obj._device, obj._extra),
+    }
+    _COMPONENT_GETTER: typing.ClassVar[dict[str, object]] = {
+      "B": lambda obj: obj.buzzer,
+      "P": lambda obj: obj.panel,
+      "S": lambda obj: obj.screen,
+      "R": lambda obj: obj.ring,
+      "U": lambda obj: obj.upper,
+      "L": lambda obj: obj.lower,
+    }
+
     def __init__(self, ringOffset=0, device=None, extra=True):
       self._ringOffset = ringOffset
       self._device = device
       self._extra = extra
-      self._components = {}
+
+    def _purge(self):
+      for name in self._COMPONENT_FACTORY:
+        try:  # NOTA: 'hasattr' calls '__getattr__'…
+          delattr(self, name)
+        except:  # noqa: E722, S110
+          pass
 
     def __getattr__(self, name):
-      """Instanciation paresseuse des composants d'un kit."""
-      if name in self._components:
-        return self._components[name]
-
-      f = RavelFactory_
-      match name:
-        case 'buzzer': obj = f.Buzzer_(self._device, self._extra)
-        case 'ring':   obj = f.Ring_(self._ringOffset, self._device, self._extra)
-        case 'screen':   obj = f.Screen_(self._device, self._extra)
-        case 'panel':    obj = f.Panel_(self._device, self._extra)
-        case 'upper':  obj = f.Upper_(False, self._device, self._extra)
-        case 'lower':  obj = f.Lower_(False, self._device, self._extra)
-        case _: raise AttributeError(f"Le Kit Ravel n'a pas de composant nommé '{name}'")
-
-      self._components[name] = obj
-      return obj
+      if name in self._COMPONENT_FACTORY:
+        setattr(self, name, self._COMPONENT_FACTORY[name](self))
+        return getattr(self, name)
+      else:
+        super().__getattribute__(name)
 
     def raz(self):
-      offset = self._components['ring'].getOffset() if 'ring' in self._components else self._ringOffset
-      self._components.clear()
+      offset = self.ring.getOffset() if hasattr(self, 'ring') else self._ringOffset
+      self._purge()
       self.__init__(offset, self._device, self._extra)
-      self.get("BPSRUL")
+      self.get("".join(self._COMPONENT_GETTER.keys()))
 
-    def get(self, list_components):
+    def get(self, componentList):
       components = []
-      for item in list_components:
-        match item.upper():
-          case "B": components.append(self.buzzer)
-          case "P": components.append(self.panel)
-          case "S": components.append(self.screen)
-          case "R": components.append(self.ring)
-          case "U": components.append(self.upper)
-          case "L": components.append(self.lower)
-          case _: raise ValueError(f"Unknown '{item}' component!")
+
+      for item in componentList:
+        if item.upper() in self._COMPONENT_GETTER:
+          components.append(self._COMPONENT_GETTER[item.upper()](self))
+        else:
+          raise ValueError(f"Unknown '{item}' component!")
+        
       return components if len(components) != 1 else components[0]
 
     def displayRingGauges(self, globalMax=0, placeholder=".",addendum="  "):
       self.panel.displayRingGauges(self.ring, 0 ,0, 16, globalMax, placeholder, addendum)
 
-  # --- Initialisation de l'instance par défaut de RavelFactory ---
   def __init__(self):
-    # L'objet racine possède son propre kit par défaut (chargement paresseux complet)
-    self._default_kit = RavelFactory_.Kit(ringOffset=0, device=None, extra=True)
+    self._defaultKit = _RavelFactory._Kit(ringOffset=0, device=None, extra=True)
 
   def __getattr__(self, name):
-    """Permet d'accéder aux composants ou aux constantes depuis ucuq.ravel."""
-    # On cherche d'abord dans les constantes de la classe
-    if hasattr(self.__class__, name):
-      return getattr(self.__class__, name)
-    # Sinon, on délègue au kit par défaut (ex: ucuq.ravel.ring)
-    return getattr(self._default_kit, name)
+    return getattr(self._defaultKit, name)
 
   def __call__(self, ringOffset=0, device=None, extra=True):
-    """Permet de créer un kit secondaire via ucuq.ravel(...)"""
-    return RavelFactory_.Kit(ringOffset=ringOffset, device=device, extra=extra)
+    return _RavelFactory._Kit(ringOffset=ringOffset, device=device, extra=extra)
 
   def displayRingGauges(self, globalMax=0, placeholder=".", addendum="  "):
-    self._default_kit.displayRingGauges(globalMax, placeholder, addendum)
+    self._defaultKit.displayRingGauges(globalMax, placeholder, addendum)
 
-
-# --- 5. Interception de l'import au niveau du module racine ucuq ---
 
 def __getattr__(name):
-  print(name)
-  """Appelé uniquement au premier accès d'une variable racine dans ucuq."""
   if name == 'ravel':
-    # On instancie la factory isolée
-    ravel_instance = RavelFactory_()
-    # On l'injecte dans le module ucuq pour figer l'accès futur
-    globals()['ravel'] = ravel_instance
-    return ravel_instance
+    global ravel
+
+    ravel = _RavelFactory()
+    return ravel
+
+  current_module = sys.modules[__name__]
+
+  getattrBackup = __getattr__
+
+  del current_module.__dict__["__getattr__"]
+  
+  try:
+    return types.ModuleType.__getattribute__(current_module, name)
+  finally:
+    current_module.__dict__["__getattr__"] = getattrBackup
     
-  # raise AttributeError(f"Le module '{__name__}' n'a pas d'attribut '{name}'")
 
 if TYPE_CHECKING:
-  class Kit:
-    buzzer: Any
-    ring: Any
-    scrren: Any
-    panel: Any
-    upper: Any
-    lower: Any
-    def __init__(self, ringOffset: int = ..., device: Any = ..., extra: bool = ...) -> None: ...
-    def raz(self) -> None: ...
-    def get(self, list_components: list[str]) -> list[Any]: ...
-    def displayRingGauges(self, globalMax: int = ..., placeholder: str = ..., addendum: str = ...) -> None: ...
+  ravel: _RavelFactory
 
-  class RavelNamespace(Kit):
-    SERVO_MAX: int
-    RING_MAX: int
-    RING_SIZE: int
-    SCREEN_WIDTH: int
-    SCREEN_HEIGHT: int
-    SCREEN_BLACK: int
-    SCREEN_WHITE: int
-    PANEL_WIDTH: int
-    PANEL_HEIGHT: int
-    def __call__(self, ringOffset: int = ..., device: Any = ..., extra: bool = ...) -> Kit: ...
-    @staticmethod
-    def displayRingGauges(rings: Any, panels: Any, globalMax: int, placeholder: str, addendum: str) -> None: ...
+class ScreenWall(FrameBuffer_):
+  def __init__(self, screens):
+    self.oleds_ = screens
+    self.layout_ = indexTwoDimensionalArray_(screens)
 
-  # On déclare explicitement l'existence et le type de ravel pour l'éditeur
-  ravel: RavelNamespace  
+    super().__init__(bytearray(len(screens) * len(screens[0]) * ravel.SCREEN_WIDTH * ravel.SCREEN_HEIGHT // 8), len(screens[0]) * ravel.SCREEN_WIDTH, len(screens) * ravel.SCREEN_HEIGHT, MONO_VLSB)
+
+  def show(self):
+    buffers = splitFrameBuffer_(self, self.layout_, (ravel.SCREEN_WIDTH, ravel.SCREEN_HEIGHT))
+
+    for i, hbuffers in enumerate(buffers):
+      for j, vbuffer in enumerate(hbuffers):
+        self.oleds_[i][j].blit(vbuffer, 0, 0).show()
+
+
+class PanelStrip:
+  C_NONE_ = 0
+  C_STEADY_ = 1
+  C_BLINKING_ = 2
+  def __init__(self, panels):
+    self.lcds_ = panels
+    self.x_ = 0
+    self.y_ = 0
+    self.cursor_ = False
+
+  def handleCursor_(self):
+    if self.cursor_ == self.C_NONE_:
+      return
+
+    index = self.x_ // ravel.PANEL_WIDTH
+
+    for i, lcd in enumerate(self.lcds_):
+      if i == index:
+        if self.cursor_ == self.C_STEADY_:
+          lcd.showCursor()
+        else:
+          lcd.blinkCursorOn()
+      else:
+        lcd.hideCursor()
+
+  def moveTo(self, x, y):
+    self.x_ = x
+    self.y_ = y
+
+    return self
+
+  def putString(self, string):
+    while len(string) > 0:
+      index = self.x_ // ravel.PANEL_WIDTH
+      localX = self.x_ % ravel.PANEL_WIDTH
+      localY = self.y_
+
+      self.lcds_[index].moveTo(localX, localY)
+
+      localLen = min(len(string), ravel.PANEL_WIDTH - localX)
+
+      localString = string[:localLen]
+
+      self.lcds_[index].moveTo(localX, localY).putString(localString)
+
+      self.x_ += localLen
+
+      if self.x_ >= ravel.PANEL_WIDTH * len(self.lcds_):
+        self.x_ = 0
+        self.y_ += 1
+
+      if self.y_ >= ravel.PANEL_HEIGHT:
+        self.y_ = 0
+
+      string = string[localLen:]
+
+    self.handleCursor_()
+
+    return self
+
+  def backlightOn(self):
+    self.lcds_.backlightOn()
+
+    return self
+  
+  def backlightOff(self):
+    self.lcds_.backlightOff()
+
+    return self
+
+  def displayOn(self):
+    self.lcds_.displayOn()
+
+    return self
+
+  def displayOff(self):
+    self.lcds_.displayOff()
+
+    return self
+
+  def blinkCursorOn(self):
+    self.lcds_.blinkCursorOn()
+    self.cursor_ = self.C_BLINKING_
+    self.handleCursor_()
+
+    return self
+
+  def blinkCursorOff(self):
+    self.lcds_.blinkCursorOff()
+    if self.cursor_ != self.C_NONE_:
+      self.cursor_ = self.C_STEADY_
+    self.handleCursor_()
+
+    return self
+
+  def hideCursor(self):
+    self.lcds_.hideCursor()
+    self.cursor_ = self.C_NONE_
+
+    return self
+
+  def showCursor(self):
+    self.cursor_ = self.C_STEADY_
+    self.handleCursor_()
+
+    return self
+
+  def putUpwardGauges(self, position, rawGauges):
+    gauges = rawGauges[:len(self.lcds_) * ravel.PANEL_WIDTH - position]
+
+    index = position // ravel.PANEL_WIDTH
+    x = position % ravel.PANEL_WIDTH
+
+    while len(gauges):
+      self.lcds_[index].putUpwardGauges(x, gauges[:ravel.PANEL_WIDTH - x])
+      index += 1
+      x = 0
+      gauges = gauges[ravel.PANEL_WIDTH - x:]
+
+    return self  
 
 ##### End of section dedicated to the Ravel kit #####
 

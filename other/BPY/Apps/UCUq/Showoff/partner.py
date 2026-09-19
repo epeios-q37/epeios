@@ -127,11 +127,12 @@ def indy(withSound=True):
   for c in range(ringCount):
     ringEvents.append(
       (
-        lambda c=c, color=shared.getRainbowColor(
-          c + ringOffset
-        ), ringCount=ringCount: (
-          ring.setValue(c, color).setValue(ringCount - c, color).write(),
-          ravel.displayRingGauges(),
+        lambda c=c, ringCount=ringCount, ringOffset=ringOffset: (
+          ring\
+            .setValue(c, color := shared.getRainbowColor(c + ringOffset))\
+            .setValue(ringCount - c, color)\
+            .write(),
+          ravel.displayRingGauges()
         ),
         duration / ringCount,
       )

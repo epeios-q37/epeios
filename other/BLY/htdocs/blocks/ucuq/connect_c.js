@@ -4,8 +4,8 @@ python.pythonGenerator.forBlock['ucuq_connect'] = function (block, generator) {
   const code = `\
 ucuq.setDevice(tokenId=${value_token_id})
 
-ring = ucuq.ravel.Ring()
-lcd = ucuq.ravel.LCD()
+ring = ucuq.ravel.ring
+screen = ucuq.ravel.screen
 
 `;
   return code;

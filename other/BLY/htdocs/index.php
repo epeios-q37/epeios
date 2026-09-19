@@ -11,6 +11,7 @@ $use_ucuq_demo_devices_field = $use_ucuq_demo_devices === "true" ? "<input type=
 
 $version = "13.2.1";
 $api_blocks = file_get_contents("api/$api.xml");
+$brython = true ? "https://faas.q37.info/brython/index.php" : "http://localhost/brython/index.php"
 ?>
 
 <!DOCTYPE html>
@@ -392,7 +393,7 @@ $api_blocks = file_get_contents("api/$api.xml");
     <category name="%{BKY_CATVARIABLES}" colour="%{BKY_VARIABLES_HUE}" custom="VARIABLE"></category>
     <category name="%{BKY_CATFUNCTIONS}" colour="%{BKY_PROCEDURES_HUE}" custom="PROCEDURE"></category>
   </xml>
-  <form id="brython" action="https://faas.q37.info/brython/index.php" method="POST" target="brython_result">
+  <form id="brython" action="<?= $brython ?>" method="POST" target="brython_result">
     <input type="hidden" name="go" value="collapse">
     <input type="hidden" id="code" name="code">
     <?= $use_ucuq_demo_devices_field ?>

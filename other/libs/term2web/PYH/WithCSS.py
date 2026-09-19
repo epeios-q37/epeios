@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 MIT License
 
@@ -23,25 +22,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import sys,os
+import builtins
+import os
+import sys
 
 sys.path.append("./term2web")
 
 if ('Q37_XPP' in os.environ):
   sys.path.append(os.path.join(os.environ["HOME"],"epeios/other/libs/term2web/PYH/term2web"))
 
-
 from term2web import *
-
-import builtins
 
 p = builtins.print
 
 properties = {}
 
 def print_and_set_properties(nameOrProperties,value = None):
-    global properties
-
     reset_properties()
 
     print()

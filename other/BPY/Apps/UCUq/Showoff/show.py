@@ -190,7 +190,7 @@ def unpack(data):
   return zlib.decompress(base64.b64decode(data)).decode()
 
 
-def displayRingGauges(parts, addendum = "  "):
+def displayRingGauges(parts, addendum="  "):
   parts.kits.displayRingGauges(addendum=addendum)  
 
 
