@@ -652,19 +652,13 @@ ATK_XDEVICE_ = """
 <dialog id="ucuq_xdevice" style="width: min-content;">
   <fieldset>
     <legend>Device</legend>
-    <label style="display: flex; justify-content: space-between; margin: 5px;">
-      <span>Token:&nbsp;</span>
-      <input id="ucuq_xdevice_token">
-    </label>
-    <label style="display: flex; justify-content: space-between; margin: 5px;">
-      <span>Id:&nbsp;</span>
-      <input id="ucuq_xdevice_id">
-    </label>
+      <input xdh:onevent="ucuq_xdevice_ok" id="ucuq_xdevice_token_id">
+      <div style="display: flex; justify-content: space-around; margin: 5px;">
+        <button xdh:onevent="ucuq_xdevice_ok"/>{}</button>
+        <button xdh:onevent="ucuq_xdevice_cancel">{}</button>
+      </div>
+    </div>
   </fieldset>
-  <div style="display: flex; justify-content: space-around; margin: 5px;">
-    <button xdh:onevent="ucuq_xdevice_ok"/>{}</button>
-    <button xdh:onevent="ucuq_xdevice_cancel">{}</button>
-  </div>
   <fieldset>{}</fieldset>
 </dialog>
 """
@@ -678,10 +672,7 @@ async def handleXDevice_(dom, response):
   if response:
     await atlastk.getUserGlobals()["UCUqXDevice"](
       dom,
-      Device(
-        id=await dom.getValue("ucuq_xdevice_id"),
-        token=await dom.getValue("ucuq_xdevice_token"),
-      ),
+      Device(await dom.getValue('ucuq_xdevice_token_id'))
     )
 
   await dom.executeVoid("element = document.getElementById('ucuq_xdevice').remove();")
@@ -890,15 +881,24 @@ class Multi:
     return len(self.objects_)
 
   def __getattr__(self, methodName):
-    def wrapper(*args, **kwargs):
-      for object in self.objects_:
-        if False and hasattr(object, "__getattr__"): # Useless?
-          returned = object.__getattr__(methodName)(*args, **kwargs)
-        else:
-          returned = getattr(object, methodName)(*args, **kwargs)
-      if type(returned) is type(object):
-        returned = self
-      return returned
+    if inspect.iscoroutinefunction(getattr(self.objects_[0], methodName)):
+      async def wrapper(*args, **kwargs):
+        raise RuntimeError("Asynchronous methods are currently not handled correctly in this context.")  # Bryhon only problem ?
+        print(f"Async, {methodName}")
+        for obj in self.objects_:
+          returned = await getattr(obj, methodName)(*args, **kwargs)
+          print(f"---> {returned}")
+        if type(returned) is type(object):
+          returned = self
+        return returned
+    else:
+      def wrapper(*args, **kwargs):
+        print(f"Sync, {methodName}")
+        for obj in self.objects_:
+          returned = getattr(obj, methodName)(*args, **kwargs)
+        if type(returned) is type(object):
+          returned = self
+        return returned
 
     return wrapper
 
@@ -2116,7 +2116,7 @@ class HD44780_I2C(Core_):
 
 class Servo:
   class Specs:
-    def __init__(self, u16_min, u16_max, range, rest = 0):
+    def __init__(self, u16_min, u16_max, range, rest = None):
       self.min = u16_min
       self.max = u16_max
       self.range = range
@@ -2252,8 +2252,9 @@ class Servo:
     self.setSmooth(self.specs_.rest)
 
   def flash(self):
-    self.setSmooth(abs(self.specs_.rest - 500))
-    self.park()
+    if self.specs_.rest is not None:
+      self.setSmooth(abs(self.specs_.rest - 500))
+      self.park()
   
   
 
@@ -3375,19 +3376,27 @@ class Microbit:
 
 ##### Begin of generic section for kits #####
 
-class kit_: # Act as namespace.
-  class WS2812(globals()["WS2812"]):  # Workaround to Brython issue     
+# Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+# NOTA: 'def class Class(globals()["Class"]):' workaround prevents IntelliSense from working properly.
+_BWA_WS2812 = WS2812
+_BWA_BUZZER = Buzzer
+_BWA_HD44780_I2C = HD44780_I2C
+_BWA_SSD1306_I2C = SSD1306_I2C
+_BWA_SERVO = Servo
+
+class _kit: # Act as namespace.
+  class WS2812(_BWA_WS2812):
     def write(self):
       super().write(lambda color: f"(wc_({color}))")
       return self
     
-  class Buzzer(globals()["Buzzer"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+  class Buzzer(_BWA_BUZZER):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     pass
       
-  class HD44780_I2C(globals()["HD44780_I2C"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+  class HD44780_I2C(_BWA_HD44780_I2C):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
     @staticmethod
     def deepMax_(x):
-      return x if not isinstance(x,(list,tuple,set)) else max((kit_.HD44780_I2C.deepMax_(i) for i in x), default=None)
+      return x if not isinstance(x,(list,tuple,set)) else max((_kit.HD44780_I2C.deepMax_(i) for i in x), default=None)
 
     # - globalMax == -1: same max for all gauges.
     # - globalMax == 0: each gauge has its own max. 
@@ -3449,10 +3458,10 @@ class kit_: # Act as namespace.
         
       return self
       
-  class SSD1306_I2C(globals()["SSD1306_I2C"]):  # Workaround to Brython issue 'https://github.com/brython-dev/brython/issues/2662'.
+  class SSD1306_I2C(_BWA_SSD1306_I2C):
     pass
   
-  class Servo(globals()["Servo"]):
+  class Servo(_BWA_SERVO):
     pass
 
 def BaseClassPatch_(caller, owner):
@@ -3474,23 +3483,23 @@ class _RavelFactory:
   PANEL_WIDTH = 16
   PANEL_HEIGHT = 2
 
-  class _Buzzer(kit_.Buzzer):
+  class _Buzzer(_kit.Buzzer):
     def __init__(self, device=None, extra=True):
       super().__init__(PWM(5, device=device), extra=extra)
 
-  class _Ring(kit_.WS2812):
+  class _Ring(_kit.WS2812):
     def __init__(self, offset=0, device=None, extra=True):
       super().__init__(8, 20, offset=offset, device=device, extra=extra)
 
-  class _Screen(kit_.SSD1306_I2C):
+  class _Screen(_kit.SSD1306_I2C):
     def __init__(self, device=None, extra=True):
       super().__init__(128, 64, I2C(10, 9, device=device), extra=extra)
 
-  class _Panel(kit_.HD44780_I2C):
+  class _Panel(_kit.HD44780_I2C):
     def __init__(self, device=None, extra=True):
       super().__init__(16, 2, SoftI2C(6, 7, device=device), extra=extra)
 
-  class _Upper(kit_.Servo):
+  class _Upper(_kit.Servo):
     def __init__(self, smooth=False, device=None, extra=True):
       super().__init__(
         PWM(
@@ -3501,7 +3510,7 @@ class _RavelFactory:
         Servo.Specs(1638, 8192, 180, _RavelFactory.SERVO_MAX),
         smooth=smooth)
 
-  class _Lower(kit_.Servo):
+  class _Lower(_kit.Servo):
     def __init__(self, smooth=False, device=None, extra=True):
       super().__init__(
         PWM(
@@ -3513,14 +3522,6 @@ class _RavelFactory:
         smooth=smooth)
 
   class _Kit:
-    if TYPE_CHECKING:
-      buzzer: Any
-      ring: Any
-      screen: Any
-      panel: Any
-      upper: Any
-      lower: Any
-
     _COMPONENT_FACTORY: typing.ClassVar[dict[str, object]] = {
       'buzzer': lambda obj: _RavelFactory._Buzzer(obj._device, obj._extra),
       'ring': lambda obj: _RavelFactory._Ring(obj._ringOffset, obj._device, obj._extra),
@@ -3577,6 +3578,14 @@ class _RavelFactory:
     def displayRingGauges(self, globalMax=0, placeholder=".",addendum="  "):
       self.panel.displayRingGauges(self.ring, 0 ,0, 16, globalMax, placeholder, addendum)
 
+    if TYPE_CHECKING:
+      buzzer: "_RavelFactory._Buzzer"
+      ring: "_RavelFactory._Ring"
+      screen: "_RavelFactory._Screen"
+      panel: "_RavelFactory._Panel"
+      upper: "_RavelFactory._Upper"
+      lower: "_RavelFactory._Lower"
+
   def __init__(self):
     self._defaultKit = _RavelFactory._Kit(ringOffset=0, device=None, extra=True)
 
@@ -3610,7 +3619,7 @@ def __getattr__(name):
     
 
 if TYPE_CHECKING:
-  ravel: _RavelFactory
+  ravel: _RavelFactory._Kit
 
 class ScreenWall(FrameBuffer_):
   def __init__(self, screens):

@@ -8,18 +8,26 @@ class OLED:
 
   def plot(self, x, y):
     # return self.oled.rect(x*8, y*8, 8, 8, 1)
-    return self.oled.ellipse(x*8+3, y*8+3, 3, 3, 1)
+    self.oled.ellipse(x*8+3, y*8+3, 3, 3, 1, True)
+
+    return self
   
   def show(self):
-    return self.oled.show()
+    self.oled.show()
+
+    return self
   
   def clear(self):
-    return self.oled.fill(0).show()
+    self.oled.fill(0).show()
+
+    return self
 
   def rect(self, x0, y0, x1, y1):
     for x in range(x0, x1+1):
       for y in range(y0, y1+1):
         self.plot(x,y)
+
+    return self
   
   def draw(self, motif):
     self.oled.fill(0)
@@ -71,7 +79,7 @@ def test():
 
   hw.rect(0, 0, 15, 7).show()
 
-  for b in range(0, 16):
+  for b in range(16):
     hw.setBrightness(b)
     ucuq.sleep(TEST_DELAY)
 
@@ -232,4 +240,5 @@ MATRICES = (
 )
 
 async def UCUqXDevice(dom, device):
+  print(device)
   hw.add(HW(await ucuq.getInfosAwait(device), device))

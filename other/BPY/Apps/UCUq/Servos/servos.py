@@ -117,10 +117,10 @@ async def atk(dom):
 async def atkTest():
   reset_()
   step = int(STEP * DEFAULT_SPEED / 2)
-  for servo in servos:
-    ucuq.servoMoves([[servos[servo], 15]], step)
-    ucuq.servoMoves([[servos[servo], -15]], step)
-    ucuq.servoMoves([[servos[servo], 0]], step)
+  for servo in servos.values():
+    ucuq.servoMoves(((servo, 15),), step)
+    ucuq.servoMoves(((servo, -15),), step)
+    ucuq.servoMoves(((servo, 0),), step)
   
 
 async def atkReset(dom):
