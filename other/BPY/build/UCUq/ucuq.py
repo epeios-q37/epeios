@@ -1262,10 +1262,9 @@ class Multi:
         return returned
     else:
       def wrapper(*args, **kwargs):
-        print(f"Sync, {methodName}")
         for obj in self.objects_:
           returned = getattr(obj, methodName)(*args, **kwargs)
-        if type(returned) is type(object):
+        if type(returned) is type(obj):
           returned = self
         return returned
 

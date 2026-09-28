@@ -1,5 +1,6 @@
 import base64  # noqa: I001
 import copy
+import sys
 import types
 import zlib
 
@@ -35,7 +36,7 @@ RING_RAINBOW_DELAY_ = 1/3
 
 START_DELAY_ = (FAST_SCROLL_HEIGHT_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELAY_ * (PIANO_ROLL_HEIGHT_ - FAST_SCROLL_HEIGHT_)
 
-COMMIT_MAX_DELAY_ = 1/2
+COMMIT_MAX_DELAY_ = 1/3
 
 SCREEN_ANTICIPATION_ = 0
 KIT_COUNT_ = 3
@@ -164,7 +165,7 @@ def screenDrawSeparators_(counter, screens):
 
 
 def screenPianoRollEvent_(pitches, tracking, separatorCounter, screens):
-  minNotes, maxNotes = unpack_(tracking.extrema)
+  minNotes, maxNotes, _ = unpack_(tracking.extrema)
 
   for turn, pitch in enumerate(pitches):
     if pitch:
@@ -185,17 +186,23 @@ def screenPianoRollEvent_(pitches, tracking, separatorCounter, screens):
 
 
 def getExtremaNotes_(voices):
-  minNotes = [100] * len(voices)
-  maxNotes = [0] * len(voices)
+  minNotes, maxNotes, ambituses =  tuple([100] * len(voices) for _ in range(3))
 
   for i, voice in enumerate(voices):
+    minNote = sys.maxsize
+    maxNote = 0
+
     for note in voice:
       pitch = note[0]
       if pitch:
-        minNotes[i] = min(minNotes[i], pitch)
-        maxNotes[i] = max(maxNotes[i], pitch)
+        minNote = min(minNote, pitch)
+        maxNote = max(maxNote, pitch)
+    
+    minNotes[i] = minNote
+    maxNotes[i] = maxNote
+    ambituses[i] = maxNote - minNote
 
-  return minNotes, maxNotes
+  return minNotes, maxNotes, ambituses
 
 
 def getPacedNotes_(tracking):
@@ -227,7 +234,7 @@ def getPacedNotes_(tracking):
 
 
 def screenActiveNotesEvent_(pitches, tracking, screens):
-  minNotes, maxNotes = unpack_(tracking.extrema)
+  minNotes, maxNotes, _ = unpack_(tracking.extrema)
 
   for start in PIANO_ROLL_VOICES_START_:
     screens.rect(start, PIANO_ROLL_HEIGHT_, PIANO_ROLL_VOICE_WIDTH_, SCREEN_HEIGHT_ - PIANO_ROLL_HEIGHT_, 0, True )
@@ -245,13 +252,15 @@ def screenEvents_(pacedNotes, tracking, screens):
     yield pacedNotes[i][1] - ( SCREEN_ANTICIPATION_ if i == 0 else 0 )
 
 
-def panelActiveNotesEvents_(notes, minNote, maxNote, width, panel):
+def panelActiveNotesEvents_(notes, position, minNote, ambitus, panel):
   counter = 0
   yield START_DELAY_
 
+  peakWidth = 5 * (ambitus // 5 + 1)
+
   for note in notes:
-    panel.moveTo(PANEL_WIDTH_ - width, 1).putString(panel.getForwardPeak(( note[0] - minNote ) * (width * 5 - 1) // ( maxNote - minNote) , width * 5 ) if note[0] else panel.getEmptyPeak(width * 5)),
-    panel.moveTo(PANEL_WIDTH_ - width - 2, 1).putString(chr(6 + counter % 2) if note[0] else " ")
+    panel.moveTo(position, 1).putString(chr(6 + counter % 2) if note[0] else " ")
+    panel.moveTo(position + 2, 1).putString(panel.getForwardPeak(( note[0] - minNote ), peakWidth ) if note[0] else panel.getEmptyPeak(peakWidth))
 
     yield note[1]
 
@@ -378,7 +387,7 @@ def launch(part, timestamp, parts):
   for voice in PARTS_[part][1]:
     tracking.voices.append(parseVoice_(decompressVoiceString_(voice)))
 
-  tracking.extrema.minNotes, tracking.extrema.maxNotes = getExtremaNotes_(tracking.voices)
+  tracking.extrema = types.SimpleNamespace(**dict(zip(('minNotes', 'maxNotes', 'ambituses'), getExtremaNotes_(tracking.voices))))
 
   pacedNotes = getPacedNotes_(tracking)
 
@@ -387,7 +396,7 @@ def launch(part, timestamp, parts):
 
   tracking.maxDuration = maxDuration
 
-  ambitus = max([( tracking.extrema.maxNotes[i] - tracking.extrema.minNotes[i] ) // 5 + 1 for i in range(3)])
+  maxAmbitus = max([tracking.extrema.ambituses[i] for i in range(3)])
 
   cb = ucuq.getCommitBehavior()
 
@@ -402,12 +411,12 @@ def launch(part, timestamp, parts):
       *(element for turn, voice in enumerate(tracking.voices) for element in (
         buzzerEvents_(voice, turn, prev, parts.buzzers[turn]),
         ringsActiveNotesEvents_(voice, turn, parts.rings),
-        panelActiveNotesEvents_(voice, tracking.extrema.minNotes[turn], tracking.extrema.maxNotes[turn], ambitus, parts.panels[turn])
+        panelActiveNotesEvents_(voice, PANEL_WIDTH_ - maxAmbitus // 5 - 3, tracking.extrema.minNotes[turn], tracking.extrema.ambituses[turn], parts.panels[turn])
         )
       ),
       screenEvents_(pacedNotes, tracking, parts.screens),
       panelTitleEvents_(PARTS_[part][0][1], maxDuration + START_DELAY_, parts.panels),
-      panelDurationEvents_(maxDuration, PANEL_WIDTH_ - ambitus - 3, parts.panels),
+      panelDurationEvents_(maxDuration, PANEL_WIDTH_ - maxAmbitus // 5 - 4, parts.panels),
       ringsRainbowEvents_(maxDuration, parts.rings)
     ),
     lambda tracking, user: sleepCallback_(tracking, user, timestamp),
@@ -585,7 +594,7 @@ PARTS_ = (
     'eJztWluC6yAI3Up3MDFRk2b/C7tNBIUTNI92Zjoz98v6AA+ICKShm134mG4+pDZwf6L+kPtrc380flm19uIy6eLND3NqwzoextQNgVqaDj211zeVXMeZmBCP8NHfYr/2Osbx4DP0t7AwWto8EGhg4IGeBhKlYhM7WhRpUR5o8V0pg2azNm6VhnZY9/OvQvquAgM3zwNuLhOtk3VbSbPAZUxaQsbQSyi0LpkVQe5kR61b4cG+flBbbU3wkwGmK7JctXu+S4jLw2UI3S5mWDlJTBoNnXCBs/b6clGL6BM7iZO7fwJOZVlLO0E/GONSnYN2YOzQOugTG88tsefD2vQD8DnKf6rQQT+vA/os9gB9wmW4KgtNBZ1SKvsGdDmPdtXC0o7UsnT3inR/U+s1pxi1clnZo1by4Xk4HF6nfHRy3pfmw/1JfCfx+wnGgc/peeQ7AB4aj4jr6DxclkhGhXpd9WmM7+k7VuR8tb3wpc7jvbjcJ+aVU/gCe/lv77/Q3q0XH5yxeAxKlFniKo4fOoMqBzzMo03LEkLMRLg8yclEY2FRp4WHkmPJBA41cAXze8sbRIyHV2ZztP5yjqvja83itRnsII9RhrxSGk00zpYJIO0k1KrjZhGP6JA5hjqtDLZsG0RRVYXgqhTfpIEo49lp16NU7o6a7htZIl8FI5sk2KrjnRxzxjoj69ya82avT8J09SqkrLezVtdNUBFBmghBfzn6KtGrrf4g7vcS1kjM+5aDLA4xe1OfbSGl19LFem2T/iDfQIn6SAI1Ko9ts+MYwImXY1WQ4/WOdaNn6jSRf+TaTebG+vcOZmSZBzbM/GX1FdeMuNMGZvcMzYSidSiIMK0jEuUzNHX8WOCLsctjxMy9lmkjHUQIWCHYZPRYSbACoCfwqHDnCD+gz68bmn2l7BVBD3hdXobnl57Xu+H56fZzVI97uKQ7T+Qj8z8YpjuFp/ha7WJPJQBGvR6PYDIfpAzgYOrioQD/gtQFWTa+zGS0jSJDTv4pWcdiirhXTleLOMvfY8zVCtLyIA3wBD1XLcQHMDZoZ5avjjJkC1bp7xkgXBYJG2DFzM7gs05Cegaiy+W5OOuy0M4+D7o+/dipDzbrXldO8rCJfTWwv25iyrTY2T53EPL7cHawrbe7eNja0wz1g1wL8LN6uSFlqj2slANvvvzAuylzZIub8c3XxXQn5Stq/xuDK6n8uSmP/zW9WY8Y547193D/7xuF9gIvqekgYQb+0ofLmn122eZ39CvMqp/ahU/dHJPVL8xkKejb5ftJyjJwXjQR6VKF52j2RTSwqbS3+uzSU13wiXP/etAuoe4+3D/Xzpv8'
     )
   ),(
-    ("test", "test"),
+    ("Hob. XI:10", "Joseph Haydn * Trio for Baryton, Viola and Cello in A major (Hob. XI:10) * I. Moderato"),
 (
 'eJztVluywyAI3Up2EK1KrPtf2DVRkQh12pnkPubyVUs4yPMg+GTD6h4LPPeDhWVz+wH8stl6KJ+K5OFW+4iLSdvxW3QKCj9Z21GHkku+njzKoMmIXkQ9SG53yiTX/hcvs4GqYhDlBRdccQ9uiG403ZV8M8TuoPit5QRRr02jEjRD/A6UADNUYBkfWWgYNUShEBYL4UiamXmelaKPWTlKOAgEP2NWMoG6vJ8COhFJ10gxmkDLdeo4QGwOj2EjYgHvlRKSZYLPJZyYWli2deYYCvYqeCYStGSRkOo2Ej/jwLdnoPZPIFXuDdur3GtWZ78hQWhhyxuFNE83hnRFrrrcXBlW091ValZqVmpWalZq/qXU3BlmQgOEzvjsWoGAZ5SGvBM7uUxuloz7sZJTovskwhfGp2TBVhII+vmrPwPIBX030X3FAMKCO3nEAE4IgYbFAALJjYkfHfmUwl3lFVebwdUajf8R+uT1ZGa9wNOda08TPON4oalPi2vC8WJ/0nSy/mxLMqIW8tHFIr26j8ow/kF6lNE33Z1v2b/12ot8lt+aEf/WGAqvIHlY+QKKAlVZznfXm9OVqit1DEtXqq7Uf3O1rlRdqfesVLPaL75jCrY=',
 'eJztVVuWwyAI3Up3kChqHvtfWDUBRMU06XzMmTl+1RK4IFyu8278ZMIrbHRYdw+Tsetr3pfjN1rYx9InwG/b7vxxWszhlU5ANgRNNsd+sMMENkHQ/+gTDREAXWaOMkpm4xcJ/rhih/nY6cwSHCKmw5ottoLeclQfWm2UmavrRduquJ2VM5ZtsValwUo5ehXi8scYHHWf6sPGpFNoE53JZbe01AQfES46EYBRmR8xItuaoS9QcaNuQuZgG+vEVy1CaeUXeZnNjVvR2HxJ7BRFymsXxEqseOp0WmjIY8nHko8l/7dLzpuC5IU8uzvcb4hXXO9qDzCfo3yXiTVwdzWe/k7fu6AGTjbJliwCJmOVWif843AdE6gOMEpS1wRoalry91kG0bNNKned6qmaAHIdcNyAU6j/c6g1lUTncsV69JSr8L8sNzWLVEYuG+WybFO2vV7PKiLbghLbXfLP6vZNXpDiVhFefRblXv709f+1t1R5N++Z+s9SuOYGuvm2HL/02SpbfstpCPYQ7CHYQ7CHYP8xwZ4n8wbqrL+v',
