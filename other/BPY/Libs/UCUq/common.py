@@ -2932,8 +2932,9 @@ def voicesToEvents(voices, tempo, callback):
 
 
 def dispatchEvents(eventGenerators, durationCallback, **kwargs):
-  tracking = types.SimpleNamespace(
+  report = types.SimpleNamespace(
     cumul =  0,
+    duration = 0,
     eventsAmounts=[0] * len(eventGenerators)
   )
 
@@ -2941,31 +2942,36 @@ def dispatchEvents(eventGenerators, durationCallback, **kwargs):
   params = []
 
   if len(inspect.signature(durationCallback).parameters) >= 1:
-    params.append(tracking)
+    params.append(report)
 
   if len(inspect.signature(durationCallback).parameters) >= 2:
     params.append(types.SimpleNamespace(**kwargs))
 
   while True:
-    tracking.duration = sys.maxsize
+    minDuration = sys.maxsize
+    duration = sys.maxsize
+    report.generators = []
 
     for i in range(len(delays)):
-      if delays[i] != -1:
+      if delays[i] != sys.maxsize:
+        delays[i] -= report.duration
         if delays[i] == 0:
-          tracking.eventsAmounts[i] += 1
-          delays[i] = next(eventGenerators[i], -1)
-        tracking.duration = min(tracking.duration, delays[i])
-        
-    tracking.cumul += tracking.duration
+          report.eventsAmounts[i] += 1
+          generator = eventGenerators[i]
+          duration = next(generator, sys.maxsize)
+          report.generators.append((generator, duration))
+          delays[i] = duration
+        minDuration = min(minDuration, delays[i])
 
-    if durationCallback(*params) == False or all(i == -1 for i in delays):
+    if all(i == sys.maxsize for i in delays):
       break
+    elif minDuration != sys.maxsize:
+      report.duration = minDuration
+      report.cumul += minDuration
+      if durationCallback(*params) == False:
+        break;
 
-    for i in range(len(delays)):
-      if delays[i] != -1:
-        delays[i] -= tracking.duration
-        
-  return tracking.cumul
+  return report.cumul
 
 
 def playVoices(voices, tempo, voiceCallback, durationCallback, **kwargs):

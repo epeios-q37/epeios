@@ -31,7 +31,7 @@ def mixedScrollWrite_(panel):
       scrollToLeftEvents_(panel, LINE1_, 0, 0, DELAY_SCROLL_WRITE_),
       scrollToRightEvents_(panel, LINE2_, 0, 1, DELAY_SCROLL_WRITE_)
     ),
-    lambda tracking: ucuq.sleepWait(tracking.cumul)
+    lambda report: ucuq.sleepWait(report.cumul)
   )
 
 

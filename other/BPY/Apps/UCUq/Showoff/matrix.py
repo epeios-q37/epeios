@@ -185,7 +185,7 @@ def launch():
   
   ucuq.sleepStart()
   
-  ucuq.dispatchEvents(allEvents, lambda tracking: ucuq.sleepWait(tracking.cumul))
+  ucuq.dispatchEvents(allEvents, lambda report: ucuq.sleepWait(report.cumul))
 
   buzzer.off().ratio(ratioBackup)
 

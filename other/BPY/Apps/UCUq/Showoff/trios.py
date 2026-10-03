@@ -110,12 +110,14 @@ def buzzerEvent(note, turn, prev, buzzer):
   buzzer.play(note)
 
 
-def buzzerEvents_(voice, turn, prev, buzzer):
+def buzzerEvents_(voice, turn, prev, buzzer, stops):
   yield START_DELAY_
 
   for note in voice:
     buzzerEvent(note[0], turn, prev, buzzer)
     yield note[1]
+
+  stops[turn] = True
 
 
 def ringsActiveNotesEvent_(note, turn, counter, rings):
@@ -130,15 +132,14 @@ def ringsActiveNotesEvent_(note, turn, counter, rings):
 
 
 def ringsActiveNotesEvents_(voice, turn, rings):
-  duration = 0
   counter = 0
 
   yield START_DELAY_
 
   for note in voice:
     ringsActiveNotesEvent_(note[0], turn, counter, rings)
+  
     yield note[1]
-    duration += note[1]
 
     if note[0]:
       counter += 1
@@ -252,13 +253,14 @@ def screenEvents_(pacedNotes, tracking, screens):
     yield pacedNotes[i][1] - ( SCREEN_ANTICIPATION_ if i == 0 else 0 )
 
 
-def panelActiveNotesEvents_(notes, position, minNote, ambitus, panel):
+def panelActiveNotesEvents_(voice, position, minNote, ambitus, panel):
   counter = 0
+  
   yield START_DELAY_
 
   peakWidth = 5 * (ambitus // 5 + 1)
 
-  for note in notes:
+  for note in voice:
     panel.moveTo(position, 1).putString(chr(6 + counter % 2) if note[0] else " ")
     panel.moveTo(position + 2, 1).putString(panel.getForwardPeak(( note[0] - minNote ), peakWidth ) if note[0] else panel.getEmptyPeak(peakWidth))
 
@@ -348,14 +350,19 @@ def set(dom):
   dom.inner("ShowTrios", html)
 
 
-def sleepCallback_(tracking, user, timestamp):
-  if tracking.cumul - user.timestamp >= COMMIT_MAX_DELAY_:
+def _t(n, rang=4):
+  return "∞" if n == sys.maxsize else f"{n:.{rang}g}"
+
+
+def sleepCallback_(report, user, timestamp):
+  # print(_t(report.duration), _t(report.cumul), [(generator[0].__name__, _t(generator[1])) for generator in report.generators])
+  if report.cumul - user.timestamp >= COMMIT_MAX_DELAY_:
     ucuq.commit()
-    user.timestamp = tracking.cumul
+    user.timestamp = report.cumul
 
-  sleepUntil_(timestamp + tracking.cumul, 0)  # The commits are handled directly.
+  sleepUntil_(timestamp + report.cumul, 0)  # The commits are handled directly.
 
-  return True
+  return any(stop == False for stop in user.stops)
 
 
 def getDuration_(voice):
@@ -368,7 +375,10 @@ def getDuration_(voice):
 
 
 def launch(part, timestamp, parts):
+  stops = [False] *3
+
   tracking = types.SimpleNamespace(
+    stop = False,
     voices = [],
     extrema = types.SimpleNamespace()
   )
@@ -409,7 +419,7 @@ def launch(part, timestamp, parts):
   timestamp += ucuq.dispatchEvents(
     (
       *(element for turn, voice in enumerate(tracking.voices) for element in (
-        buzzerEvents_(voice, turn, prev, parts.buzzers[turn]),
+        buzzerEvents_(voice, turn, prev, parts.buzzers[turn], stops),
         ringsActiveNotesEvents_(voice, turn, parts.rings),
         panelActiveNotesEvents_(voice, PANEL_WIDTH_ - maxAmbitus // 5 - 3, tracking.extrema.minNotes[turn], tracking.extrema.ambituses[turn], parts.panels[turn])
         )
@@ -419,8 +429,9 @@ def launch(part, timestamp, parts):
       panelDurationEvents_(maxDuration, PANEL_WIDTH_ - maxAmbitus // 5 - 4, parts.panels),
       ringsRainbowEvents_(maxDuration, parts.rings)
     ),
-    lambda tracking, user: sleepCallback_(tracking, user, timestamp),
-    timestamp = 0
+    lambda report, user: sleepCallback_(report, user, timestamp),
+    timestamp = 0,
+    stops = stops
   )
 
   parts.screens.fill(0).show()

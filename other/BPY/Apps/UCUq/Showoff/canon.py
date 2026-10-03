@@ -187,7 +187,7 @@ def launch(timestamp, parts):
       ),
       getPanelEvents_(tracking, panels),
     ),
-    lambda tracking, user: (sleepUntil_(timestamp + tracking.cumul, 1/3),  not user.tracking.stop)[-1],
+    lambda report, user: (sleepUntil_(timestamp + report.cumul, 1/3),  not user.tracking.stop)[-1],
     tracking = tracking,
     timestamp = 0
   )
