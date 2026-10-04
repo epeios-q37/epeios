@@ -380,7 +380,6 @@ import time
 import types
 import typing
 import zlib
-from typing import TYPE_CHECKING, Any
 
 import atlastk
 
@@ -3332,13 +3331,11 @@ def dispatchEvents(eventGenerators, durationCallback, **kwargs):
           delays[i] = duration
         minDuration = min(minDuration, delays[i])
 
-    if all(i == sys.maxsize for i in delays):
+    report.duration = minDuration
+    report.cumul += minDuration
+
+    if all(delay == sys.maxsize for delay in delays) or ( durationCallback(*params) == False ):
       break
-    elif minDuration != sys.maxsize:
-      report.duration = minDuration
-      report.cumul += minDuration
-      if durationCallback(*params) == False:
-        break;
 
   return report.cumul
 
@@ -3952,7 +3949,7 @@ class _RavelFactory:
     def displayRingGauges(self, globalMax=0, placeholder=".",addendum="  "):
       self.panel.displayRingGauges(self.ring, 0 ,0, 16, globalMax, placeholder, addendum)
 
-    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
       buzzer: "_RavelFactory._Buzzer"
       ring: "_RavelFactory._Ring"
       screen: "_RavelFactory._Screen"
@@ -3992,7 +3989,7 @@ def __getattr__(name):
     current_module.__dict__["__getattr__"] = getattrBackup
     
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
   ravel: _RavelFactory._Kit
 
 class ScreenWall(FrameBuffer_):

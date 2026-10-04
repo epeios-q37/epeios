@@ -375,10 +375,9 @@ def getDuration_(voice):
 
 
 def launch(part, timestamp, parts):
-  stops = [False] *3
+  stops = [False] * 3
 
   tracking = types.SimpleNamespace(
-    stop = False,
     voices = [],
     extrema = types.SimpleNamespace()
   )
