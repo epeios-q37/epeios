@@ -1,4 +1,4 @@
-__version__ = "2026-09-07"
+__version__ = "2026-10-13"
 
 import asyncio, deflate, sys, uos, time, network, json, binascii, io
 from machine import Pin
@@ -15,6 +15,8 @@ _WLAN_FALLBACK = "q37"
 _PROTOCOL_LABEL = "c37cc83e-079f-448a-9541-5c63ce00d960"
 _PROTOCOL_VERSION = "1"
 SPECS_VERSION_ = 0
+
+_DATA_SIZE_MAX = 2048
 
 # Connection status.
 _S_FAILURE = const(0)
@@ -39,8 +41,6 @@ _P_READER = const(0)
 _P_WRITER = const(1)
 
 wifi = None
-buffer = bytes()
-
 
 def getMacAddress():
   global wifi
@@ -135,16 +135,77 @@ def wlanConnect(wlan, wifiPower, wlans, callback):
   return True
 
 
-async def recv(size):
-  global buffer
+_dataBuffer = memoryview(bytearray(_DATA_SIZE_MAX))
+_dataAmount = 0
+_dataBegin = 0
 
-  while len(buffer) < size:
+_buffer_ = bytes() # Deprecated
+
+_counter = 0
+
+def _readFromBuffer(size, buffer):
+  global _dataAmount, _dataBegin, _counter
+
+  _counter += 1
+
+  begin = _dataBegin
+  _dataAmount -= size
+
+  if _dataAmount:
+    _dataBegin += size
+  else:
+    _dataBegin = 0
+
+  buffer[:] = _dataBuffer[begin : begin + size]
+
+
+async def _fillBuffer(size):
+  global _dataAmount, _dataBegin
+
+  if _dataAmount:
+    _dataBuffer[: _dataAmount] = _dataBuffer[_dataBegin : _dataBegin + _dataAmount]
+
+  _dataBegin = 0
+
+  while _dataAmount < size:
+    # With ESP8266 and SSL, 'read' ('readinto' not tested) returns always an empty buffer.
+    _dataAmount += await proxy[_P_READER].readinto(_dataBuffer[_dataAmount:])
+
+
+# Returning a received buffer from a coroutine locks the buffer…
+async def _recv(size, buffer):
+  global _dataAmount, _dataBegin, _counter
+
+  if size <= _DATA_SIZE_MAX:
+    if size > _dataAmount:
+      await _fillBuffer(size)
+    _readFromBuffer(size, buffer)
+  else:
+    pos = 0
+
+    while size > 0:
+      await _fillBuffer(min(size, _DATA_SIZE_MAX))
+
+      amount = min(size, _dataAmount)
+      buffer[pos : pos + amount] = _dataBuffer[_dataBegin : _dataBegin + amount]
+
+      pos += amount
+      size -= amount
+      _dataAmount -= amount
+      
+    _dataBegin += amount
+
+
+async def _recvOld_(size):  # Deprecated
+  global _buffer_
+
+  while len(_buffer_) < size:
     # With ESP8266 and SSL, returns always an empty buffer.
-    buffer += await proxy[_P_READER].read(4096)
+    _buffer_ += await proxy[_P_READER].read(4096)
 
-  result = buffer[:size]
+  result = _buffer_[:size]
 
-  buffer = buffer[size:]
+  _buffer_ = _buffer_[size:]
 
   return result
 
@@ -184,39 +245,42 @@ async def writeString(string):
 def blockingWriteString(string):
   return asyncio.run(writeString(string))
 
-
-async def readByte():
-  return ord(await recv(1))
+_byteBuffer = bytearray(1)
 
 
-async def readUInt():
-  byte = await readByte()
+async def _recvByte():
+  await _recv(1, _byteBuffer)
+  return _byteBuffer[0]
+
+
+async def _recvUInt():
+  byte = await _recvByte()
   value = byte & 0x7f
 
   while byte & 0x80:
-    byte = await readByte()
+    byte = await _recvByte()
     value = (value << 7) + (byte & 0x7f)
 
   return value
 
-
-async def readString():
-  size = await readUInt()
-
-  if size:
-    return (await recv(size)).decode("utf-8")
-  else:
-    return ""
-  
-
-async def readBytes():
-  size = await readUInt()
+# Returning a received buffer from a coroutine locks the buffer…
+async def _recvBytes(buffer = None):
+  size = await _recvUInt()
 
   if size:
-    return (await recv(size))
+    if buffer is None or len(buffer) < size:
+      trueBuffer = memoryview(bytearray(size))
+      buffer = None
+    else:
+      trueBuffer = buffer
+    await _recv(size, trueBuffer[:size])
+    if buffer is None:
+      return bytes(trueBuffer)
+    else:
+      return size
   else:
-    return ""
-  
+    return b""
+
 
 def exit(message=None):
   if (message):
@@ -246,8 +310,8 @@ def getDeviceLabel():
 
 
 def blockingReadString():
-  return asyncio.run(readString())
-
+  return asyncio.run(_recvBytes()).decode("utf-8")
+  
 
 def handshake():
   blockingWriteString(_PROTOCOL_LABEL)
@@ -283,18 +347,25 @@ def decompress(buffer):
       decompressed = decompressor.read()
     return decompressed.decode('utf-8')
   except:
-    return buffer.decode('utf-8')
+    return str(buffer, 'utf-8')
+  
 
 async def serve(callback):
+  bytesBuffer = memoryview(bytearray(2048))
+
   while True:
-    request = await readUInt()
+    request = await _recvUInt()
 
     if request == _R_EXECUTE:
-      script = await readBytes()
-      expression = await readString()
+      scriptOrSize = await _recvBytes(bytesBuffer)
+      script = decompress(bytesBuffer[:scriptOrSize] if isinstance(scriptOrSize, int ) else scriptOrSize)
+
+      expressionOrSize = await _recvBytes(bytesBuffer)
+      expression = str(bytesBuffer[:expressionOrSize] if isinstance(expressionOrSize, int ) else expressionOrSize, "utf-8")
+  
       returned = ""
       try:
-        result = callback(decompress(script), expression)
+        result = callback(script, expression)
         if expression:
           returned = json.dumps(result)
       except Exception as exception:
@@ -324,7 +395,7 @@ def defaultStatusCallback(status, tries):
     elif status == _S_UCUQ:
       print("Connecting to UCUq server...", end="")
     elif status == _S_SUCCESS:
-      print("", end="") # Erase line and go to the beginning of the line. 
+      print(end="") # Erase line and go to the beginning of the line. 
   else:
     print(".", end="")
 
@@ -333,7 +404,7 @@ def defaultStatusCallback(status, tries):
   elif status == _S_DECONNECTION:
     print("Deconnection!")
 
-  return True if tries <= 200 else False 
+  return tries <= 200 
 
 
 def handleLed(pin, state, onValue):

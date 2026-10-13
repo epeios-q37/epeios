@@ -5,7 +5,8 @@
   <button onclick="changeLcdSize()">Valider</button>
   <br>
 -->
-  <textarea id="lcdtext" rows="4" placeholder="Entrez votre texte, une par ligne d'afficheur."></textarea>
+  <input id="Line1" size="16" type="text" maxlength=16 style="font-family: monospace" placeholder="First line" xdh:onevent="input|Update">
+  <input id="Line2" size="16" type="text" maxlength=16 style="font-family: monospace" placeholder="First line" xdh:onevent="input|Update">
   <button xdh:onevent="Submit" onclick_="updateLCD()">Afficher</button>
 </div>
 <div id="lcd-pixels"></div>

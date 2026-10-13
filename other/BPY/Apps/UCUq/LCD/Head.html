@@ -393,9 +393,7 @@
   }
 
   function updateLCD() {
-    let text = document.getElementById('lcdtext').value;
-    let lines = text.split('\\n').slice(0, nbRows);
-    renderLCD(lines);
+    renderLCD(["",""]);
   }
 
   function displayLCD(escapedLines) {

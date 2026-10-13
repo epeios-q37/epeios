@@ -19,7 +19,8 @@ PANEL_WIDTH_ = ucuq.ravel.PANEL_WIDTH
 SCREEN_HEIGHT_ = ucuq.ravel.SCREEN_HEIGHT
 SCREEN_WIDTH_ = ucuq.ravel.SCREEN_WIDTH
 
-PIANO_ROLL_HEIGHT_ = 57
+_PIANO_ROLL_KEYBOARD_HEIGHT = 5
+PIANO_ROLL_HEIGHT_ = SCREEN_HEIGHT_ - _PIANO_ROLL_KEYBOARD_HEIGHT
 FAST_SCROLL_HEIGHT_= 9 * PIANO_ROLL_HEIGHT_ // 10
 PIANO_ROLL_MARKER_WIDTH_ = 20
 PIANO_ROLL_VOICE_WIDTH_ = 39
@@ -36,7 +37,7 @@ RING_RAINBOW_DELAY_ = 1/3
 
 START_DELAY_ = (FAST_SCROLL_HEIGHT_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELAY_ * (PIANO_ROLL_HEIGHT_ - FAST_SCROLL_HEIGHT_)
 
-COMMIT_MAX_DELAY_ = 1/3
+COMMIT_MAX_DELAY_ = .34
 
 SCREEN_ANTICIPATION_ = 0
 KIT_COUNT_ = 3
@@ -242,7 +243,11 @@ def screenActiveNotesEvent_(pitches, tracking, screens):
 
   for index, pitch in enumerate(pitches):
     if pitch:
-      screens.vLine(screenComputeNotePos_(index, pitch, minNotes[index], maxNotes[index]), PIANO_ROLL_HEIGHT_, SCREEN_HEIGHT_ - PIANO_ROLL_HEIGHT_ - 1, 1)    
+      pos = screenComputeNotePos_(index, pitch, minNotes[index], maxNotes[index])
+      screens.rect(pos - 1, PIANO_ROLL_HEIGHT_, 3, 4, 0, True)
+      screens.vLine(pos - 1, PIANO_ROLL_HEIGHT_, 2, 1)    
+      screens.vLine(pos + 1, PIANO_ROLL_HEIGHT_, 2, 1)    
+      screens.vLine(pos, PIANO_ROLL_HEIGHT_ + 2, 2, 1)    
 
 
 def screenEvents_(pacedNotes, tracking, screens):
@@ -415,6 +420,8 @@ def launch(part, timestamp, parts):
 
   parts.panels.backlightOn()
 
+  # ucuq.gcDisable()
+
   timestamp += ucuq.dispatchEvents(
     (
       *(element for turn, voice in enumerate(tracking.voices) for element in (
@@ -433,13 +440,13 @@ def launch(part, timestamp, parts):
     stops = stops
   )
 
-  parts.screens.fill(0).show()
-  parts.panels.clear().backlightOff()
-  parts.rings.fill((0, 0, 0)).write()
+  # ucuq.gcEnable()
 
   ucuq.setCommitBehavior(cb)
 
-  ucuq.commit()
+  parts.screens.fill(0).show()
+  parts.panels.clear().backlightOff()
+  parts.rings.fill((0, 0, 0)).write()
 
 
 PARTS_ = (

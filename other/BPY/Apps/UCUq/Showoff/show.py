@@ -16,9 +16,11 @@ from shared import (
 
 W_COUNTDOWN_ = "ShowCountdown"
 
-COMMIT_DELAY_ = 2/3
+_COUNTDOWN_COMMIT_DELAY = 2/3
 
-parts_ = None
+_parts = None
+_lastCommitTimestamp = 0
+
 
 def setParts_():
   parts = collections.OrderedDict((name, ucuq.Multi()) for name in ('buzzers', 'rings', 'panels', 'screens', 'uppers', 'lowers'))
@@ -38,7 +40,7 @@ def setParts_():
 
 
 def getParts():
-  return parts_
+  return _parts
 
 
 def getNTPTime_(host="pool.ntp.org"):
@@ -67,7 +69,7 @@ ntpOffset_ = 0
 
   
 def connect(deviceList):
-  global ntpOffset_, parts_
+  global ntpOffset_, _parts
   
   ntpOffset_ = time.time() - getNTPTime_()
   
@@ -75,26 +77,32 @@ def connect(deviceList):
   
   ucuq.setDevice(deviceList)
 
-  parts_ = setParts_()
+  _parts = setParts_()
 
   ucuq.ntpSync()
   
   return ntpOffset_
 
-lastCommitTimestamp_ = 0
-
+_lastCollectTimestamp = 0
 
 def sleepUntil(timestamp, commitDelay):
-  global lastCommitTimestamp_
-  
-  if commitDelay > 0:
-    if lastCommitTimestamp_ == 0:
-      lastCommitTimestamp_ = timestamp
-    if timestamp - lastCommitTimestamp_ > commitDelay:
-      lastCommitTimestamp_ = timestamp
-      ucuq.commit()
+  global _lastCommitTimestamp, _lastCollectTimestamp
 
   ucuq.ntpSleepUntil(timestamp - ntpOffset_)
+
+  if _lastCollectTimestamp == 0:
+    _lastCollectTimestamp = timestamp
+  if timestamp - _lastCollectTimestamp > .1:
+    _lastCollectTimestamp = timestamp
+    # ucuq.gcCollect()
+
+  if commitDelay > 0:
+    if _lastCommitTimestamp == 0:
+      _lastCommitTimestamp = timestamp
+    if timestamp - _lastCommitTimestamp > commitDelay:
+      _lastCommitTimestamp = timestamp
+      # ucuq.gcCollect()
+      ucuq.commit()
 
 
 DIGITS_ = (
@@ -174,7 +182,7 @@ def countdownIfRequested(dom, timestamp, parts):
   parts.rings.flash()
   parts.rings.fill((1,1,1)).write()
   parts.panels.backlightOn()
-  timestamp += ucuq.playEvents(allEvents, lambda tracking: sleepUntil(timestamp + tracking.cumul, COMMIT_DELAY_))
+  timestamp += ucuq.playEvents(allEvents, lambda tracking: sleepUntil(timestamp + tracking.cumul, _COUNTDOWN_COMMIT_DELAY))
   parts.screens.fill(0).show()
   parts.rings.fill((0,0,0)).write()
   parts.panels.clear().backlightOff()
