@@ -38,7 +38,7 @@ def launch(timestamp, parts):
   parts.screens.powerOn()
   parts.panels.backlightOn()
 
-  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, parts), lambda _, cumul: sleepUntil_(timestamp + cumul))
+  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, parts), lambda report: sleepUntil_(timestamp + report.cumul, COMMIT_DELAY_))
   
   parts.screens.hLine(0, 0, 128, 0)
   

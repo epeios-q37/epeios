@@ -7,6 +7,7 @@ import ucuq
 import bouncing
 import colors
 import indy
+import json
 import canon
 import life
 import partner
@@ -18,6 +19,7 @@ from show import (
   connect as connect_,
   syncTest as syncTest_
 )
+import subprocess
 import trios
 
 
@@ -30,6 +32,8 @@ DEVICES_ = ("Papa", "Romeo", "Mike")
 SHOW_DEVICES_ = DEVICES_
 """
 HTML_OPTION_ = "<option>{}</option>"
+
+_devices = None
 
 
 def combinaisons_(A):
@@ -47,6 +51,18 @@ def combinaisons_(A):
   return R
 
 
+def _getDevices():
+  global _devices
+
+  _devices = json.loads(subprocess.run(("ucuqm", "--fetch", "--json"), capture_output=True, check=True).stdout)["Ids"]
+
+  return _devices
+
+
+def _closeDevices():
+  subprocess.run(("ucuqm", "--close"), check=False)
+
+
 def partnerLength_(dom):
   return int(dom.getValue("PartnerLength"))
 
@@ -54,12 +70,57 @@ def partnerLength_(dom):
 def atk(dom):
   devices = "\n".join(HTML_OPTION_.format(device) for device in combinaisons_(DEVICES_))
   
-  dom.inner("", BODY.format(devices, DEVICES_[0], *SHOW_DEVICES_))  # type: ignore # noqa: F821
+  dom.inner("", BODY.format(devices, _devices[0] if len(_getDevices()) else "", *SHOW_DEVICES_))  # type: ignore # noqa: F821
   partner.set(dom)
   trios.set(dom)
   qrcodes.set(dom)
   dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);toggleFieldsetByLegend('QR Codes', true);")
 
+
+def _getPartnerDevicesDialog():
+  return "document.getElementById('PartnerDevices')"
+
+
+def _fillPartnerDevices(dom):
+  html = "<div style='display: flex; flex-direction: column;'>"
+
+  devices = dom.getValue("PartnerDevice").split()
+
+  for index, device in enumerate(_getDevices()):
+    html += f"<label style='display: flex; justify-content: space-between'><span>{device}: </span><input id='PartnerDevice{index}' type='checkbox' {"checked" if device in devices else ""}></input></label>"
+  html += "</div>"
+
+  dom.setValue("PartnerDevicesList", html)
+
+
+def atkPartnerDevicesOK(dom):
+  dom.executeVoid(f"{_getPartnerDevicesDialog()}.close()")
+
+  ids = [f"PartnerDevice{index}" for index in range(len(_devices))]
+
+  dom.setValue("PartnerDevice", " ".join([_devices[int(k[13:])] for k, v in dom.getValues(ids).items() if v == "true"]))
+
+
+def atkPartnerDevicesCancel(dom):
+  dom.executeVoid(f"{_getPartnerDevicesDialog()}.close()")
+
+
+def atkPartnerDevicesRefresh(dom):
+  dom.setValue("PartnerDevicesList", "")
+  _fillPartnerDevices(dom)
+
+
+def atkPartnerDevicesClose(dom):
+  _closeDevices()
+  dom.setValue("PartnerDevicesList", "")
+
+
+def atkPartnerSelect(dom):
+  with open("PartnerDevices.html") as dialog:
+    dom.inner("PartnerDevices", dialog.read())
+    dom.executeVoid(f"{_getPartnerDevicesDialog()}.showModal();")
+
+  _fillPartnerDevices(dom)
 
 def atkPartnerConnect(dom):
   partner.connect(dom.getValue("PartnerDevice"))
@@ -112,6 +173,67 @@ def atkPartnerMatrix(dom):
   partner.matrixSimulation()
 
 
+def _getShowDevicesDialog():
+  return "document.getElementById('ShowDevices')"
+
+
+def _fillShowDevices(dom):
+  html = "<div style='display: flex; flex-direction: column;'>"
+
+  for index, device in enumerate(_getDevices()):
+    html += f"""
+  <div style='display: flex; justify-content: space-between;>
+    <label style='display: flex; justify-content: space-between'>{device}: </label>
+    <span xdh:radio='ShowDevice{index}' id='ShowDevice{index}'>
+      <input name="ShowDevice{index}" value='Left' type='radio'></input>
+      <input name="ShowDevice{index}" value='Middle' type='radio'></input>
+      <input name="ShowDevice{index}" value='Right' type='radio'></input>
+      <button>x</button>
+    </span>
+  </div>
+"""
+
+  html += "</div>"
+
+  dom.setValue("ShowDevicesList", html)
+
+
+def atkShowDevicesOK(dom):
+  dom.executeVoid(f"{_getShowDevicesDialog()}.close()")
+
+  ids = dom.getValues([f"ShowDevice{index}" for index in range(len(_devices))])
+
+  values = {
+    "ShowLeftDevice": " ".join([_devices[int(key[10:])] for key, valeur in ids.items() if valeur == "Left"]),
+    "ShowMiddleDevice": " ".join([_devices[int(key[10:])] for key, valeur in ids.items() if valeur == "Middle"]),
+    "ShowRightDevice": " ".join([_devices[int(key[10:])] for key, valeur in ids.items() if valeur == "Right"]),
+  }
+
+  dom.setValues(values)
+
+
+def atkShowDevicesCancel(dom):
+  dom.executeVoid(f"{_getShowDevicesDialog()}.close()")
+
+
+def atkShowDevicesRefresh(dom):
+  dom.setValue("ShowDevicesList", "")
+  _fillShowDevices(dom)
+
+
+def atkShowDevicesClose(dom):
+  _closeDevices()
+  dom.setValue("ShowDevicesList", "")
+
+
+def atkShowSelect(dom):
+  with open("ShowDevices.html") as dialog:
+    dom.inner("ShowDevices", dialog.read())
+    dom.executeVoid(f"{_getShowDevicesDialog()}.showModal();")
+
+  _fillShowDevices(dom)
+
+
 def atkShowConnect(dom):
   cont = True
 
@@ -153,6 +275,7 @@ def atkShowPink(dom):
 SHOWS_ = {
   "Colors": lambda timestamp, parts: colors.launch(timestamp, parts),
   "Bouncing": lambda timestamp, parts: bouncing.launch(timestamp, parts),
+  "Indy":  lambda timestamp, parts: indy.launch(timestamp, parts),
   "Pink":  lambda timestamp, parts: pink.launch(timestamp, parts),
   "Life":  lambda timestamp, parts: life.launch(timestamp, parts),
   "Canon":  lambda timestamp, parts: canon.launch(timestamp, parts),

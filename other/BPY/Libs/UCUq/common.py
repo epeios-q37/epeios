@@ -1018,6 +1018,7 @@ class Device(Device_):  # noqa: F821
 
   def __del__(self):
     try:
+      super().__del__(self)
       self.commit()
     except:
       pass
@@ -2251,7 +2252,7 @@ class Servo:
 
   def flash(self):
     if self.specs_.rest is not None:
-      self.setSmooth(abs(self.specs_.rest - 500))
+      self.setSmooth(abs(self.specs_.rest - 300))
       self.park()
   
   

@@ -77,8 +77,9 @@
 
         elements.forEach(el => {
           const isConnectButton =
-            el.tagName === 'BUTTON' &&
-            el.textContent.trim() === 'Connect';
+            el.tagName === 'BUTTON'
+            && ( el.textContent.trim() === 'Connect'
+                 || el.textContent.trim() === 'Select' );
 
           const isDevicesInput =
             el.tagName === 'INPUT' &&

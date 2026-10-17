@@ -209,13 +209,17 @@ def turnOffAndScrollDown(timestamp, parts):
     parts.rings.setValue(i, getRainbowColor_(i, 7))
     
   parts.rings.write()
-  
+
+  cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
+    
   for i in range(64):
-    parts.rings.setValue(i //ucuq.ravel.RING_SIZE + offset, (0,0,0)).write()
+    parts.rings.setValue(i // ucuq.ravel.RING_SIZE + offset, (0,0,0)).write()
     parts.screens.scroll(0, 1).show()
     parts.kits.displayRingGauges()
-    timestamp += 0.09
-    sleepUntil(timestamp, 0) 
+    timestamp += 0.015
+    sleepUntil(timestamp, 0.05) 
+
+  ucuq.setCommitBehavior(cb)
     
   return timestamp
     

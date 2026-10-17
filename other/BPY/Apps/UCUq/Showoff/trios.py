@@ -156,8 +156,12 @@ def screenDrawNote_(index, pitch, minNote, maxNote, screen):
 
 def screenDrawMarker_(turn, color, counter, screen):
   width = PIANO_ROLL_VOICE_WIDTH_ - PIANO_ROLL_MARKER_WIDTH_
-  trueX = abs((counter % width * 2 ) - width * 2 + width)
+  trueX =  abs((counter % width) * 2 - width)
   screen.hLine( PIANO_ROLL_VOICES_START_[turn] + trueX, SCREEN_HEIGHT_ - 1, PIANO_ROLL_MARKER_WIDTH_, color)
+  trueX = width - abs((counter % width) * 2 - width)
+  for index in range(3):
+    if turn != index:
+      screen.hLine( PIANO_ROLL_VOICES_START_[index] + trueX, SCREEN_HEIGHT_ - 1, PIANO_ROLL_MARKER_WIDTH_, color)
 
 
 def screenDrawSeparators_(counter, screens):
@@ -175,11 +179,12 @@ def screenPianoRollEvent_(pitches, tracking, separatorCounter, screens):
 
   for turn, screen in enumerate(screens):
     screenDrawMarker_(turn, 1, separatorCounter, screen)
+      
   screens.show()
 
   for turn, screen in enumerate(screens):
     pitch = pitches[turn]
-    screenDrawMarker_(turn, 0, separatorCounter, screen)
+
     if pitch:
       screenDrawNote_(turn, pitch, minNotes[turn], maxNotes[turn], screen)
 
@@ -384,7 +389,7 @@ def launch(part, timestamp, parts):
 
   tracking = types.SimpleNamespace(
     voices = [],
-    extrema = types.SimpleNamespace()
+    extrema = types.SimpleNamespace(),
   )
 
   parts.panels.uploadHPeakChars()\
@@ -425,9 +430,9 @@ def launch(part, timestamp, parts):
   timestamp += ucuq.dispatchEvents(
     (
       *(element for turn, voice in enumerate(tracking.voices) for element in (
-        buzzerEvents_(voice, turn, prev, parts.buzzers[turn], stops),
-        ringsActiveNotesEvents_(voice, turn, parts.rings),
-        panelActiveNotesEvents_(voice, PANEL_WIDTH_ - maxAmbitus // 5 - 3, tracking.extrema.minNotes[turn], tracking.extrema.ambituses[turn], parts.panels[turn])
+          buzzerEvents_(voice, turn, prev, parts.buzzers[turn], stops),
+          ringsActiveNotesEvents_(voice, turn, parts.rings),
+          panelActiveNotesEvents_(voice, PANEL_WIDTH_ - maxAmbitus // 5 - 3, tracking.extrema.minNotes[turn], tracking.extrema.ambituses[turn], parts.panels[turn])
         )
       ),
       screenEvents_(pacedNotes, tracking, parts.screens),

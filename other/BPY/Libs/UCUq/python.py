@@ -74,6 +74,8 @@ def recv_(socket, size):
   while l != size:
     buffer += socket.recv(size-l)
     l = len(buffer)
+    if l == 0:
+      raise ConnectionAbortedError
 
   return buffer
 
@@ -149,7 +151,7 @@ def init_():
   print("Connection to UCUq server…", end="", flush=True)
 
   try:
-    s = socket.create_connection((UCUQ_HOST_, UCUQ_PORT_))
+    s = socket.create_connection((UCUQ_HOST_, UCUQ_PORT_), timeout=None)
     if UCUQ_SSL_:
       s = ssl.create_default_context().wrap_socket(s, server_hostname="q37.info" if UCUQ_HOST_ == UCUQ_DEFAULT_HOST_ else UCUQ_HOST_)
   except Exception as e:
@@ -221,9 +223,16 @@ def displayExitMessage_(Message):
   raise Error(Message)
 
 
+def _getAnswer(socket):
+  try:
+    return readUInt_(socket)
+  except ConnectionAbortedError:
+    return A_DISCONNECTED_
+
+
 def readingThread(proxy):
   while True:
-    if ( answer := readUInt_(proxy.socket) ) == A_RESULT_:
+    if ( answer := _getAnswer(proxy.socket) ) == A_RESULT_:
       proxy.resultBegin.set()
       proxy.resultEnd.wait()
       proxy.resultEnd.clear()
@@ -245,7 +254,7 @@ def readingThread(proxy):
       readString_(proxy.socket) # For future use
       raise Error("Puzzled!")
     elif answer == A_DISCONNECTED_:
-        raise Error(f"Disconnected from device '{proxy.id}'!")
+      raise Error(f"Disconnected from device '{proxy.id}'!")
     else:
       raise Error(f"Unknown answer from device '{proxy.id}'!")
 
@@ -270,6 +279,7 @@ class Device_:
 
     if id or token:
       self.connect(id, token)
+
 
   def connect(self, id = None, token = None, errorAsException = True):
     if token == None and id == None:
