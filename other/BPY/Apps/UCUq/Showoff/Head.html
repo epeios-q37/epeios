@@ -8,10 +8,6 @@
     padding-right: 1rem;
   }
 
-  .clearable-wrapper.empty input {
-    padding-right: 0;
-  }
-
   .clear-btn {
     position: absolute;
     right: 0.4rem;
@@ -83,7 +79,7 @@
 
           const isDevicesInput =
             el.tagName === 'INPUT' &&
-            el.getAttribute('list') === 'Devices';
+            el.classList.contains('clearable');
 
           const isClearButton =
             el.tagName === 'BUTTON' &&

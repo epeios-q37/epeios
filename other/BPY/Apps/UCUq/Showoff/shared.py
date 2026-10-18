@@ -5,6 +5,9 @@ import ucuq
 
 RGB_MAX = 10
 
+SHOW_SITES = ("Left", "Middle", "Right")
+SHOW_SITES_INPUT = tuple((f"Show{site}Device" for site in SHOW_SITES))
+
 def rainbowGradient_(n, max):
   colors = []
   
