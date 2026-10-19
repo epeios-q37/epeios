@@ -3,18 +3,21 @@ import copy
 import sys
 import types
 import zlib
+from fractions import Fraction
 
 import shared
 import ucuq
 
-
-from show import sleepUntil as sleepUntil_
-from fractions import Fraction
+from show import (
+  KIT_COUNT as _KIT_COUNT,
+  sleepUntil as sleepUntil_
+)
 
 # No debug if == 0
 DEBUG_DURATION_ = 0
 
-PANEL_WIDTH_ = ucuq.ravel.PANEL_WIDTH
+_PANEL_WIDTH = ucuq.ravel.PANEL_WIDTH
+_PANEL_STRIP_WIDTH = _PANEL_WIDTH * _KIT_COUNT
 
 SCREEN_HEIGHT_ = ucuq.ravel.SCREEN_HEIGHT
 SCREEN_WIDTH_ = ucuq.ravel.SCREEN_WIDTH
@@ -40,7 +43,6 @@ START_DELAY_ = (FAST_SCROLL_HEIGHT_ * START_SCROLL_DELAY_) + REGULAR_SCROLL_DELA
 COMMIT_MAX_DELAY_ = .34
 
 SCREEN_ANTICIPATION_ = 0
-KIT_COUNT_ = 3
 
 NOTE_UP_CHARMAP_ = (
   0b00001,
@@ -69,8 +71,8 @@ def isDebug_():
   return DEBUG_DURATION_ != 0
 
 
-def unpack_(ns):
-  return vars(ns).values()
+def unpack_(extrema):
+  return [extremum.minNote for extremum in extrema], [extremum.maxNote for extremum in extrema]
 
 
 def decompressVoiceString_(compressedString):
@@ -167,11 +169,11 @@ def screenDrawMarker_(turn, color, counter, screen):
 def screenDrawSeparators_(counter, screens):
   for position in PIANO_ROLL_SEPARATOR_POSITIONS_:
     for y in range(SCREEN_HEIGHT_):
-      screens.pixel(position, y, 1 if ( y + counter ) % ( KIT_COUNT_ * 3 ) == KIT_COUNT_ * 3 // 2 else 0 )
+      screens.pixel(position, y, 0 if ( y + counter ) % 7 else 1 )
 
 
 def screenPianoRollEvent_(pitches, tracking, separatorCounter, screens):
-  minNotes, maxNotes, _ = unpack_(tracking.extrema)
+  minNotes, maxNotes = unpack_(tracking.extrema)
 
   for turn, pitch in enumerate(pitches):
     if pitch:
@@ -192,24 +194,17 @@ def screenPianoRollEvent_(pitches, tracking, separatorCounter, screens):
   screenDrawSeparators_(separatorCounter, screens)
 
 
-def getExtremaNotes_(voices):
-  minNotes, maxNotes, ambituses =  tuple([100] * len(voices) for _ in range(3))
+def getExtrema_(voice):
+  minNote = sys.maxsize
+  maxNote = 0
 
-  for i, voice in enumerate(voices):
-    minNote = sys.maxsize
-    maxNote = 0
-
-    for note in voice:
-      pitch = note[0]
-      if pitch:
-        minNote = min(minNote, pitch)
-        maxNote = max(maxNote, pitch)
+  for note in voice:
+    pitch = note[0]
+    if pitch:
+      minNote = min(minNote, pitch)
+      maxNote = max(maxNote, pitch)
     
-    minNotes[i] = minNote
-    maxNotes[i] = maxNote
-    ambituses[i] = maxNote - minNote
-
-  return minNotes, maxNotes, ambituses
+  return types.SimpleNamespace(minNote = minNote, maxNote = maxNote)
 
 
 def getPacedNotes_(tracking):
@@ -241,7 +236,7 @@ def getPacedNotes_(tracking):
 
 
 def screenActiveNotesEvent_(pitches, tracking, screens):
-  minNotes, maxNotes, _ = unpack_(tracking.extrema)
+  minNotes, maxNotes = unpack_(tracking.extrema)
 
   for start in PIANO_ROLL_VOICES_START_:
     screens.rect(start, PIANO_ROLL_HEIGHT_, PIANO_ROLL_VOICE_WIDTH_, SCREEN_HEIGHT_ - PIANO_ROLL_HEIGHT_, 0, True )
@@ -263,16 +258,18 @@ def screenEvents_(pacedNotes, tracking, screens):
     yield pacedNotes[i][1] - ( SCREEN_ANTICIPATION_ if i == 0 else 0 )
 
 
-def panelActiveNotesEvents_(voice, position, minNote, ambitus, panel):
+def panelActiveNotesEvents_(voice, position, extremum, panel):
   counter = 0
   
   yield START_DELAY_
 
-  peakWidth = 5 * (ambitus // 5 + 1)
+  ambitus = extremum.maxNote - extremum.minNote
+
+  peakWidth = ( _PANEL_WIDTH - position - 2  ) * 5
 
   for note in voice:
     panel.moveTo(position, 1).putString(chr(6 + counter % 2) if note[0] else " ")
-    panel.moveTo(position + 2, 1).putString(panel.getForwardPeak(( note[0] - minNote ), peakWidth ) if note[0] else panel.getEmptyPeak(peakWidth))
+    panel.moveTo(position + 2, 1).putString(panel.getForwardPeak(( peakWidth - 1 ) * ( note[0] - extremum.minNote ) // ambitus, peakWidth ) if note[0] else panel.getEmptyPeak(peakWidth))
 
     yield note[1]
 
@@ -282,7 +279,7 @@ def panelActiveNotesEvents_(voice, position, minNote, ambitus, panel):
 
 def ringsRainbowEvent_(counter, rings):
   for index, ring in enumerate(rings):
-    color = shared.getRainbowColor(counter + index * len(shared.RAINBOW) // KIT_COUNT_)
+    color = shared.getRainbowColor(counter + index * len(shared.RAINBOW) // _KIT_COUNT)
     ring.setValue(5, color).setValue(6, color).write()
 
 
@@ -299,41 +296,29 @@ def ringsRainbowEvents_(duration, rings):
     counter += 1
 
 
-def panelTitleEvent_(title, counter, panelStrip):
-  string = title[counter % (len(title) - KIT_COUNT_ * PANEL_WIDTH_):][:KIT_COUNT_ * PANEL_WIDTH_]
+def _getTitleRibbon(title):
+  yield from _PANEL_STRIP_WIDTH // 8 * "\06\07\06 \07\06\07 "
 
-  panelStrip.moveTo(0,0).putString(string)
+  paddedTitle = title + " " * _PANEL_WIDTH
 
-
-def panelTitlePrologEvents_(title, t, panels):
-  title = KIT_COUNT_ * PANEL_WIDTH_ // 4 * "\06\07\06 " + KIT_COUNT_ * (title + PANEL_WIDTH_ * " ")
   counter = 0
 
-  while t.duration > 0 and counter < KIT_COUNT_ * PANEL_WIDTH_:
-    panelTitleEvent_(title, counter, panels)
-    yield PANEL_TITLE_DELAY_
-
-    t.duration -= PANEL_TITLE_DELAY_
+  while True:
+    yield paddedTitle[counter % len(paddedTitle)]
     counter += 1
 
 
-def panelTitleMainEvents_(title, duration, panels):
-  title = KIT_COUNT_ * (title + PANEL_WIDTH_ * " ")
-  counter = 0
-
-  while duration > 0:
-    panelTitleEvent_(title, counter, panels)
-    yield PANEL_TITLE_DELAY_
-
-    duration -= PANEL_TITLE_DELAY_
-    counter += 1
-
-
-def panelTitleEvents_(title, duration, panels):
+def _panelTitleEvents(title, panels):
   panelStrip = ucuq.PanelStrip(panels)
-  t = types.SimpleNamespace(duration = duration)
-  yield from panelTitlePrologEvents_(title, t, panelStrip)
-  yield from panelTitleMainEvents_(title, t.duration, panelStrip)
+
+  titleRibbon = _getTitleRibbon(title)
+
+  stripText = "".join(next(titleRibbon) for _ in range(_PANEL_STRIP_WIDTH))
+  
+  while True:
+    panelStrip.moveTo(0,0).putString(stripText)
+    stripText = stripText[1:] + next(titleRibbon)
+    yield PANEL_TITLE_DELAY_
 
 
 def panelDurationEvents_(duration, width, panels):
@@ -365,7 +350,6 @@ def _t(n, rang=4):
 
 
 def sleepCallback_(report, user, timestamp):
-  # print(_t(report.duration), _t(report.cumul), [(generator[0].__name__, _t(generator[1])) for generator in report.generators])
   if report.cumul - user.timestamp >= COMMIT_MAX_DELAY_:
     ucuq.commit()
     user.timestamp = report.cumul
@@ -385,11 +369,11 @@ def getDuration_(voice):
 
 
 def launch(part, timestamp, parts):
-  stops = [False] * 3
+  stops = [False] * _KIT_COUNT
 
   tracking = types.SimpleNamespace(
     voices = [],
-    extrema = types.SimpleNamespace(),
+    extrema = [],
   )
 
   parts.panels.uploadHPeakChars()\
@@ -403,10 +387,9 @@ def launch(part, timestamp, parts):
 
   maxDuration = 0
 
-  for voice in PARTS_[part][1]:
+  for turn, voice in enumerate(PARTS_[part][1]):
     tracking.voices.append(parseVoice_(decompressVoiceString_(voice)))
-
-  tracking.extrema = types.SimpleNamespace(**dict(zip(('minNotes', 'maxNotes', 'ambituses'), getExtremaNotes_(tracking.voices))))
+    tracking.extrema.append(getExtrema_(tracking.voices[turn]))
 
   pacedNotes = getPacedNotes_(tracking)
 
@@ -414,8 +397,6 @@ def launch(part, timestamp, parts):
     maxDuration = max(maxDuration, getDuration_(voice))
 
   tracking.maxDuration = maxDuration
-
-  maxAmbitus = max([tracking.extrema.ambituses[i] for i in range(3)])
 
   cb = ucuq.getCommitBehavior()
 
@@ -432,12 +413,12 @@ def launch(part, timestamp, parts):
       *(element for turn, voice in enumerate(tracking.voices) for element in (
           buzzerEvents_(voice, turn, prev, parts.buzzers[turn], stops),
           ringsActiveNotesEvents_(voice, turn, parts.rings),
-          panelActiveNotesEvents_(voice, PANEL_WIDTH_ - maxAmbitus // 5 - 3, tracking.extrema.minNotes[turn], tracking.extrema.ambituses[turn], parts.panels[turn])
+          panelActiveNotesEvents_(voice, _PANEL_WIDTH // 2 - 1, tracking.extrema[turn], parts.panels[turn])
         )
       ),
       screenEvents_(pacedNotes, tracking, parts.screens),
-      panelTitleEvents_(PARTS_[part][0][1], maxDuration + START_DELAY_, parts.panels),
-      panelDurationEvents_(maxDuration, PANEL_WIDTH_ - maxAmbitus // 5 - 4, parts.panels),
+      _panelTitleEvents(PARTS_[part][0][1], parts.panels),
+      panelDurationEvents_(maxDuration, _PANEL_WIDTH // 2 - 2, parts.panels),
       ringsRainbowEvents_(maxDuration, parts.rings)
     ),
     lambda report, user: sleepCallback_(report, user, timestamp),

@@ -1,16 +1,22 @@
 import json
 import subprocess
 
-import shared
-
+import show
 
 _devices = None
 
 _PARTNER_DIALOG = """\
-<div style="display: flex; flex-direction: column; gap: 5px;">
-  <fieldset id="PartnerDevicesList" style="display: flex; flex-direction: column;">
-  </fieldset>
-  <span style="display: flex; justify-content: space-around; gap: 5px;">
+<div style="display: flex; flex-direction: column; column-gap: 5px;">
+  <span style="display: flex; justify-content: space-between; gap: 5px;">
+    <span style="display: flex; justify-content: space-between; width: 100%;">
+      <span>Device</span>
+      <input type="checkbox" onchange="document.querySelectorAll('input[type=&quot;checkbox&quot;][class=&quot;PartnerDevices&quot;]').forEach(checkbox =&gt; {{checkbox.checked=this.checked;}});"></input>
+    </span>
+    <span xdh:onevent="PartnerDevicesCloseAll" style="cursor: default;">⏏</span>
+  </span>
+  <hr style="width: 100%;">
+  <span id="PartnerDevicesList" style="display: flex; flex-direction: column;"></span>
+  <span style="display: flex; justify-content: space-around; column-gap: 5px; margin-top: 20px;">
     <button xdh:onevent="PartnerDevicesOK">OK</button>
     <button xdh:onevent="PartnerDevicesCancel">Cancel</button>
     <button xdh:onevent="PartnerDevicesRefresh">Refresh</button>
@@ -20,47 +26,39 @@ _PARTNER_DIALOG = """\
 
 _PARTNER_ITEM = """\
 <div style="display: flex; justify-content: space-between; gap: 5px;">
-<label style="display: flex; justify-content: space-between; width: 100%;">
-  <span>{device}: </span>
-  <input id="PartnerDevice{index}" type="checkbox" {checked}></input>
-</label>
-<span xdh:onevent="PartnerDeviceClose" xdh:mark="{device}" style="cursor: default;">⏏</span>
+  <label style="display: flex; justify-content: space-between; width: 100%;">
+    <span>{device}</span>
+    <input id="PartnerDevice{index}" type="checkbox" class="PartnerDevices" {checked}></input>
+  </label>
+  <span xdh:onevent="PartnerDevicesClose" xdh:mark="{device}" style="cursor: default;">⏏</span>
 </div>
 """
 
 _SHOW_DIALOG = """\
-<fieldset style="display: flex; flex-direction: column; gap: 5px;">
-  <legend>Show device</legend>
-  <fieldset id="ShowDevicesList" style="display: grid;  grid-template-columns: repeat(6, 1fr); align-items: center;">
-  </fieldset>
-  <span style="display: flex; justify-content: space-around; gap: 5px;">
-    <button xdh:onevent="ShowDevicesOK">OK</button>
-    <button xdh:onevent="ShowDevicesCancel">Cancel</button>
-    <button xdh:onevent="ShowDevicesRefresh">Refresh</button>
-  </span>
-</fieldset>
-"""
-
-_SHOW_HEADER = """\
-  <span>Sites: </span>
+<span style="display: grid;  grid-template-columns: repeat(6, auto); align-items: center; column-gap: 10px;">
+  <span>Device </span>
   {}
-  <span>⌫</span>
-  <span></span>
+  <span style="justify-self: center; cursor: default;"onclick="document.querySelectorAll('input[type=&quot;radio&quot;]').forEach(radio =&gt; {{radio.checked = false;}});">⌫</span>
+  <span style="justify-self: center;cursor: default; " xdh:onevent="ShowDevicesCloseAll"">⏏</span>
+  <hr id="ShowDevicesList" style="grid-column: 1/7; width : 100%;">
+</span>
+<span style="display: flex; justify-content: space-around; column-gap: 5px; margin-top: 20px;">
+  <button xdh:onevent="ShowDevicesOK">OK</button>
+  <button xdh:onevent="ShowDevicesCancel">Cancel</button>
+  <button xdh:onevent="ShowDevicesRefresh">Refresh</button>
+</span>
 """
 
 _SHOW_HEADER_ITEM = '<span style="justify-self: center;">{}</span>'
 
-_SHOW_BODY_ITEM = """\
-    <span>{device}: </span>
-    <span style="display: none;" xdh:radio="ShowDevice{index}" id="ShowDevice{index}"></span>
-    {sites}
-    <span onclick="document.querySelectorAll('input[type=&quot;radio&quot;][name=&quot;ShowDevice{index}&quot;]').forEach(radio =&gt; {{radio.checked = false;}});">⌫</span>
-    <span xdh:onevent="PartnerDeviceClose" xdh:mark="{device}" style="cursor: default;">⏏</span>
+_SHOW_LIST_ITEM = """\
+<span xdh:radio="ShowDevice{index}" id="ShowDevice{index}">{device}</span>
+{sites}
+<span style="justify-self: center; cursor: default;" onclick="document.querySelectorAll('input[type=&quot;radio&quot;][name=&quot;ShowDevice{index}&quot;]').forEach(radio =&gt; {{radio.checked = false;}});">⌫</span>
+<span style="justify-self: center; cursor: default;" xdh:onevent="ShowDevicesClose" xdh:mark="{device}">⏏</span>
 """
 
-
-_SHOW_BODY_SUB_ITEM = '<input name="ShowDevice{index}" value="{site}" type="radio" {checked}></input>'
-
+_SHOW_LIST_SUB_ITEM = '<input name="ShowDevice{index}" value="{site}" type="radio" {checked}></input>'
 
 
 def getDevices():
@@ -71,7 +69,7 @@ def getDevices():
   return _devices
 
 
-def _closeDevices():
+def _closeAllDevices():
   subprocess.run(("ucuqm", "--close"), check=False)
 
 
@@ -84,8 +82,8 @@ def _getPartnerDevicesDialog():
 
 
 def _fillPartnerDevices(dom):
+  dom.setValue("PartnerDevicesList", "")
   devices = dom.getValue("PartnerDevice").split()
-
   dom.inner("PartnerDevicesList", "\n".join(_PARTNER_ITEM.format(device=device, index=index, checked="checked" if device in devices else "") for index, device in enumerate(getDevices())))
 
 
@@ -102,19 +100,18 @@ def atkPartnerDevicesCancel(dom):
 
 
 def atkPartnerDevicesRefresh(dom):
-  dom.setValue("PartnerDevicesList", "")
   _fillPartnerDevices(dom)
 
 
-def atkPartnerDevicesRAZ(dom):
-  _closeDevices()
-  dom.setValue("PartnerDevicesList", "")
+def atkPartnerDevicesCloseAll(dom):
+  _closeAllDevices()
+  _fillPartnerDevices(dom)
 
 
-def atkPartnerDeviceClose(dom, id):
+def atkPartnerDevicesClose(dom, id):
   _closeDevice(dom.getMark(id))
-  dom.setValue("PartnerDevicesList", "")
   _fillPartnerDevices(dom)
+
 
 def atkPartnerSelect(dom):
   dom.inner("PartnerDevices", _PARTNER_DIALOG)
@@ -129,13 +126,13 @@ def _getShowDevicesDialog():
 
 
 def _fillShowDevices(dom):
-  devices = dom.getValues(shared.SHOW_SITES_INPUT)
+  dom.executeVoid("removeFollowingSiblings('ShowDevicesList')")
 
-  header = _SHOW_HEADER.format("\n".join(_SHOW_HEADER_ITEM.format(site.lower()) for site in shared.SHOW_SITES))
+  devices = dom.getValues(show.SHOW_SITES_INPUT)
 
-  body = "\n".join(_SHOW_BODY_ITEM.format(device=device, index=index, sites = "\n".join(_SHOW_BODY_SUB_ITEM.format(index=index, site=site, checked="checked" if device in devices[f"Show{site}Device"].split() else "") for site in shared.SHOW_SITES)) for index, device in enumerate(getDevices()))
+  list = "\n".join(_SHOW_LIST_ITEM.format(device=device, index=index, sites = "\n".join(_SHOW_LIST_SUB_ITEM.format(index=index, site=site, checked="checked" if device in devices[f"Show{site}Device"].split() else "") for site in show.SHOW_SITES)) for index, device in enumerate(getDevices()))
 
-  dom.setValue("ShowDevicesList", f'{header}\n{body}')
+  dom.after("ShowDevicesList", list)
 
 
 def atkShowDevicesOK(dom):
@@ -144,7 +141,7 @@ def atkShowDevicesOK(dom):
   sites = { int(key[10:]): value for key, value in dom.getValues([f"ShowDevice{index}" for index in range(len(_devices))]).items() }
 
   dom.setValues({
-    f"Show{site}Device": " ".join([_devices[key] for key, valeur in sites.items() if valeur == site]) for site in shared.SHOW_SITES})
+    f"Show{site}Device": " ".join([_devices[key] for key, valeur in sites.items() if valeur == site]) for site in show.SHOW_SITES})
 
 
 def atkShowDevicesCancel(dom):
@@ -152,17 +149,21 @@ def atkShowDevicesCancel(dom):
 
 
 def atkShowDevicesRefresh(dom):
-  dom.setValue("ShowDevicesList", "")
   _fillShowDevices(dom)
 
 
-def atkShowDevicesRAZ(dom):
-  _closeDevices()
-  dom.setValue("ShowDevicesList", "")
+def atkShowDevicesCloseAll(dom):
+  _closeAllDevices()
+  _fillShowDevices(dom)
+
+
+def atkShowDevicesClose(dom, id):
+  _closeDevice(dom.getMark(id))
+  _fillShowDevices(dom)
 
 
 def atkShowSelect(dom):
-  dom.inner("ShowDevices", _SHOW_DIALOG)
+  dom.inner("ShowDevices", _SHOW_DIALOG.format("\n".join(_SHOW_HEADER_ITEM.format(site.lower()) for site in show.SHOW_SITES)))
 
   _fillShowDevices(dom)
 

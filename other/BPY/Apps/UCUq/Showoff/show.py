@@ -16,6 +16,11 @@ from shared import (
 
 W_COUNTDOWN_ = "ShowCountdown"
 
+KIT_COUNT = 3
+
+SHOW_SITES = ("Left", "Middle", "Right")
+SHOW_SITES_INPUT = tuple(f"Show{site}Device" for site in SHOW_SITES)
+
 _COUNTDOWN_COMMIT_DELAY = 2/3
 
 _parts = None

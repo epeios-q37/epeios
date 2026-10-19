@@ -1,9 +1,11 @@
-import copy
+import copy  # noqa: I001
 import math
 import random
 import types
 
 import ucuq
+
+import show
 
 from show import sleepUntil as sleepUntil_
 
@@ -11,7 +13,7 @@ MAX_ = ucuq.ravel.SERVO_MAX
 STEP_ = 50
 DELAY_ = 4/110
 PANEL_DELAY_MULTIPLIER_ = 11
-REMAINDER_ = ucuq.ravel.PANEL_WIDTH * 3
+REMAINDER_ = ucuq.ravel.PANEL_WIDTH * show.KIT_COUNT
 AMOUNT_ = REMAINDER_ * PANEL_DELAY_MULTIPLIER_
 TOTAL_ITERATION_COUNT_ = 100
 PROLOG_ITERATION_COUNT_ = 14

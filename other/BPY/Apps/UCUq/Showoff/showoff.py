@@ -14,16 +14,15 @@ import life
 import partner
 import pink
 import qrcodes
+import show
+import trios
+
 from show import (
   getParts as getParts_,
   countdownIfRequested as countdownIfRequested_,
   connect as connect_,
   syncTest as syncTest_
 )
-import shared
-import subprocess
-import trios
-
 
 DELAY_ = 0.5
 
@@ -113,7 +112,7 @@ def atkShowConnect(dom):
   while cont:
     cont = False
     try:
-      offset = connect_(tuple(dom.getValues(shared.SHOW_SITES_INPUT).values()))
+      offset = connect_(tuple(dom.getValues(show.SHOW_SITES_INPUT).values()))
     except RuntimeError as e:
       dom.alert(f"RuntimeError: {e!s}")
       cont = True

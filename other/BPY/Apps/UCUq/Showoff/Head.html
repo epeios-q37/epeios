@@ -175,3 +175,12 @@
       launchEvent(`${x},${y},${z}|BUTTON|click||(PartnerDisplayOrientation)`);
   });
 </script>
+<script>
+  function removeFollowingSiblings(id) {
+    const element = document.getElementById(id);
+
+    while (element.nextElementSibling) {
+        element.nextElementSibling.remove();
+    }
+  }
+</script>

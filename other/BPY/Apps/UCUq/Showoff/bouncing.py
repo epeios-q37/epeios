@@ -1,8 +1,8 @@
 import math
 
 import ucuq
-
 from show import sleepUntil as sleepUntil_
+import show
 
 
 def animateLoopingBouncingBall_(fb, width, height, timestamp, bounceCount=3):
@@ -92,6 +92,6 @@ def launch(timestamp, parts):
   
   sleepUntil_(timestamp, 0)
 
-  timestamp = animateLoopingBouncingBall_(ucuq.ScreenWall((tuple(screen for screen in parts.screens),)), ucuq.ravel.SCREEN_WIDTH * 3, ucuq.ravel.SCREEN_HEIGHT, timestamp)
+  timestamp = animateLoopingBouncingBall_(ucuq.ScreenWall((tuple(screen for screen in parts.screens),)), ucuq.ravel.SCREEN_WIDTH * show.KIT_COUNT, ucuq.ravel.SCREEN_HEIGHT, timestamp)
 
   return timestamp
