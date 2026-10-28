@@ -269,7 +269,7 @@ def _panelActiveNotesEvents(voice, extremum, panel):
   for note in voice:
     panel\
       .moveTo(_PANEL_WIDTH // 2, 1)\
-      .putString(chr(6 + shift) if note[0] else " ")\
+      .putString(chr(6 + shift) if note[0] else "-")\
       .moveTo(0, 1)\
       .putString(panel.getForwardPeak(( peakWidth - 1 ) * ( note[0] - extremum.minNote ) // ambitus, peakWidth ) if note[0] else panel.getEmptyPeak(peakWidth))
 
@@ -303,7 +303,7 @@ def _ringsRainbowEvents(duration, rings):
 def _getTitleRibbon(title):
   yield from _PANEL_STRIP_WIDTH // 8 * "\06\07\06 \07\06\07 "
 
-  paddedTitle = title + " " * _PANEL_WIDTH
+  paddedTitle = title + "  \06\07\06 \07\06\07 \06\07\06  "
 
   counter = 0
 
@@ -315,29 +315,36 @@ def _getTitleRibbon(title):
 def _panelTitleEvents(title, panels):
   panelStrip = ucuq.PanelStrip(panels)
 
-  titleRibbon = _getTitleRibbon(title)
-  stripText = "".join(next(titleRibbon) for _ in range(_PANEL_STRIP_WIDTH))
+  titleRibbonGenerator = _getTitleRibbon(title)
+  stripText = "".join(next(titleRibbonGenerator) for _ in range(_PANEL_STRIP_WIDTH))
   
   while True:
     panelStrip.moveTo(0,0).putString(stripText)
-    stripText = stripText[1:] + next(titleRibbon)
+    stripText = stripText[1:] + next(titleRibbonGenerator)
 
     yield _PANEL_TITLE_DELAY
 
 
-def _panelDurationEvents(duration, width, panels):
+def _panelDurationEvents(duration, panels):
   yield _START_DELAY
 
   position = _PANEL_WIDTH // 2 + 2
-  width = _PANEL_WIDTH - position
+  width = _PANEL_WIDTH - position - 1
+  delay = duration / ( width * 5 * 5 )
 
-  for i in range(width * 5):
+  for counter in range(width * 5 * 5):
+    if ( fast:= counter % 5 ) == 0:
+      text = panels[0].getForwardPeak(counter // 5, width * 5)
+      x = position
+    else:
+      x = _PANEL_WIDTH - 1
+      text = ""
+
     panels\
-      .moveTo(position, 1)\
-      .putString(panels[0]\
-      .getForwardPeak(i, width * 5))
-    
-    yield duration / (width * 5 )
+      .moveTo(x, 1)\
+      .putString(text + (panels[0].getForwardPeak(fast, 5)))
+
+    yield delay
 
 
 def set(dom):
@@ -426,7 +433,7 @@ def launch(part, timestamp, parts):
       ),
       _screenEvents(pacedNotes, tracking, parts.screens),
       _panelTitleEvents(_PARTS[part][0][1], parts.panels),
-      _panelDurationEvents(maxDuration, _PANEL_WIDTH // 2 - 2, parts.panels),
+      _panelDurationEvents(maxDuration, parts.panels),
       _ringsRainbowEvents(maxDuration, parts.rings)
     ),
     lambda report, user: _sleepCallback(report, user, timestamp),
