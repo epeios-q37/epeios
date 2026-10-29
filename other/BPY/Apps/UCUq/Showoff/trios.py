@@ -267,16 +267,22 @@ def _panelActiveNotesEvents(voice, extremum, panel):
   yield _START_DELAY - .02
 
   for note in voice:
+    pitch = note[0]
+
+    if pitch == 0:
+      peakString = panel.getEmptyPeak(peakWidth)
+      noteChar = "-"
+      shift = False
+    else:
+      peakString = panel.getForwardPeak(( peakWidth - 1 ) * ( note[0] - extremum.minNote ) // ambitus, peakWidth)
+      noteChar = chr(6 + shift)
+      shift = not shift
+
     panel\
-      .moveTo(_PANEL_WIDTH // 2, 1)\
-      .putString(chr(6 + shift) if note[0] else "-")\
       .moveTo(0, 1)\
-      .putString(panel.getForwardPeak(( peakWidth - 1 ) * ( note[0] - extremum.minNote ) // ambitus, peakWidth ) if note[0] else panel.getEmptyPeak(peakWidth))
+      .putString(f"{peakString} {noteChar}")
 
     yield note[1]
-
-    if note[0]:
-      shift = not shift
 
 
 def _ringsRainbowEvent(counter, rings):
@@ -334,7 +340,7 @@ def _panelDurationEvents(duration, panels):
 
   for counter in range(width * 5 * 5):
     if ( fast:= counter % 5 ) == 0:
-      text = panels[0].getForwardPeak(counter // 5, width * 5)
+      text = panels[0].getForwardPeak(width * 5 - counter // 5 - 1, width * 5)
       x = position
     else:
       x = _PANEL_WIDTH - 1
