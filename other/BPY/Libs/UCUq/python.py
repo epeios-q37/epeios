@@ -345,6 +345,7 @@ class Device_:
       self.pendingModules_ = []
 
     if self.commands_ or expression:
+      # print(self.commands_)
       result = self.execute_('\n'.join(self.commands_), expression)
       self.commands_ = []
 

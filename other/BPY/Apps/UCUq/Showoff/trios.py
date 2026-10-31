@@ -1,8 +1,9 @@
 import base64  # noqa: I001
 import copy
 import sys
-import types
 import zlib
+
+from dataclasses import dataclass
 from fractions import Fraction
 
 import shared
@@ -18,17 +19,21 @@ _DEBUG_DURATION = 0
 
 _PANEL_WIDTH = ucuq.ravel.PANEL_WIDTH
 _PANEL_STRIP_WIDTH = _PANEL_WIDTH * _KIT_COUNT
+_PANEL_PEAK_WIDTH = 7 * 5
+_PANEL_DURATION_POSITION = _PANEL_WIDTH // 2 + 2
+_PANEL_SLOW_DURATION_WIDTH = 3
+_PANEL_FAST_DURATION_WIDTH = 3
 
 _SCREEN_HEIGHT = ucuq.ravel.SCREEN_HEIGHT
 _SCREEN_WIDTH = ucuq.ravel.SCREEN_WIDTH
 
 _PIANO_ROLL_KEYBOARD_HEIGHT = 5
 _PIANO_ROLL_HEIGHT = _SCREEN_HEIGHT - _PIANO_ROLL_KEYBOARD_HEIGHT
-_FAST_SCROLL_HEIGHT= 9 * _PIANO_ROLL_HEIGHT // 10
 _PIANO_ROLL_MARKER_WIDTH = 20
 _PIANO_ROLL_VOICE_WIDTH = 39
 _PIANO_ROLL_VOICES_START = (2, 44, 86)
 _PIANO_ROLL_SEPARATOR_POSITIONS = (0, 42, 84, 126)
+_FAST_SCROLL_HEIGHT= 9 * _PIANO_ROLL_HEIGHT // 10
 
 _REGULAR_SCROLL_DELAY = .10
 _START_SCROLL_DELAY = .05
@@ -64,6 +69,24 @@ _NOTE_DOWN_CHARMAP = (
   0b11111,
   0b01110,
 )
+
+@dataclass
+class _Extremum:
+  minNote: int
+  maxNote: int
+
+
+@dataclass
+class _Monitoring:
+  flags: list
+  peaks: list
+
+
+@dataclass
+class _Tracking:
+  voices: list
+  extrema: list[_Extremum]
+  monitoring: _Monitoring
 
 
 def _isDebug():
@@ -106,7 +129,7 @@ def _parseVoice(decompressedString):
 def _buzzerEvent(note, turn, prev, buzzer):
   if note != 0 and prev[turn] == note:
     buzzer.off()
-    ucuq.getDevice()[turn].sleep(0.015)
+    yield 0.015
   else:
     prev[turn] = note
 
@@ -117,8 +140,10 @@ def _buzzerEvents(voice, turn, prev, buzzer, stops):
   yield _START_DELAY
 
   for note in voice:
-    _buzzerEvent(note[0], turn, prev, buzzer)
-    yield note[1]
+    temporisation = (yield from _buzzerEvent(note[0], turn, prev, buzzer)) or 0
+    if temporisation != 0:
+      print(temporisation)
+    yield note[1] - temporisation
 
   stops[turn] = True
 
@@ -204,7 +229,7 @@ def _getExtrema(voice):
       minNote = min(minNote, pitch)
       maxNote = max(maxNote, pitch)
     
-  return types.SimpleNamespace(minNote = minNote, maxNote = maxNote)
+  return _Extremum(minNote = minNote, maxNote = maxNote)
 
 
 def _getPacedNotes(tracking):
@@ -224,9 +249,6 @@ def _getPacedNotes(tracking):
           voice[1][1] += voice[0][1]
         del voice[0]
     elapsed += _REGULAR_SCROLL_DELAY
-
-    if _isDebug() and elapsed >= _DEBUG_DURATION:
-      break
 
   for _ in range(_PIANO_ROLL_HEIGHT):
     pacedNotes.append(((0,) * len(tracking.voices), _START_SCROLL_DELAY if start else _REGULAR_SCROLL_DELAY))
@@ -256,31 +278,38 @@ def _screenEvents(pacedNotes, tracking, screens):
     if i >= _PIANO_ROLL_HEIGHT:
       _screenActiveNotesEvent(pacedNotes[i-_PIANO_ROLL_HEIGHT][0], tracking, screens)
     _screenPianoRollEvent(pacedNotes[i][0], tracking, i, screens)
+
     yield pacedNotes[i][1] - ( _SCREEN_ANTICIPATION if i == 0 else 0 )
 
 
-def _panelActiveNotesEvents(voice, extremum, panel):
-  shift = False
+def _panelActiveNotesEvent(monitoring, panels):
+  notes = ['-' if flag is None else chr( 7 - flag ) for flag in (monitoring.flags)]
+
+  for t, panel in enumerate(panels):
+    peak = monitoring.peaks[t]
+
+    if peak is None:
+      peakString = panel.getEmptyPeak(_PANEL_PEAK_WIDTH)
+    else:
+      peakString = panel.getForwardPeak(peak, _PANEL_PEAK_WIDTH)
+
+    panel\
+      .moveTo(0, 1)\
+      .putString("".join([*notes[:t], peakString, *notes[t+1:]]))
+
+
+def _panelActiveNotesEvents(voice, turn, extremum, monitoring, panels):
   ambitus = extremum.maxNote - extremum.minNote
-  peakWidth = ( _PANEL_WIDTH // 2 - 1  ) * 5  
 
   yield _START_DELAY - .02
 
   for note in voice:
     pitch = note[0]
 
-    if pitch == 0:
-      peakString = panel.getEmptyPeak(peakWidth)
-      noteChar = "-"
-      shift = False
-    else:
-      peakString = panel.getForwardPeak(( peakWidth - 1 ) * ( note[0] - extremum.minNote ) // ambitus, peakWidth)
-      noteChar = chr(6 + shift)
-      shift = not shift
+    monitoring.flags[turn] = None if pitch == 0 else not monitoring.flags[turn]
+    monitoring.peaks[turn] = None if pitch == 0 else ( _PANEL_PEAK_WIDTH - 1 ) * ( pitch - extremum.minNote ) // ambitus
 
-    panel\
-      .moveTo(0, 1)\
-      .putString(f"{peakString} {noteChar}")
+    _panelActiveNotesEvent( monitoring, panels)
 
     yield note[1]
 
@@ -325,31 +354,32 @@ def _panelTitleEvents(title, panels):
   stripText = "".join(next(titleRibbonGenerator) for _ in range(_PANEL_STRIP_WIDTH))
   
   while True:
-    panelStrip.moveTo(0,0).putString(stripText)
+    panelStrip.moveTo(0, 0).putString(stripText)
     stripText = stripText[1:] + next(titleRibbonGenerator)
 
     yield _PANEL_TITLE_DELAY
 
 
+def _panelDurationEvent(counter, panels):
+  if ( fast:= counter % 15 ) == 0:
+    x = _PANEL_DURATION_POSITION
+    text = panels[0].getForwardPeak(_PANEL_SLOW_DURATION_WIDTH * 5 - counter // 15 - 1, _PANEL_SLOW_DURATION_WIDTH * 5)
+  else:
+    x = _PANEL_DURATION_POSITION + _PANEL_SLOW_DURATION_WIDTH
+    text = ""
+
+  panels\
+    .moveTo(x, 1)\
+    .putString(text + (panels[0].getForwardPeak(fast, 15)))
+
+
 def _panelDurationEvents(duration, panels):
   yield _START_DELAY
 
-  position = _PANEL_WIDTH // 2 + 2
-  width = _PANEL_WIDTH - position - 1
-  delay = duration / ( width * 5 * 5 )
+  delay = duration / ( _PANEL_SLOW_DURATION_WIDTH * _PANEL_FAST_DURATION_WIDTH * 5 * 5)
 
-  for counter in range(width * 5 * 5):
-    if ( fast:= counter % 5 ) == 0:
-      text = panels[0].getForwardPeak(width * 5 - counter // 5 - 1, width * 5)
-      x = position
-    else:
-      x = _PANEL_WIDTH - 1
-      text = ""
-
-    panels\
-      .moveTo(x, 1)\
-      .putString(text + (panels[0].getForwardPeak(fast, 5)))
-
+  for counter in range(_PANEL_SLOW_DURATION_WIDTH * _PANEL_FAST_DURATION_WIDTH * 5 * 5):
+    _panelDurationEvent(counter, panels)
     yield delay
 
 
@@ -357,10 +387,13 @@ def set(dom):
   html = ""
 
   for part in _PARTS:
-    selected = False # or part[0][0] == "Bartok"
+    selected = part[0][0] == "Bartok" if _isDebug() else False
     html += f'<option value="{_PARTS.index(part)}"{" selected" if selected else ""}>{part[0][0]}</option>'
 
   dom.inner("ShowTrios", html)
+
+  if _isDebug():
+    dom.removeAttribute("ShowCountdown", "checked")
 
 
 def _sleepCallback(report, user, timestamp):
@@ -369,6 +402,9 @@ def _sleepCallback(report, user, timestamp):
     user.timestamp = report.cumul
 
   sleepUntil_(timestamp + report.cumul, 0)  # The commits are handled directly.
+
+  if _isDebug() and report.cumul > _DEBUG_DURATION:
+    return False
 
   return any(stop == False for stop in user.stops)
 
@@ -385,9 +421,13 @@ def _getDuration(voice):
 def launch(part, timestamp, parts):
   stops = [False] * _KIT_COUNT
 
-  tracking = types.SimpleNamespace(
+  tracking = _Tracking(
     voices = [],
     extrema = [],
+    monitoring = _Monitoring(
+      flags = [None] * _KIT_COUNT,
+      peaks = [None] * _KIT_COUNT
+    )
   )
 
   parts.panels\
@@ -427,13 +467,16 @@ def launch(part, timestamp, parts):
 
   parts.rings.write()
 
+  _panelActiveNotesEvent(tracking.monitoring, parts.panels)
+  _panelDurationEvent(0, parts.panels)
+
   # ucuq.gcDisable()
 
   timestamp += ucuq.dispatchEvents(
     (
       *(element for turn, voice in enumerate(tracking.voices) for element in (
           _ringsActiveNotesEvents(voice, turn, parts.rings),
-          _panelActiveNotesEvents(voice, tracking.extrema[turn], parts.panels[turn]),
+          _panelActiveNotesEvents(voice, turn, tracking.extrema[turn], tracking.monitoring, parts.panels),
           _buzzerEvents(voice, turn, prev, parts.buzzers[turn], stops),
         )
       ),
