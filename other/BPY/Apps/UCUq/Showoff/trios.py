@@ -44,7 +44,7 @@ _RING_RAINBOW_DELAY = 1/3
 
 _START_DELAY = (_FAST_SCROLL_HEIGHT * _START_SCROLL_DELAY) + _REGULAR_SCROLL_DELAY * (_PIANO_ROLL_HEIGHT - _FAST_SCROLL_HEIGHT)
 
-_COMMIT_MAX_DELAY = .34
+_COMMIT_MAX_DELAY = .233
 
 _SCREEN_ANTICIPATION = 0
 
@@ -126,24 +126,24 @@ def _parseVoice(decompressedString):
   return noteList
 
 
-def _buzzerEvent(note, turn, prev, buzzer):
-  if note != 0 and prev[turn] == note:
-    buzzer.off()
-    yield 0.015
-  else:
-    prev[turn] = note
+def _buzzerEvents(voice, turn, buzzer, stops):
+  prevPitch = 0
 
-  buzzer.play(note)
-
-
-def _buzzerEvents(voice, turn, prev, buzzer, stops):
   yield _START_DELAY
 
   for note in voice:
-    temporisation = (yield from _buzzerEvent(note[0], turn, prev, buzzer)) or 0
-    if temporisation != 0:
-      print(temporisation)
-    yield note[1] - temporisation
+    pitch = note[0]
+    delay = note[1]
+    
+    if pitch != 0 and prevPitch == pitch:
+      buzzer.off()
+      delay -= .15
+      yield 0.15
+    else:
+      prevPitch = pitch
+
+    buzzer.play(pitch)
+    yield delay
 
   stops[turn] = True
 
@@ -398,6 +398,7 @@ def set(dom):
 
 def _sleepCallback(report, user, timestamp):
   if report.cumul - user.timestamp >= _COMMIT_MAX_DELAY:
+    ucuq.gcCollect()
     ucuq.commit()
     user.timestamp = report.cumul
 
@@ -436,8 +437,6 @@ def launch(part, timestamp, parts):
     .createChar(7, _NOTE_DOWN_CHARMAP)
 
   timestamp = timestamp + 1
-  prev = [None] * len(parts.buzzers)
-
   sleepUntil_(timestamp, 0)
 
   maxDuration = 0
@@ -477,7 +476,7 @@ def launch(part, timestamp, parts):
       *(element for turn, voice in enumerate(tracking.voices) for element in (
           _ringsActiveNotesEvents(voice, turn, parts.rings),
           _panelActiveNotesEvents(voice, turn, tracking.extrema[turn], tracking.monitoring, parts.panels),
-          _buzzerEvents(voice, turn, prev, parts.buzzers[turn], stops),
+          _buzzerEvents(voice, turn, parts.buzzers[turn], stops),
         )
       ),
       _screenEvents(pacedNotes, tracking, parts.screens),
@@ -681,14 +680,14 @@ _VOICES_MAIN_COLORS = (
 )
 
 _VOICES_REPEATER_COLORS = (
-  (4,1,1),
-  (1,4,1),
-  (1,1,4)
+  (5,1,1),
+  (1,5,1),
+  (1,1,5)
 )
 
 _RING_SPOTS = (
   (1,2),
-  (6,7),
-  (4,5),
-  (0,3)
+  (0,3),
+  (7,4),
+  (5,6)
 )
