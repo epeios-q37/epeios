@@ -1,0 +1,34 @@
+<canvas id="qr"></canvas>
+<script type="module">
+import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm'; // héberge-la toi-même en prod
+
+const ALLOWED_DOMAINS = ['zelbinium.org', 'faas.q37.info'];
+
+let timer;
+
+function isAllowedHost(hostname) {
+  return ALLOWED_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d));
+}
+
+async function start() {
+  clearInterval(timer);
+  const { id, rk, ttl } = await (await fetch('/qrbeam.php?action=create', { method: 'POST' })).json();
+  await QRCode.toCanvas(document.getElementById('qr'), `${location.origin}/?qrpair=${id}`, { width: 256 });
+  const deadline = Date.now() + ttl * 1000;
+
+  timer = setInterval(async () => {
+    if (Date.now() > deadline) return start(); // nouveau QR
+    const r = await fetch(`/qrbeam.php?action=poll&id=${id}&rk=${rk}`);
+    if (!r.ok) return start();
+    const { url } = await r.json();
+    if (!url) return;
+    clearInterval(timer);
+    const target = new URL(url);
+    if (!isAllowedHost(target.hostname)) {
+      return start();
+    }
+    location.replace(target.href);
+  }, 1500);
+}
+start();
+</script>

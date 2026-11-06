@@ -44,7 +44,8 @@ _RING_RAINBOW_DELAY = 1/3
 
 _START_DELAY = (_FAST_SCROLL_HEIGHT * _START_SCROLL_DELAY) + _REGULAR_SCROLL_DELAY * (_PIANO_ROLL_HEIGHT - _FAST_SCROLL_HEIGHT)
 
-_COMMIT_MAX_DELAY = .233
+_COMMIT_MAX_DELAY = .22
+_GC_MAX_DELAY = 0 # _COMMIT_MAX_DELAY
 
 _SCREEN_ANTICIPATION = 0
 
@@ -397,8 +398,10 @@ def set(dom):
 
 
 def _sleepCallback(report, user, timestamp):
-  if report.cumul - user.timestamp >= _COMMIT_MAX_DELAY:
+  if _GC_MAX_DELAY != 0 and report.cumul - user.timestamp >= _GC_MAX_DELAY:
     ucuq.gcCollect()
+
+  if report.cumul - user.timestamp >= _COMMIT_MAX_DELAY:
     ucuq.commit()
     user.timestamp = report.cumul
 
