@@ -1,16 +1,13 @@
-__version__ = "2025-08-20"
+__version__ = "2025-11-07"
 
 import ucuq, time
 
-_BLE_FALLBACK_SERVICE_UUID = "b6000102-1ba1-4916-9493-e4279b6988ac"
-_BLE_CHAR_UUID = "56562c57-1508-4242-be45-976c42598a95"
-
 try:
   import ble
-  _BLE = True
+  BLE = True
 except Exception as e:
   # raise e
-  _BLE = False
+  BLE = False
   
 
 def show(script):
@@ -34,8 +31,17 @@ def callback(script, expression):
     return eval(expression)
 
 
-if _BLE:
-  ble.launch(_BLE_FALLBACK_SERVICE_UUID, _BLE_CHAR_UUID, lambda message: callback(*message.split('\0')))
+if BLE:
+  def bleOn(state = True):
+    if state:
+      ble.launch(lambda message: callback(*message.split('\0')))
+    else:
+      ble.close()
+
+  def bleOff():
+    bleOn(False)
+
+  bleOn()
 
 
 try:

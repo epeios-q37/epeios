@@ -173,7 +173,7 @@ $qrCodeId = "QRCode";
         </span>
       </span>
       <a href="https://zelbinium.com" target="_blank">
-        <img title="Go to next level! Create own applications!"
+        <img title="Go to next level! Create your own applications!"
           src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAACXBIWXMAAAsTAAALEwEAmpwYAAADqUlEQVQ4y31UXUwcVRQ+d+bO7O/szrI7LARk+bGpg0vbtApbSy3SDU26oqaN+qBJbRoTE1OjNn3wwaT6oD5pjFETTTT6YIxJi+mDv4lELW2hVqhARRbaUNT9aQv7OzC/14ehy7jDch9Ozpz7ne9+5557Bl09HWc4L+3xYzdPO3mK5SnGj7AXaC9CbkS5AJwAACADWSGGBEbZ0IpELRhKTpdzupTTynmtWELRaBQAEEKmNRfcWZVP65YVQFGUaSlCCPx/WSO1fHsKJoSwGA12O3q7A5EOwRmolw0us4Sv3ShPXk13dW395NNvisWVSoJVTiVCCKEFQXiiGx9LcHdFOGBdeYm+VUA6YfkAv227mEjsb2lpHBmZUFWtVnWmjwEgVyJvnylN3ijcyusGWYf27Yv2xGK/j89IklxLUSWIAeC7aR0h4w73OvTAwH0A5NLY1Ia1VGCmT9W6xYawr/+hnRPj08m5v02A1dpFUbW6c+TpBxkWf/TxECGb9auayEpBCOlorTt8KPbjD6MXLs5UbQGAYRh2adSGb+Sl4/2yrLzz7te1HpFdI2WXE9/XFutp++DDb1PpHACcOvXc0aOPAMChx3p2bG8xwY/GG8V2t5WumsjPMSePx86fn/3iqzEzeGBgLwAdCnInXn7y8cO7CSFb2nwvPCsm+kJWadV39PwznQiM1978voJQVEVVV+PxXWNjU02NPADsjTWNjKaFOmbj0gBgZ6cvEW969Y3hm7elClE6vcQwjmDQNzW90BDmXU4sKzC/UGwOs9YOrBMxGL14JPLlUPLi5Yy12NS/2bs7mlOp5cXFbF3Q19cbuTSeTl4vCkHG51mbeQSW9h8bDKWz0vufJaua/efMfP/+3efO/TFx5Toh5OBA9K/5pctTOUnSHu71IoCuBoNGQAuCAAA72tmDe7hX3ltUVMM6loSQTOa2rmk/Df9WKsv1Idfwr7Nz8zd1Hf5JrQ7ucbX61QtJo6Qg1LtLfKqHFu/h3jojZZY1RSMUQg4HdrkdYYGPtDarqvbzL1fsE289DyGEywrc306Hm5nPX48Y7gByh7C73uGpd3hCs3P500OjZ8+ObDgTFclrM3xvp+hi0QOdjm2iry7sJ9ibzdPXFsoTk+l0tgCA7OdX/WfXtkRRtCPsyWbOJgVSmwy01TEH1Y6p9BfNDcVZP4e9PuzhaVeAZgMU66MwhzCHKA+i3ICcAABklZAVopdBL+lakSh5XV7WV3NaOaeW82qh9B+JkPDUpfvU0gAAAABJRU5ErkJggg==" />
       </a>
       <!--a href="https://atlastk.org" target="_blank">
@@ -184,7 +184,7 @@ $qrCodeId = "QRCode";
     <a style="color: transparent;" target="_blank" href="<?= $url ?>">
       <div title="<?= $url ?>" style="display: none; justify-content: space-around; padding: 5px 0px 10px"
         id="<?= $qrCodeId ?>"></div>
-    </a>
+      </a>
     <?php
     $sponsors = 'sponsors.php';
     if (file_exists($sponsors)) {

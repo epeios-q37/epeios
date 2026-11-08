@@ -16,7 +16,7 @@ _PROTOCOL_LABEL = "c37cc83e-079f-448a-9541-5c63ce00d960"
 _PROTOCOL_VERSION = "1"
 SPECS_VERSION_ = 0
 
-_DATA_SIZE_MAX = 2048
+_DATA_SIZE_MAX = 8192
 
 # Connection status.
 _S_FAILURE = const(0)
@@ -141,12 +141,8 @@ _dataBegin = 0
 
 _buffer_ = bytes() # Deprecated
 
-_counter = 0
-
 def _readFromBuffer(size, buffer):
-  global _dataAmount, _dataBegin, _counter
-
-  _counter += 1
+  global _dataAmount, _dataBegin
 
   begin = _dataBegin
   _dataAmount -= size
@@ -174,7 +170,7 @@ async def _fillBuffer(size):
 
 # Returning a received buffer from a coroutine locks the buffer…
 async def _recv(size, buffer):
-  global _dataAmount, _dataBegin, _counter
+  global _dataAmount, _dataBegin
 
   if size <= _DATA_SIZE_MAX:
     if size > _dataAmount:
@@ -351,7 +347,7 @@ def decompress(buffer):
   
 
 async def serve(callback):
-  bytesBuffer = memoryview(bytearray(2048))
+  bytesBuffer = memoryview(bytearray(_DATA_SIZE_MAX))
 
   while True:
     request = await _recvUInt()

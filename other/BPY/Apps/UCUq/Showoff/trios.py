@@ -44,8 +44,7 @@ _RING_RAINBOW_DELAY = 1/3
 
 _START_DELAY = (_FAST_SCROLL_HEIGHT * _START_SCROLL_DELAY) + _REGULAR_SCROLL_DELAY * (_PIANO_ROLL_HEIGHT - _FAST_SCROLL_HEIGHT)
 
-_COMMIT_MAX_DELAY = .22
-_GC_MAX_DELAY = 0 # _COMMIT_MAX_DELAY
+_COMMIT_DELAY = .05
 
 _SCREEN_ANTICIPATION = 0
 
@@ -138,8 +137,8 @@ def _buzzerEvents(voice, turn, buzzer, stops):
     
     if pitch != 0 and prevPitch == pitch:
       buzzer.off()
-      delay -= .15
-      yield 0.15
+      delay -= .01
+      yield 0.01
     else:
       prevPitch = pitch
 
@@ -398,14 +397,7 @@ def set(dom):
 
 
 def _sleepCallback(report, user, timestamp):
-  if _GC_MAX_DELAY != 0 and report.cumul - user.timestamp >= _GC_MAX_DELAY:
-    ucuq.gcCollect()
-
-  if report.cumul - user.timestamp >= _COMMIT_MAX_DELAY:
-    ucuq.commit()
-    user.timestamp = report.cumul
-
-  sleepUntil_(timestamp + report.cumul, 0)  # The commits are handled directly.
+  sleepUntil_(timestamp + report.cumul, _COMMIT_DELAY)
 
   if _isDebug() and report.cumul > _DEBUG_DURATION:
     return False
@@ -457,7 +449,7 @@ def launch(part, timestamp, parts):
 
   cb = ucuq.getCommitBehavior()
 
-  if True:
+  if _COMMIT_DELAY != 0:
     #    eventList.append(getCommitEvents_(maxDuration + START_DELAY_))
     cb = ucuq.setCommitBehavior(ucuq.CB_MANUAL)
 
@@ -473,6 +465,8 @@ def launch(part, timestamp, parts):
   _panelDurationEvent(0, parts.panels)
 
   # ucuq.gcDisable()
+
+  ucuq.bleOff()
 
   timestamp += ucuq.dispatchEvents(
     (
@@ -493,6 +487,8 @@ def launch(part, timestamp, parts):
   )
 
   # ucuq.gcEnable()
+
+  ucuq.bleOn()
 
   ucuq.setCommitBehavior(cb)
 

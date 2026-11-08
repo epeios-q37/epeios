@@ -88,26 +88,21 @@ def connect(deviceList):
   
   return ntpOffset_
 
-_lastCollectTimestamp = 0
+_prevTimestamp = 0
 
 def sleepUntil(timestamp, commitDelay):
-  global _lastCommitTimestamp, _lastCollectTimestamp
+  global _lastCommitTimestamp, _prevTimestamp
 
-  ucuq.ntpSleepUntil(timestamp - ntpOffset_)
+  if timestamp - _prevTimestamp != 0:
+    ucuq.ntpSleepUntil(timestamp - ntpOffset_)
+    _prevTimestamp = timestamp
 
-  if _lastCollectTimestamp == 0:
-    _lastCollectTimestamp = timestamp
-  if timestamp - _lastCollectTimestamp > .1:
-    _lastCollectTimestamp = timestamp
-    # ucuq.gcCollect()
-
-  if commitDelay > 0:
-    if _lastCommitTimestamp == 0:
-      _lastCommitTimestamp = timestamp
-    if timestamp - _lastCommitTimestamp > commitDelay:
-      _lastCommitTimestamp = timestamp
-      # ucuq.gcCollect()
-      ucuq.commit()
+    if commitDelay > 0:
+      if _lastCommitTimestamp == 0:
+        _lastCommitTimestamp = timestamp
+      if timestamp - _lastCommitTimestamp > commitDelay:
+        _lastCommitTimestamp = timestamp
+        ucuq.commit()
 
 
 DIGITS_ = (
