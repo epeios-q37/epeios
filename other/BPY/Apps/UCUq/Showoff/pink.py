@@ -6,7 +6,7 @@ import shared
 import show
 
 from shared import getRainbowColor as getRainbowColor_
-from show import sleepUntil as sleepUntil_
+from show import sleepUntil as _sleepUntil
 
 COMMIT_DELAY_ = 0 # No delayed commit
 
@@ -29,7 +29,7 @@ def durationCallback_(timestamp, helper, parts):
     
   show.displayRingGauges(parts)
   
-  sleepUntil_(timestamp, COMMIT_DELAY_)
+  _sleepUntil(timestamp, COMMIT_DELAY_)
 
 
 def launch(timestamp, parts):
@@ -39,7 +39,7 @@ def launch(timestamp, parts):
   
   parts.panels.backlightOff().uploadUpwardGaugeChars()
 
-  sleepUntil_(timestamp, COMMIT_DELAY_)
+  _sleepUntil(timestamp, COMMIT_DELAY_)
 
   parts.panels.backlightOn()
 

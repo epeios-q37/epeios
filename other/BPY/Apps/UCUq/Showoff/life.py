@@ -2,7 +2,7 @@ import random
 
 import ucuq
 
-from show import sleepUntil as sleepUntil_
+from show import sleepUntil as _sleepUntil
 
 
 GRID_WIDTH_ = 32
@@ -107,7 +107,7 @@ def runDemo_(screen, ring, panel, timestamp):
 
   timestamp += 1
 
-  sleepUntil_(timestamp, 0)
+  _sleepUntil(timestamp, 0)
 
   while True:
     drawGrid_(screen, grid)
@@ -127,7 +127,7 @@ def runDemo_(screen, ring, panel, timestamp):
 
     if isExtinct or isStagnant or isExhausted:
       timestamp += 1
-      sleepUntil_(timestamp, 0)
+      _sleepUntil(timestamp, 0)
       grid = createRandomGrid_()
       generation = 0
       previousPopulation = countPopulation_(grid)
@@ -140,7 +140,7 @@ def runDemo_(screen, ring, panel, timestamp):
     generation += 1
 
     timestamp += TARGET_DURATION_
-    sleepUntil_(timestamp, 0)
+    _sleepUntil(timestamp, 0)
 
   return timestamp
 

@@ -48,37 +48,78 @@ def getParts():
   return _parts
 
 
-def getNTPTime_(host="pool.ntp.org"):
-  port = 123
-  buf = 1024
-  address = (host, port)
-  msg = b'\x1b' + 47 * b'\0'
+def _computeNtpOffset(ntpServer="fr.pool.ntp.org", samples=8) -> float:
+  ntpToUnixNs = 2208988800 * 1_000_000_000
 
-  NTP_DELTA = 2208988800
+  packet = bytearray(48)
+  packet[0] = 0b00011011  # LI = 0, VN = 3, Mode = 3
+  
+  bestOffsetNs = 0
+  minDelayNs = float('inf')
+  
+  with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+    sock.settimeout(1.5)
+    
+    for _ in range(samples):
+      try:
+        t1 = time.time_ns()
+        sock.sendto(packet, (ntpServer, 123))
+        data, _ = sock.recvfrom(48)
+        t4 = time.time_ns()  # T4 en nanosecondes
+        
+        # Extraction T2 et T3 (secondes et fractions de seconde)
+        t2Int, t2Frac = struct.unpack("!II", data[32:40])
+        t3Int, t3Frac = struct.unpack("!II", data[40:48])
+        
+        # Conversion immédiate en nanosecondes strictes (entiers)
+        t2 = int((t2Int * 1_000_000_000) + (t2Frac * 1_000_000_000) // 2**32) - ntpToUnixNs
+        t3 = int((t3Int * 1_000_000_000) + (t3Frac * 1_000_000_000) // 2**32) - ntpToUnixNs
+        
+        # Calcul du délai réseau aller-retour (RTT)
+        delayNs = (t4 - t1) - (t3 - t2)
+        
+        # Si cette tentative a subi moins de perturbations réseau, on la garde
+        if delayNs < minDelayNs:
+          minDelayNs = delayNs
+          bestOffsetNs = ((t2 - t1) + (t3 - t4)) // 2
+          
+      except (socket.timeout, socket.error):
+        continue
+        
+  if minDelayNs == float('inf'):
+    raise RuntimeError("Impossible de contacter le serveur NTP de manière fiable.")
+    
+  # Retourne l'offset sous forme de float en secondes pour votre usage
+  return bestOffsetNs / 1_000_000_000
 
-  try:
-    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    client.settimeout(2)
-    client.sendto(msg, address)
-    data, _ = client.recvfrom(buf)
-  except TimeoutError as e:
-    raise RuntimeError("Erreur NTP : " + str(e))
 
-  t = struct.unpack("!12I", data)[10]
-  ntp_time = t - NTP_DELTA
-
-  return ntp_time
+def getNtpTime(offset: float | None = None) -> float:
+  return (time.time_ns() / 1_000_000_000) + _ntpOffset if offset is None else offset
 
 
-ntpOffset_ = 0
+def waitUntilNtpTime(targetTimestamp: float, offset: float | None = None):
+  while True:
+    currentSyncedTime = getNtpTime(offset)
+    remaining = targetTimestamp - currentSyncedTime
+    
+    if remaining <= 0:
+      break
+      
+    if remaining > 0.003:
+      time.sleep(remaining - 0.0015)  # Réveil anticipé pour ne pas rater la cible
+    else:
+      pass
+
+
+_ntpOffset = 0
 
   
 def connect(deviceList):
-  global ntpOffset_, _parts
+  global _ntpOffset, _parts
   
-  ntpOffset_ = time.time() - getNTPTime_()
+  _ntpOffset = _computeNtpOffset()
   
-  print(f"Décalage horaire : {ntpOffset_} s.")
+  print(f"Décalage horaire : {_ntpOffset} s.")
   
   ucuq.setDevice(deviceList)
 
@@ -86,15 +127,18 @@ def connect(deviceList):
 
   ucuq.ntpSync()
   
-  return ntpOffset_
+  return _ntpOffset
 
 _prevTimestamp = 0
 
+_checkpoint = 0
+
+
 def sleepUntil(timestamp, commitDelay):
-  global _lastCommitTimestamp, _prevTimestamp
+  global _lastCommitTimestamp, _prevTimestamp, _checkpoint
 
   if timestamp - _prevTimestamp != 0:
-    ucuq.ntpSleepUntil(timestamp - ntpOffset_)
+    ucuq.ntpSleepUntil(timestamp - _ntpOffset)
     _prevTimestamp = timestamp
 
     if commitDelay > 0:
@@ -103,6 +147,11 @@ def sleepUntil(timestamp, commitDelay):
       if timestamp - _lastCommitTimestamp > commitDelay:
         _lastCommitTimestamp = timestamp
         ucuq.commit()
+
+      if _checkpoint + 4 < timestamp:
+        print(timestamp)
+        _checkpoint = timestamp
+        waitUntilNtpTime(timestamp - 1.25)
 
 
 DIGITS_ = (

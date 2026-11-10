@@ -6,7 +6,7 @@ import shared
 import show
 
 from shared import getRainbowColor as getRainbowColor_
-from show import sleepUntil as sleepUntil_
+from show import sleepUntil as _sleepUntil
 
 COMMIT_DELAY_ = 0 # No delayed commit
 
@@ -33,12 +33,12 @@ def launch(timestamp, parts):
   parts.screens.powerOff().draw(INDY_, 128).show()
   parts.panels.backlightOff().uploadUpwardGaugeChars()
 
-  sleepUntil_(timestamp, COMMIT_DELAY_)
+  _sleepUntil(timestamp, COMMIT_DELAY_)
 
   parts.screens.powerOn()
   parts.panels.backlightOn()
 
-  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, parts), lambda report: sleepUntil_(timestamp + report.cumul, COMMIT_DELAY_))
+  timestamp += ucuq.playVoices(shared.INDY_VOICES, shared.INDY_TEMPO, lambda freq: callback_(freq, helper, parts), lambda report: _sleepUntil(timestamp + report.cumul, COMMIT_DELAY_))
   
   parts.screens.hLine(0, 0, 128, 0)
   

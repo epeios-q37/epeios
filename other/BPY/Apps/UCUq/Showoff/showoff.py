@@ -15,6 +15,7 @@ import partner
 import pink
 import qrcodes
 import show
+import threading
 import trios
 
 from show import (
@@ -134,13 +135,13 @@ def atkShowTest():
 
 def atkShowIndy(dom):
   parts = getParts_()
-  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, parts)
+  timestamp = countdownIfRequested_(dom, show.getNtpTime() + DELAY_, parts)
   indy.launch(timestamp, parts)
 
 
 def atkShowPink(dom):
   parts = getParts_()
-  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, parts)
+  timestamp = countdownIfRequested_(dom, show.getNtpTime() + DELAY_, parts)
   pink.launch(timestamp, parts)
 
 
@@ -153,16 +154,24 @@ SHOWS_ = {
   "Canon":  lambda timestamp, parts: canon.launch(timestamp, parts),
 }
 
+_stop = False
+
+def stopCallback():
+  return _stop
+
 
 def atkShowPlay(dom):
-  parts = getParts_()
-  show = dom.getValue("Show")
-  timestamp = countdownIfRequested_(dom, time.time() + DELAY_, parts)
-  if show in SHOWS_:
-    SHOWS_[show](timestamp, parts)
-  else:
-    trios.launch(int(show), timestamp, parts)
+  global _stop
 
+  _stop = False
+
+  parts = getParts_()
+  showId = dom.getValue("Show")
+  timestamp = countdownIfRequested_(dom, show.getNtpTime() + DELAY_, parts)
+  if show in SHOWS_:
+    SHOWS_[showId](timestamp, parts)
+  else:
+    threading.Thread(target=trios.launch, args=(showId, timestamp, parts, stopCallback)).start()
 
 def atkQRCodesSelect(dom, id):
   dom.setValue("QRCodesText", dom.getValue(id))
@@ -173,4 +182,9 @@ def atkQRCodesDisplay(dom):
 
 
 if os.environ.get("PREFIX", "").startswith("/data/data/com.termux"):
-  atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"')) 
+  atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"'))
+
+def atkStop(dom):
+  global _stop
+
+  _stop = True
