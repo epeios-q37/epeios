@@ -124,12 +124,12 @@ def atkShowConnect(dom):
     dom.alert(f"Décalage horaire : {offset} s !")
 
 
-def atkShowSync(dom):
+def atkShowSyncAdjust(dom):
   ucuq.ntpSync()
   syncTest_()
 
 
-def atkShowTest():
+def atkShowSyncTest():
   syncTest_()  
 
 
@@ -154,24 +154,16 @@ SHOWS_ = {
   "Canon":  lambda timestamp, parts: canon.launch(timestamp, parts),
 }
 
-_stop = False
-
-def stopCallback():
-  return _stop
-
 
 def atkShowPlay(dom):
-  global _stop
-
-  _stop = False
-
   parts = getParts_()
   showId = dom.getValue("Show")
   timestamp = countdownIfRequested_(dom, show.getNtpTime() + DELAY_, parts)
   if show in SHOWS_:
     SHOWS_[showId](timestamp, parts)
   else:
-    threading.Thread(target=trios.launch, args=(showId, timestamp, parts, stopCallback)).start()
+    threading.Thread(target=trios.launch, args=(showId, timestamp, parts)).start()
+
 
 def atkQRCodesSelect(dom, id):
   dom.setValue("QRCodesText", dom.getValue(id))
@@ -184,7 +176,14 @@ def atkQRCodesDisplay(dom):
 if os.environ.get("PREFIX", "").startswith("/data/data/com.termux"):
   atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"'))
 
-def atkStop(dom):
-  global _stop
 
-  _stop = True
+def atkShowStop(dom):
+  show.setState(show.State.STOP)
+
+
+def atkShowSuspendRestart(dom, id):
+  if show.toggleSuspendRestart(lambda: show.getParts().buzzers.off()):
+    dom.setValue(id, "Resume")
+  else:
+    dom.setValue(id, "Suspend")
+

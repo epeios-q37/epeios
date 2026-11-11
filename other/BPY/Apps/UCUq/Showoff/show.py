@@ -1,5 +1,6 @@
 import base64  # noqa: I001
 import collections
+from enum import IntEnum, auto
 import random
 import socket
 import struct
@@ -133,9 +134,69 @@ _prevTimestamp = 0
 
 _checkpoint = 0
 
+class _State(IntEnum):
+  PENDING = auto()
+  PLAYING = auto()
+  STOPPING = auto()
+  SUSPENDED = auto()
+
+_state = _State.PENDING
+_suspendTimestamp = 0
+_suspendDelta = 0
+_suspendCallback = None
+
+class State(IntEnum):
+  STOP = auto()
+  SUSPEND = auto()
+  RESUME = auto()
+
+
+def setState(state: State, callback = None):
+  global _state, _suspendTimestamp, _suspendDelta, _suspendCallback
+
+  match state:
+    case State.STOP:
+      _state = _State.STOPPING
+    case State.SUSPEND:
+      _suspendTimestamp = getNtpTime()
+      _suspendCallback = callback
+      _state = _State.SUSPENDED
+    case State.RESUME:
+      _suspendDelta += getNtpTime() - _suspendTimestamp
+      _state = _State.PLAYING
+    case _:
+      raise(ValueError)
+
+
+def toggleSuspendRestart(callback = None):
+  if _state == _State.PLAYING:
+    setState(State.SUSPEND, callback)
+    return True
+  else:
+    setState(State.RESUME)
+    return False
+
 
 def sleepUntil(timestamp, commitDelay):
-  global _lastCommitTimestamp, _prevTimestamp, _checkpoint
+  global _lastCommitTimestamp, _prevTimestamp, _checkpoint, _state, _suspendDelta, _suspendCallback
+
+  if _state == _State.PENDING:
+    _suspendDelta = 0
+    _state = _State.PLAYING
+
+  while _state == _State.SUSPENDED:
+    if _suspendCallback is not None:
+      _suspendCallback()
+      ucuq.commit()
+      _suspendCallback = None
+    time.sleep(1)
+
+  if _state == _State.STOPPING:
+    _state = _State.PENDING
+
+    return False
+
+  timestamp += _suspendDelta
 
   if timestamp - _prevTimestamp != 0:
     ucuq.ntpSleepUntil(timestamp - _ntpOffset)
@@ -152,6 +213,8 @@ def sleepUntil(timestamp, commitDelay):
         print(timestamp)
         _checkpoint = timestamp
         waitUntilNtpTime(timestamp - 1.25)
+
+  return True
 
 
 DIGITS_ = (

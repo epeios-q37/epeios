@@ -1,8 +1,8 @@
 import math
 
+import show
 import ucuq
 from show import sleepUntil as _sleepUntil
-import show
 
 
 def animateLoopingBouncingBall_(fb, width, height, timestamp, bounceCount=3):

@@ -143,8 +143,9 @@ def _buzzerEvents(voice, turn, buzzer, stops):
     
     if pitch != 0 and prevPitch == pitch:
       buzzer.off()
-      delay -= .01
-      yield 0.01
+      rest = min(delay / 2, 0.03)
+      delay -= rest
+      yield rest
     else:
       prevPitch = pitch
 
@@ -181,8 +182,6 @@ def _ringsActiveNotesEvents(voice, turn, rings):
     yield _START_DELAY / 9
 
   counter = 0
-
-  #yield _START_DELAY
 
   for note in voice:
     _ringsActiveNotesEvent(note[0], turn, counter, rings)
@@ -412,10 +411,8 @@ def set(dom):
     dom.removeAttribute("ShowCountdown", "checked")
 
 
-def _sleepCallback(report, tracking, startTimestamp, stopCallback):
-  _sleepUntil(startTimestamp + report.cumul, _COMMIT_DELAY)
-
-  if stopCallback():
+def _sleepCallback(report, tracking, startTimestamp):
+  if not _sleepUntil(startTimestamp + report.cumul, _COMMIT_DELAY):
     return False
 
   if _isDebug() and report.cumul > _DEBUG_DURATION:
@@ -433,7 +430,7 @@ def _getDuration(voice):
   return duration
 
 
-def launch(scoreId, timestamp, parts, stopCallback):
+def launch(scoreId, timestamp, parts):
   stops = [False] * _KIT_COUNT
 
   tracking = _Tracking(
@@ -500,7 +497,7 @@ def launch(scoreId, timestamp, parts, stopCallback):
       _panelDurationEvents(maxDuration, parts.panels),
       _ringsRainbowEvents(maxDuration, parts.rings)
     ),
-    lambda report, tracking: _sleepCallback(report, tracking, timestamp, stopCallback),
+    lambda report, tracking: _sleepCallback(report, tracking, timestamp),
     stops = stops
   )
 
