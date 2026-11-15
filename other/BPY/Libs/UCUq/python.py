@@ -254,7 +254,8 @@ def readingThread(proxy):
       readString_(proxy.socket) # For future use
       raise Error("Puzzled!")
     elif answer == A_DISCONNECTED_:
-      raise Error(f"Disconnected from device '{proxy.id}'!")
+      print(f"Disconnected from device '{proxy.id}'!")
+      break
     else:
       raise Error(f"Unknown answer from device '{proxy.id}'!")
 

@@ -27,6 +27,9 @@ from show import (
 
 DELAY_ = 0.5
 
+W_SHOW_SUSPEND_RESTART_BUTTON = "ShowSuspendRestart"
+W_SHOW_CONTROL_GROUP = "ShowControl"
+
 def combinaisons_(A):
   R = []
   n = len(A)
@@ -46,6 +49,10 @@ def partnerLength_(dom):
   return int(dom.getValue("PartnerLength"))
 
 
+def _enableShowControl(dom, state):
+  dom.executeVoid(f"toggleFieldsetByLegend('Control', {'true' if state else 'false'})")
+
+
 def atk(dom):
   availableDevices = devices.getDevices()
   
@@ -54,6 +61,7 @@ def atk(dom):
   trios.set(dom)
   qrcodes.set(dom)
   dom.executeVoid("handleClearable();toggleFieldsetByLegend('Showoff', false);toggleFieldsetByLegend('QR Codes', true);")
+  _enableShowControl(dom, False)
 
 
 def atkPartnerConnect(dom):
@@ -119,6 +127,7 @@ def atkShowConnect(dom):
       cont = True
 
   dom.executeVoid("toggleFieldsetByLegend('Show', true)")
+  _enableShowControl(dom, False)
   
   if abs(offset) >= .9:
     dom.alert(f"Décalage horaire : {offset} s !")
@@ -155,14 +164,38 @@ SHOWS_ = {
 }
 
 
+def atkbDisableShowControl(dom):
+  _enableShowControl(dom, False)
+
+
+def _launchTrio( showId, timestamp, parts):
+  trios.launch(showId, timestamp, parts)
+  atlastk.broadcastAction(atkbDisableShowControl)
+
+
 def atkShowPlay(dom):
   parts = getParts_()
   showId = dom.getValue("Show")
+  show.setState(show.State.STOP)
   timestamp = countdownIfRequested_(dom, show.getNtpTime() + DELAY_, parts)
-  if show in SHOWS_:
-    SHOWS_[showId](timestamp, parts)
+  if showId in SHOWS_:
+    threading.Thread(target=SHOWS_[showId], args=(timestamp, parts)).start()
   else:
-    threading.Thread(target=trios.launch, args=(showId, timestamp, parts)).start()
+    threading.Thread(target=_launchTrio, args=(showId, timestamp, parts)).start()
+    _enableShowControl(dom, True)
+
+
+def atkShowDisableControl(dom):
+  show.setState(show.State.DISABLE)
+  _enableShowControl(dom, False)
+
+
+def atkShowStop(dom):
+  show.setState(show.State.STOP)
+
+
+def atkShowSuspendRestart(dom, id):
+  show.toggleSuspendRestart(lambda: (show.getParts().buzzers.off(), ucuq.commit()))
 
 
 def atkQRCodesSelect(dom, id):
@@ -175,15 +208,4 @@ def atkQRCodesDisplay(dom):
 
 if os.environ.get("PREFIX", "").startswith("/data/data/com.termux"):
   atlastk.set_supplier(lambda url: os.system(f'am start -n com.android.chrome/com.google.android.apps.chrome.Main -d "{url}"'))
-
-
-def atkShowStop(dom):
-  show.setState(show.State.STOP)
-
-
-def atkShowSuspendRestart(dom, id):
-  if show.toggleSuspendRestart(lambda: show.getParts().buzzers.off()):
-    dom.setValue(id, "Resume")
-  else:
-    dom.setValue(id, "Suspend")
 

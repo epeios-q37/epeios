@@ -2947,14 +2947,14 @@ def voicesToEvents(voices, tempo, callback):
   return raws
 
 @dataclass
-class _Report:
+class dispatchReport:
   cumul: int
   duration: int
   eventAmounts: list[int]
 
 
-def dispatchEvents(eventGenerators, durationCallback, **kwargs):
-  report = _Report(
+def dispatchEvents(eventGenerators, durationCallback):
+  report = dispatchReport(
     cumul =  0,
     duration = 0,
     eventAmounts=[0] * len(eventGenerators)
@@ -2965,9 +2965,6 @@ def dispatchEvents(eventGenerators, durationCallback, **kwargs):
 
   if len(inspect.signature(durationCallback).parameters) >= 1:
     params.append(report)
-
-  if len(inspect.signature(durationCallback).parameters) >= 2:
-    params.append(types.SimpleNamespace(**kwargs))
 
   while True:
     minDuration = sys.maxsize

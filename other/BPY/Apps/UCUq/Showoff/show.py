@@ -139,6 +139,7 @@ class _State(IntEnum):
   PLAYING = auto()
   STOPPING = auto()
   SUSPENDED = auto()
+  DISABLED = auto()
 
 _state = _State.PENDING
 _suspendTimestamp = 0
@@ -149,6 +150,7 @@ class State(IntEnum):
   STOP = auto()
   SUSPEND = auto()
   RESUME = auto()
+  DISABLE = auto()
 
 
 def setState(state: State, callback = None):
@@ -156,7 +158,10 @@ def setState(state: State, callback = None):
 
   match state:
     case State.STOP:
-      _state = _State.STOPPING
+      if _state != _State.PENDING:
+        _state = _State.STOPPING
+      else:
+        _suspendDelta = 0
     case State.SUSPEND:
       _suspendTimestamp = getNtpTime()
       _suspendCallback = callback
@@ -164,16 +169,20 @@ def setState(state: State, callback = None):
     case State.RESUME:
       _suspendDelta += getNtpTime() - _suspendTimestamp
       _state = _State.PLAYING
+    case State.DISABLE:
+      _state = _State.DISABLED
     case _:
       raise(ValueError)
 
 
 def toggleSuspendRestart(callback = None):
+  global _checkpoint
   if _state == _State.PLAYING:
     setState(State.SUSPEND, callback)
     return True
   else:
     setState(State.RESUME)
+    _checkpoint = 0
     return False
 
 
@@ -187,9 +196,8 @@ def sleepUntil(timestamp, commitDelay):
   while _state == _State.SUSPENDED:
     if _suspendCallback is not None:
       _suspendCallback()
-      ucuq.commit()
       _suspendCallback = None
-    time.sleep(1)
+    time.sleep(0)
 
   if _state == _State.STOPPING:
     _state = _State.PENDING
@@ -209,10 +217,9 @@ def sleepUntil(timestamp, commitDelay):
         _lastCommitTimestamp = timestamp
         ucuq.commit()
 
-      if _checkpoint + 4 < timestamp:
-        print(timestamp)
+      if _state != _State.DISABLED and _checkpoint + 3 < timestamp:
         _checkpoint = timestamp
-        waitUntilNtpTime(timestamp - 1.25)
+        waitUntilNtpTime(timestamp - .75)
 
   return True
 

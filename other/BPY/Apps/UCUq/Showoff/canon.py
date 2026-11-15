@@ -189,13 +189,12 @@ def launch(timestamp, parts):
       ),
       getPanelEvents_(tracking, panels),
     ),
-    lambda report, user: (_sleepUntil(timestamp + report.cumul, 1/3),  not user.tracking.stop)[-1],
-    tracking = tracking,
-    timestamp = 0
+    lambda report:_sleepUntil(timestamp + report.cumul, 1/3) and not tracking.stop
   )
 
   ucuq.setCommitBehavior(cb)
 
+  rings.fill((0,0,0)).write()
   uppers.park()
   lowers.park()
   panels.backlightOff()

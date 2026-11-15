@@ -12,8 +12,7 @@ import ucuq
 
 from show import (
   KIT_COUNT as _KIT_COUNT,
-  sleepUntil as _sleepUntil,
-  waitUntilNtpTime as _ntpSleep
+  sleepUntil as _sleepUntil
 )
 
 # No debug if == 0
@@ -89,6 +88,7 @@ class _Tracking:
   voices: list
   extrema: list[_Extremum]
   monitoring: _Monitoring
+  stops: list[bool]
 
 
 def _isDebug():
@@ -159,10 +159,10 @@ def _ringsActiveNotesEvent(note, turn, counter, rings):
   for k in range(_KIT_COUNT):
     if k == turn:
       colors = _VOICES_MAIN_COLORS
-      spots = _RING_SPOTS[0]
+      spots = _RING_SPOTS_LIST[0]
     else:
       colors = _VOICES_REPEATER_COLORS
-      spots = _RING_SPOTS[2 if turn == 2 else (1 if turn == 0 or k == 0 else 2)]
+      spots = _RING_SPOTS_LIST[(turn - k) % len(_RING_SPOTS_LIST)]
 
     for spot in spots:
       rings[k].setValue(spot, (0, 0, 0))
@@ -322,7 +322,7 @@ def _panelActiveNotesEvents(voice, turn, extremum, monitoring, panels):
     monitoring.flags[turn] = None if pitch == 0 else not monitoring.flags[turn]
     monitoring.peaks[turn] = None if pitch == 0 else ( _PANEL_PEAK_WIDTH - 1 ) * ( pitch - extremum.minNote ) // ambitus
 
-    _panelActiveNotesEvent( monitoring, panels)
+    _panelActiveNotesEvent(monitoring, panels)
 
     yield note[1]
 
@@ -330,7 +330,7 @@ def _panelActiveNotesEvents(voice, turn, extremum, monitoring, panels):
 def _ringsRainbowEvent(counter, rings):
   for r, ring in enumerate(rings):
     color = shared.getRainbowColor(counter + r * len(shared.RAINBOW) // _KIT_COUNT)
-    for spot in _RING_SPOTS[3]:
+    for spot in _RING_SPOTS_LIST[( 3 - r ) % len(_RING_SPOTS_LIST)]:
       ring.setValue(spot, color)
 
   rings.write()
@@ -411,7 +411,7 @@ def set(dom):
     dom.removeAttribute("ShowCountdown", "checked")
 
 
-def _sleepCallback(report, tracking, startTimestamp):
+def _sleepCallback(report: ucuq.dispatchReport, tracking, startTimestamp):
   if not _sleepUntil(startTimestamp + report.cumul, _COMMIT_DELAY):
     return False
 
@@ -431,15 +431,14 @@ def _getDuration(voice):
 
 
 def launch(scoreId, timestamp, parts):
-  stops = [False] * _KIT_COUNT
-
   tracking = _Tracking(
     voices = [],
     extrema = [],
     monitoring = _Monitoring(
       flags = [None] * _KIT_COUNT,
       peaks = [None] * _KIT_COUNT
-    )
+    ),
+    stops = [False] * _KIT_COUNT
   )
 
   parts.panels\
@@ -472,7 +471,7 @@ def launch(scoreId, timestamp, parts):
   parts.panels.backlightOn()
 
   for turn in range(_KIT_COUNT):
-    for spot in _RING_SPOTS[0]:
+    for spot in _RING_SPOTS_LIST[0]:
       parts.rings[turn].setValue(spot, _VOICES_MAIN_COLORS[turn])
 
   parts.rings.write()
@@ -489,7 +488,7 @@ def launch(scoreId, timestamp, parts):
       *(element for turn, voice in enumerate(tracking.voices) for element in (
           _ringsActiveNotesEvents(voice, turn, parts.rings),
           _panelActiveNotesEvents(voice, turn, tracking.extrema[turn], tracking.monitoring, parts.panels),
-          _buzzerEvents(voice, turn, parts.buzzers[turn], stops),
+          _buzzerEvents(voice, turn, parts.buzzers[turn], tracking.stops),
         )
       ),
       _screenEvents(pacedNotes, tracking, parts.screens),
@@ -497,8 +496,7 @@ def launch(scoreId, timestamp, parts):
       _panelDurationEvents(maxDuration, parts.panels),
       _ringsRainbowEvents(maxDuration, parts.rings)
     ),
-    lambda report, tracking: _sleepCallback(report, tracking, timestamp),
-    stops = stops
+    lambda report: _sleepCallback(report, tracking, timestamp)
   )
 
   # ucuq.gcEnable()
@@ -518,9 +516,7 @@ _SCORE_LIST = tuple(sorted((
     "BWV 848b", "BWV 847b", "Gimo 359a", "Gimo 359c", "Bartok",
     "Brahms", "Elgar", "Plaisir d'amour", "Rachmaninov", "BVW 530",
     "RV63", "Hob. XI:10", "Sheba", "Beethoven 87-4", "Beethoven 3-1",
-    "Beethoven 3-2", "Beethoven 3-3", "Beethoven 3-4", "Beethoven 3-5", "Beethoven 3-6")))
-
-print(_SCORE_LIST)
+    "Beethoven 3-2", "Beethoven 3-3", "Beethoven 3-4", "Beethoven 3-5", "Beethoven 3-6", "Mozart KV. 532")))
 
 _SCORE_LIST  = _SCORE_LIST + ("Test",)
 
@@ -536,14 +532,14 @@ _VOICES_MAIN_COLORS = (
 )
 
 _VOICES_REPEATER_COLORS = (
-  (5,1,1),
-  (1,5,1),
-  (1,1,5)
+  (3,1,1),
+  (1,3,1),
+  (1,1,3)
 )
 
-_RING_SPOTS = (
+_RING_SPOTS_LIST = (
   (1,2),
-  (0,3),
-  (7,4),
-  (5,6)
+  (3,4),
+  (5,6),
+  (7,0)
 )
